@@ -422,9 +422,9 @@ class Product extends Model
     }
 
     /*******************************************************************************
-    *                                Copyright : AGmedia                           *
-    *                              email: filip@agmedia.hr                         *
-    *******************************************************************************/
+     *                                Copyright : AGmedia                           *
+     *                              email: filip@agmedia.hr                         *
+     *******************************************************************************/
 
     /**
      * @param Request         $request
@@ -451,12 +451,12 @@ class Product extends Model
             // Akcije
             if ($request->input('group') == 'snizenja') {
                 $query->where('special', '!=', '')
-                      ->where(function ($query) {
-                          $query->whereDate('special_from', '<=', now())->orWhereNull('special_from');
-                      })
-                      ->where(function ($query) {
-                          $query->whereDate('special_to', '>=', now())->orWhereNull('special_to');
-                      });
+                    ->where(function ($query) {
+                        $query->whereDate('special_from', '<=', now())->orWhereNull('special_from');
+                    })
+                    ->where(function ($query) {
+                        $query->whereDate('special_to', '>=', now())->orWhereNull('special_to');
+                    });
             } else {
                 // Kategorija...
                 $group = $request->input('group');

@@ -207,7 +207,7 @@ class Action extends Model
             $products = Product::whereIn('id', $ids)->pluck('price', 'id');
         }
 
-        foreach ($products as $k_id => $price) {
+        foreach ($products->all() as $k_id => $price) {
             $query[] = [
                 'product_id' => $k_id,
                 'special'    => Helper::calculateDiscountPrice($price, $this->request->discount)

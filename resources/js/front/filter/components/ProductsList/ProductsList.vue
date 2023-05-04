@@ -1,5 +1,5 @@
 <template>
-    <section class="col-lg-8">
+    <section class="col">
         <!-- Toolbar-->
         <div class="d-flex justify-content-center justify-content-sm-between align-items-center pt-2 pb-4 pb-sm-5">
             <div class="d-flex flex-wrap">
@@ -21,44 +21,41 @@
 
         <!-- Products grid-->
         <div class="row mx-n2 mb-3" v-if="products.total">
-            <div class="col-md-4 col-6 px-2 mb-4" v-for="product in products.data">
-                <div class="card product-card-alt">
-                    <span class="badge rounded-pill bg-primary mt-3 ms-1 badge-shadow" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
-                    <div class="product-thumb">
-                        <div class="product-card-actions">
-                            <a class="btn btn-light btn-icon btn-shadow fs-base mx-2" :href="origin + product.url"><i class="ci-eye"></i></a>
-                            <button type="button" class="btn btn-light btn-icon btn-shadow fs-base mx-2" v-on:click="add(product.id)"><i class="ci-cart"></i></button>
-<!--                            <add-to-cart-btn-simple :id="(product.id).toString()"></add-to-cart-btn-simple>-->
+
+            <div class="col-md-3 col-6 px-2 mb-4 d-flex align-items-stretch" v-for="product in products.data">
+                <div class="card product-card  pb-3">
+                    <span class="badge rounded-pill bg-primary mt-1 ms-1 badge-shadow" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
+                       <a class="card-img-top d-block overflow-hidden" :href="origin + product.url">
+                        <img src="media/img/test-slika.jpg" alt="Product">
+                    </a>
+                    <div class="card-body py-2">
+                        <a class="product-meta d-block fs-xs pb-1" :href="product.author ? (origin + product.author.url) : '#'">{{ product.author ? product.author.title : '' }}s</a>
+                        <h3 class="product-title fs-sm "><a :href="origin + product.url">{{ product.name }}</a></h3>
+
+
+                        <div class="product-price">
+
+                            <span class="text-muted"  v-if="product.special"><small>NC 30 dana: {{ product.main_price_text }} </small></span>
                         </div>
-                        <a class="product-thumb-overlay" :href="origin + product.url"></a>
-                        <img load="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
+                        <div class="product-price">
+                            <span class="text-accent" v-if="product.special">{{ product.main_special_text }}</span>
+                         </div>
+                        <div class="product-price">
+                            <span class="text-accent" v-if="!product.special">{{ product.main_price_text }}</span>
+
+                        </div>
+
+
+
+
+
+
+
                     </div>
-                    <div class="card-body pt-2">
-                        <div class="d-flex flex-wrap justify-content-between align-items-start pb-2">
-                            <div class="text-muted fs-xs me-1">
-                                <a class="product-meta fw-medium" :href="product.author ? (origin + product.author.url) : '#'">{{ product.author ? product.author.title : '' }}</a>
-                            </div>
-
-                        </div>
-                        <h3 class="product-title fs-sm mb-0"><a :href="origin + product.url">{{ product.name }}</a></h3>
-                        <div class="d-flex flex-wrap justify-content-between align-items-center" v-if="product.category_string">
-                            <div class="fs-sm me-2"><i class="ci-book text-muted" style="font-size: 11px;"></i> <span v-html="product.category_string"></span></div>
-                        </div>
-
-                        <div class="d-flex flex-wrap justify-content-between align-items-center price-box mt-2">
-                            <div class="bg-faded-accent text-accent fs-sm rounded-1 py-1 px-2" v-if="product.special" style="text-decoration: line-through;">{{ product.main_price_text }}</div>
-                            <div class="bg-faded-accent text-accent fs-sm rounded-1 py-1 px-2" v-if="product.special">{{ product.main_special_text }}</div>
-                            <div class="bg-faded-accent text-accent fs-sm rounded-1 py-1 px-2" v-if="!product.special">{{ product.main_price_text }}</div>
-                        </div>
-
-                        <div class="d-flex flex-wrap justify-content-between align-items-center price-box mt-2" v-if="product.secondary_price">
-                            <div class="bg-faded-accent text-accent fs-sm rounded-1 py-1 px-2" v-if="product.special" style="text-decoration: line-through;">{{ product.secondary_price_text }}</div>
-                            <div class="bg-faded-accent text-accent fs-sm rounded-1 py-1 px-2" v-if="product.special">{{ product.secondary_special_text }}</div>
-                            <div class="bg-faded-accent text-accent fs-sm rounded-1 py-1 px-2" v-if="!product.special">{{ product.secondary_price_text }}</div>
-                        </div>
+                    <div class="product-floating-btn">
+                        <button class="btn btn-primary btn-shadow btn-sm" v-on:click="add(product.id)" type="button">+<i class="ci-cart fs-base ms-1"></i></button>
                     </div>
                 </div>
-                <hr class="d-sm-none">
             </div>
         </div>
 
@@ -283,7 +280,7 @@
                 let now = new Date();
 
                 for (let i = 0; i < this.products.data.length; i++) {
-                    if (this.products.data[i].main_price <= this.products.data[i].main_special) {
+                    if (Number(this.products.data[i].main_price) <= Number(this.products.data[i].main_special)) {
                         this.products.data[i].special = false;
                     }
                 }

@@ -1,50 +1,54 @@
-<div class="card product-card-alt">
+<div class="article " >
+
+<div class="card product-card  pb-3">
     @if ($product->main_price > $product->main_special)
-        <span class="badge rounded-pill bg-primary mt-3 ms-1 badge-shadow">-{{ floatval(\App\Helpers\Helper::calculateDiscount($product->price, $product->special())) }}%</span>
+        <span class="badge rounded-pill bg-primary mt-1 ms-1 badge-shadow">-{{ number_format(floatval(\App\Helpers\Helper::calculateDiscount($product->price, $product->special())), 0) }}%</span>
+
+
     @endif
-    <div class="product-thumb">
-        <div class="product-card-actions">
-            <a class="btn btn-light btn-icon btn-shadow fs-base mx-2" href="{{ url($product->url) }}"><i class="ci-eye"></i></a>
-            <add-to-cart-btn-simple id="{{ $product->id }}"></add-to-cart-btn-simple>
-        </div>
-        <a class="product-thumb-overlay" href="{{ url($product->url) }}"></a>
-        <img load="lazy" src="{{ $product->thumb }}" width="250" height="300" alt="{{ $product->name }}">
-    </div>
-    <div class="card-body pt-2">
-        <div class="d-flex flex-wrap justify-content-between align-items-start pb-2">
-            <div class="text-muted fs-xs me-1">
-                @if ($product->author)
-                    <a class="product-meta fw-medium" href="{{ url($product->author->url) }}">{{ $product->author->title }}</a>
-                @else
-                    <a class="product-meta fw-medium" href="#">Nepoznato</a>
-                @endif
+
+
+        <a class="card-img-top d-block overflow-hidden" href="{{ url($product->url) }}">
+       {{-- <img load="lazy" src="{{ $product->thumb }}" width="250" height="300" alt="{{ $product->name }}"> --}}
+
+        <img load="lazy" src="media/img/test-slika.jpg" alt="{{ $product->name }}">
+
+
+        </a>
+            <div class="card-body pt-2" style="min-height: 126px;">
+
+                    @if ($product->author)
+                            <a class="product-meta d-block fs-xs pb-1" href="{{ url($product->author->url) }}">{{ $product->author->title }}</a>
+                        @else
+                            <a class="product-meta d-block fs-xs pb-1" href="#">Nepoznato</a>
+                        @endif
+
+
+
+                         <h3 class="product-title fs-sm"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
+
+
+                        {{--     @if ($product->category_string)
+                            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                <div class="fs-sm me-2"><i class="ci-book text-muted" style="font-size: 11px;"></i> {!! $product->category_string !!}</div>
+                            </div>
+                        @endif --}}
+
+
+                            @if ($product->main_price > $product->main_special)
+                                <div class="product-price"><small><span class="text-muted">NC 30 dana: {{ $product->main_special_text }}  @if($product->secondary_price_text) {{ $product->secondary_special_text }} @endif</span></small></div>
+                                <div class="product-price"><span class="text-accent">{{ $product->main_price_text }}  @if($product->secondary_price_text) {{ $product->secondary_price_text }} @endif</span></div>
+                            @else
+                                <div class="product-price"><span class="text-accent">{{ $product->main_price_text }}  @if($product->secondary_price_text) <small class="text-muted">{{ $product->secondary_price_text }} </small>@endif</span></div>
+                            @endif
+
+
             </div>
 
+        <div class="product-floating-btn">
+            <add-to-cart-btn-simple id="{{ $product->id }}"></add-to-cart-btn-simple>
         </div>
-        <h3 class="product-title fs-sm mb-0"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
-        @if ($product->category_string)
-            <div class="d-flex flex-wrap justify-content-between align-items-center">
-                <div class="fs-sm me-2"><i class="ci-book text-muted" style="font-size: 11px;"></i> {!! $product->category_string !!}</div>
-            </div>
-        @endif
-        <div class="d-flex flex-wrap justify-content-between align-items-center price-box mt-2">
-            @if ($product->main_price > $product->main_special)
-                <div class="bg-faded-accent text-accent text-sm rounded-1 py-1 px-1" style="text-decoration: line-through;">{{ $product->main_special_text }}</div>
-                <div class="bg-faded-accent text-accent text-sm rounded-1 py-1 px-1">{{ $product->main_price_text }}</div>
-            @else
-                <div class="bg-faded-accent text-accent rounded-1 py-1 px-1">{{ $product->main_price_text }}</div>
-            @endif
-        </div>
-        @if($product->secondary_price_text)
-            <div class="d-flex flex-wrap justify-content-between align-items-center price-box mt-2">
-                @if ($product->main_price > $product->main_special)
-                    <div class="bg-faded-accent text-accent text-sm rounded-1 py-1 px-1" style="text-decoration: line-through;">{{ $product->secondary_special_text }}</div>
-                    <div class="bg-faded-accent text-accent text-sm rounded-1 py-1 px-1">{{ $product->secondary_price_text }}</div>
-                @else
-                    <div class="bg-faded-accent text-accent rounded-1 py-1 px-1">{{ $product->secondary_price_text }}</div>
-                @endif
-            </div>
-        @endif
-    </div>
 </div>
-<hr class="d-sm-none">
+
+</div>
+

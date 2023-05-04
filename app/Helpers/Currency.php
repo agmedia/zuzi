@@ -92,6 +92,6 @@ class Currency
             return $left . number_format(($price * $currency->value), $currency->decimal_places, ',', '.') . $right;
         }
 
-        return number_format(($price * $currency->value), $currency->decimal_places, ',', '.');
+        return number_format(($price * $currency->value), $currency->decimal_places, '.', '');
     }
 }

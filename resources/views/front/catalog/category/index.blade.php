@@ -2,13 +2,13 @@
 
 @if (isset($group) && $group)
     @if ($group && ! $cat && ! $subcat)
-        @section ( 'title',  \Illuminate\Support\Str::ucfirst($group). ' - Antikvarijat Biblos' )
+        @section ( 'title',  \Illuminate\Support\Str::ucfirst($group). ' - ZuZi Shop' )
     @endif
     @if ($cat && ! $subcat)
-        @section ( 'title',  $cat->title . ' - Antikvarijat Biblos' )
+        @section ( 'title',  $cat->title . ' - ZuZi Shop' )
         @section ( 'description', $cat->meta_description )
     @elseif ($cat && $subcat)
-        @section ( 'title', $subcat->title . ' - Antikvarijat Biblos' )
+        @section ( 'title', $subcat->title . ' - ZuZi Shop' )
         @section ( 'description', $cat->meta_description )
     @endif
 @endif
@@ -35,7 +35,7 @@
 @section('content')
 
     <!-- Page Title-->
-    <div class="page-title-overlap bg-dark pt-4" style="background-image: url({{ config('settings.images_domain') . 'media/img/indexslika.jpg' }});-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover;background-size: cover;">
+    <div class="page-title-overlap bg-dark pt-4" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
         <div class="container d-lg-block justify-content-start py-2 py-lg-3">
 
             @if (isset($group) && $group)

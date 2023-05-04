@@ -1,7 +1,7 @@
 <template>
     <div class="cart mb-5 d-flex align-items-center">
+        <button class="btn btn-primary btn-shadow btn-sm" @click="addToCart()" type="button">+<i class="ci-cart fs-base ms-1"></i></button>
 
-        <button class="btn btn-primary btn-shadow d-block w-100" @click="addToCart()">Dodaj u Košaricu</button>
     </div>
 </template>
 

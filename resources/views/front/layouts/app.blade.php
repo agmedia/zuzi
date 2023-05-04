@@ -6,11 +6,11 @@
     <!-- SEO Meta Tags-->
     <meta name="description" content="@yield('description')">
 
-    <meta name="author" content="Antikvarijat Biblos">
+    <meta name="author" content="Zuzi Shop">
     @stack('meta_tags')
     <!-- Viewport-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="facebook-domain-verification" content="16b3jag78m5ywwi9xfdmmt7r4mmsws" />
+
     <!-- Favicon and Touch Icons-->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
@@ -25,7 +25,7 @@
     <!-- Vendor Styles including: Font Icons, Plugins, etc.-->
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <!-- Main Theme Styles + Bootstrap-->
-    <link rel="stylesheet" media="screen" href="{{ config('settings.images_domain') . 'css/theme.min.css?v=1.6' }}">
+    <link rel="stylesheet" media="screen" href="{{ config('settings.images_domain') . 'css/theme.css?v=1.6' }}">
 
     @if (config('app.env') == 'production')
         @yield('google_data_layer')
@@ -34,7 +34,7 @@
                         new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
                                                                   j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-                })(window,document,'script','dataLayer','GTM-TV7RKFH');
+                })(window,document,'script','dataLayer','GTM-xxxxxxx');
             </script>
 
         <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -44,7 +44,7 @@
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
-            gtag('config', 'G-YY35049KQZ');
+            gtag('config', 'G-xxxxxxx');
         </script>
     @endif
 
@@ -61,7 +61,7 @@
                 t.src=v;s=b.getElementsByTagName(e)[0];
                 s.parentNode.insertBefore(t,s)}(window, document,'script',
                 'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '659899245170060');
+            fbq('init', 'xxxxxxxxxxx');
             fbq('track', 'PageView');
         </script>
         <noscript><img height="1" width="1" style="display:none"
@@ -75,28 +75,39 @@
 
 </head>
 <!-- Body-->
-<body class="handheld-toolbar-enabled">
+<body class="handheld-toolbar-enabled bg-secondary">
 
 @if (config('app.env') == 'production')
     <!-- Google Tag Manager (noscript) -->
     <noscript>
-        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TV7RKFH" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-xxxxxxx" height="0" width="0" style="display:none;visibility:hidden"></iframe>
     </noscript>
 @endif
 
-<!-- Topbar-->
-<div class="topbar topbar-light bg-light d-none d-md-block">
+
+<!-- Light topbar -->
+<div class="topbar topbar-light bg-secondary">
     <div class="container">
-        <div class="topbar-text text-nowrap">
-            <a class="topbar-link me-4" href="tel:+38514816574"><i class="ci-phone"></i> +385 1 48 16 574</a>
-            <a class="topbar-link me-4" href="https://www.google.com/maps/place/Biblos/@45.810942,15.9794894,17.53z/data=!4m5!3m4!1s0x4765d7aac4f8b023:0xb60bceb791b31ede!8m2!3d45.8106161!4d15.9816921?hl=hr" target="_blank"><i class="ci-location"></i> Palmotićeva 28, Zagreb </a>
-           <a class="topbar-link d-none d-md-inline-block me-4" href="{{ route('kontakt') }}"><i class="ci-time"></i> PON-PET: 9-20 | SUB: 9-14</a>
-            <a class="topbar-link d-none d-xl-inline-block" href="mailto:info@antikvarijat-biblos.hr"><i class="ci-mail"></i> info@antikvarijat-biblos.hr</a>
+
+        <div class="topbar-text text-nowrap  d-inline-block">
+            <i class="ci-phone"></i>
+            <span class="text-muted me-1">Podrška</span>
+            <a class="topbar-link" href="tel:00385916047126">091 604 7126</a>
         </div>
-        <div class="ms-3 text-nowrap">
-            <a class="topbar-link d-none d-md-inline-block" href="{{ route('faq') }}">Česta pitanja</a>
-            <a class="topbar-link ms-3 ps-3 border-start border-dark d-none d-md-inline-block" href="{{ route('catalog.route.page',['page' => 'o-nama']) }}">O nama</a>
-            <a class="topbar-link ms-3 ps-3 border-start border-dark d-none d-md-inline-block" href="{{ route('kontakt') }}">Kontakt</a>
+        <div class="topbar-text  d-none  d-md-inline-block">Besplatna dostava za sve narudžbe iznad 67 €</div>
+        <div class="ms-3 text-nowrap ">
+            <a class="topbar-link me-2 d-inline-block" href="#">
+                <i class="ci-facebook"></i>
+            </a>
+
+            <a class="topbar-link me-2 d-inline-block" href="#">
+                <i class="ci-instagram"></i>
+            </a>
+
+            <a class="topbar-link me-0 d-inline-block" href="#">
+                <i class="ci-mail"></i>
+            </a>
+
         </div>
     </div>
 </div>

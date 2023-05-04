@@ -40,6 +40,7 @@
         "vuex": "^3.6.2"
     },
     "dependencies": {
+        "composer": "^4.1.0",
         "laravel-vue-pagination": "^2.3.1",
         "vue-router": "^3.5.2"
     }

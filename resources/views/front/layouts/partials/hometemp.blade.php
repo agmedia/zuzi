@@ -1,0 +1,138 @@
+
+
+
+<!-- Hero slider-->
+<section class="tns-carousel tns-controls-lg mb-0 bg-white">
+    <div class="tns-carousel-inner" data-carousel-options="{&quot;mode&quot;: &quot;gallery&quot;, &quot;responsive&quot;: {&quot;0&quot;:{&quot;nav&quot;:true, &quot;controls&quot;: false},&quot;992&quot;:{&quot;nav&quot;:true, &quot;controls&quot;: true}}}">
+        <!-- Item-->
+        <div class="px-lg-5" style="background-image: url({{ asset('media/img/pexels-suzy-hazelwood-3765180.jpg') }});box-shadow: inset 0 0 0 1000px rgba(55, 63, 80,.7);
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;">
+            <div class="d-lg-flex justify-content-center align-items-center ps-lg-4">
+                <div class="position-relative mx-auto py-5 px-4 mb-lg-5 order-lg-1" style="max-width: 42rem; z-index: 10;">
+                    <div class="pb-lg-5 mb-lg-5 pt-lg-5 mt-lg-5 text-center">
+                        <span class="badge bg-dark fw-semibold fs-lg p-2 mb-4 rounded-1 from-bottom delay-3">30% popusta</span>
+                        <h2 class="text-light display-6 fw-bold from-bottom delay-1">Antikvarni naslovi</h2>
+                        <p class="fs-xl text-light pb-3 from-bottom delay-3">Sve antikvarne knjige na popustu su do kraja travnja!</p>
+                        <div class="scale-up delay-4 mx-auto mx-lg-0"><a class="btn btn-primary" href="shop-grid-ls.html">Saznajte više<i class="ci-arrow-right ms-2 me-n1"></i></a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Item-->
+
+        <!-- Item-->
+        <div class="px-lg-5" style="background-image: url({{ asset('media/img/kula-tmine.jpg') }});box-shadow: inset 0 0 0 1000px rgba(55, 63, 80,.7);
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;">
+            <div class="d-lg-flex justify-content-center align-items-center ps-lg-4">
+                <div class="position-relative mx-auto py-5 px-4 mb-lg-5 order-lg-1" style="max-width: 42rem; z-index: 10;">
+                    <div class="pb-lg-5 mb-lg-5 pt-lg-5 mt-lg-5 text-center">
+                        <span class="badge bg-dark fw-semibold fs-lg p-2 mb-4 rounded-1 from-bottom delay-3">70% popusta</span>
+                        <h2 class="text-light display-6 fw-bold from-bottom delay-1">Stephen King</h2>
+                        <p class="fs-xl text-light pb-3 from-bottom delay-3">Drugi i treći dio fantastične Kule tmine na fantastičnoj akciji</p>
+                        <div class="scale-up delay-4 mx-auto mx-lg-0"><a class="btn btn-primary" href="shop-grid-ls.html">Saznajte više<i class="ci-arrow-right ms-2 me-n1"></i></a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Item-->
+
+    </div>
+</section>
+
+
+<section class="bg-white " >
+
+    <div class="container py-4  py-sm-5">
+    <h2 class="text-center fw-bold pt-4 pt-sm-3">Popularne kategorije</h2>
+    <p class="text-muted text-center mb-5">Odaberite željeni naslov iz jedne od naših kategorija</p>
+
+
+        <div class="tns-carousel">
+            <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 20},"740":{"items":2, "gutter": 20},"900":{"items":3, "gutter": 20}, "1100":{"items":4, "gutter": 30}}}'>
+
+                    <!--item start -->
+                    <div class="article mb-grid-gutter">
+                        <a class="card border-0 shadow" href="#">
+                            <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
+                            <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Alternativne-knjige_600x600-optimized.jpg" alt="">
+                            <div class="card-body py-3 text-center">
+                                <h3 class="h6 mt-1">Alternativne knjige</h3>
+                            </div>
+                        </a>
+                    </div>
+                <!--item end -->
+
+                <!--item start -->
+                <div class="article mb-grid-gutter">
+                    <a class="card border-0 shadow" href="#">
+                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
+                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Autobiografije_600x600-optimized.jpg" alt="">
+                        <div class="card-body py-3 text-center">
+                            <h3 class="h6 mt-1">Biografije i autobiografije</h3>
+                        </div>
+                    </a>
+                </div>
+                <!--item end -->
+
+                <!--item start -->
+                <div class="article mb-grid-gutter">
+                    <a class="card border-0 shadow" href="#">
+                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
+                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Horori_600x600-optimized.jpg" alt="">
+                        <div class="card-body py-3 text-center">
+                            <h3 class="h6 mt-1">Horrori</h3>
+                        </div>
+                    </a>
+                </div>
+                <!--item end -->
+
+                <!--item start -->
+                <div class="article mb-grid-gutter">
+                    <a class="card border-0 shadow" href="#">
+                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
+                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Krimici_600x600-optimized.jpg" alt="">
+                        <div class="card-body py-3 text-center">
+                            <h3 class="h6 mt-1">Krimići</h3>
+                        </div>
+                    </a>
+                </div>
+                <!--item end -->
+
+                <!--item start -->
+                <div class="article mb-grid-gutter">
+                    <a class="card border-0 shadow" href="#">
+                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
+                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Ljubavni_600x600-optimized.jpg" alt="">
+                        <div class="card-body py-3 text-center">
+                            <h3 class="h6 mt-1">Ljubići</h3>
+                        </div>
+                    </a>
+                </div>
+                <!--item end -->
+
+                <!--item start -->
+                <div class="article mb-grid-gutter">
+                    <a class="card border-0 shadow" href="#">
+                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
+                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Povijesne_600x600-optimized.jpg" alt="">
+                        <div class="card-body py-3 text-center">
+                            <h3 class="h6 mt-1">Povijesne</h3>
+                        </div>
+                    </a>
+                </div>
+                <!--item end -->
+
+
+            </div>
+
+        </div>
+    </div>
+</section>
+
+

@@ -1,5 +1,5 @@
 <template>
-    <aside class="col-lg-4">
+    <aside class="col-lg-auto">
         <!-- Sidebar-->
         <div class="offcanvas offcanvas-collapse bg-white w-100 rounded-3 shadow-lg py-1" id="shop-sidebar" style="max-width: 22rem;">
             <div class="offcanvas-cap align-items-center shadow-sm">
