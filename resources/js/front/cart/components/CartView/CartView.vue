@@ -35,7 +35,7 @@
         </div>
 
         <div class="d-flex pt-3 pb-4 pb-sm-5 mt-1" v-if="show_buttons">
-            <a class="btn btn-secondary btn-sm ps-2" :href="continueurl"><i class="ci-arrow-left me-2"></i>Natrag na trgovinu</a>
+            <a class="btn btn-outline-dark btn-sm ps-2" :href="continueurl"><i class="ci-arrow-left me-2"></i>Natrag na trgovinu</a>
         </div>
     </div>
 </template>

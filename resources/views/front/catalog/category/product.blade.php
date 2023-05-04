@@ -9,30 +9,30 @@
 
 
         <a class="card-img-top d-block overflow-hidden" href="{{ url($product->url) }}">
-       {{-- <img load="lazy" src="{{ $product->thumb }}" width="250" height="300" alt="{{ $product->name }}"> --}}
-
-        <img load="lazy" src="media/img/test-slika.jpg" alt="{{ $product->name }}">
-
-
-        </a>
-            <div class="card-body pt-2" style="min-height: 126px;">
-
-                    @if ($product->author)
-                            <a class="product-meta d-block fs-xs pb-1" href="{{ url($product->author->url) }}">{{ $product->author->title }}</a>
-                        @else
-                            <a class="product-meta d-block fs-xs pb-1" href="#">Nepoznato</a>
-                        @endif
+        <img load="lazy" src="{{ $product->thumb }}" width="250" height="300" alt="{{ $product->name }}">
 
 
 
-                         <h3 class="product-title fs-sm"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
+
+            </a>
+                <div class="card-body pt-2" style="min-height: 126px;">
+
+                        @if ($product->author)
+                                <a class="product-meta d-block fs-xs pb-1" href="{{ url($product->author->url) }}">{{ $product->author->title }}</a>
+                            @else
+                                <a class="product-meta d-block fs-xs pb-1" href="#">Nepoznato</a>
+                            @endif
 
 
-                        {{--     @if ($product->category_string)
-                            <div class="d-flex flex-wrap justify-content-between align-items-center">
-                                <div class="fs-sm me-2"><i class="ci-book text-muted" style="font-size: 11px;"></i> {!! $product->category_string !!}</div>
-                            </div>
-                        @endif --}}
+
+                             <h3 class="product-title fs-sm"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
+
+
+                            {{--     @if ($product->category_string)
+                                <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                    <div class="fs-sm me-2"><i class="ci-book text-muted" style="font-size: 11px;"></i> {!! $product->category_string !!}</div>
+                                </div>
+                            @endif --}}
 
 
                             @if ($product->main_price > $product->main_special)

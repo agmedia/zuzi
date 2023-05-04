@@ -41,7 +41,7 @@
 
         {!! $page->description !!}
 
-
+        @include('front.layouts.partials.otkupwidget')
 
 
 

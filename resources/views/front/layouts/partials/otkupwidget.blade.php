@@ -1,0 +1,165 @@
+
+
+
+<section class="bg-white bg-size-cover bg-position-center pt-3" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});">
+    <div class="container pt-2 pt-sm-0">
+        <div class="row align-items-center">
+            <div class="col-xl-4 col-lg-5 col-sm-6 offset-xl-2 offset-lg-1 mt-md-n5 text-center text-sm-start">
+                <h2 class="text-dark fw-bold mb-3">Otkup knjiga</h2>
+                <p class="text-dark mb-0 d-block d-sm-none d-md-block">Otkup starih knjiga, otkupljujemo antikvarne i stare knjige, riječnike, enciklopedije, priručnike i ostale dobro očuvane knjige.</p>
+                <div class="mt-4 pt-2"><a class="btn btn-primary mb-2" href="#" role="button">Ispunite obrazac<i class="ci-arrow-right ms-2 me-n1"></i></a>   </div>
+            </div>
+            <div class="col-lg-5 col-sm-6 offset-lg-1 pt-5 pt-sm-3"><img class="d-block mx-auto mx-sm-0" src="{{ asset('media/img/otkup-ikona-dark.svg') }}" width="401" alt="Mobile App Screen"></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Become Courier / Partner CTA-->
+<section class=" pb-4 pt-lg-5 pb-sm-5">
+    <div class="container">
+    <div class="row pt-4 mt-2 mt-lg-3 mb-md-2">
+        <div class="col-lg-6 mb-grid-gutter">
+            <div class="d-block d-sm-flex justify-content-between align-items-center bg-white rounded-3 shadow">
+                <div class="pt-5 py-sm-5 px-4 ps-md-5  text-center text-sm-start">
+                    <h2 class="h3 fw-bold">Rijetke knjige</h2>
+                    <p class="text-muted pb-2">Pogledajte našu kolekeciju popularnih i rijetkih naslova.</p><a class="btn btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
+                </div><img class="d-block mx-auto mx-sm-0 rounded-end" src="{{ asset('media/img/rijetke.jpg') }}"  width="250" alt="Become a Courier">
+            </div>
+        </div>
+        <div class="col-lg-6 mb-grid-gutter">
+            <div class="d-block d-sm-flex justify-content-between align-items-center bg-white rounded-3 shadow">
+                <div class="pt-5 py-sm-5 px-4 ps-md-5  text-center text-sm-start">
+                    <h2 class="h3 fw-bold">Svezalice - pidžame za knjige</h2>
+                    <p class="text-muted pb-2">Za praktičnije čuvanje knjige, ručno izrađeno s puno ljubavi.
+
+                        </p><a class="btn btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
+                </div><img class="d-block mx-auto mx-sm-0 rounded-end" src="{{ asset('media/img/svezalice.jpg') }}" width="250"    alt="Become a Partner">
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+
+
+<section class="bg-dark bg-size-cover bg-position-center pt-5 pb-4" >
+    <div class="container pt-lg-1">
+
+        <div class="row pt-lg-2 text-center">
+            <div class="col-lg-3 col-sm-6 mb-grid-gutter">
+                <div class="d-inline-flex align-items-center text-start"><i class="ci-truck text-primary" style="font-size: 3rem;"></i>
+                    <div class="ps-3">
+                        <h6 class="text-light fs-base mb-1">Brza dostava</h6>
+                        <p class="text-light fs-ms opacity-70 mb-0">Unutar 5 radnih dana</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-sm-6 mb-grid-gutter">
+                <div class="d-inline-flex align-items-center text-start"><i class="ci-security-check text-primary" style="font-size: 3rem;"></i>
+                    <div class="ps-3">
+                        <h6 class="text-light fs-base mb-1">Sigurna kupovina</h6>
+                        <p class="text-light fs-ms opacity-70 mb-0">SSL certifitikat i CorvusPay</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-sm-6 mb-grid-gutter">
+                <div class="d-inline-flex align-items-center text-start"><i class="ci-bag text-primary" style="font-size: 3rem;"></i>
+                    <div class="ps-3">
+                        <h6 class="text-light fs-base mb-1">Besplatna dostava</h6>
+                        <p class="text-light fs-ms opacity-70 mb-0">Za narudžbe iznad 67 €</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-sm-6 mb-grid-gutter">
+                <div class="d-inline-flex align-items-center text-start"><i class="ci-locked text-primary" style="font-size: 3rem;"></i>
+                    <div class="ps-3">
+                        <h6 class="text-light fs-base mb-1">Zaštita kupca</h6>
+                        <p class="text-light fs-ms opacity-70 mb-0">Od narudžbe pa sve do dostave</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Reviews-->
+<section class="bg-secondary py-5">
+    <div class="container py-md-4 pt-3 pb-0 py-sm-3">
+        <h2 class="text-center text-dark fw-bold mb-4 mb-md-5">Komentari kupaca</h2>
+
+
+        <div class="tns-carousel mb-3">
+            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;controls&quot;: false, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:1, &quot;gutter&quot;:20}, &quot;576&quot;:{&quot;items&quot;:2, &quot;gutter&quot;:20},&quot;850&quot;:{&quot;items&quot;:3, &quot;gutter&quot;:20},&quot;1080&quot;:{&quot;items&quot;:3, &quot;gutter&quot;:25}}}">
+                <blockquote class="mb-2">
+                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                        <div class="mb-2">
+                            <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
+                            </div>
+                        </div>Vrlo ljubazni, uslužni, pouzdani, često izađu u susret. Knjige očuvane i dobro zapakirane prilikom slanja. Surađujemo već dugo i svima preporuke.
+
+                        <div class="pt-3">
+                            <h6 class="fs-sm mb-n1">Helena J.</h6>
+                        </div>
+                    </div>
+
+                </blockquote>
+
+                <blockquote class="mb-2">
+                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                        <div class="mb-2">
+                            <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
+                            </div>
+                        </div>Odlična trgovina, vrhunska usluga i ljubazni prodavači. Svaka preporuka.
+
+                        <div class="pt-3">
+                            <h6 class="fs-sm mb-n1">Katarina H.</h6>
+                        </div>
+                    </div>
+
+                </blockquote>
+                <blockquote class="mb-2">
+                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                        <div class="mb-2">
+                            <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
+                            </div>
+                        </div>Predivan mali antikvarijat, sa jako ljubaznim i susretljivim prodavačima, kao stvoren za prave ljubitelje knjige.
+
+                        <div class="pt-3">
+                            <h6 class="fs-sm mb-n1">Mija S.</h6>
+                        </div>
+                    </div>
+
+                </blockquote>
+
+                <blockquote class="mb-2">
+                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                        <div class="mb-2">
+                            <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
+                            </div>
+                        </div>Napokon i u Španskom mjesto za knjigoljupce, knjigu koju sam tražila po cijelom gradu našla samo kod njih!
+
+                        <div class="pt-3">
+                            <h6 class="fs-sm mb-n1">Kornelija B.</h6>
+                        </div>
+                    </div>
+
+                </blockquote>
+
+                <blockquote class="mb-2">
+                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                        <div class="mb-2">
+                            <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
+                            </div>
+                        </div>Dečko mi je naručio knjigu koju isprva nismo mogli pronaći ali Vi ste ju naravno imali na stanju. Brza dostava, uredno zapakirano i najbitnije odličan izbor knjiga. Vidi se da volite to što radite. Velika pohvala i topla preporuka svima
+
+                        <div class="pt-3">
+                            <h6 class="fs-sm mb-n1">Valentina J.</h6>
+                        </div>
+                    </div>
+
+                </blockquote>
+
+            </div>
+        </div>
+    </div>
+</section>

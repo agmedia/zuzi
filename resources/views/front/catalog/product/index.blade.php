@@ -9,7 +9,7 @@
     <meta property="og:title" content="{{ $seo['title'] }}" />
     <meta property="og:description" content="{{ $seo['description']  }}" />
     <meta property="og:url" content="{{ env('APP_URL')}}/{{ $prod->url }}"  />
-    <meta property="og:site_name" content="Antikvarijat Biblos" />
+    <meta property="og:site_name" content="ZuZi Shop" />
     <meta property="og:updated_time" content="{{ $prod->updated_at  }}" />
     <meta property="og:image" content="{{ asset($prod->image) }}" />
     <meta property="og:image:secure_url" content="{{ asset($prod->image) }}" />
@@ -18,7 +18,7 @@
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:alt" content="{{ $prod->image_alt }}" />
     <meta property="product:price:amount" content="{{ number_format($prod->price, 2) }}" />
-    <meta property="product:price:currency" content="HRK" />
+    <meta property="product:price:currency" content="EUR" />
     <meta property="product:availability" content="instock" />
     <meta property="product:retailer_item_id" content="{{ $prod->sku }}" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -45,9 +45,9 @@
 @section('content')
 
     <!-- Page Title-->
-    <div class="page-title-overlap bg-dark pt-4" style="background-image: url({{ config('settings.images_domain') . 'media/img/indexslika.jpg' }});-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover;background-size: cover;">
+    <div class="page-title-overlap bg-dark pt-4" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
         <div class="container d-lg-block justify-content-end py-2 py-lg-3">
-            <div class="order-lg-2 mb-3 mb-lg-0 pb-lg-2">
+            <div class="order-lg-2 mb-3 mb-lg-0 pb-lg-1">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
                         <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
@@ -81,9 +81,7 @@
                     </ol>
                 </nav>
             </div>
-            <div class="order-lg-1 pe-lg-4 text-center text-lg-start">
-                <h1 class="h3 text-light mb-0"><span style="font-weight: lighter;">{{ $prod->author ? $prod->author->title : '' }}:</span> {{ $prod->name }}</h1>
-            </div>
+
         </div>
     </div>
     <div class="container">
@@ -92,11 +90,13 @@
             <div class="px-lg-3">
                 <div class="row">
                     <!-- Product gallery-->
-                    <div class="col-lg-7 pe-lg-0 pt-lg-4">
+                    <div class="col-lg-6 pe-lg-0 pt-lg-4 pb-lg-4">
                         <div class="product-gallery">
                             <div class="product-gallery-preview order-sm-2">
                                 @if ( ! empty($prod->image))
-                                    <div class="product-gallery-preview-item active" id="first"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}"></div>
+                                  <!--  <div class="product-gallery-preview-item active" id="first"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}"></div> -->
+                                      <div class="product-gallery-preview-item active" id="first"><img  src="https://www.zuzi.hr/wp-content/uploads/2020/08/kako-manje-misliti-MU2d-692x1024-1-optimized.jpg"  alt="{{ $prod->name }}"></div>
+
                                 @endif
 
                                 @if ($prod->images->count())
@@ -106,7 +106,7 @@
                                 @endif
                             </div>
 
-                            <div class="product-gallery-thumblist order-sm-1" style="z-index: 10;position: relative;">
+                          {{--   <div class="product-gallery-thumblist order-sm-1" style="z-index: 10;position: relative;">
                                 @if ($prod->images->count())
                                 @if ( ! empty($prod->thumb))
                                     <a class="product-gallery-thumblist-item active" href="#first"><img src="{{ asset($prod->thumb) }}" alt="{{ $prod->name }}"></a>
@@ -118,16 +118,22 @@
                                     @endforeach
                                 @endif
                             </div>
+
+                            --}}
                         </div>
                     </div>
                     <!-- Product details-->
-                    <div class="col-lg-5 pt-4 pt-lg-0">
-                        <div class="product-details ms-auto pb-3">
+                    <div class="col-lg-6 pt-4 pt-lg-0">
+                        <div class="product-details ms-auto me-auto pb-3">
+
+                            <div class="order-lg-1 pe-lg-4 text-center text-lg-start mt-5">
+                                <h1 class="h3 text-dark mb-0"><span style="font-weight: lighter;">{{ $prod->author ? $prod->author->title : '' }}:</span> {{ $prod->name }}</h1>
+                            </div>
 
                             <div class="mb-0 mt-4">
                                 @if ($prod->main_price > $prod->main_special)
                                     <span class="h3 fw-normal text-accent me-1">{{ $prod->main_special_text }}</span>
-                                    <del class="text-muted fs-lg me-3">{{ $prod->main_price_text }}</del>
+                                    <del class="text-muted fw-normal me-3">{{ $prod->main_price_text }}</del>
                                     <span class="badge bg-danger align-middle mt-n2">Akcija</span>
                                 @else
                                     <span class="h3 fw-normal text-accent me-1">{{ $prod->main_price_text }}</span>
@@ -142,18 +148,21 @@
                             @if($prod->secondary_price_text)
                                 <div class="mb-3 mt-1">
                                     @if ($prod->main_price > $prod->main_special)
-                                        <span class="h3 fw-normal text-accent me-1">{{ $prod->secondary_special_text }}</span>
-                                        <del class="text-muted fs-lg me-3">{{ $prod->secondary_price_text }}</del>
+                                        <span class=" fw-normal text-muted me-1">{{ $prod->secondary_special_text }}</span>
+                                        <del class="text-muted fw-normal me-3">{{ $prod->secondary_price_text }}</del>
                                     @else
-                                        <span class="h3 fw-normal text-accent me-1">{{ $prod->secondary_price_text }}</span>
+                                        <span class="fw-normal text-muted me-1">{{ $prod->secondary_price_text }}</span>
                                     @endif
                                 </div>
                             @endif
 
                             <add-to-cart-btn id="{{ $prod->id }}"></add-to-cart-btn>
 
+
+
+
                             <!-- Product panels-->
-                            <ul class="list-unstyled fs-sm spec">
+                           <ul class="list-unstyled fs-sm spec">
                                 @if ($prod->author)
                                     <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Autor</span><span class="text-muted"><a class="product-meta text-primary" href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">{{ $prod->author->title }}</a></span></li>
                                 @endif
@@ -161,14 +170,23 @@
                                     <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Izdavač</span><a class="product-meta text-primary" href="{{ route('catalog.route.publisher', ['publisher' => $prod->publisher]) }}">{{ $prod->publisher->title }}</a></li>
                                 @endif
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Šifra</span><span class="text-muted">{{ $prod->sku }}</span></li>
+
+                                    <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Stanje</span><span class="text-muted">{{ $prod->condition ?: '...' }}</span></li>
+
+
+                                    {{--
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Broj stranica</span><span class="text-muted">{{ $prod->pages ?: '...' }}</span></li>
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Godina izdanja</span><span class="text-muted">{{ $prod->year ?: '...' }}</span></li>
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Dimenzije</span><span class="text-muted">{{ $prod->dimensions.' cm' ?: '...' }}</span></li>
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Mjesto izdavanja</span><span class="text-muted">{{ $prod->origin ?: '...' }}</span></li>
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Pismo</span><span class="text-muted">{{ $prod->letter ?: '...' }}</span></li>
-                                <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Stanje</span><span class="text-muted">{{ $prod->condition ?: '...' }}</span></li>
-                                <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Uvez</span><span class="text-muted">{{ $prod->binding ?: '...' }}</span></li>
+
+                                <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Uvez</span><span class="text-muted">{{ $prod->binding ?: '...' }}</span></li> --}}
                             </ul>
+
+                            <div class="mb-3 mt-1 text-dark">
+                                <p>Postoje dvije osnovne vrste knjiga; one koje čitamo kako bismo skratili vrijeme i zabavili se i one koje čitamo kako bismo nešto naučili, a pritom i uživali. “Tajna” je zasigurno jedna od knjiga iz druge kategorije. Vjerujem da je moguće čitati je i samo iz razbibrige, no teško da će iz takvoga čitanja proizaći isključivo razbibriga – neka će nam rečenica zasigurno ostati u sjećanju i potaknuti nas na razmišljanje, propitkivanje. Samim time što smo je uzeli u ruke – baš nju – odabrali smo pouku, kaže “zakon privlačnosti”, jer slučajnost ne postoji. Postoji razlog zašto smo uzeli baš nju i postoji neki odgovor koji ćemo čitanjem pronaći za sebe.</p>
+                            </div>
 
                             <div class=" pt-2 pb-4 mb-1">
                                 <div class="mt-3"><span class="d-inline-block align-middle text-muted fs-sm me-3 mt-1 mb-2">Podijeli:</span>

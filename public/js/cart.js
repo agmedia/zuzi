@@ -2071,7 +2071,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -3292,6 +3291,7 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 function _iterableToArrayLimit(arr, i) { var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"]; if (null != _i) { var _s, _e, _x, _r, _arr = [], _n = !0, _d = !1; try { if (_x = (_i = _i.call(arr)).next, 0 === i) { if (Object(_i) !== _i) return; _n = !1; } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0); } catch (err) { _d = !0, _e = err; } finally { try { if (!_n && null != _i["return"] && (_r = _i["return"](), Object(_r) !== _r)) return; } finally { if (_d) throw _e; } } return _arr; } }
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+//
 //
 //
 //
@@ -5593,15 +5593,14 @@ var render = function() {
     _c(
       "button",
       {
-        staticClass: "btn btn-primary btn-shadow btn-sm",
-        attrs: { type: "button" },
+        staticClass: "btn btn-primary btn-shadow d-block w-100",
         on: {
           click: function($event) {
             return _vm.addToCart()
           }
         }
       },
-      [_vm._v("+"), _c("i", { staticClass: "ci-cart fs-base ms-1" })]
+      [_vm._v("Dodaj u Košaricu")]
     )
   ])
 }
@@ -6171,7 +6170,7 @@ var render = function() {
             _c(
               "a",
               {
-                staticClass: "btn btn-secondary btn-sm ps-2",
+                staticClass: "btn btn-outline-dark btn-sm ps-2",
                 attrs: { href: _vm.continueurl }
               },
               [
@@ -6250,7 +6249,7 @@ var render = function() {
             _c(
               "a",
               {
-                staticClass: "btn btn-green btn-shadow d-block w-100 mt-4",
+                staticClass: "btn btn-primary btn-shadow d-block w-100 mt-4",
                 attrs: { href: _vm.checkouturl }
               },
               [_vm._v("NASTAVI NA NAPLATU")]
@@ -7676,8 +7675,11 @@ var render = function() {
                       [
                         _c("img", {
                           attrs: {
-                            src: "media/img/test-slika.jpg",
-                            alt: "Product"
+                            load: "lazy",
+                            src: product.image.replace(".webp", "-thumb.webp"),
+                            width: "250",
+                            height: "300",
+                            alt: product.name
                           }
                         })
                       ]
