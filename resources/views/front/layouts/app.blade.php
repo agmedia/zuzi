@@ -65,7 +65,7 @@
             fbq('track', 'PageView');
         </script>
         <noscript><img height="1" width="1" style="display:none"
-                       src="https://www.facebook.com/tr?id=659899245170060&ev=PageView&noscript=1"
+                       src="https://www.facebook.com/tr?id=xxxxxx&ev=PageView&noscript=1"
             /></noscript>
     @endif
 
