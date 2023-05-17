@@ -2,7 +2,7 @@
 
 @section('content')
 
-    <div class="row no-gutters justify-content-center bg-body-dark bckimagelogin">
+    <div class="row no-gutters justify-content-center bg-white bckimagelogin" >
 
         @if (session('status'))
             <div class="mb-4 font-medium text-sm text-green-600">
@@ -12,14 +12,14 @@
 
         <div class="hero-static col-sm-10 col-md-8 col-xl-6 d-flex align-items-center p-2 px-sm-0">
             <!-- Sign In Block -->
-            <div class="block block-rounded block-transparent block-fx-pop w-100 mb-0 overflow-hidden bg-image" style="background-image: url({{ asset('media/img/lightslider.webp') }});">
+            <div class="block block-rounded block-transparent block-fx-pop w-100 mb-0 overflow-hidden bg-image" >
                 <div class="row no-gutters">
                     <div class="col-md-6 order-md-1 bg-white">
                         <div class="block-content block-content-full px-lg-5 py-md-5 py-lg-6">
                             <!-- Header -->
                             <div class="mb-2 text-center">
                                 <a class="link-fx font-w700 font-size-h2" href="{{ route('index') }}">
-                                    <span class="text-dark">Antikvarijat</span> <span class="text-primary">Biblos</span>
+                                    <span class="text-dark">ZUZI</span> <span class="text-primary">SHOP</span>
                                 </a>
                                 <p class="text-uppercase font-w700 font-size-sm text-muted">PRIJAVA</p>
                             </div>
@@ -57,17 +57,17 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 order-md-0 bg-primary-dark-op d-flex align-items-center">
+                    <div class="col-md-6 order-md-0 bg-primary-dark d-flex align-items-center">
                         <div class="block-content block-content-full px-lg-5 py-md-5 py-lg-6">
                             <div class="media">
                                 <a class="img-link mr-3" href="{{ route('index') }}">
-                                    <img class="img-avatar img-avatar-thumb" src="{{ asset('media/img/faviconbiblos.png') }}" alt="Antikvarijat Biblos">
+                                    <img class="img-avatar img-avatar-thumb" src="{{ asset('media/img/apple-touch-icon.png') }}" alt="ZUZI SHOP">
                                 </a>
                                 <div class="media-body">
                                     <p class="text-white font-w600 mb-1">
-                                        Knjige, vedute & zemljovidi
+                                        Prodaja knjiga | Otkup knjiga | Webshop
                                     </p>
-                                    <a class="text-white-75 font-w600" href="{{ route('index') }}">Antikvarijat Biblos</a>
+                                    <a class="text-white-75 font-w600" href="{{ route('index') }}">ZUZI SHOP</a>
                                 </div>
                             </div>
                         </div>

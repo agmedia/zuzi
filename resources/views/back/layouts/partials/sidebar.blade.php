@@ -15,12 +15,12 @@
     <div class="bg-header-dark">
         <div class="content-header bg-white-10">
             <!-- Logo -->
-            <a class="font-w600 text-white tracking-wide" href="/">
+            <a class="font-w600 text-white text-center tracking-wide" href="/">
                             <span class="smini-visible">
                                 B<span class="opacity-75">x</span>
                             </span>
                 <span class="smini-hidden">
-                                ANTIKVARIJAT<span class="opacity-75">BIBLOS</span>
+                                ZUZI<span class="opacity-75">SHOP</span>
                             </span>
             </a>
             <!-- END Logo -->

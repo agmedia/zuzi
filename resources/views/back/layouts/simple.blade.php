@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
 
-    <title>Antikvarijat Biblos</title>
+    <title>Zuzi shop</title>
 
-    <meta name="description" content="Dobrodošli na stranice Antikvarijata Biblos, Palmotićeva 28, Zagreb. Radno vrijeme pon-pet 09-20h, sub 09-14h">
+    <meta name="description" content="Zuzi shop">
     <meta name="author" content="pixelcave">
     <meta name="robots" content="noindex, nofollow">
 
@@ -14,9 +14,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Icons -->
-    <link rel="shortcut icon" href="{{ asset('media/img/faviconbiblos.png') }}">
-    <link rel="icon" sizes="192x192" type="image/png" href="{{ asset('media/img/faviconbiblos.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('media/img/faviconbiblos.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ config('settings.images_domain') . 'media/img/favicon-16x16.png' }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'media/img/apple-touch-icon.png' }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ config('settings.images_domain') . 'media/img/favicon-16x16.png' }}">
+    <link rel="mask-icon" href="{{ config('settings.images_domain') . 'safari-pinned-tab.svg' }}" color="#e50077">
 
     <!-- Fonts and Styles -->
     @stack('css_before')
