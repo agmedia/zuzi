@@ -5712,7 +5712,7 @@ var render = function() {
     _c(
       "a",
       {
-        staticClass: "navbar-tool-icon-box bg-secondary dropdown-toggle",
+        staticClass: "navbar-tool-icon-box  dropdown-toggle",
         attrs: { href: _vm.carturl }
       },
       [
@@ -5721,7 +5721,7 @@ var render = function() {
             _vm._s(_vm.$store.state.cart ? _vm.$store.state.cart.count : 0)
           )
         ]),
-        _c("i", { staticClass: "navbar-tool-icon ci-cart" })
+        _c("i", { staticClass: "navbar-tool-icon ci-bag" })
       ]
     ),
     _vm._v(" "),

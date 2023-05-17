@@ -1,15 +1,15 @@
 
 
 
-<section class="bg-white bg-size-cover bg-position-center pt-3" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});">
-    <div class="container pt-2 pt-sm-0">
+<section class="bg-white bg-size-cover bg-position-center " style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});">
+    <div class="container">
         <div class="row align-items-center">
-            <div class="col-xl-4 col-lg-5 col-sm-6 offset-xl-2 offset-lg-1 mt-md-n5 text-center text-sm-start">
+            <div class="col-sm-6  mt-md-n5 text-center text-sm-start">
                 <h2 class="text-dark fw-bold mb-3">Otkup knjiga</h2>
                 <p class="text-dark mb-0 d-block d-sm-none d-md-block">Otkup starih knjiga, otkupljujemo antikvarne i stare knjige, riječnike, enciklopedije, priručnike i ostale dobro očuvane knjige.</p>
                 <div class="mt-4 pt-2"><a class="btn btn-primary mb-2" href="#" role="button">Ispunite obrazac<i class="ci-arrow-right ms-2 me-n1"></i></a>   </div>
             </div>
-            <div class="col-lg-5 col-sm-6 offset-lg-1 pt-5 pt-sm-3"><img class="d-block mx-auto mx-sm-0" src="{{ asset('media/img/otkup-ikona-dark.svg') }}" width="401" alt="Mobile App Screen"></div>
+            <div class="col-sm-6  p-5"><img class="d-block mx-auto mx-sm-0 rounded" src="{{ asset('media/img/otkup-knjiga-slika.jpg') }}"  alt="Otkup knjiga"></div>
         </div>
     </div>
 </section>
@@ -20,18 +20,18 @@
     <div class="container">
     <div class="row pt-4 mt-2 mt-lg-3 mb-md-2">
         <div class="col-lg-6 mb-grid-gutter">
-            <div class="d-block d-sm-flex justify-content-between align-items-center bg-white rounded-3 shadow">
+            <div class="d-block d-sm-flex justify-content-between align-items-center bg-dark rounded-3 shadow">
                 <div class="pt-5 py-sm-5 px-4 ps-md-5  text-center text-sm-start">
-                    <h2 class="h3 fw-bold">Rijetke knjige</h2>
-                    <p class="text-muted pb-2">Pogledajte našu kolekeciju popularnih i rijetkih naslova.</p><a class="btn btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
+                    <h2 class="h3 text-white fw-bold">Rijetke knjige</h2>
+                    <p class=" pb-2 text-white">Pogledajte našu kolekeciju popularnih i rijetkih naslova.</p><a class="btn btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
                 </div><img class="d-block mx-auto mx-sm-0 rounded-end" src="{{ asset('media/img/rijetke.jpg') }}"  width="250" alt="Become a Courier">
             </div>
         </div>
         <div class="col-lg-6 mb-grid-gutter">
-            <div class="d-block d-sm-flex justify-content-between align-items-center bg-white rounded-3 shadow">
+            <div class="d-block d-sm-flex justify-content-between align-items-center bg-dark rounded-3 shadow">
                 <div class="pt-5 py-sm-5 px-4 ps-md-5  text-center text-sm-start">
-                    <h2 class="h3 fw-bold">Svezalice - pidžame za knjige</h2>
-                    <p class="text-muted pb-2">Za praktičnije čuvanje knjige, ručno izrađeno s puno ljubavi.
+                    <h2 class="h3 fw-bold text-white">Svezalice - pidžame za knjige</h2>
+                    <p class="text-white pb-2">Za praktičnije čuvanje knjige, ručno izrađeno s puno ljubavi.
 
                         </p><a class="btn btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
                 </div><img class="d-block mx-auto mx-sm-0 rounded-end" src="{{ asset('media/img/svezalice.jpg') }}" width="250"    alt="Become a Partner">

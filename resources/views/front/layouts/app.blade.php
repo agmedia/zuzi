@@ -86,12 +86,12 @@
 
 
 <!-- Light topbar -->
-<div class="topbar topbar-light bg-secondary">
+<div class="topbar topbar-light bg-dark">
     <div class="container">
 
         <div class="topbar-text text-nowrap  d-inline-block">
-            <i class="ci-phone"></i>
-            <span class="text-muted me-1">Podrška</span>
+            <i class="ci-support"></i>
+            <span class=" me-1">Podrška</span>
             <a class="topbar-link" href="tel:00385916047126">091 604 7126</a>
         </div>
         <div class="topbar-text  d-none  d-md-inline-block">Besplatna dostava za sve narudžbe iznad 67 €</div>

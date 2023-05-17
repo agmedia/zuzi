@@ -8,7 +8,7 @@
                     <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-search"></i></div>
                 </a>
                 <a class="navbar-tool ms-12" href="{{ route('login') }}" ><span class="navbar-tool-tooltip">Korisnički račun</span>
-                    <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-user"></i></div>
+                    <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-user-circle"></i></div>
                 </a>
                 <div style="width:46px">
                     <cart-nav-icon carturl="{{ route('kosarica') }}" checkouturl="{{ route('naplata') }}"></cart-nav-icon>
