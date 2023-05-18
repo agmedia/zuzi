@@ -27,7 +27,8 @@ return [
     'unknown_author'    => 6,
     'unknown_publisher' => 6,
 
-    'images_domain' => 'http://zuzi.agm/',
+    'images_domain' => 'http://127.0.0.1:8000/',
+    'images_domain' =>  env('APP_IMAGE_DOMAIN'),
 
     'eur_divide_amount' => 0.13272280,
 

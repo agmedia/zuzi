@@ -178,6 +178,9 @@ class Helper
      */
     public static function setDescription(string $description)
     {
+        if ($description == '') {
+            return '';
+        }
         $iterator = substr_count($description, '++');
         $offset = 0;
         $ids = [];

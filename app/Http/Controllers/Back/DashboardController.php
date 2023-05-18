@@ -73,6 +73,8 @@ class DashboardController extends Controller
         $count  = 0;
 
         foreach ($xml->post as $item) {
+            $categories = [];
+            $images = [];
             $publisher = $import->resolvePublisher();
             $author = $import->resolveAuthor($item->Title);
             $action = ((float) $item->RegularPrice == (float) $item->Price) ? 0 : $item->Price;
