@@ -14,16 +14,16 @@ use Intervention\Image\Facades\Image;
 class Import
 {
 
-
     /**
-     * @param array $images
+     * @param array  $images
+     * @param string $name
+     * @param int    $id
      *
      * @return array
      */
     public function resolveImages(array $images, string $name, int $id): array
     {
         $response = [];
-        // Log::info($images);
 
         foreach ($images as $image) {
             if ($image) {
@@ -32,7 +32,8 @@ class Import
                 try {
                     $img = Image::make($image);
                 } catch (\Exception $e) {
-                    //not throwing  error when exception occurs
+                    Log::info('Error downloading image: ' . $image);
+                    Log::info($e->getMessage());
                 }
 
                 $str = $id . '/' . Str::limit(Str::slug($name)) . '-' . $time . '.';
@@ -69,45 +70,23 @@ class Import
     public function resolveCategories(array $categories)
     {
         $response = [];
-        $data = [];
 
         foreach ($categories as $category) {
             $category = $this->replaceNames($category);
-            $data = array_merge($data, explode(' > ', $category));
-        }
 
-        $data = array_unique($data);
+            if ( ! str_contains($category, '>')) {
+                $response[] = $this->saveCategory($category);
+            } else {
+                $parent_id = 0;
+                $cats = explode('>', $category);
 
-
-        $parent = 0;
-
-        for ($i = 0; $i < count($data); $i++) {
-            if (isset($data[$i])) {
-
-                if (strpos($data[$i], '?') == false && ! in_array($data[$i], ['Knjige', 'Zemljovidi i vedute','Vedute'])) {
-                    $exist = Category::where('title', $data[$i])->first();
-
-                    if ( ! $exist) {
-                        $id = Category::insertGetId([
-                            'parent_id'        => $parent,
-                            'title'            => $data[$i],
-                            'description'      => '',
-                            'meta_title'       => $data[$i],
-                            'meta_description' => $data[$i],
-                            'group'            => $data[0],
-                            'lang'             => 'hr',
-                            'status'           => 1,
-                            'slug'             => Str::slug($data[$i]),
-                            'created_at'       => Carbon::now(),
-                            'updated_at'       => Carbon::now()
-                        ]);
-
-                        $parent = $id;
-
-                        $response[] = $id;
+                foreach ($cats as $key => $cat) {
+                    if ($key == 0) {
+                        $parent_id = $this->saveCategory($cat);
+                        $response[] = $parent_id;
                     } else {
-                        $parent = $exist->id;
-                        $response[] = $exist->id;
+                        $id = $this->saveCategory($cat, $parent_id);
+                        $response[] = $id;
                     }
                 }
             }
@@ -122,6 +101,36 @@ class Import
 
 
     /**
+     * @param string $name
+     * @param int    $parent
+     *
+     * @return mixed
+     */
+    private function saveCategory(string $name, int $parent = 0)
+    {
+        $exist = Category::where('title', $name)->first();
+
+        if ( ! $exist) {
+            return Category::insertGetId([
+                'parent_id'        => $parent,
+                'title'            => $name,
+                'description'      => '',
+                'meta_title'       => $name,
+                'meta_description' => $name,
+                'group'            => 'Knjige',
+                'lang'             => 'hr',
+                'status'           => 1,
+                'slug'             => Str::slug($name),
+                'created_at'       => Carbon::now(),
+                'updated_at'       => Carbon::now()
+            ]);
+        }
+
+        return $exist->id;
+    }
+
+
+    /**
      * @param string $author
      *
      * @return int
@@ -129,6 +138,8 @@ class Import
     public function resolveAuthor(string $author = null): int
     {
         if ($author) {
+            $author = substr($author, 0, strpos($author, ':'));
+
             $exist = Author::where('title', $author)->first();
 
             if ( ! $exist) {
@@ -150,7 +161,23 @@ class Import
             return $exist->id;
         }
 
-        return 0;
+        return config('settings.unknown_author');
+    }
+
+
+    /**
+     * @param string      $start_tag
+     * @param string|null $end_tag
+     *
+     * @return string
+     */
+    public function resolveContent(string $content, string $start_tag, string $end_tag = null): string
+    {
+        $content = strip_tags($content);
+        $ini = strlen($start_tag);
+        $len = strpos($content, $end_tag, $ini) - $ini;
+
+        return trim(substr($content, $ini, $len));
     }
 
 
@@ -162,7 +189,10 @@ class Import
     public function resolvePublisher(string $publisher = null): int
     {
         if ($publisher) {
-            $exist = Publisher::where('title', $publisher)->first();
+
+            Log::info('$publisher..... ' . $publisher);
+
+            /*$exist = Publisher::where('title', $publisher)->first();
 
             if ( ! $exist) {
                 return Publisher::insertGetId([
@@ -180,10 +210,10 @@ class Import
                 ]);
             }
 
-            return $exist->id;
+            return $exist->id;*/
         }
 
-        return 0;
+        return config('settings.unknown_publisher');
     }
 
 

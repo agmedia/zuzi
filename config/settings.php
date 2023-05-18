@@ -18,14 +18,16 @@ return [
 
     'pagination' => [
         'front' => 30,
-        'back' => 30
+        'back'  => 30
     ],
 
-    'search_keyword' => 'pojam',
-    'author_path' => 'autor',
-    'publisher_path' => 'nakladnik',
+    'search_keyword'    => 'pojam',
+    'author_path'       => 'autor',
+    'publisher_path'    => 'nakladnik',
+    'unknown_author'    => 6,
+    'unknown_publisher' => 6,
 
-    'images_domain' => 'http://127.0.0.1:8000/',
+    'images_domain' => 'http://zuzi.agm/',
 
     'eur_divide_amount' => 0.13272280,
 
@@ -54,22 +56,22 @@ return [
 
     'order' => [
         'made_text' => 'Narudžba napravljena.',
-        'status' => [
-            'new' => 1,
+        'status'    => [
+            'new'        => 1,
             'unfinished' => 8,
-            'declined' => 7,
-            'canceled' => 5,
-            'paid' => 3,
-            'send' => 4,
+            'declined'   => 7,
+            'canceled'   => 5,
+            'paid'       => 3,
+            'send'       => 4,
         ]
     ],
 
     'payment' => [
         'providers' => [
-            'wspay' => \App\Models\Front\Checkout\Payment\Wspay::class,
+            'wspay'  => \App\Models\Front\Checkout\Payment\Wspay::class,
             'payway' => \App\Models\Front\Checkout\Payment\Payway::class,
-            'cod' => \App\Models\Front\Checkout\Payment\Cod::class,
-            'bank' => \App\Models\Front\Checkout\Payment\Bank::class,
+            'cod'    => \App\Models\Front\Checkout\Payment\Cod::class,
+            'bank'   => \App\Models\Front\Checkout\Payment\Bank::class,
             'pickup' => \App\Models\Front\Checkout\Payment\Pickup::class
         ]
     ],

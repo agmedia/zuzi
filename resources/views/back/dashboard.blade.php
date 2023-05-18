@@ -35,6 +35,7 @@
 
     <!-- Page Content -->
     <div class="content">
+        @include('back.layouts.partials.session')
         <!-- Quick Overview -->
         <div class="row row-deck">
             <div class="col-6 col-lg-3">

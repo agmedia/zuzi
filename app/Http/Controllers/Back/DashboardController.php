@@ -62,132 +62,110 @@ class DashboardController extends Controller
 
 
     /**
-     * Import initialy from excel files.
+     * Import initialy from Excel files.
      *
      * @param Request $request
      */
     public function import(Request $request)
     {
-        $spread = IOFactory::load(public_path('assets/artikli.csv'));
-        $sheet  = $spread->getActiveSheet();
-        $list   = array(1, $sheet->toArray(null, true, true, true))[1];
-
+        $xml = simplexml_load_file(asset('assets/proizvodi.xml'));
         $import = new Import();
         $count  = 0;
 
-        $unknown_author_id    = 6;
-        $unknown_publisher_id = 2;
+        foreach ($xml->post as $item) {
+            $publisher = $import->resolvePublisher();
+            $author = $import->resolveAuthor($item->Title);
+            $action = ((float) $item->RegularPrice == (float) $item->Price) ? 0 : $item->Price;
 
-        for ($n = 0; $n < 1; $n++) {
-            for ($i = 2; $i < count($list); $i++) {
-                //  $attributes = $import->setAttributes($list[$i]);
-                //$author     = $import->resolveAuthor($attributes['author']);
-                $author = $import->resolveAuthor($list[$i]['AX']);
-                //$publisher  = $import->resolvePublisher($attributes['publisher']);
+            $count++;
 
-                $list[$i]['BM'] = substr($list[$i]['BM'], 0, strpos($list[$i]['BM'], "("));
-                $publisher  = $import->resolvePublisher($list[$i]['BM']);
+            foreach ($item->Kategorijeproizvoda as $category) {
+                $categories[] = $category;
+            }
 
+            foreach ($item->ImageURL as $image) {
+                $images[] = $image;
+            }
 
+            $product_id = Product::insertGetId([
+                'author_id'        => $author ?: config('settings.unknown_author'),
+                'publisher_id'     => $publisher ?: config('settings.unknown_publisher'),
+                'action_id'        => 0,
+                'name'             => $item->Title,
+                'sku'              => $item->Sku,
+                'description'      => '<p>' . str_replace('\n', '<br>', $item->Excerpt) . '</p>',
+                'slug'             => $item->Slug,
+                'price'            => $item->RegularPrice ?: '0',
+                'quantity'         => $item->Stock ?: '0',
+                'tax_id'           => 1,
+                'special'          => $action,
+                'special_from'     => null,
+                'special_to'       => null,
+                'meta_title'       => $item->Title,
+                'meta_description' => $item->Title,
+                'pages'            => null,
+                'dimensions'       => null,
+                'origin'           => null,
+                'letter'           => null,
+                'condition'        => null,
+                'binding'          => null,
+                'year'             => null,
+                'viewed'           => 0,
+                'sort_order'       => 0,
+                'push'             => 0,
+                'status'           => $item->Stock ? 1 : 0,
+                'created_at'       => Carbon::now(),
+                'updated_at'       => Carbon::now()
+            ]);
 
-                $name = $list[$i]['A'];
-                $action = ($list[$i]['S'] == $list[$i]['T']) ? null : $list[$i]['T'];
+            if ($product_id) {
+                $images = $import->resolveImages($images, $item->Title, $product_id);
 
-                $product_id = Product::insertGetId([
-                    'author_id'        => $author ?: $unknown_author_id,
-                    'publisher_id'     => $publisher ?: $unknown_publisher_id,
-                    'action_id'        => 0,
-                    'name'             => $name,
-                    'sku'              => $list[$i]['M'] ?: '0',
-                    'description'      => '<p>' . str_replace('\n', '<br>', $list[$i]['F']) . '</p>',
-                    'slug'             => Str::slug($name),
-                    'price'            => $list[$i]['S'] ?: '0',
-                    'quantity'         => $list[$i]['R'] ?: '0',
-                    'tax_id'           => 1,
-                    'special'          => $action,
-                    'special_from'     => null,
-                    'special_to'       => null,
-                    'meta_title'       => $name,
-                    'meta_description' => $name,
-                    'pages'            => $list[$i]['BA'],
-                    'dimensions'       => $list[$i]['BD'],
-                    'origin'           => $list[$i]['BP'],
-                    'letter'           => $list[$i]['BS'],
-                    'condition'        => $list[$i]['BV'],
-                    'binding'          => $list[$i]['BY'],
-                    'year'             => $list[$i]['BJ'],
-                    'viewed'           => 0,
-                    'sort_order'       => 0,
-                    'push'             => 0,
-                    'status'           => $list[$i]['R'] ? 1 : 0,
-                    'created_at'       => $list[$i]['J'],
-                    'updated_at'       => Carbon::now()
-                ]);
-
-                if ($product_id) {
-
-                    $images = explode('|', $list[$i]['AP']);
-
-                    $data2=array();
-                    foreach ($images as $dat){
-
-                        $data2[] = array_map('trim',explode('!', $dat));
-                    }
-
-                    $data2 = array_column($data2, 0);
-
-
-
-                    $images   = $import->resolveImages($data2, $name, $product_id);
-
-                    if ($list[$i]['AU'] == '') {
-                        $list[$i]['AU'] = [];
-                    } else {
-                        $list[$i]['AU'] = explode('|', $list[$i]['AU']);
-                    }
-
-                    $categories = $import->resolveCategories($list[$i]['AU']);
-
-
-                    if ($images) {
-                        for ($k = 0; $k < count($images); $k++) {
-                            if ($k == 0) {
-                                Product::where('id', $product_id)->update([
-                                    'image' => $images[$k]
-                                ]);
-                            } else {
-                                ProductImage::insert([
-                                    'product_id' => $product_id,
-                                    'image'      => $images[$k],
-                                    'alt'        => $name,
-                                    'published'  => 1,
-                                    'sort_order' => $k,
-                                    'created_at' => Carbon::now(),
-                                    'updated_at' => Carbon::now()
-                                ]);
-                            }
-                        }
-                    }
-
-                    if ($categories) {
-                        foreach ($categories as $category) {
-                            ProductCategory::insert([
-                                'product_id'  => $product_id,
-                                'category_id' => $category
+                if ($images && ! empty($images)) {
+                    for ($k = 0; $k < count($images); $k++) {
+                        if ($k == 0) {
+                            Product::where('id', $product_id)->update([
+                                'image' => $images[$k]
+                            ]);
+                        } else {
+                            ProductImage::insert([
+                                'product_id' => $product_id,
+                                'image'      => $images[$k],
+                                'alt'        => $item->Title,
+                                'published'  => 1,
+                                'sort_order' => $k,
+                                'created_at' => Carbon::now(),
+                                'updated_at' => Carbon::now()
                             ]);
                         }
                     }
+                }
 
-                    $product = Product::find($product_id);
+                $categories = $import->resolveCategories($categories);
 
-                    $product->update([
-                        'url' => ProductHelper::url($product),
-                        'category_string' => ProductHelper::categoryString($product)
-                    ]);
+                if ($categories) {
+                    foreach ($categories as $category) {
+                        ProductCategory::insert([
+                            'product_id'  => $product_id,
+                            'category_id' => $category
+                        ]);
+                    }
+                }
 
-                    $count++;
+                $product = Product::find($product_id);
+
+                $product->update([
+                    'url' => ProductHelper::url($product),
+                    'category_string' => ProductHelper::categoryString($product)
+                ]);
+
+                $count++;
+
+                if ($count > 3) {
+                    return redirect()->route('dashboard');
                 }
             }
+
         }
 
         return redirect()->route('dashboard')->with(['success' => 'Import je uspješno obavljen..! ' . $count . ' proizvoda importano.']);
