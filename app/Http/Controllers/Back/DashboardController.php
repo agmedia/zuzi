@@ -68,7 +68,7 @@ class DashboardController extends Controller
      */
     public function import(Request $request)
     {
-        $xml = simplexml_load_file(asset('assets/proizvodi.xml'));
+        $xml = simplexml_load_file(public_path('assets/proizvodi.xml'));
         $import = new Import();
         $count  = 0;
 
