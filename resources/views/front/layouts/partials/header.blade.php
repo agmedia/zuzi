@@ -36,7 +36,7 @@
 
 
 
-                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.authors') }}"><span>Autori</span></a>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.author') }}"><span>Autori</span></a>
                     <li class="nav-item"><a class="nav-link" href=""><span>Rijetke knjige</span></a>
                     <li class="nav-item"><a class="nav-link" href=""><span>Akcije</span></a>
                     <li class="nav-item"><a class="nav-link" href=""><span>Outlet</span></a>
