@@ -94,8 +94,8 @@
                         <div class="product-gallery">
                             <div class="product-gallery-preview order-sm-2">
                                 @if ( ! empty($prod->image))
-                                  <!--  <div class="product-gallery-preview-item active" id="first"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}"></div> -->
-                                      <div class="product-gallery-preview-item active" id="first"><img  src="https://www.zuzi.hr/wp-content/uploads/2020/08/kako-manje-misliti-MU2d-692x1024-1-optimized.jpg"  alt="{{ $prod->name }}"></div>
+                                   <div class="product-gallery-preview-item active" id="first"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}"></div>
+
 
                                 @endif
 
@@ -106,7 +106,7 @@
                                 @endif
                             </div>
 
-                          {{--   <div class="product-gallery-thumblist order-sm-1" style="z-index: 10;position: relative;">
+                           <div class="product-gallery-thumblist order-sm-1" style="z-index: 10;position: relative;">
                                 @if ($prod->images->count())
                                 @if ( ! empty($prod->thumb))
                                     <a class="product-gallery-thumblist-item active" href="#first"><img src="{{ asset($prod->thumb) }}" alt="{{ $prod->name }}"></a>
@@ -119,7 +119,7 @@
                                 @endif
                             </div>
 
-                            --}}
+
                         </div>
                     </div>
                     <!-- Product details-->
