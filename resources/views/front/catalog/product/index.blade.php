@@ -127,7 +127,7 @@
                         <div class="product-details ms-auto me-auto pb-3">
 
                             <div class="order-lg-1 pe-lg-4 text-center text-lg-start mt-5">
-                                <h1 class="h3 text-dark mb-0"><span style="font-weight: lighter;">{{ $prod->author ? $prod->author->title : '' }}:</span> {{ $prod->name }}</h1>
+                                <h1 class="h3 text-dark mb-0"> {{ $prod->name }}</h1>
                             </div>
 
                             <div class="mb-0 mt-4">
@@ -184,9 +184,7 @@
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Uvez</span><span class="text-muted">{{ $prod->binding ?: '...' }}</span></li> --}}
                             </ul>
 
-                            <div class="mb-3 mt-1 text-dark">
-                                <p>Postoje dvije osnovne vrste knjiga; one koje čitamo kako bismo skratili vrijeme i zabavili se i one koje čitamo kako bismo nešto naučili, a pritom i uživali. “Tajna” je zasigurno jedna od knjiga iz druge kategorije. Vjerujem da je moguće čitati je i samo iz razbibrige, no teško da će iz takvoga čitanja proizaći isključivo razbibriga – neka će nam rečenica zasigurno ostati u sjećanju i potaknuti nas na razmišljanje, propitkivanje. Samim time što smo je uzeli u ruke – baš nju – odabrali smo pouku, kaže “zakon privlačnosti”, jer slučajnost ne postoji. Postoji razlog zašto smo uzeli baš nju i postoji neki odgovor koji ćemo čitanjem pronaći za sebe.</p>
-                            </div>
+
 
                             <div class=" pt-2 pb-4 mb-1">
                                 <div class="mt-3"><span class="d-inline-block align-middle text-muted fs-sm me-3 mt-1 mb-2">Podijeli:</span>
@@ -196,21 +194,23 @@
                         </div>
                     </div>
                 </div>
+
+
+                <div class="row align-items-center py-md-3">
+                    <div class="col-lg-8 col-md-12 offset-lg-2 py-4 text-center">
+                        <h2 class="h3 mb-2 pb-0">{{ $prod->name }}</h2>
+                        @if ($prod->author)
+                            <h3 class="h6 mb-4">{{ $prod->author->title }}</h3>
+                        @endif
+                        <p class="fs-md pb-2">{!! $prod->description !!}</p>
+                        @if ($prod->author)
+                            <div class="mt-3 me-3"><a class="btn-tag me-2 mb-2" href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">#{{ $prod->author->title }}</a></div>
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="row align-items-center py-md-3">
-            <div class="col-lg-8 col-md-12 offset-lg-2 py-4 text-center">
-                <h2 class="h3 mb-2 pb-0">{{ $prod->name }}</h2>
-                @if ($prod->author)
-                    <h3 class="h6 mb-4">{{ $prod->author->title }}</h3>
-                @endif
-                <p class="fs-md pb-2">{!! $prod->description !!}</p>
-                @if ($prod->author)
-                    <div class="mt-3 me-3"><a class="btn-tag me-2 mb-2" href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">#{{ $prod->author->title }}</a></div>
-                @endif
-            </div>
-        </div>
     </div>
 
     <!-- Product carousel (You may also like)-->
