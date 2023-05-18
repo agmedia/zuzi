@@ -25,36 +25,43 @@ class Import
     {
         $response = [];
 
-        foreach ($images as $image) {
+        foreach ($images as $key => $image) {
             if ($image) {
                 $time = time();
 
-                try {
-                    $img = Image::make($image);
-                } catch (\Exception $e) {
-                    Log::info('Error downloading image: ' . $image);
-                    Log::info($e->getMessage());
+                $image_saved = Storage::disk('local')->put('temp/' . $key . '.jpg', file_get_contents($image));
+
+                if ($image_saved) {
+                    try {
+                        $image = Storage::disk('local')->get('temp/' . $key . '.jpg');
+                        $img = Image::make($image);
+                    } catch (\Exception $e) {
+                        Log::info('Error downloading image: ' . $image);
+                        Log::info($e->getMessage());
+                    }
+
+                    $str = $id . '/' . Str::limit(Str::slug($name)) . '-' . $time . '.';
+
+                    $path = $str . 'jpg';
+                    Storage::disk('products')->put($path, $img->encode('jpg'));
+
+                    $path_webp = $str . 'webp';
+                    Storage::disk('products')->put($path_webp, $img->encode('webp'));
+
+                    // Thumb creation
+                    $str_thumb = $id . '/' . Str::limit(Str::slug($name)) . '-' . $time . '-thumb.';
+
+                    $img = $img->resize(null, 300, function ($constraint) {
+                        $constraint->aspectRatio();
+                    })->resizeCanvas(250, null);
+
+                    $path_webp_thumb = $str_thumb . 'webp';
+                    Storage::disk('products')->put($path_webp_thumb, $img->encode('webp'));
+
+                    $response[] = config('filesystems.disks.products.url') . $path;
+
+                    Storage::disk('local')->delete('temp/' . $key . '.jpg');
                 }
-
-                $str = $id . '/' . Str::limit(Str::slug($name)) . '-' . $time . '.';
-
-                $path = $str . 'jpg';
-                Storage::disk('products')->put($path, $img->encode('jpg'));
-
-                $path_webp = $str . 'webp';
-                Storage::disk('products')->put($path_webp, $img->encode('webp'));
-
-                // Thumb creation
-                $str_thumb = $id . '/' . Str::limit(Str::slug($name)) . '-' . $time . '-thumb.';
-
-                $img = $img->resize(null, 300, function ($constraint) {
-                    $constraint->aspectRatio();
-                })->resizeCanvas(250, null);
-
-                $path_webp_thumb = $str_thumb . 'webp';
-                Storage::disk('products')->put($path_webp_thumb, $img->encode('webp'));
-
-                $response[] = config('filesystems.disks.products.url') . $path;
             }
         }
 
