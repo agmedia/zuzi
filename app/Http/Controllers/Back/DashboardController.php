@@ -77,7 +77,7 @@ class DashboardController extends Controller
             $images = [];
             $publisher = $import->resolvePublisher();
             $author = $import->resolveAuthor($item->Title);
-            $action = ((float) $item->RegularPrice == (float) $item->Price) ? 0 : $item->Price;
+            $action = ((float) $item->RegularPrice == (float) $item->Price) ? null : $item->Price;
 
             $count++;
 
@@ -104,7 +104,7 @@ class DashboardController extends Controller
                 'special_from'     => null,
                 'special_to'       => null,
                 'meta_title'       => $item->Title,
-                'meta_description' => $item->Title,
+                'meta_description' => $item->Content,
                 'pages'            => null,
                 'dimensions'       => null,
                 'origin'           => null,

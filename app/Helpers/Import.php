@@ -151,6 +151,7 @@ class Import
 
             if ( ! $exist) {
                 return Author::insertGetId([
+                    'letter'           => Helper::resolveFirstLetter($author),
                     'title'            => $author,
                     'description'      => '',
                     'meta_title'       => $author,
@@ -203,6 +204,7 @@ class Import
 
             if ( ! $exist) {
                 return Publisher::insertGetId([
+                    'letter'           => Helper::resolveFirstLetter($publisher),
                     'title'            => $publisher,
                     'description'      => '',
                     'meta_title'       => $publisher,
