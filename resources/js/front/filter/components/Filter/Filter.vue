@@ -1,33 +1,33 @@
 <template>
     <aside class="col-lg-auto">
         <!-- Sidebar-->
-        <div class="offcanvas offcanvas-collapse bg-white w-100 rounded-3 shadow-lg py-1" id="shop-sidebar" style="max-width: 22rem;">
+        <div class="offcanvas offcanvas-collapse bg-dark w-100 rounded-3 shadow-lg py-1" id="shop-sidebar" style="min-width: 22rem;">
             <div class="offcanvas-cap align-items-center shadow-sm">
-                <h2 class="h5 mb-0">Filtriraj</h2>
+                <h2 class="h3 mb-0 text-color">Filtriraj</h2>
                 <button class="btn-close ms-auto" type="button" data-bs-dismiss="offcanvas" v-on:click="closeWindow" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body py-grid-gutter px-lg-grid-gutter">
                 <!-- Categories-->
-                <div class="widget widget-categories mb-4 pb-4 border-bottom" v-if="categories">
+                <div class="widget widget-categories mb-2 pb-2 " v-if="categories">
 
-                    <h3 class="widget-title" v-if="!category && !subcategory">Kategorije</h3>
+                    <h3 class="widget-title text-white" v-if="!category && !subcategory">Kategorije</h3>
 
-                    <h3 class="widget-title" v-if="category && !subcategory">{{ category.title }}<span class="badge bg-secondary float-end">{{ Number(category.count).toLocaleString('hr-HR') }}</span></h3>
+                    <h3 class="widget-title text-white" v-if="category && !subcategory">{{ category.title }}<span class="badge bg-secondary float-end">{{ Number(category.count).toLocaleString('hr-HR') }}</span></h3>
 <!--                    <p class="fs-xs text-muted" v-if="category && !subcategory">Podkategorije</p>-->
 
-                    <h3 class="widget-title" v-if="category && subcategory">{{ subcategory.title }}<span class="badge bg-secondary float-end">{{ Number(subcategory.count).toLocaleString('hr-HR') }}</span></h3>
+                    <h3 class="widget-title text-white" v-if="category && subcategory">{{ subcategory.title }}<span class="badge bg-secondary float-end">{{ Number(subcategory.count).toLocaleString('hr-HR') }}</span></h3>
 
                     <div class="accordion mt-n1" id="shop-categories">
-                        <h3 class="accordion-header" v-for="category in categories">
-                            <a :href="category.url" class="accordion-button py-1 none collapsed" role="link">
-                                {{ category.title }} <span class="badge bg-secondary ms-2 position-absolute end-0">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
+                        <h3 class="accordion-header " v-for="category in categories">
+                            <a :href="category.url" class="accordion-button py-1 none collapsed text-white" role="link">
+                                {{ category.title }} <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
                             </a>
                         </h3>
                     </div>
                 </div>
 
                 <!-- Date range-->
-                <div class="widget mb-4 pb-4 border-bottom">
+             <!--   <div class="widget mb-4 pb-4 border-bottom">
                     <h3 class="widget-title">Godina izdanja</h3>
                     <div >
                         <div class="d-flex pb-1">
@@ -46,22 +46,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="widget widget-filter mb-4 pb-4 border-bottom" v-if="show_authors">
-                    <h3 class="widget-title">Autori<span v-if="!authors_loaded" class="spinner-border spinner-border-sm" style="float: right;"></span></h3>
-                    <div class="input-group input-group-sm mb-2 autocomplete">
-                        <input type="search" v-model="searchAuthor" class="form-control rounded-end pe-5" placeholder="Pretraži autora"><i class="ci-search position-absolute top-50 end-0 translate-middle-y fs-sm me-3"></i>
-                    </div>
-                    <ul class="widget-list widget-filter-list list-unstyled pt-1" style="max-height: 11rem;" data-simplebar data-simplebar-auto-hide="false">
-                        <li class="widget-filter-item d-flex justify-content-between align-items-center mb-1" v-for="author in authors">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" :id="author.slug" :value="author.slug" v-model="selectedAuthors">
-                                <label class="form-check-label widget-filter-item-text" :for="author.slug">{{ author.title }}</label>
-                            </div><span class="fs-xs text-muted"><a :href="origin + author.url">{{ Number(author.products_count).toLocaleString('hr-HR') }}</a></span>
-                        </li>
-                    </ul>
-                </div>
-
                 <div class="widget widget-filter mb-4 pb-4 border-bottom" v-if="show_publishers">
                     <h3 class="widget-title">Nakladnici<span v-if="!publishers_loaded" class="spinner-border spinner-border-sm" style="float: right;"></span></h3>
                     <div class="input-group input-group-sm mb-2 autocomplete">
@@ -76,7 +60,21 @@
                         </li>
                     </ul>
                 </div>
-                <button type="button" class="btn btn-primary mt-4" v-on:click="cleanQuery"><i class=" ci-trash"></i> Očisti sve</button>
+                <div class="widget widget-filter mb-4 pb-4 border-bottom" v-if="show_authors">
+                    <h3 class="widget-title">Autori<span v-if="!authors_loaded" class="spinner-border spinner-border-sm" style="float: right;"></span></h3>
+                    <div class="input-group input-group-sm mb-2 autocomplete">
+                        <input type="search" v-model="searchAuthor" class="form-control rounded-end pe-5" placeholder="Pretraži autora"><i class="ci-search position-absolute top-50 end-0 translate-middle-y fs-sm me-3"></i>
+                    </div>
+                    <ul class="widget-list widget-filter-list list-unstyled pt-1" style="max-height: 11rem;" data-simplebar data-simplebar-auto-hide="false">
+                        <li class="widget-filter-item d-flex justify-content-between align-items-center mb-1" v-for="author in authors">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" :id="author.slug" :value="author.slug" v-model="selectedAuthors">
+                                <label class="form-check-label widget-filter-item-text" :for="author.slug">{{ author.title }}</label>
+                            </div><span class="fs-xs text-muted"><a :href="origin + author.url">{{ Number(author.products_count).toLocaleString('hr-HR') }}</a></span>
+                        </li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-primary mt-4" v-on:click="cleanQuery"><i class=" ci-trash"></i> Očisti sve</button> -->
             </div>
         </div>
     </aside>

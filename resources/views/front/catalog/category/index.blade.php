@@ -35,7 +35,7 @@
 @section('content')
 
     <!-- Page Title-->
-    <div class="page-title-overlap bg-dark pt-4" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
+    <div class="page-title bg-dark pt-4 pb-4 mb-4" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
         <div class="container d-lg-block justify-content-start py-2 py-lg-3">
 
             @if (isset($group) && $group)

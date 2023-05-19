@@ -2720,8 +2720,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
-//
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -3291,13 +3289,6 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 function _iterableToArrayLimit(arr, i) { var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"]; if (null != _i) { var _s, _e, _x, _r, _arr = [], _n = !0, _d = !1; try { if (_x = (_i = _i.call(arr)).next, 0 === i) { if (Object(_i) !== _i) return; _n = !1; } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0); } catch (err) { _d = !0, _e = err; } finally { try { if (!_n && null != _i["return"] && (_r = _i["return"](), Object(_r) !== _r)) return; } finally { if (_d) throw _e; } } return _arr; } }
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-//
-//
-//
-//
-//
-//
-//
 //
 //
 //
@@ -6789,8 +6780,8 @@ var render = function() {
       "div",
       {
         staticClass:
-          "offcanvas offcanvas-collapse bg-white w-100 rounded-3 shadow-lg py-1",
-        staticStyle: { "max-width": "22rem" },
+          "offcanvas offcanvas-collapse bg-dark w-100 rounded-3 shadow-lg py-1",
+        staticStyle: { "min-width": "22rem" },
         attrs: { id: "shop-sidebar" }
       },
       [
@@ -6798,7 +6789,9 @@ var render = function() {
           "div",
           { staticClass: "offcanvas-cap align-items-center shadow-sm" },
           [
-            _c("h2", { staticClass: "h5 mb-0" }, [_vm._v("Filtriraj")]),
+            _c("h2", { staticClass: "h3 mb-0 text-color" }, [
+              _vm._v("Filtriraj")
+            ]),
             _vm._v(" "),
             _c("button", {
               staticClass: "btn-close ms-auto",
@@ -6819,19 +6812,16 @@ var render = function() {
             _vm.categories
               ? _c(
                   "div",
-                  {
-                    staticClass:
-                      "widget widget-categories mb-4 pb-4 border-bottom"
-                  },
+                  { staticClass: "widget widget-categories mb-2 pb-2 " },
                   [
                     !_vm.category && !_vm.subcategory
-                      ? _c("h3", { staticClass: "widget-title" }, [
+                      ? _c("h3", { staticClass: "widget-title text-white" }, [
                           _vm._v("Kategorije")
                         ])
                       : _vm._e(),
                     _vm._v(" "),
                     _vm.category && !_vm.subcategory
-                      ? _c("h3", { staticClass: "widget-title" }, [
+                      ? _c("h3", { staticClass: "widget-title text-white" }, [
                           _vm._v(_vm._s(_vm.category.title)),
                           _c(
                             "span",
@@ -6850,7 +6840,7 @@ var render = function() {
                       : _vm._e(),
                     _vm._v(" "),
                     _vm.category && _vm.subcategory
-                      ? _c("h3", { staticClass: "widget-title" }, [
+                      ? _c("h3", { staticClass: "widget-title text-white" }, [
                           _vm._v(_vm._s(_vm.subcategory.title)),
                           _c(
                             "span",
@@ -6875,12 +6865,12 @@ var render = function() {
                         attrs: { id: "shop-categories" }
                       },
                       _vm._l(_vm.categories, function(category) {
-                        return _c("h3", { staticClass: "accordion-header" }, [
+                        return _c("h3", { staticClass: "accordion-header " }, [
                           _c(
                             "a",
                             {
                               staticClass:
-                                "accordion-button py-1 none collapsed",
+                                "accordion-button py-1 none collapsed text-white",
                               attrs: { href: category.url, role: "link" }
                             },
                             [
@@ -6893,7 +6883,7 @@ var render = function() {
                                 "span",
                                 {
                                   staticClass:
-                                    "badge bg-secondary ms-2 position-absolute end-0"
+                                    "badge bg-dark ms-2 position-absolute end-0 fw-bold"
                                 },
                                 [
                                   _vm._v(
@@ -6913,395 +6903,7 @@ var render = function() {
                     )
                   ]
                 )
-              : _vm._e(),
-            _vm._v(" "),
-            _c("div", { staticClass: "widget mb-4 pb-4 border-bottom" }, [
-              _c("h3", { staticClass: "widget-title" }, [
-                _vm._v("Godina izdanja")
-              ]),
-              _vm._v(" "),
-              _c("div", [
-                _c("div", { staticClass: "d-flex pb-1" }, [
-                  _c("div", { staticClass: "w-50 pe-2 me-2" }, [
-                    _c("div", { staticClass: "input-group input-group-sm" }, [
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.start,
-                            expression: "start"
-                          }
-                        ],
-                        staticClass: "form-control range-slider-value-min",
-                        attrs: { placeholder: "Od", type: "text" },
-                        domProps: { value: _vm.start },
-                        on: {
-                          input: function($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.start = $event.target.value
-                          }
-                        }
-                      }),
-                      _vm._v(" "),
-                      _c("span", { staticClass: "input-group-text" }, [
-                        _vm._v("g")
-                      ])
-                    ])
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "w-50 ps-2" }, [
-                    _c("div", { staticClass: "input-group input-group-sm" }, [
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.end,
-                            expression: "end"
-                          }
-                        ],
-                        staticClass: "form-control range-slider-value-max",
-                        attrs: { placeholder: "Do", type: "text" },
-                        domProps: { value: _vm.end },
-                        on: {
-                          input: function($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.end = $event.target.value
-                          }
-                        }
-                      }),
-                      _vm._v(" "),
-                      _c("span", { staticClass: "input-group-text" }, [
-                        _vm._v("g")
-                      ])
-                    ])
-                  ])
-                ])
-              ])
-            ]),
-            _vm._v(" "),
-            _vm.show_authors
-              ? _c(
-                  "div",
-                  {
-                    staticClass: "widget widget-filter mb-4 pb-4 border-bottom"
-                  },
-                  [
-                    _c("h3", { staticClass: "widget-title" }, [
-                      _vm._v("Autori"),
-                      !_vm.authors_loaded
-                        ? _c("span", {
-                            staticClass: "spinner-border spinner-border-sm",
-                            staticStyle: { float: "right" }
-                          })
-                        : _vm._e()
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      {
-                        staticClass:
-                          "input-group input-group-sm mb-2 autocomplete"
-                      },
-                      [
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.searchAuthor,
-                              expression: "searchAuthor"
-                            }
-                          ],
-                          staticClass: "form-control rounded-end pe-5",
-                          attrs: {
-                            type: "search",
-                            placeholder: "Pretraži autora"
-                          },
-                          domProps: { value: _vm.searchAuthor },
-                          on: {
-                            input: function($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.searchAuthor = $event.target.value
-                            }
-                          }
-                        }),
-                        _c("i", {
-                          staticClass:
-                            "ci-search position-absolute top-50 end-0 translate-middle-y fs-sm me-3"
-                        })
-                      ]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "ul",
-                      {
-                        staticClass:
-                          "widget-list widget-filter-list list-unstyled pt-1",
-                        staticStyle: { "max-height": "11rem" },
-                        attrs: {
-                          "data-simplebar": "",
-                          "data-simplebar-auto-hide": "false"
-                        }
-                      },
-                      _vm._l(_vm.authors, function(author) {
-                        return _c(
-                          "li",
-                          {
-                            staticClass:
-                              "widget-filter-item d-flex justify-content-between align-items-center mb-1"
-                          },
-                          [
-                            _c("div", { staticClass: "form-check" }, [
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.selectedAuthors,
-                                    expression: "selectedAuthors"
-                                  }
-                                ],
-                                staticClass: "form-check-input",
-                                attrs: { type: "checkbox", id: author.slug },
-                                domProps: {
-                                  value: author.slug,
-                                  checked: Array.isArray(_vm.selectedAuthors)
-                                    ? _vm._i(_vm.selectedAuthors, author.slug) >
-                                      -1
-                                    : _vm.selectedAuthors
-                                },
-                                on: {
-                                  change: function($event) {
-                                    var $$a = _vm.selectedAuthors,
-                                      $$el = $event.target,
-                                      $$c = $$el.checked ? true : false
-                                    if (Array.isArray($$a)) {
-                                      var $$v = author.slug,
-                                        $$i = _vm._i($$a, $$v)
-                                      if ($$el.checked) {
-                                        $$i < 0 &&
-                                          (_vm.selectedAuthors = $$a.concat([
-                                            $$v
-                                          ]))
-                                      } else {
-                                        $$i > -1 &&
-                                          (_vm.selectedAuthors = $$a
-                                            .slice(0, $$i)
-                                            .concat($$a.slice($$i + 1)))
-                                      }
-                                    } else {
-                                      _vm.selectedAuthors = $$c
-                                    }
-                                  }
-                                }
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "label",
-                                {
-                                  staticClass:
-                                    "form-check-label widget-filter-item-text",
-                                  attrs: { for: author.slug }
-                                },
-                                [_vm._v(_vm._s(author.title))]
-                              )
-                            ]),
-                            _c("span", { staticClass: "fs-xs text-muted" }, [
-                              _c(
-                                "a",
-                                { attrs: { href: _vm.origin + author.url } },
-                                [
-                                  _vm._v(
-                                    _vm._s(
-                                      Number(
-                                        author.products_count
-                                      ).toLocaleString("hr-HR")
-                                    )
-                                  )
-                                ]
-                              )
-                            ])
-                          ]
-                        )
-                      }),
-                      0
-                    )
-                  ]
-                )
-              : _vm._e(),
-            _vm._v(" "),
-            _vm.show_publishers
-              ? _c(
-                  "div",
-                  {
-                    staticClass: "widget widget-filter mb-4 pb-4 border-bottom"
-                  },
-                  [
-                    _c("h3", { staticClass: "widget-title" }, [
-                      _vm._v("Nakladnici"),
-                      !_vm.publishers_loaded
-                        ? _c("span", {
-                            staticClass: "spinner-border spinner-border-sm",
-                            staticStyle: { float: "right" }
-                          })
-                        : _vm._e()
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      {
-                        staticClass:
-                          "input-group input-group-sm mb-2 autocomplete"
-                      },
-                      [
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.searchPublisher,
-                              expression: "searchPublisher"
-                            }
-                          ],
-                          staticClass: "form-control rounded-end pe-5",
-                          attrs: {
-                            type: "search",
-                            placeholder: "Pretraži nakladnike"
-                          },
-                          domProps: { value: _vm.searchPublisher },
-                          on: {
-                            input: function($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.searchPublisher = $event.target.value
-                            }
-                          }
-                        }),
-                        _c("i", {
-                          staticClass:
-                            "ci-search position-absolute top-50 end-0 translate-middle-y fs-sm me-3"
-                        })
-                      ]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "ul",
-                      {
-                        staticClass:
-                          "widget-list widget-filter-list list-unstyled pt-1",
-                        staticStyle: { "max-height": "11rem" },
-                        attrs: {
-                          "data-simplebar": "",
-                          "data-simplebar-auto-hide": "false"
-                        }
-                      },
-                      _vm._l(_vm.publishers, function(publisher) {
-                        return _c(
-                          "li",
-                          {
-                            staticClass:
-                              "widget-filter-item d-flex justify-content-between align-items-center mb-1"
-                          },
-                          [
-                            _c("div", { staticClass: "form-check" }, [
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.selectedPublishers,
-                                    expression: "selectedPublishers"
-                                  }
-                                ],
-                                staticClass: "form-check-input",
-                                attrs: { type: "checkbox", id: publisher.slug },
-                                domProps: {
-                                  value: publisher.slug,
-                                  checked: Array.isArray(_vm.selectedPublishers)
-                                    ? _vm._i(
-                                        _vm.selectedPublishers,
-                                        publisher.slug
-                                      ) > -1
-                                    : _vm.selectedPublishers
-                                },
-                                on: {
-                                  change: function($event) {
-                                    var $$a = _vm.selectedPublishers,
-                                      $$el = $event.target,
-                                      $$c = $$el.checked ? true : false
-                                    if (Array.isArray($$a)) {
-                                      var $$v = publisher.slug,
-                                        $$i = _vm._i($$a, $$v)
-                                      if ($$el.checked) {
-                                        $$i < 0 &&
-                                          (_vm.selectedPublishers = $$a.concat([
-                                            $$v
-                                          ]))
-                                      } else {
-                                        $$i > -1 &&
-                                          (_vm.selectedPublishers = $$a
-                                            .slice(0, $$i)
-                                            .concat($$a.slice($$i + 1)))
-                                      }
-                                    } else {
-                                      _vm.selectedPublishers = $$c
-                                    }
-                                  }
-                                }
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "label",
-                                {
-                                  staticClass:
-                                    "form-check-label widget-filter-item-text",
-                                  attrs: { for: publisher.slug }
-                                },
-                                [_vm._v(_vm._s(publisher.title))]
-                              )
-                            ]),
-                            _c("span", { staticClass: "fs-xs text-muted" }, [
-                              _c(
-                                "a",
-                                { attrs: { href: _vm.origin + publisher.url } },
-                                [
-                                  _vm._v(
-                                    _vm._s(
-                                      Number(
-                                        publisher.products_count
-                                      ).toLocaleString("hr-HR")
-                                    )
-                                  )
-                                ]
-                              )
-                            ])
-                          ]
-                        )
-                      }),
-                      0
-                    )
-                  ]
-                )
-              : _vm._e(),
-            _vm._v(" "),
-            _c(
-              "button",
-              {
-                staticClass: "btn btn-primary mt-4",
-                attrs: { type: "button" },
-                on: { click: _vm.cleanQuery }
-              },
-              [_c("i", { staticClass: " ci-trash" }), _vm._v(" Očisti sve")]
-            )
+              : _vm._e()
           ]
         )
       ]
@@ -7531,7 +7133,7 @@ var render = function() {
         "div",
         {
           staticClass:
-            "d-flex justify-content-center justify-content-sm-between align-items-center pt-2 pb-4 pb-sm-5"
+            "d-flex justify-content-center justify-content-sm-between align-items-center pt-2 pb-4 pb-sm-2"
         },
         [
           _c("div", { staticClass: "d-flex flex-wrap" }, [
@@ -7643,7 +7245,7 @@ var render = function() {
                     "col-md-3 col-6 px-2 mb-4 d-flex align-items-stretch"
                 },
                 [
-                  _c("div", { staticClass: "card product-card  pb-3" }, [
+                  _c("div", { staticClass: "card product-card shadow pb-3" }, [
                     product.special
                       ? _c(
                           "span",

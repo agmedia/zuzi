@@ -4700,9 +4700,15 @@ textarea.form-control-lg {
 
 #shop-categories .accordion-header {
     margin-bottom: 0;
-    border-bottom: 1px solid #e3e9ef;
-    padding: 3px 0;
+    border-bottom: 1px dashed #768dbc;
+    padding: 5px 0;
 }
+
+#shop-categories .accordion-header:hover {
+color:#ccc
+}
+
+
 
 
 
@@ -17847,16 +17853,17 @@ a.nav-link:hover .media-tab-media {
   content: "\e906";
   text-align: center;
   line-height: 1.375rem;
+    display:none
 }
 .widget-categories .accordion-button.collapsed {
-    color: #111;
-    font-weight: 500;
+    color: #fff;
+    font-weight: 600;
 }
 .widget-categories .accordion-button.collapsed::after {
   background-color: #f3f5f9;
 }
 .widget-categories .accordion-button:hover {
-  color: var(--cz-primary);
+  color: var(--cz-primary)!important;
 }
 .widget-categories .accordion-button:hover::after {
   background-color: rgba(var(--cz-primary-rgb), 0.1);
