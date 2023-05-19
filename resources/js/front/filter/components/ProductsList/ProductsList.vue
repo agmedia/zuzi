@@ -30,7 +30,7 @@
                            <img load="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
                     </a>
                     <div class="card-body py-2">
-                        <a class="product-meta d-block fs-xs pb-1" :href="product.author ? (origin + product.author.url) : '#'">{{ product.author ? product.author.title : '' }}s</a>
+                        <a class="product-meta d-block fs-xs pb-1" :href="product.author ? (origin + product.author.url) : '#'">{{ product.author ? product.author.title : '' }}</a>
                         <h3 class="product-title fs-sm "><a :href="origin + product.url">{{ product.name }}</a></h3>
 
 

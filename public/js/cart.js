@@ -7698,8 +7698,7 @@ var render = function() {
                         },
                         [
                           _vm._v(
-                            _vm._s(product.author ? product.author.title : "") +
-                              "s"
+                            _vm._s(product.author ? product.author.title : "")
                           )
                         ]
                       ),
