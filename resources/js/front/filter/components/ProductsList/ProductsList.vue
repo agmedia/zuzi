@@ -16,7 +16,7 @@
                     </select>
                 </div>
             </div>
-            <div class="d-flex pb-3"><span class="fs-sm text-light btn btn-primary btn-sm text-nowrap ms-2 d-none d-sm-block">Ukupno {{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }} artikala</span></div>
+            <div class="d-flex pb-3"><span class="fs-sm text-dark btn btn-white btn-sm text-nowrap ms-2 d-none d-sm-block">Ukupno {{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }} artikala</span></div>
         </div>
 
         <!-- Products grid-->
