@@ -79,21 +79,23 @@ class Import
         $response = [];
 
         foreach ($categories as $category) {
-            $category = $this->replaceNames($category);
+            if ($category != 'Akcijska ponuda') {
+                $category = $this->replaceNames($category);
 
-            if ( ! str_contains($category, '>')) {
-                $response[] = $this->saveCategory($category);
-            } else {
-                $parent_id = 0;
-                $cats = explode('>', $category);
+                if ( ! str_contains($category, '>')) {
+                    $response[] = $this->saveCategory($category);
+                } else {
+                    $parent_id = 0;
+                    $cats = explode('>', $category);
 
-                foreach ($cats as $key => $cat) {
-                    if ($key == 0) {
-                        $parent_id = $this->saveCategory($cat);
-                        $response[] = $parent_id;
-                    } else {
-                        $id = $this->saveCategory($cat, $parent_id);
-                        $response[] = $id;
+                    foreach ($cats as $key => $cat) {
+                        if ($key == 0) {
+                            $parent_id = $this->saveCategory($cat);
+                            $response[] = $parent_id;
+                        } else {
+                            $id = $this->saveCategory($cat, $parent_id);
+                            $response[] = $id;
+                        }
                     }
                 }
             }
