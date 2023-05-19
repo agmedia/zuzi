@@ -5,7 +5,7 @@
             <div class="d-flex flex-wrap">
                 <div class="dropdown me-2 d-sm-none"><a class="btn btn-primary dropdown-toggle collapsed" href="#shop-sidebar" data-bs-toggle="collapse" aria-expanded="false"><i class="ci-filter-alt"></i></a></div>
                 <div class="d-flex align-items-center flex-nowrap me-3 me-sm-4 pb-3">
-                    <label class="text-light opacity-75 text-nowrap fs-sm me-2 d-none d-sm-block" for="sorting"></label>
+
                     <select class="form-select" v-model="sorting">
                         <option value="">Sortiraj</option>
                         <option value="novi">Najnovije</option>
