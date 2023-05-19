@@ -53,7 +53,7 @@ class Import
 
                     $img = $img->resize(null, 300, function ($constraint) {
                         $constraint->aspectRatio();
-                    })->resizeCanvas(250, null)->fit(300, 250);
+                    })->resizeCanvas(250, null)->fit(250, 300);
 
                     $path_webp_thumb = $str_thumb . 'webp';
                     Storage::disk('products')->put($path_webp_thumb, $img->encode('webp'));
