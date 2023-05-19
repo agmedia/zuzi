@@ -7215,7 +7215,7 @@ var render = function() {
               "span",
               {
                 staticClass:
-                  "fs-sm text-light btn btn-primary btn-sm text-nowrap ms-2 d-none d-sm-block"
+                  "fs-sm text-dark btn btn-white btn-sm text-nowrap ms-2 d-none d-sm-block"
               },
               [
                 _vm._v(
