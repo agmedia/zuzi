@@ -51,9 +51,9 @@ class Import
                     // Thumb creation
                     $str_thumb = $id . '/' . Str::limit(Str::slug($name)) . '-' . $time . '-thumb.';
 
-                    $img = $img->resize(null, 250, function ($constraint) {
+                    $img = $img->resize(null, 300, function ($constraint) {
                         $constraint->aspectRatio();
-                    })->resizeCanvas(300, null)->fit(250, 300);
+                    })->fit(250, 300);
 
                     $path_webp_thumb = $str_thumb . 'webp';
                     Storage::disk('products')->put($path_webp_thumb, $img->encode('webp'));
