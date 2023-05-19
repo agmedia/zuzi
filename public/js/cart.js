@@ -2720,6 +2720,10 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -6900,7 +6904,21 @@ var render = function() {
                         ])
                       }),
                       0
-                    )
+                    ),
+                    _vm._v(" "),
+                    _vm.category && !_vm.subcategory
+                      ? _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-outline-light mt-4 ",
+                            attrs: { type: "button", onclick: "history.back()" }
+                          },
+                          [
+                            _c("i", { staticClass: "ci-arrow-left" }),
+                            _vm._v(" Povratak")
+                          ]
+                        )
+                      : _vm._e()
                   ]
                 )
               : _vm._e()

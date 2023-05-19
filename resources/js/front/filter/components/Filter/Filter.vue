@@ -24,6 +24,9 @@
                             </a>
                         </h3>
                     </div>
+
+                    <button type="button" class="btn btn-outline-light mt-4 " v-if="category && !subcategory" onclick="history.back()"><i class="ci-arrow-left"></i> Povratak</button>
+
                 </div>
 
                 <!-- Date range-->
@@ -75,6 +78,7 @@
                     </ul>
                 </div>
                 <button type="button" class="btn btn-primary mt-4" v-on:click="cleanQuery"><i class=" ci-trash"></i> Očisti sve</button> -->
+
             </div>
         </div>
     </aside>
