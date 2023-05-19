@@ -7146,12 +7146,6 @@ var render = function() {
                   "d-flex align-items-center flex-nowrap me-3 me-sm-4 pb-3"
               },
               [
-                _c("label", {
-                  staticClass:
-                    "text-light opacity-75 text-nowrap fs-sm me-2 d-none d-sm-block",
-                  attrs: { for: "sorting" }
-                }),
-                _vm._v(" "),
                 _c(
                   "select",
                   {
