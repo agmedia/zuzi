@@ -54,7 +54,7 @@ class ProductHelper
         }
 
         if ( ! $subcategory) {
-            $subcategory = $product->subcategory();
+            $subcategory = $category->subcategories()->first();
         }
 
         if ($subcategory) {
