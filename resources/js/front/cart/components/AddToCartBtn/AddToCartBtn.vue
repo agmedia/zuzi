@@ -1,6 +1,6 @@
 <template>
-    <div class="cart mb-5 d-flex align-items-center">
-        <button class="btn btn-primary btn-shadow d-block w-100" @click="addToCart()">Dodaj u Košaricu</button>
+    <div class="cart mb-4 d-flex align-items-center">
+        <button class="btn btn-primary btn-shadow d-block " @click="addToCart()"><i class=" ci-bag"></i> Dodaj u Košaricu</button>
     </div>
 </template>
 

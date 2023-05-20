@@ -45,11 +45,11 @@
 @section('content')
 
     <!-- Page Title-->
-    <div class="page-title-overlap bg-dark pt-4" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
+    <div class="page-title bg-dark pt-2 pb-2" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
         <div class="container d-lg-block justify-content-end py-2 py-lg-3">
             <div class="order-lg-2 mb-3 mb-lg-0 pb-lg-1">
                 <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
+                    <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center ">
                         <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
 
                         @if ($group)
@@ -86,16 +86,16 @@
     </div>
     <div class="container">
         <!-- Gallery + details-->
-        <div class="bg-light shadow-lg rounded-3 px-4 py-3 mb-5">
+        <div class="bg-light  rounded-3 px-4 py-3 mb-3">
             <div class="px-lg-3">
                 <div class="row">
                     <!-- Product gallery-->
-                    <div class="col-lg-6 pe-lg-0 pt-lg-4 pb-lg-4">
+                    <div class="col-lg-5 pe-lg-0 pt-lg-3 pb-lg-3">
                         <div class="product-gallery">
                             <div class="product-gallery-preview order-sm-2">
                                 @if ( ! empty($prod->image))
-                                   <div class="product-gallery-preview-item active" id="first"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}"></div>
-
+                               <!--    <div class="product-gallery-preview-item active" id="first"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}"></div>-->
+                                    <div class="product-gallery-preview-item active" id="first"><img  src="http://127.0.0.1:8000/media/img/test-slika.jpg"  alt="{{ $prod->name }}"></div>
 
                                 @endif
 
@@ -123,10 +123,9 @@
                         </div>
                     </div>
                     <!-- Product details-->
-                    <div class="col-lg-6 pt-4 pt-lg-0">
-                        <div class="product-details ms-auto me-auto pb-3">
-
-                            <div class="order-lg-1 pe-lg-4 text-center text-lg-start mt-5">
+                    <div class="col-lg-7 pt-4 pt-lg-0">
+                        <div class="product-details ms-auto me-auto pb-3 ps-2 pe-2">
+                            <div class="order-lg-1 pe-lg-4 text-center text-lg-start mt-3">
                                 <h1 class="h3 text-dark mb-0"> {{ $prod->name }}</h1>
                             </div>
 
@@ -184,9 +183,15 @@
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Uvez</span><span class="text-muted">{{ $prod->binding ?: '...' }}</span></li> --}}
                             </ul>
 
+                            <div class="row align-items-center pt-1">
+                                <div class="col-lg-12 ">
 
+                                   {!! $prod->description !!}
 
-                            <div class=" pt-2 pb-4 mb-1">
+                                </div>
+                            </div>
+
+                            <div class=" pt-0 pb-4 mb-1">
                                 <div class="mt-3"><span class="d-inline-block align-middle text-muted fs-sm me-3 mt-1 mb-2">Podijeli:</span>
                                     <!-- ShareThis BEGIN --><div class="sharethis-inline-share-buttons"></div><!-- ShareThis END -->
                                 </div>
@@ -196,18 +201,7 @@
                 </div>
 
 
-                <div class="row align-items-center py-md-3">
-                    <div class="col-lg-8 col-md-12 offset-lg-2 py-4 text-center">
-                        <h2 class="h3 mb-2 pb-0">{{ $prod->name }}</h2>
-                        @if ($prod->author)
-                            <h3 class="h6 mb-4">{{ $prod->author->title }}</h3>
-                        @endif
-                        <p class="fs-md pb-2">{!! $prod->description !!}</p>
-                        @if ($prod->author)
-                            <div class="mt-3 me-3"><a class="btn-tag me-2 mb-2" href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">#{{ $prod->author->title }}</a></div>
-                        @endif
-                    </div>
-                </div>
+
             </div>
         </div>
 

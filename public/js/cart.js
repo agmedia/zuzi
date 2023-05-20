@@ -5584,18 +5584,18 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "cart mb-5 d-flex align-items-center" }, [
+  return _c("div", { staticClass: "cart mb-4 d-flex align-items-center" }, [
     _c(
       "button",
       {
-        staticClass: "btn btn-primary btn-shadow d-block w-100",
+        staticClass: "btn btn-primary btn-shadow d-block ",
         on: {
           click: function($event) {
             return _vm.addToCart()
           }
         }
       },
-      [_vm._v("Dodaj u Košaricu")]
+      [_c("i", { staticClass: " ci-bag" }), _vm._v(" Dodaj u Košaricu")]
     )
   ])
 }

@@ -131,6 +131,8 @@ hr {
     filter: grayscale(100%)!important;
 }
 
+ul.spec{max-width:400px}
+
 h6, .h6, h5, .h5, h4, .h4, h3, .h3, h2, .h2, h1, .h1 {
   margin-top: 0;
   margin-bottom: 0.75rem;
@@ -18270,8 +18272,8 @@ html:not([dir=rtl]) .range-slider-ui.noUi-horizontal .noUi-handle {
 
 @media (min-width: 992px) {
   .product-details {
-    width: 100%;
-    max-width: 26rem;
+    width: 90%;
+
     padding-top: 0.25rem;
   }
 }
