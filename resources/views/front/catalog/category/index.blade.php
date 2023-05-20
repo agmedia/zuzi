@@ -41,7 +41,7 @@
             @if (isset($group) && $group)
                 <div class="order-lg-2 mb-3 mb-lg-0 pb-lg-2">
                     <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
+                        <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center ">
                             <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
                             @if ($group && ! $cat && ! $subcat)
                                 <li class="breadcrumb-item text-nowrap active" aria-current="page">{{ \Illuminate\Support\Str::ucfirst($group) }}</li>
@@ -57,7 +57,7 @@
                         </ol>
                     </nav>
                 </div>
-                <div class="order-lg-1 pe-lg-4 text-center text-lg-start">
+                <div class="order-lg-1 pe-lg-4 text-center ">
                     @if ($group && ! $cat && ! $subcat)
                         <h1 class="h3 text-light mb-0">{{ \Illuminate\Support\Str::ucfirst($group) }}</h1>
                     @endif
@@ -79,7 +79,7 @@
             @if (isset($author) && $author)
                 <div class="order-lg-2 mb-3 mb-lg-0 pt-lg-2">
                     <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
+                        <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center ">
                             <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
                             <li class="breadcrumb-item text-nowrap active" aria-current="page"><a class="text-nowrap" href="{{ route('catalog.route.author') }}">Autori</a></li>
                             @if ( ! $cat && ! $subcat)
