@@ -7257,7 +7257,7 @@ var render = function() {
                     "col-md-3 col-6 px-2 mb-4 d-flex align-items-stretch"
                 },
                 [
-                  _c("div", { staticClass: "card product-card shadow pb-3" }, [
+                  _c("div", { staticClass: "card product-card shadow pb-2" }, [
                     product.special
                       ? _c(
                           "span",

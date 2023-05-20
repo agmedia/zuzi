@@ -72,7 +72,7 @@
 
     {{ $products->onEachSide(1)->links() }}
 
-    <hr class="my-3">
+
 
 
 </section>
