@@ -90,7 +90,6 @@
             <hr class="d-sm-none">
         </div>
 
-        <hr class="my-3">
     </section>
 </template>
 
