@@ -3388,7 +3388,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -7466,9 +7465,7 @@ var render = function() {
             _vm._v(" "),
             _c("hr", { staticClass: "d-sm-none" })
           ])
-        : _vm._e(),
-      _vm._v(" "),
-      _c("hr", { staticClass: "my-3" })
+        : _vm._e()
     ],
     1
   )
