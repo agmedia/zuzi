@@ -133,12 +133,12 @@
                                 @if ($prod->main_price > $prod->main_special)
                                     <span class="h3 fw-normal text-accent me-1">{{ $prod->main_special_text }}</span>
                                     <del class="text-muted fw-normal me-3">{{ $prod->main_price_text }}</del>
-                                    <span class="badge bg-danger align-middle mt-n2">Akcija</span>
+
                                 @else
-                                    <span class="h3 fw-normal text-accent me-1">{{ $prod->main_price_text }}</span>
+                                    <span class="h3 fw-medium text-primary me-1">{{ $prod->main_price_text }}</span>
                                 @endif
                                 @if ($prod->quantity)
-                                    <span class="badge bg-success align-middle mt-n2">Dostupno</span>
+                                    <span class="badge bg-success align-middle mt-n2">Na stanju</span>
                                 @else
                                     <span class="badge bg-fourth align-middle mt-n2">Nedostupno</span>
                                 @endif
@@ -212,7 +212,7 @@
         <h2 class="h3 text-center pb-4">Preporučamo</h2>
         <div class="tns-carousel tns-controls-static tns-controls-outside">
             <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "nav": true, "autoHeight": true, "responsive": {"0":{"items":2, "gutter": 10},"500":{"items":2, "gutter": 18},"768":{"items":3, "gutter": 20}, "1100":{"items":5, "gutter": 30}}}'>
-                @foreach ($cat->products()->get()->take(5) as $cat_product)
+                @foreach ($cat->products()->get()->take(10) as $cat_product)
                     @if ($cat_product->id  != $prod->id)
                         <div>
                             @include('front.catalog.category.product', ['product' => $cat_product])
