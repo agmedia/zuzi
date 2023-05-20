@@ -94,8 +94,8 @@
                         <div class="product-gallery">
                             <div class="product-gallery-preview order-sm-2">
                                 @if ( ! empty($prod->image))
-                               <!--    <div class="product-gallery-preview-item active" id="first"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}"></div>-->
-                                    <div class="product-gallery-preview-item active" id="first"><img  src="http://127.0.0.1:8000/media/img/test-slika.jpg"  alt="{{ $prod->name }}"></div>
+                                <div class="product-gallery-preview-item active" id="first"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}"></div>
+
 
                                 @endif
 
