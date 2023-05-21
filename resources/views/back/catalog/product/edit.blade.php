@@ -153,30 +153,44 @@
                             </div>
 
                             <div class="form-group row items-push mb-4">
-                                <div class="col-md-4">
-                                    <label for="dm-post-edit-slug">Kategorija <span class="text-danger">*</span></label>
-                                    <select class="js-select2 form-control" id="category-select" name="category" style="width: 100%;" data-placeholder="Odaberite kategoriju">
-                                        <option></option>
+                                <div class="col-md-12">
+                                    <label for="categories">Odaberi kategorije</label>
+                                    <select class="form-control" id="category-select" name="category[]" style="width: 100%;" multiple>
+                                        <option></option><!-- Required for data-placeholder attribute to work with Select2 plugin -->
                                         @foreach ($data['categories'] as $group => $cats)
                                             @foreach ($cats as $id => $category)
-                                                <option value="{{ $id }}" class="font-weight-bold small" {{ ((isset($product)) and (in_array($id, $product->categories()->pluck('id')->toArray()))) ? 'selected' : '' }}>{{ $group . ' >> ' . $category['title'] }}</option>
+                                                <option value="{{ $id }}" class="font-weight-bold small" {{ ((isset($product)) and (in_array($id, $product->categories()->pluck('id')->toArray()))) ? 'selected' : '' }}>{{ $category['title'] }}</option>
                                                 @if ( ! empty($category['subs']))
                                                     @foreach ($category['subs'] as $sub_id => $subcategory)
-                                                        <option value="{{ $sub_id }}" class="pl-3 text-sm" {{ ((isset($product) && $product->subcategory()) and ($sub_id == $product->subcategory()->id)) ? 'selected' : '' }}>{{ $subcategory['title'] }}</option>
+                                                        <option value="{{ $sub_id }}" class="pl-3 text-sm" {{ ((isset($product) && $product->subcategory()) and ($sub_id == $product->subcategory()->id)) ? 'selected' : '' }}>{{ $category['title'] . ' >> ' . $subcategory['title'] }}</option>
                                                     @endforeach
                                                 @endif
                                             @endforeach
                                         @endforeach
                                     </select>
+{{--                                    <label for="dm-post-edit-slug">Kategorija <span class="text-danger">*</span></label>--}}
+{{--                                    <select class="js-select2 form-control" id="category-select" name="category" style="width: 100%;" data-placeholder="Odaberite kategoriju">--}}
+{{--                                        <option></option>--}}
+{{--                                        @foreach ($data['categories'] as $group => $cats)--}}
+{{--                                            @foreach ($cats as $id => $category)--}}
+{{--                                                <option value="{{ $id }}" class="font-weight-bold small" {{ ((isset($product)) and (in_array($id, $product->categories()->pluck('id')->toArray()))) ? 'selected' : '' }}>{{ $group . ' >> ' . $category['title'] }}</option>--}}
+{{--                                                @if ( ! empty($category['subs']))--}}
+{{--                                                    @foreach ($category['subs'] as $sub_id => $subcategory)--}}
+{{--                                                        <option value="{{ $sub_id }}" class="pl-3 text-sm" {{ ((isset($product) && $product->subcategory()) and ($sub_id == $product->subcategory()->id)) ? 'selected' : '' }}>{{ $subcategory['title'] }}</option>--}}
+{{--                                                    @endforeach--}}
+{{--                                                @endif--}}
+{{--                                            @endforeach--}}
+{{--                                        @endforeach--}}
+{{--                                    </select>--}}
                                     @error('category')
                                     <span class="text-danger font-italic">Kategorija je potrebna...</span>
                                     @enderror
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label for="dm-post-edit-slug">Autor</label>
                                     @livewire('back.layout.search.author-search', ['author_id' => isset($product) ? $product->author_id : 0])
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label for="dm-post-edit-slug">Izdavač</label>
                                     @livewire('back.layout.search.publisher-search', ['publisher_id' => isset($product) ? $product->publisher_id : 0])
                                 </div>
@@ -283,7 +297,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="slug-input">SEO link (url)</label>
-                                <input type="text" class="form-control" id="slug-input" name="slug" value="{{ isset($product) ? $product->slug : old('slug') }}" disabled>
+                                <input type="text" class="form-control" id="slug-input" value="{{ isset($product) ? $product->slug : old('slug') }}" disabled>
+                                <input type="hidden" name="slug" value="{{ isset($product) ? $product->slug : old('slug') }}">
                             </div>
                         </div>
                     </div>
