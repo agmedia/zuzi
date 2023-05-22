@@ -5992,58 +5992,6 @@ var render = function() {
           ])
         : _vm._e(),
       _vm._v(" "),
-      _vm.$store.state.cart.total < _vm.freeship && _vm.$store.state.cart.count
-        ? _c(
-            "div",
-            {
-              staticClass: "d-flex border p-2",
-              staticStyle: { "background-color": "rgba(245,245,245,0.96)" }
-            },
-            [
-              _c("p", { staticClass: "small mb-0" }, [
-                _vm._v(
-                  "Još € " +
-                    _vm._s(
-                      _vm.$store.state.service.formatMainPrice(
-                        _vm.freeship - _vm.$store.state.cart.total
-                      )
-                    ) +
-                    " "
-                ),
-                _vm.$store.state.cart.secondary_price
-                  ? _c("span", [
-                      _vm._v(
-                        "(" +
-                          _vm._s(
-                            _vm.$store.state.service.formatSecondaryPrice(
-                              _vm.freeship - _vm.$store.state.cart.total
-                            )
-                          ) +
-                          ")"
-                      )
-                    ])
-                  : _vm._e(),
-                _vm._v(" do besplatne dostave!")
-              ])
-            ]
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      _vm.$store.state.cart.total > _vm.freeship && _vm.$store.state.cart.count
-        ? _c(
-            "div",
-            {
-              staticClass: "d-flex border p-2",
-              staticStyle: { "background-color": "rgba(245,245,245,0.96)" }
-            },
-            [
-              _c("p", { staticClass: "small mb-0" }, [
-                _vm._v("Ostvarili ste pravo na besplatnu dostavu!")
-              ])
-            ]
-          )
-        : _vm._e(),
-      _vm._v(" "),
       _vm._l(_vm.$store.state.cart.items, function(item) {
         return _c(
           "div",
@@ -6199,7 +6147,7 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "d-flex pt-3 pb-2 mt-1" }, [
-      _c("h2", { staticClass: "h6 text-dark mb-0" }, [_vm._v("Artikli")])
+      _c("h2", { staticClass: "h6 text-primary mb-0" }, [_vm._v("Artikli")])
     ])
   }
 ]
