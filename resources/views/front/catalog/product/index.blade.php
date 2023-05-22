@@ -218,7 +218,7 @@
         <div class="container  my-md-3" >
             <h2 class="h3 text-center pb-4">Izdvojeno iz kategorije</h2>
             <div class="tns-carousel tns-controls-static tns-controls-outside">
-                <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "nav": true, "autoHeight": true, "responsive": {"0":{"items":2, "gutter": 10},"500":{"items":2, "gutter": 18},"768":{"items":3, "gutter": 20}, "1100":{"items":5, "gutter": 30}}}'>
+                <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "nav": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 10},"500":{"items":2, "gutter": 18},"768":{"items":3, "gutter": 20}, "1100":{"items":5, "gutter": 30}}}'>
                     @foreach ($cat->products()->get()->take(10) as $cat_product)
                         @if ($cat_product->id  != $prod->id)
                             <div>
