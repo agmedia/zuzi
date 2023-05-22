@@ -1,20 +1,21 @@
 <!-- Footer-->
-<footer class="bg-dark pt-5"  style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
+<footer class="bg-dark pt-sm-5"  style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
 
     <div class="container pt-2 pb-3">
         <div class="row">
             <div class="col-md-6 text-center text-md-start mb-4">
-                <div class="text-nowrap mb-3 d-none d-sm-block"><a class="d-inline-block align-middle mt-n2 me-2" href="#"><img class="d-block" src="{{ asset('media/img/zuzi-logo.png') }}" width="180" height="76" alt="Antikvarijat Biblos"></a></div>
-                <p class=" text-white  pb-1 d-none d-sm-block">Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja<br> i naručivanja željenih naslova putem web stranice zuzi.hr<br> iz udobnosti naslonjača.</p>
+
+                <h3 class="widget-title fw-700 text-white"><span>O nama</span></h3>
+                <p class=" text-white  fs-md pb-1 d-none d-sm-block">Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja<br> i naručivanja željenih naslova putem web stranice zuzi.hr<br> iz udobnosti naslonjača.</p>
 
 
-                <div class="widget mt-4 text-md-nowrap text-center text-md-start">
+                <div class="widget mt-4 text-md-nowrap text-start">
                     <a class="btn-social bs-light bs-instagram me-2 mb-2" href="https://www.instagram.com/antikvarijat_biblos/"><i class="ci-instagram"></i></a>
                     <a class="btn-social bs-light bs-facebook me-2 mb-2" href="https://www.facebook.com/AntikvarijatBiblos/"><i class="ci-facebook"></i></a>
                 </div>
             </div>
             <!-- Mobile dropdown menu (visible on screens below md)-->
-            <div class="col-12 d-md-none text-center mb-4 pb-2">
+            <div class="col-12 d-md-none text-center mb-sm-4 pb-2">
                 <div class="btn-group dropdown d-block mx-auto mb-3">
                     <button class="btn btn-outline-light border-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Uvjeti kupnje</button>
                     <ul class="dropdown-menu my-1">
@@ -27,7 +28,7 @@
             <!-- Desktop menu (visible on screens above md)-->
             <div class="col-md-3 d-none d-md-block text-center text-md-start mb-4">
                 <div class="widget widget-links widget-light pb-2">
-                    <h3 class="widget-title text-color"><span>Uvjeti kupnje</span></h3>
+                    <h3 class="widget-title fw-700 text-white"><span>Uvjeti kupnje</span></h3>
                     <ul class="widget-list">
                         @foreach ($uvjeti_kupnje as $page)
                             <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route.page', ['page' => $page]) }}">{{ $page->title }}</a></li>
@@ -37,7 +38,7 @@
             </div>
             <div class="col-md-3 d-none d-md-block text-center text-md-start mb-4">
                 <div class="widget widget-links widget-light pb-2">
-                    <h3 class="widget-title text-color"><span>Načini plaćanja</span></h3>
+                    <h3 class="widget-title fw-700 text-white"><span>Načini plaćanja</span></h3>
                     <ul class="widget-list  ">
                         <li class="widget-list-item"><a class="widget-list-link" > kreditnom karticom jednokratno ili na rate</a></li>
                         <li class="widget-list-item"><a class="widget-list-link" > virmanom / općom uplatnicom / internet bankarstvom</a></li>

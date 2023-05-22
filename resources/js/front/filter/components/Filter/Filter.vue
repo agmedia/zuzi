@@ -18,11 +18,27 @@
                     <h3 class="widget-title text-white" v-if="category && subcategory">{{ subcategory.title }}<span class="badge bg-secondary float-end">{{ Number(subcategory.count).toLocaleString('hr-HR') }}</span></h3>
 
                     <div class="accordion mt-n1" id="shop-categories">
-                        <h3 class="accordion-header " v-for="category in categories">
-                            <a :href="category.url" class="accordion-button py-1 none collapsed text-white" role="link">
-                                {{ category.title }} <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
-                            </a>
-                        </h3>
+
+                        <div class="accordion-item " v-for="category in categories">
+                            <h3 class="accordion-header " >
+
+                                <!--type="button" data-bs-toggle="collapse" data-bs-target="#fruits" aria-expanded="false" aria-controls="fruits" -->
+                                <a :href="category.url" class="accordion-button py-1 none collapsed text-white"  role="link">
+                                    {{ category.title }} <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
+                                </a>
+                            </h3>
+
+                          <!--  <div class="collapse" id="fruits"  data-bs-parent="#shop-categories">
+                                <div class="px-grid-gutter pt-1 pb-4">
+                                    <div class="widget widget-links">
+                                        <ul class="widget-list" >
+                                            <li class="widget-list-item"><a class="widget-list-link" href="#">Podkategorija</a></li>
+
+                                        </ul>
+                                    </div>
+                                </div>
+                             </div>-->
+                      </div>
                     </div>
 
                     <button type="button" class="btn btn-outline-light mt-4 " v-if="category && !subcategory" onclick="history.back()"><i class="ci-arrow-left"></i> Povratak</button>

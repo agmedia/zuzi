@@ -2724,6 +2724,22 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -6868,38 +6884,40 @@ var render = function() {
                         attrs: { id: "shop-categories" }
                       },
                       _vm._l(_vm.categories, function(category) {
-                        return _c("h3", { staticClass: "accordion-header " }, [
-                          _c(
-                            "a",
-                            {
-                              staticClass:
-                                "accordion-button py-1 none collapsed text-white",
-                              attrs: { href: category.url, role: "link" }
-                            },
-                            [
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(category.title) +
-                                  " "
-                              ),
-                              _c(
-                                "span",
-                                {
-                                  staticClass:
-                                    "badge bg-dark ms-2 position-absolute end-0 fw-bold"
-                                },
-                                [
-                                  _vm._v(
-                                    _vm._s(
-                                      Number(category.count).toLocaleString(
-                                        "hr-HR"
+                        return _c("div", { staticClass: "accordion-item " }, [
+                          _c("h3", { staticClass: "accordion-header " }, [
+                            _c(
+                              "a",
+                              {
+                                staticClass:
+                                  "accordion-button py-1 none collapsed text-white",
+                                attrs: { href: category.url, role: "link" }
+                              },
+                              [
+                                _vm._v(
+                                  "\n                                    " +
+                                    _vm._s(category.title) +
+                                    " "
+                                ),
+                                _c(
+                                  "span",
+                                  {
+                                    staticClass:
+                                      "badge bg-dark ms-2 position-absolute end-0 fw-bold"
+                                  },
+                                  [
+                                    _vm._v(
+                                      _vm._s(
+                                        Number(category.count).toLocaleString(
+                                          "hr-HR"
+                                        )
                                       )
                                     )
-                                  )
-                                ]
-                              )
-                            ]
-                          )
+                                  ]
+                                )
+                              ]
+                            )
+                          ])
                         ])
                       }),
                       0
