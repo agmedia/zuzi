@@ -1,4 +1,4 @@
-<div class="article " >
+<div class="article pb-2" >
 
 <div class="card product-card d-flex align-items-stretch shadow pb-3">
     @if ($product->main_price > $product->main_special)
