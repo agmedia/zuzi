@@ -22,7 +22,7 @@
 
 <div class="container pb-5 mb-2 mb-md-4">
     <div class="row">
-        <section class="col-lg-8">
+        <section class="col-lg-12">
 
             <div class="steps steps-light pt-2 pb-3 mb-5">
                 <a class="step-item active" href="{{ route('kosarica') }}">
@@ -46,7 +46,8 @@
                     <div class="step-label"><i class="ci-check-circle"></i>Pregledaj</div>
                 </a>
             </div>
-
+        </section>
+        <section class="col-lg-8">
             <h2 class="h6 pt-1 pb-3 mb-3">Pregled košarice</h2>
             <cart-view continueurl="{{ route('index') }}" checkouturl="{{ route('naplata') }}" buttons="false"></cart-view>
 

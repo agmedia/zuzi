@@ -23,13 +23,13 @@
                 <div class="pt-2">
                     <h3 class="product-title fs-base mb-2"><a :href="base_path + item.attributes.path">{{ item.name }}</a></h3>
 
-                    <div class="fs-lg text-accent pt-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</div>
-                    <div class="fs-lg text-accent pt-2" v-if="item.associatedModel.secondary_price">{{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}</div>
+                    <div class="fs-lg text-primary pt-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</div>
+                    <div class="fs-sm text-dark pt-2" v-if="item.associatedModel.secondary_price">{{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}</div>
                 </div>
             </div>
             <div class="pt-2 pt-sm-0 ps-sm-3 mx-auto mx-sm-0 text-center text-sm-start" style="max-width: 9rem;">
-                <label class="form-label">Količina</label>
-                <input class="form-control" type="number" v-model="item.quantity" min="1" max="1" value="1" readonly>
+                <label class="form-label">Količina: {{item.quantity}}</label>
+                <input class="form-control d-none" type="number" v-model="item.quantity" min="1" max="1" value="1" readonly>
                 <button class="btn btn-link px-0 text-danger" type="button" @click.prevent="removeFromCart(item)"><i class="ci-close-circle me-2"></i><span class="fs-sm">Ukloni</span></button>
             </div>
         </div>
@@ -71,9 +71,7 @@
             this.checkIfEmpty();
             this.setCoupon();
 
-            if (window.location.pathname == '/kosarica/naplata') {
-                this.show_delete_btn = false;
-            }
+
         },
 
         methods: {

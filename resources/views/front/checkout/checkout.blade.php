@@ -23,15 +23,12 @@
     </div>
 
     <div class="container pb-5 mb-2 mb-md-4">
-        <div class="row">
-            <section class="col-lg-8">
+
+
                 @livewire('front.checkout', ['step' => $step, 'is_free_shipping' => $is_free_shipping])
-            </section>
+
             <!-- Sidebar-->
-            <aside class="col-lg-4 pt-4 pt-lg-0 ps-xl-5 d-none d-lg-block">
-                <cart-view-aside route="naplata" continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}" checkouturl="{{ route('naplata') }}"></cart-view-aside>
-            </aside>
-        </div>
+
     </div>
 
 @endsection

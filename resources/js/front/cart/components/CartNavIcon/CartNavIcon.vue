@@ -10,17 +10,17 @@
                             <a class="d-block flex-shrink-0 pt-2" href="#"><img :src="item.associatedModel.image" :alt="item.name" :title="item.name" style="width: 5rem;"></a>
                             <div class="ps-2">
                                 <h6 class="widget-product-title"><a :href="base_path + item.attributes.path">{{ item.name }}</a></h6>
-                                <div class="widget-product-meta"><span class="text-accent me-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
-                                <div class="widget-product-meta"><span class="text-accent me-2" v-if="item.associatedModel.secondary_price">{{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
+                                <div class="widget-product-meta"><span class="text-primary me-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
+                                <div class="widget-product-meta"><span class="text-dark fs-sm me-2" v-if="item.associatedModel.secondary_price">{{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="d-flex flex-wrap justify-content-between align-items-center py-3">
                     <div class="fs-sm me-2 py-2">
-                        <span class="text-muted">Ukupno:</span><span class="text-accent fs-base ms-1">{{ $store.state.service.formatMainPrice($store.state.cart.total) }}</span>
+                        <span class="text-muted">Ukupno:</span><span class="text-primary fs-base ms-1">{{ $store.state.service.formatMainPrice($store.state.cart.total) }}</span>
                         <br v-if="$store.state.cart.secondary_price">
-                        <span v-if="$store.state.cart.secondary_price" class="text-muted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="text-accent fs-base ms-1">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</span>
+                        <span v-if="$store.state.cart.secondary_price" class="text-muted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="text-dark fs-sm ms-1">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</span>
                     </div>
                     <a class="btn btn-outline-secondary btn-sm" :href="carturl">Košarica<i class="ci-arrow-right ms-1 me-n1"></i></a>
                 </div><a class="btn btn-primary btn-sm d-block w-100" :href="carturl"><i class="ci-card me-2 fs-base align-middle"></i>Dovrši kupnju</a>
@@ -50,7 +50,6 @@
         //
         mounted() {
             this.checkCart();
-            this.getCart();
 
             if (window.location.pathname == '/kosarica/success') {
                 this.$store.dispatch('flushCart');
@@ -86,10 +85,6 @@
                 });
 
                 this.$store.dispatch('checkCart', kos);
-            },
-
-            getCart() {
-                this.$store.dispatch('getCart')
             },
 
             /**

@@ -2252,7 +2252,6 @@ __webpack_require__.r(__webpack_exports__);
   //
   mounted: function mounted() {
     this.checkCart();
-    this.getCart();
     if (window.location.pathname == '/kosarica/success') {
       this.$store.dispatch('flushCart');
     }
@@ -2280,9 +2279,6 @@ __webpack_require__.r(__webpack_exports__);
         kos.push(cart.items[key].id);
       });
       this.$store.dispatch('checkCart', kos);
-    },
-    getCart: function getCart() {
-      this.$store.dispatch('getCart');
     },
     /**
      *
@@ -2380,9 +2376,6 @@ __webpack_require__.r(__webpack_exports__);
     }
     this.checkIfEmpty();
     this.setCoupon();
-    if (window.location.pathname == '/kosarica/naplata') {
-      this.show_delete_btn = false;
-    }
   },
   methods: {
     /**
@@ -2561,9 +2554,6 @@ __webpack_require__.r(__webpack_exports__);
     }
     this.checkIfEmpty();
     this.setCoupon();
-    if (window.location.pathname == '/kosarica/naplata') {
-      this.show_delete_btn = false;
-    }
   },
   methods: {
     /**
@@ -5827,7 +5817,7 @@ var render = function() {
                                 [
                                   _c(
                                     "span",
-                                    { staticClass: "text-accent me-2" },
+                                    { staticClass: "text-primary me-2" },
                                     [
                                       _vm._v(
                                         _vm._s(
@@ -5853,7 +5843,7 @@ var render = function() {
                                   item.associatedModel.secondary_price
                                     ? _c(
                                         "span",
-                                        { staticClass: "text-accent me-2" },
+                                        { staticClass: "text-dark fs-sm me-2" },
                                         [
                                           _vm._v(
                                             _vm._s(
@@ -5893,7 +5883,7 @@ var render = function() {
                     _c("span", { staticClass: "text-muted" }, [
                       _vm._v("Ukupno:")
                     ]),
-                    _c("span", { staticClass: "text-accent fs-base ms-1" }, [
+                    _c("span", { staticClass: "text-primary fs-base ms-1" }, [
                       _vm._v(
                         _vm._s(
                           _vm.$store.state.service.formatMainPrice(
@@ -5910,7 +5900,7 @@ var render = function() {
                           _vm._v("                ")
                         ])
                       : _vm._e(),
-                    _c("span", { staticClass: "text-accent fs-base ms-1" }, [
+                    _c("span", { staticClass: "text-dark fs-sm ms-1" }, [
                       _vm._v(
                         _vm._s(
                           _vm.$store.state.service.formatSecondaryPrice(
@@ -6096,7 +6086,7 @@ var render = function() {
                     )
                   ]),
                   _vm._v(" "),
-                  _c("div", { staticClass: "fs-lg text-accent pt-2" }, [
+                  _c("div", { staticClass: "fs-lg text-primary pt-2" }, [
                     _vm._v(
                       _vm._s(
                         Object.keys(item.conditions).length
@@ -6107,7 +6097,7 @@ var render = function() {
                   ]),
                   _vm._v(" "),
                   item.associatedModel.secondary_price
-                    ? _c("div", { staticClass: "fs-lg text-accent pt-2" }, [
+                    ? _c("div", { staticClass: "fs-sm text-dark pt-2" }, [
                         _vm._v(
                           _vm._s(
                             Object.keys(item.conditions).length
@@ -6130,7 +6120,7 @@ var render = function() {
               },
               [
                 _c("label", { staticClass: "form-label" }, [
-                  _vm._v("Količina")
+                  _vm._v("Količina: " + _vm._s(item.quantity))
                 ]),
                 _vm._v(" "),
                 _c("input", {
@@ -6142,7 +6132,7 @@ var render = function() {
                       expression: "item.quantity"
                     }
                   ],
-                  staticClass: "form-control",
+                  staticClass: "form-control d-none",
                   attrs: {
                     type: "number",
                     min: "1",

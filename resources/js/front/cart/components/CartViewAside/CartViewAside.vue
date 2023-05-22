@@ -109,9 +109,7 @@
             this.checkIfEmpty();
             this.setCoupon();
 
-            if (window.location.pathname == '/kosarica/naplata') {
-                this.show_delete_btn = false;
-            }
+
         },
 
         methods: {
