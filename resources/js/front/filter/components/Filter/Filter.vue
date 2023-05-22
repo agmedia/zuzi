@@ -19,25 +19,29 @@
 
                     <div class="accordion mt-n1" id="shop-categories">
 
+
+
                         <div class="accordion-item " v-for="category in categories">
                             <h3 class="accordion-header " >
 
-                                <!--type="button" data-bs-toggle="collapse" data-bs-target="#fruits" aria-expanded="false" aria-controls="fruits" -->
-                                <a :href="category.url" class="accordion-button py-1 none collapsed text-white"  role="link">
+                                <!--type="button"  -->
+                                <a :href="category.url" class="accordion-button py-1 none collapsed text-white" data-bs-toggle="collapse" data-bs-target="#fruits" aria-expanded="false" aria-controls="fruits" role="link">
                                     {{ category.title }} <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
                                 </a>
                             </h3>
 
-                          <!--  <div class="collapse" id="fruits"  data-bs-parent="#shop-categories">
+                         <div class="collapse" id="fruits"  data-bs-parent="#shop-categories">
                                 <div class="px-grid-gutter pt-1 pb-4">
                                     <div class="widget widget-links">
-                                        <ul class="widget-list" >
-                                            <li class="widget-list-item"><a class="widget-list-link" href="#">Podkategorija</a></li>
+                                        <ul class="widget-list" v-for="sub in subcategory" >
+
+
+                                            <li class="widget-list-item"><a class="widget-list-link" href="#">{{ sub.title }}</a></li>
 
                                         </ul>
                                     </div>
                                 </div>
-                             </div>-->
+                             </div>
                       </div>
                     </div>
 
@@ -167,9 +171,12 @@
 
         //
         mounted() {
+
             this.checkQuery(this.$route);
             this.checkCategory();
             this.getCategories();
+            console.log(this.category, this.subcategory);
+
 
             if (this.author == '') {
                 this.show_authors = true;

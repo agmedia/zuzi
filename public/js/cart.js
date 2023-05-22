@@ -2740,6 +2740,10 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2809,6 +2813,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     this.checkQuery(this.$route);
     this.checkCategory();
     this.getCategories();
+    console.log(this.category, this.subcategory);
     if (this.author == '') {
       this.show_authors = true;
       this.getAuthors();
@@ -6891,7 +6896,14 @@ var render = function() {
                               {
                                 staticClass:
                                   "accordion-button py-1 none collapsed text-white",
-                                attrs: { href: category.url, role: "link" }
+                                attrs: {
+                                  href: category.url,
+                                  "data-bs-toggle": "collapse",
+                                  "data-bs-target": "#fruits",
+                                  "aria-expanded": "false",
+                                  "aria-controls": "fruits",
+                                  role: "link"
+                                }
                               },
                               [
                                 _vm._v(
@@ -6917,7 +6929,54 @@ var render = function() {
                                 )
                               ]
                             )
-                          ])
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            {
+                              staticClass: "collapse",
+                              attrs: {
+                                id: "fruits",
+                                "data-bs-parent": "#shop-categories"
+                              }
+                            },
+                            [
+                              _c(
+                                "div",
+                                { staticClass: "px-grid-gutter pt-1 pb-4" },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: "widget widget-links" },
+                                    _vm._l(_vm.subcategory, function(sub) {
+                                      return _c(
+                                        "ul",
+                                        { staticClass: "widget-list" },
+                                        [
+                                          _c(
+                                            "li",
+                                            { staticClass: "widget-list-item" },
+                                            [
+                                              _c(
+                                                "a",
+                                                {
+                                                  staticClass:
+                                                    "widget-list-link",
+                                                  attrs: { href: "#" }
+                                                },
+                                                [_vm._v(_vm._s(sub.title))]
+                                              )
+                                            ]
+                                          )
+                                        ]
+                                      )
+                                    }),
+                                    0
+                                  )
+                                ]
+                              )
+                            ]
+                          )
                         ])
                       }),
                       0

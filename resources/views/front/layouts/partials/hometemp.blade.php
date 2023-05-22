@@ -48,8 +48,8 @@
 
 <section class="bg-white " >
 
-    <div class="container py-4  py-sm-5">
-    <h2 class="text-center fw-bold pt-4 pt-sm-3">Popularne kategorije</h2>
+    <div class="container py-4  ">
+    <h2 class="text-center fw-bold pt-0">Popularne kategorije</h2>
     <p class="text-muted text-center mb-5">Odaberite željeni naslov iz jedne od naših kategorija</p>
 
 
