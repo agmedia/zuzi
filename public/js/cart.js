@@ -6909,9 +6909,7 @@ var render = function() {
                                 _vm._v(
                                   "\n                                    " +
                                     _vm._s(category.title) +
-                                    " " +
-                                    _vm._s(category.id) +
-                                    " "
+                                    "  "
                                 ),
                                 _c(
                                   "span",
