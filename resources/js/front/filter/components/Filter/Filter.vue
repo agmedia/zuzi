@@ -26,7 +26,7 @@
 
                                 <!--type="button"  -->
                                 <a :href="category.url" class="accordion-button py-1 none collapsed text-white  " data-bs-toggle="collapse" :data-bs-target="'#' + category.id" aria-expanded="false" :aria-controls="category.id" role="link">
-                                    {{ category.title }} {{ category.id }} <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
+                                    {{ category.title }}  <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
                                 </a>
                             </h3>
 
