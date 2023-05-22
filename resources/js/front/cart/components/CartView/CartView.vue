@@ -1,18 +1,18 @@
 <template>
     <div>
         <div class="d-flex pt-3 pb-2 mt-1">
-            <h2 class="h6 text-dark mb-0">Artikli</h2>
+            <h2 class="h6 text-primary mb-0">Artikli</h2>
         </div>
         <div class="d-flex pt-3 pb-2 mt-1" v-if="!$store.state.cart.count">
             <p class="text-dark mb-0">Vaša košarica je prazna!</p>
         </div>
 
-        <div class="d-flex border p-2" style="background-color: rgba(245,245,245,0.96);" v-if="$store.state.cart.total < freeship && $store.state.cart.count">
+      <!--  <div class="d-flex border p-2" style="background-color: rgba(245,245,245,0.96);" v-if="$store.state.cart.total < freeship && $store.state.cart.count">
             <p class="small mb-0">Još € {{ $store.state.service.formatMainPrice(freeship - $store.state.cart.total) }} <span v-if="$store.state.cart.secondary_price">({{ $store.state.service.formatSecondaryPrice(freeship - $store.state.cart.total) }})</span> do besplatne dostave!</p>
         </div>
         <div class="d-flex border p-2" style="background-color: rgba(245,245,245,0.96);" v-if="$store.state.cart.total > freeship && $store.state.cart.count">
             <p class="small mb-0">Ostvarili ste pravo na besplatnu dostavu!</p>
-        </div>
+        </div>-->
 
         <!-- Item-->
         <div class="d-sm-flex justify-content-between align-items-center my-2 pb-3 border-bottom" v-for="item in $store.state.cart.items">
