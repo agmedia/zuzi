@@ -33,7 +33,7 @@
 </div>
 <div class="container pb-5 mb-2 mb-md-4">
     <div class="row">
-        <section class="col-lg-8">
+        <section class="col-lg-12">
             <div class="steps steps-light pt-2 pb-3 mb-5">
                 <a class="step-item current active" href="{{ route('kosarica') }}">
                     <div class="step-progress"><span class="step-count">1</span></div>
@@ -56,7 +56,8 @@
                     <div class="step-label"><i class="ci-check-circle"></i>Pregledaj</div>
                 </a>
             </div>
-
+        </section>
+        <section class="col-lg-8">
             <cart-view continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}" checkouturl="{{ route('naplata') }}" freeship="{{ config('settings.free_shipping') }}"></cart-view>
 
         </section>
