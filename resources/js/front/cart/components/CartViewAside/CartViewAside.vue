@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="bg-white rounded-3 shadow-lg p-4" v-if="route == 'kosarica'">
+        <div class=" rounded-3  p-4" v-if="route == 'kosarica'" style="border: 2px dashed #e3e9ef;background-color: #f6f9fc !important;">
             <div class="py-2 px-xl-2" v-cloak>
                 <div class="text-center mb-4 pb-3 border-bottom">
                     <h2 class="h6 mb-3 pb-1">Ukupno</h2>
@@ -13,11 +13,11 @@
         </div>
 
 
-        <div class="bg-white rounded-3 shadow-lg p-4 ms-lg-auto" v-if="route == 'naplata'">
+        <div class=" rounded-3  p-4 ms-lg-auto" v-if="route == 'naplata'" style="border: 2px dashed #e3e9ef;background-color: #f6f9fc !important;">
             <div class="py-2 px-xl-2">
                 <div class="widget mb-3">
-                    <h2 class="widget-title text-center">Sažetak narudžbe</h2>
-                    <hr class="mb-2">
+                    <h2 class="widget-title text-center mb-2">Sažetak narudžbe</h2>
+
                     <div class="d-flex align-items-center pb-2 border-bottom" v-for="item in $store.state.cart.items">
                         <a class="d-block flex-shrink-0" :href="base_path + item.attributes.path"><img :src="item.associatedModel.image" :alt="item.name" width="64"></a>
                         <div class="ps-2">
@@ -52,7 +52,7 @@
         </div>
 
 
-        <div class="bg-white rounded-3 shadow-lg p-4 ms-lg-auto" v-if="route == 'pregled'">
+        <div class=" rounded-3 p-4 ms-lg-auto" v-if="route == 'pregled'" style="border: 2px dashed #e3e9ef;background-color: #f6f9fc !important;">
             <div class="py-2 px-xl-2">
                 <div class="widget mb-3">
                     <h2 class="widget-title text-center">Sažetak narudžbe</h2>

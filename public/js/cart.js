@@ -6175,65 +6175,85 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c("div", [
     _vm.route == "kosarica"
-      ? _c("div", { staticClass: "bg-white rounded-3 shadow-lg p-4" }, [
-          _c("div", { staticClass: "py-2 px-xl-2" }, [
-            _c("div", { staticClass: "text-center mb-4 pb-3 border-bottom" }, [
-              _c("h2", { staticClass: "h6 mb-3 pb-1" }, [_vm._v("Ukupno")]),
-              _vm._v(" "),
-              _c("h3", { staticClass: "fw-normal" }, [
-                _vm._v(
-                  _vm._s(
-                    _vm.$store.state.service.formatMainPrice(
-                      _vm.$store.state.cart.total
-                    )
-                  )
-                )
-              ]),
-              _vm._v(" "),
-              _vm.$store.state.cart.secondary_price
-                ? _c("h4", { staticClass: "fw-normal" }, [
+      ? _c(
+          "div",
+          {
+            staticClass: " rounded-3  p-4",
+            staticStyle: {
+              border: "2px dashed #e3e9ef",
+              "background-color": "#f6f9fc !important"
+            }
+          },
+          [
+            _c("div", { staticClass: "py-2 px-xl-2" }, [
+              _c(
+                "div",
+                { staticClass: "text-center mb-4 pb-3 border-bottom" },
+                [
+                  _c("h2", { staticClass: "h6 mb-3 pb-1" }, [_vm._v("Ukupno")]),
+                  _vm._v(" "),
+                  _c("h3", { staticClass: "fw-normal" }, [
                     _vm._v(
                       _vm._s(
-                        _vm.$store.state.service.formatSecondaryPrice(
+                        _vm.$store.state.service.formatMainPrice(
                           _vm.$store.state.cart.total
                         )
                       )
                     )
-                  ])
-                : _vm._e()
-            ]),
-            _vm._v(" "),
-            _c(
-              "a",
-              {
-                staticClass: "btn btn-primary btn-shadow d-block w-100 mt-4",
-                attrs: { href: _vm.checkouturl }
-              },
-              [_vm._v("NASTAVI NA NAPLATU")]
-            ),
-            _vm._v(" "),
-            _c("p", { staticClass: "small fw-light text-center mt-2" }, [
-              _vm._v("* Cijena dostave će biti izračunata na koraku 3: Dostava")
+                  ]),
+                  _vm._v(" "),
+                  _vm.$store.state.cart.secondary_price
+                    ? _c("h4", { staticClass: "fw-normal" }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.$store.state.service.formatSecondaryPrice(
+                              _vm.$store.state.cart.total
+                            )
+                          )
+                        )
+                      ])
+                    : _vm._e()
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "a",
+                {
+                  staticClass: "btn btn-primary btn-shadow d-block w-100 mt-4",
+                  attrs: { href: _vm.checkouturl }
+                },
+                [_vm._v("NASTAVI NA NAPLATU")]
+              ),
+              _vm._v(" "),
+              _c("p", { staticClass: "small fw-light text-center mt-2" }, [
+                _vm._v(
+                  "* Cijena dostave će biti izračunata na koraku 3: Dostava"
+                )
+              ])
             ])
-          ])
-        ])
+          ]
+        )
       : _vm._e(),
     _vm._v(" "),
     _vm.route == "naplata"
       ? _c(
           "div",
-          { staticClass: "bg-white rounded-3 shadow-lg p-4 ms-lg-auto" },
+          {
+            staticClass: " rounded-3  p-4 ms-lg-auto",
+            staticStyle: {
+              border: "2px dashed #e3e9ef",
+              "background-color": "#f6f9fc !important"
+            }
+          },
           [
             _c("div", { staticClass: "py-2 px-xl-2" }, [
               _c(
                 "div",
                 { staticClass: "widget mb-3" },
                 [
-                  _c("h2", { staticClass: "widget-title text-center" }, [
+                  _c("h2", { staticClass: "widget-title text-center mb-2" }, [
                     _vm._v("Sažetak narudžbe")
                   ]),
-                  _vm._v(" "),
-                  _c("hr", { staticClass: "mb-2" }),
                   _vm._v(" "),
                   _vm._l(_vm.$store.state.cart.items, function(item) {
                     return _c(
@@ -6512,7 +6532,13 @@ var render = function() {
     _vm.route == "pregled"
       ? _c(
           "div",
-          { staticClass: "bg-white rounded-3 shadow-lg p-4 ms-lg-auto" },
+          {
+            staticClass: " rounded-3 p-4 ms-lg-auto",
+            staticStyle: {
+              border: "2px dashed #e3e9ef",
+              "background-color": "#f6f9fc !important"
+            }
+          },
           [
             _c("div", { staticClass: "py-2 px-xl-2" }, [
               _vm._m(0),
