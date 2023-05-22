@@ -24,84 +24,67 @@
 
             @include('front.layouts.partials.success-session')
 
-            <div class="col-xl-3 col-sm-6 mb-grid-gutter"><a class="card h-100" href="#map" data-scroll="">
-                    <div class="card-body text-center"><i class="ci-location h3 mt-2 mb-4 text-primary"></i>
-                        <h3 class="h6 mb-2">Adresa</h3>
-                        <p class="fs-sm text-muted">Antuna Šoljana 33, <br>10090 Zagreb</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-xl-3 col-sm-6 mb-grid-gutter">
-                <div class="card h-100">
-                    <div class="card-body text-center"><i class="ci-time h3 mt-2 mb-4 text-primary"></i>
-                        <h3 class="h6 mb-3">Radno vrijeme</h3>
-                        <ul class="list-unstyled fs-sm text-muted mb-0">
-                            <li>Pon - pet: 08 - 20h</li>
-                            <li class="mb-0">Sub: 09 - 15h</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-3 col-sm-6  mb-grid-gutter">
-                <div class="card h-100">
-                    <div class="card-body text-center"><i class="ci-phone h3 mt-2 mb-4 text-primary"></i>
-                        <h3 class="h6 mb-3">Telefoni</h3>
-                        <ul class="list-unstyled fs-sm mb-0">
+            <div class="col-12 col-sm-6 mb-5">
 
-                            <li><a class="nav-link-style text-primary" href="tel:+385916047126"> +385916047126</a></li>
-                        </ul>
-                    </div>
-                </div>
+                        <h3 class=" mb-2">Impressum</h3>
+                        <p>
+
+                           <strong> ZUZI, obrt za uslužne djelatnosti, VL. MIRJANA VULIĆ ŠALDIĆ</strong></p>
+
+                <p> Sjedište: Antuna Šoljana 33, 10000 Zagreb<br><br>
+
+                            OIB: 69101336685<br>
+                            MBO: 97981036<br>
+                            Broj obrtnice: 21011606742<br>
+                    <br>
+                            IBAN: HR1624020061140345999<br>
+                            Banka: ERSTE & STEIERMÄRKISCHE BANK d.d. Rijeka<br>
+                            Swift: ESBCHR22<br><br>
+
+                            IBAN: HR0623900011101297120<br>
+                            Banka: HRVATSKA POSTANSKA BANKA d.d. Zagreb<br>
+                            Swift: HPBZHR2X
+                </p>
+
             </div>
-            <div class="col-xl-3 col-sm-6 mb-grid-gutter">
-                <div class="card h-100">
-                    <div class="card-body text-center"><i class="ci-mail h3 mt-2 mb-4 text-primary"></i>
-                        <h3 class="h6 mb-3">Email adresa</h3>
-                        <ul class="list-unstyled fs-sm mb-0">
-                            <li><a class="nav-link-style text-primary" href="mailto:info@zuzi.hr">info@zuzi.hr</a></li>
-                        </ul>
+
+            <div class="col-12 col-sm-6 mb-5 ">
+                <h2 class="h4 mb-4">Pošaljite upit</h2>
+                <form action="{{ route('poruka') }}" method="POST" class="mb-3">
+                    @csrf
+                    <div class="row g-3">
+                        <div class="col-sm-12">
+                            <label class="form-label" for="cf-name">Vaše ime:&nbsp;@include('back.layouts.partials.required-star')</label>
+                            <input class="form-control" type="text" name="name" id="cf-name" placeholder="">
+                            @error('name')<div class="text-danger font-size-sm">Molimo upišite vaše ime!</div>@enderror
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="cf-email">Email adresa:&nbsp;@include('back.layouts.partials.required-star')</label>
+                            <input class="form-control" type="email" id="cf-email" placeholder="" name="email">
+                            @error('email')<div class="invalid-feedback">Molimo upišite ispravno email adresu!</div>@enderror
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="cf-phone">Broj telefona:&nbsp;@include('back.layouts.partials.required-star')</label>
+                            <input class="form-control" type="text" id="cf-phone" placeholder="" name="phone">
+                            @error('phone')<div class="invalid-feedback">Molimo upišite broj telefona!</div>@enderror
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label" for="cf-message">Upit:&nbsp;@include('back.layouts.partials.required-star')</label>
+                            <textarea class="form-control" id="cf-message" rows="6" placeholder="" name="message"></textarea>
+                            @error('message')<div class="invalid-feedback">Molimo upišite poruku!</div>@enderror
+                            <button class="btn btn-primary mt-4" type="submit">Pošaljite upite</button>
+                        </div>
                     </div>
-                </div>
+                    <input type="hidden" name="recaptcha" id="recaptcha">
+                </form>
             </div>
+
         </div>
     </section>
 
 
-    <section class="container pt-grid-gutter">
-        <div class="row ">
-        <div class="col-lg-12 px-3 py-5 border-top">
-            <h2 class="h4 mb-4">Pošaljite upit</h2>
-            <form action="{{ route('poruka') }}" method="POST" class="mb-3">
-                @csrf
-                <div class="row g-3">
-                    <div class="col-sm-12">
-                        <label class="form-label" for="cf-name">Vaše ime:&nbsp;@include('back.layouts.partials.required-star')</label>
-                        <input class="form-control" type="text" name="name" id="cf-name" placeholder="">
-                        @error('name')<div class="text-danger font-size-sm">Molimo upišite vaše ime!</div>@enderror
-                    </div>
-                    <div class="col-sm-6">
-                        <label class="form-label" for="cf-email">Email adresa:&nbsp;@include('back.layouts.partials.required-star')</label>
-                        <input class="form-control" type="email" id="cf-email" placeholder="" name="email">
-                        @error('email')<div class="invalid-feedback">Molimo upišite ispravno email adresu!</div>@enderror
-                    </div>
-                    <div class="col-sm-6">
-                        <label class="form-label" for="cf-phone">Broj telefona:&nbsp;@include('back.layouts.partials.required-star')</label>
-                        <input class="form-control" type="text" id="cf-phone" placeholder="" name="phone">
-                        @error('phone')<div class="invalid-feedback">Molimo upišite broj telefona!</div>@enderror
-                    </div>
 
-                    <div class="col-12">
-                        <label class="form-label" for="cf-message">Upit:&nbsp;@include('back.layouts.partials.required-star')</label>
-                        <textarea class="form-control" id="cf-message" rows="6" placeholder="" name="message"></textarea>
-                        @error('message')<div class="invalid-feedback">Molimo upišite poruku!</div>@enderror
-                        <button class="btn btn-primary mt-4" type="submit">Pošaljite upite</button>
-                    </div>
-                </div>
-                <input type="hidden" name="recaptcha" id="recaptcha">
-            </form>
-        </div>
-        </div>
-    </section>
 
     <!-- Split section: Map + Contact form-->
     <div class="container-fluid px-0" id="map">
