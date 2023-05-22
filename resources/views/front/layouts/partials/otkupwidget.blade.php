@@ -1,19 +1,6 @@
 
 
 
-<section class="bg-white bg-size-cover bg-position-center " style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-sm-6  mt-md-n5 text-center text-sm-start">
-                <h2 class="text-dark fw-bold mb-3">Otkup knjiga</h2>
-                <p class="text-dark mb-0 d-block d-sm-none d-md-block">Otkup starih knjiga, otkupljujemo antikvarne i stare knjige, riječnike, enciklopedije, priručnike i ostale dobro očuvane knjige.</p>
-                <div class="mt-4 pt-2"><a class="btn btn-primary mb-2" href="#" role="button">Ispunite obrazac<i class="ci-arrow-right ms-2 me-n1"></i></a>   </div>
-            </div>
-            <div class="col-sm-6  p-5"><img class="d-block mx-auto mx-sm-0 rounded" src="{{ asset('media/img/otkup-knjiga-slika.jpg') }}"  alt="Otkup knjiga"></div>
-        </div>
-    </div>
-</section>
-
 
 <!-- Become Courier / Partner CTA-->
 <section class=" pb-4 pt-lg-5 pb-sm-5">

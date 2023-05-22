@@ -1,8 +1,7 @@
-<!-- {"title": "Product Carousel", "description": "Some description of a Product Carousel."} -->
-<section class=" py-5 {{ $data['css'] }}" style="z-index: 10;">
+
+<section class=" py-5 {{ $data['css'] }}" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});z-index: 10;-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover;background-size: cover;" >
     @if ($data['container'])
-        <div class="card px-lg-2 border-0 shadow-lg">
-            <div class="card-body px-4 pt-4 pb-4">
+
                 <h2 class="h3 text-center">{{ $data['title'] }}</h2>
                 <p class="text-muted-light text-center ">{{ $data['subtitle'] }}</p>
                 @if($data['url'] !='/')
@@ -18,8 +17,7 @@
                             </div>
                         @endforeach
                     </div>
-                </div>
-            </div>
+
         </div>
     @else
         <div class="container">
