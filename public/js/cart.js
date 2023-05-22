@@ -6437,18 +6437,22 @@ var render = function() {
                 2
               ),
               _vm._v(" "),
-              _c("h3", { staticClass: "fw-normal text-center my-2" }, [
-                _vm._v(
-                  _vm._s(
-                    _vm.$store.state.service.formatMainPrice(
-                      _vm.$store.state.cart.total
+              _c(
+                "h3",
+                { staticClass: "fw-normal text-primary text-center my-2" },
+                [
+                  _vm._v(
+                    _vm._s(
+                      _vm.$store.state.service.formatMainPrice(
+                        _vm.$store.state.cart.total
+                      )
                     )
                   )
-                )
-              ]),
+                ]
+              ),
               _vm._v(" "),
               _vm.$store.state.cart.secondary_price
-                ? _c("h4", { staticClass: "fw-normal text-center my-2" }, [
+                ? _c("h4", { staticClass: "fw-sm text-center my-2" }, [
                     _vm._v(
                       _vm._s(
                         _vm.$store.state.service.formatSecondaryPrice(
