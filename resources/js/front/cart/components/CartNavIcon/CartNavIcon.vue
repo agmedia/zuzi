@@ -50,6 +50,7 @@
         //
         mounted() {
             this.checkCart();
+            this.getCart();
 
             if (window.location.pathname == '/kosarica/success') {
                 this.$store.dispatch('flushCart');
@@ -85,6 +86,10 @@
                 });
 
                 this.$store.dispatch('checkCart', kos);
+            },
+
+            getCart() {
+                this.$store.dispatch('getCart')
             },
 
             /**

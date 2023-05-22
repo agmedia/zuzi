@@ -2252,6 +2252,7 @@ __webpack_require__.r(__webpack_exports__);
   //
   mounted: function mounted() {
     this.checkCart();
+    this.getCart();
     if (window.location.pathname == '/kosarica/success') {
       this.$store.dispatch('flushCart');
     }
@@ -2279,6 +2280,9 @@ __webpack_require__.r(__webpack_exports__);
         kos.push(cart.items[key].id);
       });
       this.$store.dispatch('checkCart', kos);
+    },
+    getCart: function getCart() {
+      this.$store.dispatch('getCart');
     },
     /**
      *

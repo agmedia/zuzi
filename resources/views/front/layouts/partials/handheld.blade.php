@@ -1,5 +1,5 @@
 <!-- Toolbar for handheld devices (Marketplace)-->
-<div class="handheld-toolbar">
+<div class="handheld-toolbar d-none">
     <div class="d-table table-layout-fixed w-100">
         @if (Request::is('knjige/*' ) || Request::is('knjige'))
        <!--     <a class="d-table-cell handheld-toolbar-item" href="#" data-bs-toggle="offcanvas" data-bs-target="#shop-sidebar"><span class="handheld-toolbar-icon"><i class="ci-filter-alt"></i></span><span class="handheld-toolbar-label">Filtriraj</span></a> -->

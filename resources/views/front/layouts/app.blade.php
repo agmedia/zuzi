@@ -119,7 +119,7 @@
 
     @include('front.layouts.partials.footer')
 
-   {{-- @include('front.layouts.partials.handheld')--}}
+    {{--@include('front.layouts.partials.handheld') --}}
 </div>
 
 <!-- Back To Top Button-->
