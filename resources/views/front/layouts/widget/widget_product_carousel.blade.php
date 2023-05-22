@@ -26,7 +26,7 @@
         @if($data['url'] !='/')
             <p class=" text-center">  <a class="btn btn-primary btn-shadow " href="{{ url($data['url']) }}">Pogledajte ponudu <i class="ci-arrow-right "></i></a></p>
         @endif
-        <div class="tns-carousel pt-4">
+        <div class="tns-carousel pt-4 pb-2">
             <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "nav": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 10},"500":{"items":2, "gutter": 18},"768":{"items":3, "gutter": 20}, "1100":{"items":5, "gutter": 30}}}'>
             @foreach ($data['items'] as $product)
                 <!-- Product-->
