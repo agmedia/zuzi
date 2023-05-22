@@ -13,7 +13,7 @@
             </a>
                 <div class="card-body pt-2" style="min-height: 126px;">
 
-                             <h3 class="product-title fs-sm"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
+                             <h3 class="product-title pt-2 fs-sm"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
 
                             @if ($product->main_price > $product->main_special)
                                 <div class="product-price"><small><span class="text-muted">NC 30 dana: {{ $product->main_special_text }}  @if($product->secondary_price_text) {{ $product->secondary_special_text }} @endif</span></small></div>
