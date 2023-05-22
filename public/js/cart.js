@@ -6459,70 +6459,8 @@ var render = function() {
                   ])
                 : _vm._e(),
               _vm._v(" "),
-              _c("p", { staticClass: "small fw-light text-center mt-4 mb-0" }, [
-                _c("span", { staticClass: "fw-normal" }, [
-                  _vm._v(
-                    _vm._s(
-                      _vm.$store.state.service.formatMainPrice(
-                        _vm.$store.state.service.calculateItemsTax(
-                          _vm.$store.state.cart.items
-                        )
-                      )
-                    )
-                  )
-                ]),
-                _vm._v(" PDV knjige i\n                "),
-                _c("span", { staticClass: "fw-normal" }, [
-                  _vm._v(
-                    _vm._s(
-                      _vm.$store.state.service.formatMainPrice(
-                        _vm.$store.state.service.calculateItemsTax(
-                          _vm.$store.state.cart.total -
-                            _vm.$store.state.cart.subtotal
-                        )
-                      )
-                    )
-                  )
-                ]),
-                _vm._v(" PDV dostava\n            ")
-              ]),
-              _vm._v(" "),
-              _vm.$store.state.cart.secondary_price
-                ? _c(
-                    "p",
-                    { staticClass: "small fw-light text-center mt-2 mb-0" },
-                    [
-                      _c("span", { staticClass: "fw-normal" }, [
-                        _vm._v(
-                          _vm._s(
-                            _vm.$store.state.service.formatSecondaryPrice(
-                              _vm.$store.state.service.calculateItemsTax(
-                                _vm.$store.state.cart.items
-                              )
-                            )
-                          )
-                        )
-                      ]),
-                      _vm._v(" PDV knjige i\n                "),
-                      _c("span", { staticClass: "fw-normal" }, [
-                        _vm._v(
-                          _vm._s(
-                            _vm.$store.state.service.formatSecondaryPrice(
-                              _vm.$store.state.service.calculateItemsTax(
-                                _vm.$store.state.cart.total -
-                                  _vm.$store.state.cart.subtotal
-                              )
-                            )
-                          )
-                        )
-                      ]),
-                      _vm._v(" PDV dostava\n            ")
-                    ]
-                  )
-                : _vm._e(),
-              _vm._v(" "),
               _c("p", { staticClass: "small text-center mt-0 mb-0" }, [
-                _vm._v("*Uračunato u cijenu")
+                _vm._v("PDV uračunat u cijeni")
               ])
             ])
           ]
