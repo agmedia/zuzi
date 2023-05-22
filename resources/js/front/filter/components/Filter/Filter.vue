@@ -175,7 +175,7 @@
             this.checkQuery(this.$route);
             this.checkCategory();
             this.getCategories();
-            console.log(this.category, this.subcategory);
+
 
 
             if (this.author == '') {
@@ -200,6 +200,7 @@
 
                 axios.post('filter/getCategories', { params }).then(response => {
                     this.categories = response.data;
+                    console.log(this.categories);
                 });
             },
 

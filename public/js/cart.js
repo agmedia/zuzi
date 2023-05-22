@@ -2813,7 +2813,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     this.checkQuery(this.$route);
     this.checkCategory();
     this.getCategories();
-    console.log(this.category, this.subcategory);
     if (this.author == '') {
       this.show_authors = true;
       this.getAuthors();
@@ -2835,6 +2834,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         params: params
       }).then(function (response) {
         _this.categories = response.data;
+        console.log(_this.categories);
       });
     },
     /**
