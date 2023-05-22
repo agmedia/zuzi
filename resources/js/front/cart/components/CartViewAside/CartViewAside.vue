@@ -38,7 +38,7 @@
                     </div>
                 </ul>
                 <h3 class="fw-normal text-primary text-center my-2">{{ $store.state.service.formatMainPrice($store.state.cart.total) }}</h3>
-                <h4 v-if="$store.state.cart.secondary_price" class="fw-sm text-center my-2">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</h4>
+                <h4 v-if="$store.state.cart.secondary_price" class="fs-sm text-center my-2">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</h4>
              <!--  <p class="small fw-light text-center mt-4 mb-0">
                     <span class="fw-normal">{{ $store.state.service.formatMainPrice($store.state.service.calculateItemsTax($store.state.cart.items)) }}</span> PDV knjige i
                     <span class="fw-normal">{{ $store.state.service.formatMainPrice($store.state.service.calculateItemsTax($store.state.cart.total - $store.state.cart.subtotal)) }}</span> PDV dostava
@@ -68,7 +68,7 @@
                     </div>
                 </ul>
                 <h3 class="fw-normal text-primary text-center my-2">{{ $store.state.service.formatMainPrice($store.state.cart.total) }}</h3>
-                <h4 v-if="$store.state.cart.secondary_price" class="fw-sm text-center my-2">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</h4>
+                <h4 v-if="$store.state.cart.secondary_price" class="fs-sm text-center my-2">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</h4>
               <!--  <p class="small fw-light text-center mt-4 mb-0">
                     <span class="fw-normal">{{ $store.state.service.formatMainPrice($store.state.service.calculateItemsTax($store.state.cart.items)) }}</span> PDV knjige i
                     <span class="fw-normal">{{ $store.state.service.formatMainPrice($store.state.service.calculateItemsTax($store.state.cart.total - $store.state.cart.subtotal)) }}</span> PDV dostava
