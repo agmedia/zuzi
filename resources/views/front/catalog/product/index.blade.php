@@ -137,20 +137,16 @@
                                 @else
                                     <span class="h3 fw-medium text-primary me-1">{{ $prod->main_price_text }}</span>
                                 @endif
-                                @if ($prod->quantity)
-                                    <span class="badge bg-success align-middle mt-n2">Na stanju</span>
-                                @else
-                                    <span class="badge bg-fourth align-middle mt-n2">Nedostupno</span>
-                                @endif
+
                             </div>
 
                             @if($prod->secondary_price_text)
                                 <div class="mb-3 mt-1">
                                     @if ($prod->main_price > $prod->main_special)
-                                        <span class=" fw-normal text-muted me-1">{{ $prod->secondary_special_text }}</span>
-                                        <del class="text-muted fw-normal me-3">{{ $prod->secondary_price_text }}</del>
+                                        <span class=" fs-sm text-muted me-1">NC zadnjih 30 dana: {{ $prod->secondary_special_text }}</span>
+                                        <del class="text-muted fs-sm me-3">{{ $prod->secondary_price_text }}</del>
                                     @else
-                                        <span class="fw-normal text-muted me-1">{{ $prod->secondary_price_text }}</span>
+                                        <span class="fs-sm text-muted me-1">{{ $prod->secondary_price_text }}</span>
                                     @endif
                                 </div>
                             @endif
@@ -168,9 +164,19 @@
                                 @if ($prod->publisher)
                                     <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Izdavač</span><a class="product-meta text-primary" href="{{ route('catalog.route.publisher', ['publisher' => $prod->publisher]) }}">{{ $prod->publisher->title }}</a></li>
                                 @endif
-                                <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Šifra</span><span class="text-muted">{{ $prod->sku }}</span></li>
+                                <li class="d-flex justify-content-between mb-2 bg-gray-50 pb-2 border-bottom"><span class="text-dark fw-medium">Šifra</span><span class="text-muted">{{ $prod->sku }}</span></li>
 
                                     <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Stanje</span><span class="text-muted">{{ $prod->condition ?: '...' }}</span></li>
+
+                                    @if ($prod->quantity)
+
+                                        <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Dostupnost</span><span class="text-muted">Na stanju</span></li>
+
+
+                                    @else
+                                        <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Dostupnost</span><span class="text-muted">Rasprodano</span></li>
+                                    @endif
+
 
 
                                     {{--
@@ -184,7 +190,7 @@
                             </ul>
 
                             <div class="row align-items-center pt-1">
-                                <div class="col-lg-12 ">
+                                <div class="col-lg-12 fs-md">
 
                                    {!! $prod->description !!}
 
@@ -208,21 +214,22 @@
     </div>
 
     <!-- Product carousel (You may also like)-->
-    <div class="container py-5 my-md-3">
-        <h2 class="h3 text-center pb-4">Preporučamo</h2>
-        <div class="tns-carousel tns-controls-static tns-controls-outside">
-            <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "nav": true, "autoHeight": true, "responsive": {"0":{"items":2, "gutter": 10},"500":{"items":2, "gutter": 18},"768":{"items":3, "gutter": 20}, "1100":{"items":5, "gutter": 30}}}'>
-                @foreach ($cat->products()->get()->take(10) as $cat_product)
-                    @if ($cat_product->id  != $prod->id)
-                        <div>
-                            @include('front.catalog.category.product', ['product' => $cat_product])
-                        </div>
-                    @endif
-                @endforeach
+    <div class="container-fluid py-5 bg-white bg-size-cover bg-position-center" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});">
+        <div class="container  my-md-3" >
+            <h2 class="h3 text-center pb-4">Izdvojeno iz kategorije</h2>
+            <div class="tns-carousel tns-controls-static tns-controls-outside">
+                <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "nav": true, "autoHeight": true, "responsive": {"0":{"items":2, "gutter": 10},"500":{"items":2, "gutter": 18},"768":{"items":3, "gutter": 20}, "1100":{"items":5, "gutter": 30}}}'>
+                    @foreach ($cat->products()->get()->take(10) as $cat_product)
+                        @if ($cat_product->id  != $prod->id)
+                            <div>
+                                @include('front.catalog.category.product', ['product' => $cat_product])
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>
-
 @endsection
 
 @push('js_after')

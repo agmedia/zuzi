@@ -71,7 +71,7 @@
   --cz-body-color: #111;
   --cz-body-bg: #fff;
   --cz-border-width: 1px;
-  --cz-border-style: solid;
+  --cz-border-style: dashed;
   --cz-border-color: #e3e9ef;
   --cz-border-color-translucent: rgba(0, 0, 0, 0.175);
   --cz-border-radius: 0.3125rem;
