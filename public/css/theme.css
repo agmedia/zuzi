@@ -16688,6 +16688,51 @@ a.nav-link:hover .media-tab-media {
     background-color: #373f50;
   }
 }
+
+@media (min-width: 300px) {
+    .navbar-sticky.navbar-stuck {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        -webkit-animation: navbar-show 0.25s;
+        animation: navbar-show 0.25s;
+        box-shadow: 0 0.25rem 0.5625rem -0.0625rem rgba(0, 0, 0, 0.03), 0 0.275rem 1.25rem -0.0625rem rgba(0, 0, 0, 0.05);
+        z-index: 1030;
+    }
+    .navbar-sticky.navbar-stuck .navbar-stuck-toggler {
+        display: flex;
+    }
+    .navbar-sticky.navbar-stuck .navbar-stuck-barnd {
+        display: block !important;
+    }
+
+    .navbar-sticky.navbar-stuck .navbar-brand img {
+        width:50px
+    }
+    .navbar-sticky.navbar-stuck .navbar-stuck-menu {
+        display: none;
+    }
+    .navbar-sticky.navbar-stuck .navbar-stuck-menu.show {
+        display: block;
+    }
+    .navbar-sticky.navbar-stuck.right-15 {
+        right: 15px;
+        width: calc(100% - 15px);
+    }
+    .navbar-sticky.position-absolute.navbar-light, .navbar-sticky.position-absolute.navbar-dark {
+        background-color: transparent;
+    }
+    .navbar-sticky.position-absolute.navbar-stuck {
+        position: fixed !important;
+    }
+    .navbar-sticky.position-absolute.navbar-stuck.navbar-light {
+        background-color: #fff;
+    }
+    .navbar-sticky.position-absolute.navbar-stuck.navbar-dark {
+        background-color: #373f50;
+    }
+}
 .fixed-top.right-15,
 .fixed-bottom.right-15 {
   right: 15px;
