@@ -21,7 +21,8 @@
         "laravel/tinker": "^2.6",
         "livewire/livewire": "^2.0",
         "phpoffice/phpspreadsheet": "^1.18",
-        "silber/bouncer": "v1.0.0-rc.10"
+        "silber/bouncer": "v1.0.0-rc.10",
+        "ext-simplexml": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.5",

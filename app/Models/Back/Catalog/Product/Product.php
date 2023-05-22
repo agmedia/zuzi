@@ -234,7 +234,7 @@ class Product extends Model
     {
         $this->old_product = $this->setHistoryProduct();
 
-        $slug = $this->resolveSlug('update');
+        $slug = $this->request->slug;//$this->resolveSlug('update');
 
         $updated = $this->update([
             'author_id'        => $this->request->author_id ?: 6,
@@ -323,10 +323,9 @@ class Product extends Model
 
 
     /**
-     * @param string  $type
-     * @param Product $product
+     * @param string $type
      *
-     * @return false
+     * @return mixed
      */
     public function addHistoryData(string $type)
     {
@@ -412,9 +411,9 @@ class Product extends Model
 
 
     /**
-     * Set Product Model request variable.
-     *
      * @param $request
+     *
+     * @return void
      */
     private function setRequest($request)
     {
@@ -459,12 +458,14 @@ class Product extends Model
     /**
      * @param int $product_id
      *
-     * @return array
+     * @return bool
      */
-    private function resolveCategories(int $product_id)
+    private function resolveCategories(int $product_id): bool
     {
-        if ($this->request->category) {
-            return ProductCategory::storeData(intval($this->request->category), $product_id);
+        if ( ! empty($this->request->category) && is_array($this->request->category)) {
+            ProductCategory::storeData($this->request->category, $product_id);
+
+            return true;
         }
 
         return false;
@@ -472,6 +473,7 @@ class Product extends Model
 
 
     /**
+     * @param string       $target
      * @param Request|null $request
      *
      * @return string

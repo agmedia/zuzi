@@ -17,15 +17,11 @@ class ProductHelper
      *
      * @return string
      */
-    public static function categoryString(Product $product, Category $category = null, Category $subcategory = null)
+    public static function categoryString(Product $product, Category $category = null, Category $subcategory = null): string
     {
-        if ( ! $category) {
-            $category = $product->category();
-        }
-
-        if ( ! $subcategory) {
-            $subcategory = $product->subcategory();
-        }
+        $data        = static::resolveCategories($product, $category, $subcategory);
+        $category    = $data['category'];
+        $subcategory = $data['subcategory'];
 
         $catstring = '<span class="fs-xs ms-1"><a href="' . route('catalog.route', ['group' => Str::slug($category->group), 'cat' => $category->slug]) . '">' . $category->title . '</a> ';
 
@@ -47,15 +43,11 @@ class ProductHelper
      *
      * @return string
      */
-    public static function url(Product $product, Category $category = null, Category $subcategory = null)
+    public static function url(Product $product, Category $category = null, Category $subcategory = null): string
     {
-        if ( ! $category) {
-            $category = $product->category();
-        }
-
-        if ( ! $subcategory) {
-            $subcategory = $category->subcategories()->first();
-        }
+        $data        = static::resolveCategories($product, $category, $subcategory);
+        $category    = $data['category'];
+        $subcategory = $data['subcategory'];
 
         if ($subcategory) {
             return Str::slug($category->group) . '/' . $category->slug . '/' . $subcategory->slug . '/' . $product->slug;
@@ -66,6 +58,38 @@ class ProductHelper
         }
 
         return '/';
+    }
+
+
+    /**
+     * @param Product       $product
+     * @param Category|null $category
+     * @param Category|null $subcategory
+     *
+     * @return array
+     */
+    public static function resolveCategories(Product $product, Category $category = null, Category $subcategory = null): array
+    {
+        if ( ! $category) {
+            $category = $product->category();
+        }
+
+        if ( ! $subcategory) {
+            $psub = $product->subcategory();
+
+            if ($psub) {
+                foreach ($category->subcategories()->get() as $sub) {
+                    if ($sub->id == $psub->id) {
+                        $subcategory = $psub;
+                    }
+                }
+            }
+        }
+
+        return [
+            'category'    => $category,
+            'subcategory' => $subcategory
+        ];
     }
 
 
