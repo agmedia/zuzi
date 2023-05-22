@@ -6452,7 +6452,7 @@ var render = function() {
               ),
               _vm._v(" "),
               _vm.$store.state.cart.secondary_price
-                ? _c("h4", { staticClass: "fw-sm text-center my-2" }, [
+                ? _c("h4", { staticClass: "fs-sm text-center my-2" }, [
                     _vm._v(
                       _vm._s(
                         _vm.$store.state.service.formatSecondaryPrice(
@@ -6597,7 +6597,7 @@ var render = function() {
               ),
               _vm._v(" "),
               _vm.$store.state.cart.secondary_price
-                ? _c("h4", { staticClass: "fw-sm text-center my-2" }, [
+                ? _c("h4", { staticClass: "fs-sm text-center my-2" }, [
                     _vm._v(
                       _vm._s(
                         _vm.$store.state.service.formatSecondaryPrice(
