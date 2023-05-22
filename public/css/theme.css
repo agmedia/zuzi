@@ -16663,7 +16663,7 @@ a.nav-link:hover .media-tab-media {
   }
 
     .navbar-sticky.navbar-stuck .navbar-brand img {
-     width:70px
+     width:70px!important;
     }
   .navbar-sticky.navbar-stuck .navbar-stuck-menu {
     display: none;
