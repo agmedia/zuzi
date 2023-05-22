@@ -1,5 +1,5 @@
-
-<section class=" py-5 {{ $data['css'] }}" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});z-index: 10;-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover;background-size: cover;" >
+  dd
+<section class="py-5 {{ $data['css'] }}" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});z-index: 10;-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover;background-size: cover;" >
     @if ($data['container'])
 
                 <h2 class="h3 text-center">{{ $data['title'] }}</h2>
