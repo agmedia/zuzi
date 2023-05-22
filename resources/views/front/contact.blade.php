@@ -73,7 +73,7 @@
                             <label class="form-label" for="cf-message">Upit:&nbsp;@include('back.layouts.partials.required-star')</label>
                             <textarea class="form-control" id="cf-message" rows="6" placeholder="" name="message"></textarea>
                             @error('message')<div class="invalid-feedback">Molimo upišite poruku!</div>@enderror
-                            <button class="btn btn-primary mt-4" type="submit">Pošaljite upite</button>
+                            <button class="btn btn-primary mt-4" type="submit">Pošaljite upit</button>
                         </div>
                     </div>
                     <input type="hidden" name="recaptcha" id="recaptcha">
