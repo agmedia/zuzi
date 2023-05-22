@@ -25,12 +25,12 @@
                             <h3 class="accordion-header " >
 
                                 <!--type="button"  -->
-                                <a :href="category.url" class="accordion-button py-1 none collapsed text-white" data-bs-toggle="collapse" data-bs-target="#fruits" aria-expanded="false" aria-controls="fruits" role="link">
-                                    {{ category.title }} <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
+                                <a :href="category.url" class="accordion-button py-1 none collapsed text-white  " data-bs-toggle="collapse" :data-bs-target="'#' + category.id" aria-expanded="false" :aria-controls="category.id" role="link">
+                                    {{ category.title }} {{ category.id }} <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
                                 </a>
                             </h3>
 
-                         <div class="collapse" id="fruits"  data-bs-parent="#shop-categories">
+                             <div class="collapse" :id="category.id"  data-bs-parent="#shop-categories">
                                 <div class="px-grid-gutter pt-1 pb-4">
                                     <div class="widget widget-links">
                                         <ul class="widget-list" v-for="sub in subcategory" >
@@ -42,7 +42,7 @@
                                     </div>
                                 </div>
                              </div>
-                      </div>
+                        </div>
                     </div>
 
                     <button type="button" class="btn btn-outline-light mt-4 " v-if="category && !subcategory" onclick="history.back()"><i class="ci-arrow-left"></i> Povratak</button>

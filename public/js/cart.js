@@ -6895,13 +6895,13 @@ var render = function() {
                               "a",
                               {
                                 staticClass:
-                                  "accordion-button py-1 none collapsed text-white",
+                                  "accordion-button py-1 none collapsed text-white  ",
                                 attrs: {
                                   href: category.url,
                                   "data-bs-toggle": "collapse",
-                                  "data-bs-target": "#fruits",
+                                  "data-bs-target": "#" + category.id,
                                   "aria-expanded": "false",
-                                  "aria-controls": "fruits",
+                                  "aria-controls": category.id,
                                   role: "link"
                                 }
                               },
@@ -6909,6 +6909,8 @@ var render = function() {
                                 _vm._v(
                                   "\n                                    " +
                                     _vm._s(category.title) +
+                                    " " +
+                                    _vm._s(category.id) +
                                     " "
                                 ),
                                 _c(
@@ -6936,7 +6938,7 @@ var render = function() {
                             {
                               staticClass: "collapse",
                               attrs: {
-                                id: "fruits",
+                                id: category.id,
                                 "data-bs-parent": "#shop-categories"
                               }
                             },
@@ -7415,7 +7417,7 @@ var render = function() {
                       _vm._v(" "),
                       _c("div", { staticClass: "product-price" }, [
                         product.special
-                          ? _c("span", { staticClass: "text-accent" }, [
+                          ? _c("span", { staticClass: "text-primary" }, [
                               _vm._v(_vm._s(product.main_special_text))
                             ])
                           : _vm._e()
@@ -7423,7 +7425,7 @@ var render = function() {
                       _vm._v(" "),
                       _c("div", { staticClass: "product-price" }, [
                         !product.special
-                          ? _c("span", { staticClass: "text-accent" }, [
+                          ? _c("span", { staticClass: "text-primary" }, [
                               _vm._v(_vm._s(product.main_price_text))
                             ])
                           : _vm._e()

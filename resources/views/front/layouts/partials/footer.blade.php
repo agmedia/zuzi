@@ -3,13 +3,13 @@
 
     <div class="container pt-2 pb-3">
         <div class="row">
-            <div class="col-md-6 text-center text-md-start mb-4">
+            <div class="col-md-6  text-center text-md-start mb-4">
 
-                <h3 class="widget-title fw-700 text-white"><span>O nama</span></h3>
+                <h3 class="widget-title fw-700 d-none d-md-block text-white"><span>O nama</span></h3>
                 <p class=" text-white  fs-md pb-1 d-none d-sm-block">Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja<br> i naručivanja željenih naslova putem web stranice zuzi.hr<br> iz udobnosti naslonjača.</p>
 
 
-                <div class="widget mt-4 text-md-nowrap text-start">
+                <div class="widget mt-4 text-md-nowrap text-center text-sm-start">
                     <a class="btn-social bs-light bs-instagram me-2 mb-2" href="https://www.instagram.com/antikvarijat_biblos/"><i class="ci-instagram"></i></a>
                     <a class="btn-social bs-light bs-facebook me-2 mb-2" href="https://www.facebook.com/AntikvarijatBiblos/"><i class="ci-facebook"></i></a>
                 </div>

@@ -21,20 +21,21 @@
     <div class="row pt-4 mt-2 mt-lg-3 mb-md-2">
         <div class="col-lg-6 mb-grid-gutter">
             <div class="d-block d-sm-flex justify-content-between align-items-center bg-dark rounded-3 shadow">
-                <div class="pt-5 py-sm-5 px-4 ps-md-5  text-center text-sm-start">
+                <div class="pt-5 py-sm-5 px-4 ps-md-5 mb-3 text-center text-sm-start">
                     <h2 class="h3 text-white fw-bold">Rijetke knjige</h2>
-                    <p class=" pb-2 text-white">Pogledajte našu kolekeciju popularnih i rijetkih naslova.</p><a class="btn btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
-                </div><img class="d-block mx-auto mx-sm-0 rounded-end" src="{{ asset('media/img/rijetke.jpg') }}"  width="250" alt="Become a Courier">
+                    <p class=" pb-2 text-white">Pogledajte našu kolekeciju popularnih i rijetkih naslova.</p><a class="btn mb-3 btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
+                </div>
+                <img class="d-block mx-auto mx-sm-0 rounded-end rounded-xs pb-4 pb-sm-0" src="{{ asset('media/img/rijetke.jpg') }}"  width="250" alt="Become a Courier">
             </div>
         </div>
         <div class="col-lg-6 mb-grid-gutter">
             <div class="d-block d-sm-flex justify-content-between align-items-center bg-dark rounded-3 shadow">
-                <div class="pt-5 py-sm-5 px-4 ps-md-5  text-center text-sm-start">
+                <div class="pt-5 py-sm-5 px-4 ps-md-5 mb-3   text-center text-sm-start">
                     <h2 class="h3 fw-bold text-white">Svezalice - pidžame za knjige</h2>
                     <p class="text-white pb-2">Za praktičnije čuvanje knjige, ručno izrađeno s puno ljubavi.
 
-                        </p><a class="btn btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
-                </div><img class="d-block mx-auto mx-sm-0 rounded-end" src="{{ asset('media/img/svezalice.jpg') }}" width="250"    alt="Become a Partner">
+                        </p><a class="btn btn-primary mb-3" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
+                </div><img class="d-block mx-auto mx-sm-0 rounded-end rounded-xs pb-sm-0 pb-4" src="{{ asset('media/img/svezalice.jpg') }}" width="250"    alt="Become a Partner">
             </div>
         </div>
     </div>
@@ -46,7 +47,7 @@
     <div class="container pt-lg-1">
 
         <div class="row pt-lg-2 text-center">
-            <div class="col-lg-3 col-sm-6 mb-grid-gutter">
+            <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-truck text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
                         <h6 class="text-light fs-base mb-1">Brza dostava</h6>
@@ -54,7 +55,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-sm-6 mb-grid-gutter">
+            <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-security-check text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
                         <h6 class="text-light fs-base mb-1">Sigurna kupovina</h6>
@@ -62,7 +63,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-sm-6 mb-grid-gutter">
+            <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-bag text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
                         <h6 class="text-light fs-base mb-1">Besplatna dostava</h6>
@@ -70,7 +71,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-sm-6 mb-grid-gutter">
+            <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-locked text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
                         <h6 class="text-light fs-base mb-1">Zaštita kupca</h6>

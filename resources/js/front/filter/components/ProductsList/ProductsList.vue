@@ -39,10 +39,10 @@
                             <span class="text-muted"  v-if="product.special"><small>NC 30 dana: {{ product.main_price_text }} </small></span>
                         </div>
                         <div class="product-price">
-                            <span class="text-accent" v-if="product.special">{{ product.main_special_text }}</span>
+                            <span class="text-primary" v-if="product.special">{{ product.main_special_text }}</span>
                          </div>
                         <div class="product-price">
-                            <span class="text-accent" v-if="!product.special">{{ product.main_price_text }}</span>
+                            <span class="text-primary" v-if="!product.special">{{ product.main_price_text }}</span>
 
                         </div>
                     </div>

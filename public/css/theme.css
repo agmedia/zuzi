@@ -18705,7 +18705,12 @@ html:not([dir=rtl]) .range-slider-ui.noUi-horizontal .noUi-handle {
   color: #7d879c;
   font-size: 0.6875rem;
 }
+@media (max-width: 991.98px) {
 
+.rounded-xs {
+    border-radius: var(--cz-border-radius) !important;
+}
+}
 @media (max-width: 991.98px) {
   .handheld-toolbar-enabled .footer {
     padding-bottom: 3.5rem;
