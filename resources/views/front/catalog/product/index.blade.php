@@ -198,7 +198,7 @@
                             </div>
 
                             <div class=" pt-0 pb-4 mb-1">
-                                <div class="mt-3"><span class="d-inline-block align-middle text-muted fs-sm me-3 mt-1 mb-2">Podijeli:</span>
+                                <div class="mt-2">
                                     <!-- ShareThis BEGIN --><div class="sharethis-inline-share-buttons"></div><!-- ShareThis END -->
                                 </div>
                             </div>
