@@ -17720,7 +17720,7 @@ a.nav-link:hover .media-tab-media {
   width: 1.625rem;
   height: 1.625rem;
   margin-left: -0.8125rem;
-  border-radius: 50%;
+  border-radius: 3px;
   font-size: 0.875rem;
   line-height: 1.625rem;
 }

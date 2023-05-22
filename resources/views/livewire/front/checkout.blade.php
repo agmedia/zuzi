@@ -82,12 +82,9 @@
         @endif
 
         @if (auth()->guest())
-            <div class="alert alert-secondary d-flex mb-3" role="alert">
-                <div class="alert-icon">
-                    <i class="ci-user"></i>
-                </div>
-                <div><a data-bs-toggle="collapse" href="#collapseLogin" role="button" aria-expanded="false" aria-controls="collapseLogin" class="alert-link">Prijava </a> za registrirane korisnike!</div>
-            </div>
+
+                <div class="mb-3"><a data-bs-toggle="collapse" href="#collapseLogin" role="button" aria-expanded="false" aria-controls="collapseLogin" class="alert-link">Prijava za registrirane kupce </a> </div>
+
 
             @if (session()->has('error'))
                 <div class="alert alert-primary alert-dismissible fade show" role="alert">
@@ -97,9 +94,8 @@
             @endif
 
             <div id="collapseLogin" aria-expanded="false" class="collapse">
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div class="row mb-3">
+
+                        <div class="row mt-3 mb-5">
                             <div class="col-sm-6">
                                 <div class="mb-3">
                                     <label class="form-label" for="si-email">Email adresa</label>
@@ -124,13 +120,12 @@
                                         <input class="form-check-input" type="checkbox" wire:model.defer="login.remember" id="si-remember">
                                         <label class="form-check-label" for="si-remember">Zapamti me</label>
                                     </div>
-                                    <a class="fs-sm" href="{{ route('register') }}">Registriraj se..!</a>
+                                    <a class="fs-sm" href="{{ route('register') }}">Registriraj se</a>
                                 </div>
                                 <button class="btn btn-primary btn-shadow d-block w-100" wire:click="authUser()" type="button">Prijava</button>
                             </div>
                         </div>
-                    </div>
-                </div>
+
             </div>
         @endif
 
