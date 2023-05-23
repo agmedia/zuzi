@@ -1,7 +1,7 @@
 <template>
     <div>
-        <div class="d-flex pt-3 pb-2 mt-1">
-            <h2 class="h6 text-primary mb-0">Artikli</h2>
+        <div class="d-block pt-3 pb-2 mt-1 text-center text-sm-start">
+            <h2 class="h6 text-primary  mb-0">Artikli</h2>
         </div>
         <div class="d-flex pt-3 pb-2 mt-1" v-if="!$store.state.cart.count">
             <p class="text-dark mb-0">Vaša košarica je prazna!</p>
@@ -34,7 +34,7 @@
             </div>
         </div>
 
-        <div class="d-flex pt-3 pb-4 pb-sm-5 mt-1" v-if="show_buttons">
+        <div class="d-block pt-3 pb-4 pb-sm-5 mt-1 text-center text-sm-start" v-if="show_buttons">
             <a class="btn btn-outline-dark btn-sm ps-2" :href="continueurl"><i class="ci-arrow-left me-2"></i>Natrag na trgovinu</a>
         </div>
     </div>

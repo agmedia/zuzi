@@ -6123,19 +6123,26 @@ var render = function() {
       }),
       _vm._v(" "),
       _vm.show_buttons
-        ? _c("div", { staticClass: "d-flex pt-3 pb-4 pb-sm-5 mt-1" }, [
-            _c(
-              "a",
-              {
-                staticClass: "btn btn-outline-dark btn-sm ps-2",
-                attrs: { href: _vm.continueurl }
-              },
-              [
-                _c("i", { staticClass: "ci-arrow-left me-2" }),
-                _vm._v("Natrag na trgovinu")
-              ]
-            )
-          ])
+        ? _c(
+            "div",
+            {
+              staticClass:
+                "d-block pt-3 pb-4 pb-sm-5 mt-1 text-center text-sm-start"
+            },
+            [
+              _c(
+                "a",
+                {
+                  staticClass: "btn btn-outline-dark btn-sm ps-2",
+                  attrs: { href: _vm.continueurl }
+                },
+                [
+                  _c("i", { staticClass: "ci-arrow-left me-2" }),
+                  _vm._v("Natrag na trgovinu")
+                ]
+              )
+            ]
+          )
         : _vm._e()
     ],
     2
@@ -6146,9 +6153,11 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "d-flex pt-3 pb-2 mt-1" }, [
-      _c("h2", { staticClass: "h6 text-primary mb-0" }, [_vm._v("Artikli")])
-    ])
+    return _c(
+      "div",
+      { staticClass: "d-block pt-3 pb-2 mt-1 text-center text-sm-start" },
+      [_c("h2", { staticClass: "h6 text-primary  mb-0" }, [_vm._v("Artikli")])]
+    )
   }
 ]
 render._withStripped = true
@@ -6186,35 +6195,31 @@ var render = function() {
           },
           [
             _c("div", { staticClass: "py-2 px-xl-2" }, [
-              _c(
-                "div",
-                { staticClass: "text-center mb-4 pb-3 border-bottom" },
-                [
-                  _c("h2", { staticClass: "h6 mb-3 pb-1" }, [_vm._v("Ukupno")]),
-                  _vm._v(" "),
-                  _c("h3", { staticClass: "fw-normal" }, [
-                    _vm._v(
-                      _vm._s(
-                        _vm.$store.state.service.formatMainPrice(
-                          _vm.$store.state.cart.total
-                        )
+              _c("div", { staticClass: "text-center mb-2 pb-2" }, [
+                _c("h2", { staticClass: "h6 mb-3 pb-1" }, [_vm._v("Ukupno")]),
+                _vm._v(" "),
+                _c("h3", { staticClass: "fw-bold text-primary" }, [
+                  _vm._v(
+                    _vm._s(
+                      _vm.$store.state.service.formatMainPrice(
+                        _vm.$store.state.cart.total
                       )
                     )
-                  ]),
-                  _vm._v(" "),
-                  _vm.$store.state.cart.secondary_price
-                    ? _c("h4", { staticClass: "fw-normal" }, [
-                        _vm._v(
-                          _vm._s(
-                            _vm.$store.state.service.formatSecondaryPrice(
-                              _vm.$store.state.cart.total
-                            )
+                  )
+                ]),
+                _vm._v(" "),
+                _vm.$store.state.cart.secondary_price
+                  ? _c("h4", { staticClass: "fs-sm" }, [
+                      _vm._v(
+                        _vm._s(
+                          _vm.$store.state.service.formatSecondaryPrice(
+                            _vm.$store.state.cart.total
                           )
                         )
-                      ])
-                    : _vm._e()
-                ]
-              ),
+                      )
+                    ])
+                  : _vm._e()
+              ]),
               _vm._v(" "),
               _c(
                 "a",
@@ -6223,13 +6228,7 @@ var render = function() {
                   attrs: { href: _vm.checkouturl }
                 },
                 [_vm._v("NASTAVI NA NAPLATU")]
-              ),
-              _vm._v(" "),
-              _c("p", { staticClass: "small fw-light text-center mt-2" }, [
-                _vm._v(
-                  "* Cijena dostave će biti izračunata na koraku 3: Dostava"
-                )
-              ])
+              )
             ])
           ]
         )
@@ -6439,7 +6438,7 @@ var render = function() {
               _vm._v(" "),
               _c(
                 "h3",
-                { staticClass: "fw-normal text-primary text-center my-2" },
+                { staticClass: "fw-bold text-primary text-center my-2" },
                 [
                   _vm._v(
                     _vm._s(
@@ -6584,7 +6583,7 @@ var render = function() {
               _vm._v(" "),
               _c(
                 "h3",
-                { staticClass: "fw-normal text-primary text-center my-2" },
+                { staticClass: "fw-bold text-primary text-center my-2" },
                 [
                   _vm._v(
                     _vm._s(
