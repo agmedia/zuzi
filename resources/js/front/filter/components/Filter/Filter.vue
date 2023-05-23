@@ -10,42 +10,74 @@
                 <!-- Categories-->
                 <div class="widget widget-categories mb-2 pb-2 " v-if="categories">
 
-                    <h3 class="widget-title text-white" v-if="!category && !subcategory">Kategorije</h3>
+                    <h3 class="widget-title text-white" >Kategorije</h3>
 
-                    <h3 class="widget-title text-white" v-if="category && !subcategory">{{ category.title }}<span class="badge bg-secondary float-end">{{ Number(category.count).toLocaleString('hr-HR') }}</span></h3>
-<!--                    <p class="fs-xs text-muted" v-if="category && !subcategory">Podkategorije</p>-->
 
-                    <h3 class="widget-title text-white" v-if="category && subcategory">{{ subcategory.title }}<span class="badge bg-secondary float-end">{{ Number(subcategory.count).toLocaleString('hr-HR') }}</span></h3>
 
                     <div class="accordion mt-n1" id="shop-categories">
 
 
 
-                        <div class="accordion-item " v-for="category in categories">
-                            <h3 class="accordion-header " >
+                        <div class="accordion-item " v-for="cat in categories">
+                            <h3 class="accordion-header" v-if="category && (category.id == cat.id)" >
+                                <!--type="button"  -->
+                                <a :href="cat.url" v-if="cat.subs " class="accordion-button py-1 none" data-bs-toggle="collapse"  :data-bs-target="'#id' + cat.id" aria-expanded="true" :aria-controls="'id'+ cat.id" role="link">
+                                    {{ cat.title }}   <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(cat.count).toLocaleString('hr-HR') }}</span>
+                                </a>
 
                                 <!--type="button"  -->
-                                <a :href="category.url" class="accordion-button py-1 none collapsed text-white  " data-bs-toggle="collapse" :data-bs-target="'#' + category.id" aria-expanded="false" :aria-controls="category.id" role="link">
-                                    {{ category.title }}  <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(category.count).toLocaleString('hr-HR') }}</span>
+                                <a :href="cat.url" v-if="!cat.subs" class="accordion-button py-1 none collapsed  " role="link">
+                                    {{ cat.title }}  <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(cat.count).toLocaleString('hr-HR') }}</span>
                                 </a>
                             </h3>
 
-                             <div class="collapse" :id="category.id"  data-bs-parent="#shop-categories">
-                                <div class="px-grid-gutter pt-1 pb-4">
+
+                            <h3 class="accordion-header" v-else >
+                                <!--type="button"  -->
+                                <a :href="cat.url" v-if="cat.subs " class="accordion-button py-1 none collapsed   " data-bs-toggle="collapse"  :data-bs-target="'#id' + cat.id" aria-expanded="false" :aria-controls="'id'+ cat.id" role="link">
+                                    {{ cat.title }}   <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(cat.count).toLocaleString('hr-HR') }}</span>
+                                </a>
+
+                                <!--type="button"  -->
+                                <a :href="cat.url" v-if="!cat.subs" class="accordion-button py-1 none collapsed  " role="link">
+                                    {{ cat.title }}  <span class="badge bg-dark ms-2 position-absolute end-0 fw-bold">{{ Number(cat.count).toLocaleString('hr-HR') }}</span>
+                                </a>
+                            </h3>
+
+                             <div class="collapse show" :id="'id'+ cat.id"  v-if="cat.subs && category && (category.id == cat.id)" data-bs-parent="#shop-categories">
+                                <div class=" pt-2 pb-2 pe-2">
                                     <div class="widget widget-links">
-                                        <ul class="widget-list" v-for="sub in subcategory" >
-
-
-                                            <li class="widget-list-item"><a class="widget-list-link" href="#">{{ sub.title }}</a></li>
-
+                                        <ul class="widget-list" >
+                                            <li class="widget-list-item"><a class="widget-list-link" :href="cat.url">Pogledajte sve</a></li>
+                                        </ul>
+                                        <ul class="widget-list" v-for="subcategory in cat.subs" >
+                                            <li class="widget-list-item"><a class="widget-list-link" :href="subcategory.url">{{ subcategory.title }} </a></li>
                                         </ul>
                                     </div>
                                 </div>
                              </div>
+
+
+                            <div class="collapse " :id="'id'+ cat.id"  v-else data-bs-parent="#shop-categories">
+                                <div class=" pt-2 pb-2 pe-2">
+                                    <div class="widget widget-links">
+                                        <ul class="widget-list" >
+                                            <li class="widget-list-item"><a class="widget-list-link" :href="cat.url">Pogledajte sve</a></li>
+                                        </ul>
+                                        <ul class="widget-list" v-for="subcategory in cat.subs" >
+                                            <li class="widget-list-item"><a class="widget-list-link" :href="subcategory.url">{{ subcategory.title }} </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+
                         </div>
                     </div>
 
-                    <button type="button" class="btn btn-outline-light mt-4 " v-if="category && !subcategory" onclick="history.back()"><i class="ci-arrow-left"></i> Povratak</button>
+
 
                 </div>
 

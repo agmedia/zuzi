@@ -4719,7 +4719,7 @@ textarea.form-control-lg {
   --cz-accordion-btn-focus-box-shadow: unset;
   --cz-accordion-body-padding-x: 1.25rem;
   --cz-accordion-body-padding-y: 1.25rem;
-  --cz-accordion-active-color: #373f50;
+  --cz-accordion-active-color: rgba(229, 0, 119, 0.9);
   --cz-accordion-active-bg: transparent;
 }
 
@@ -17966,7 +17966,7 @@ a.nav-link:hover .media-tab-media {
 .widget-categories .accordion-button {
   padding: 0.444rem 0;
   font-size: 0.9375rem;
-  font-weight: normal;
+  font-weight: 700;
   color: var(--cz-primary);
   box-shadow: none;
 }
@@ -18021,9 +18021,10 @@ a.nav-link:hover .media-tab-media {
 .widget-list-link {
   display: block;
   transition: color 0.25s ease-in-out;
-  color: #4b566b;
+  color: #fff;
   font-size: .9375rem;
-  font-weight: 500;
+  font-weight: 600;
+    padding:2px 0;
 }
 .widget-list-link:hover {
   color: var(--cz-primary);

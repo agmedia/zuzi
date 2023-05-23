@@ -2738,6 +2738,38 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -6675,49 +6707,9 @@ var render = function() {
                   "div",
                   { staticClass: "widget widget-categories mb-2 pb-2 " },
                   [
-                    !_vm.category && !_vm.subcategory
-                      ? _c("h3", { staticClass: "widget-title text-white" }, [
-                          _vm._v("Kategorije")
-                        ])
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _vm.category && !_vm.subcategory
-                      ? _c("h3", { staticClass: "widget-title text-white" }, [
-                          _vm._v(_vm._s(_vm.category.title)),
-                          _c(
-                            "span",
-                            { staticClass: "badge bg-secondary float-end" },
-                            [
-                              _vm._v(
-                                _vm._s(
-                                  Number(_vm.category.count).toLocaleString(
-                                    "hr-HR"
-                                  )
-                                )
-                              )
-                            ]
-                          )
-                        ])
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _vm.category && _vm.subcategory
-                      ? _c("h3", { staticClass: "widget-title text-white" }, [
-                          _vm._v(_vm._s(_vm.subcategory.title)),
-                          _c(
-                            "span",
-                            { staticClass: "badge bg-secondary float-end" },
-                            [
-                              _vm._v(
-                                _vm._s(
-                                  Number(_vm.subcategory.count).toLocaleString(
-                                    "hr-HR"
-                                  )
-                                )
-                              )
-                            ]
-                          )
-                        ])
-                      : _vm._e(),
+                    _c("h3", { staticClass: "widget-title text-white" }, [
+                      _vm._v("Kategorije")
+                    ]),
                     _vm._v(" "),
                     _c(
                       "div",
@@ -6725,113 +6717,339 @@ var render = function() {
                         staticClass: "accordion mt-n1",
                         attrs: { id: "shop-categories" }
                       },
-                      _vm._l(_vm.categories, function(category) {
+                      _vm._l(_vm.categories, function(cat) {
                         return _c("div", { staticClass: "accordion-item " }, [
-                          _c("h3", { staticClass: "accordion-header " }, [
-                            _c(
-                              "a",
-                              {
-                                staticClass:
-                                  "accordion-button py-1 none collapsed text-white  ",
-                                attrs: {
-                                  href: category.url,
-                                  "data-bs-toggle": "collapse",
-                                  "data-bs-target": "#" + category.id,
-                                  "aria-expanded": "false",
-                                  "aria-controls": category.id,
-                                  role: "link"
-                                }
-                              },
-                              [
-                                _vm._v(
-                                  "\n                                    " +
-                                    _vm._s(category.title) +
-                                    "  "
-                                ),
-                                _c(
-                                  "span",
-                                  {
-                                    staticClass:
-                                      "badge bg-dark ms-2 position-absolute end-0 fw-bold"
-                                  },
-                                  [
-                                    _vm._v(
-                                      _vm._s(
-                                        Number(category.count).toLocaleString(
-                                          "hr-HR"
+                          _vm.category && _vm.category.id == cat.id
+                            ? _c("h3", { staticClass: "accordion-header" }, [
+                                cat.subs
+                                  ? _c(
+                                      "a",
+                                      {
+                                        staticClass:
+                                          "accordion-button py-1 none",
+                                        attrs: {
+                                          href: cat.url,
+                                          "data-bs-toggle": "collapse",
+                                          "data-bs-target": "#id" + cat.id,
+                                          "aria-expanded": "true",
+                                          "aria-controls": "id" + cat.id,
+                                          role: "link"
+                                        }
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(cat.title) +
+                                            "   "
+                                        ),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "badge bg-dark ms-2 position-absolute end-0 fw-bold"
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                Number(
+                                                  cat.count
+                                                ).toLocaleString("hr-HR")
+                                              )
+                                            )
+                                          ]
                                         )
-                                      )
+                                      ]
                                     )
-                                  ]
-                                )
-                              ]
-                            )
-                          ]),
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                !cat.subs
+                                  ? _c(
+                                      "a",
+                                      {
+                                        staticClass:
+                                          "accordion-button py-1 none collapsed  ",
+                                        attrs: { href: cat.url, role: "link" }
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(cat.title) +
+                                            "  "
+                                        ),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "badge bg-dark ms-2 position-absolute end-0 fw-bold"
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                Number(
+                                                  cat.count
+                                                ).toLocaleString("hr-HR")
+                                              )
+                                            )
+                                          ]
+                                        )
+                                      ]
+                                    )
+                                  : _vm._e()
+                              ])
+                            : _c("h3", { staticClass: "accordion-header" }, [
+                                cat.subs
+                                  ? _c(
+                                      "a",
+                                      {
+                                        staticClass:
+                                          "accordion-button py-1 none collapsed   ",
+                                        attrs: {
+                                          href: cat.url,
+                                          "data-bs-toggle": "collapse",
+                                          "data-bs-target": "#id" + cat.id,
+                                          "aria-expanded": "false",
+                                          "aria-controls": "id" + cat.id,
+                                          role: "link"
+                                        }
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(cat.title) +
+                                            "   "
+                                        ),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "badge bg-dark ms-2 position-absolute end-0 fw-bold"
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                Number(
+                                                  cat.count
+                                                ).toLocaleString("hr-HR")
+                                              )
+                                            )
+                                          ]
+                                        )
+                                      ]
+                                    )
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                !cat.subs
+                                  ? _c(
+                                      "a",
+                                      {
+                                        staticClass:
+                                          "accordion-button py-1 none collapsed  ",
+                                        attrs: { href: cat.url, role: "link" }
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(cat.title) +
+                                            "  "
+                                        ),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "badge bg-dark ms-2 position-absolute end-0 fw-bold"
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                Number(
+                                                  cat.count
+                                                ).toLocaleString("hr-HR")
+                                              )
+                                            )
+                                          ]
+                                        )
+                                      ]
+                                    )
+                                  : _vm._e()
+                              ]),
                           _vm._v(" "),
-                          _c(
-                            "div",
-                            {
-                              staticClass: "collapse",
-                              attrs: {
-                                id: category.id,
-                                "data-bs-parent": "#shop-categories"
-                              }
-                            },
-                            [
-                              _c(
+                          cat.subs && _vm.category && _vm.category.id == cat.id
+                            ? _c(
                                 "div",
-                                { staticClass: "px-grid-gutter pt-1 pb-4" },
+                                {
+                                  staticClass: "collapse show",
+                                  attrs: {
+                                    id: "id" + cat.id,
+                                    "data-bs-parent": "#shop-categories"
+                                  }
+                                },
                                 [
                                   _c(
                                     "div",
-                                    { staticClass: "widget widget-links" },
-                                    _vm._l(_vm.subcategory, function(sub) {
-                                      return _c(
-                                        "ul",
-                                        { staticClass: "widget-list" },
+                                    { staticClass: " pt-2 pb-2 pe-2" },
+                                    [
+                                      _c(
+                                        "div",
+                                        { staticClass: "widget widget-links" },
                                         [
                                           _c(
-                                            "li",
-                                            { staticClass: "widget-list-item" },
+                                            "ul",
+                                            { staticClass: "widget-list" },
                                             [
                                               _c(
-                                                "a",
+                                                "li",
                                                 {
                                                   staticClass:
-                                                    "widget-list-link",
-                                                  attrs: { href: "#" }
+                                                    "widget-list-item"
                                                 },
-                                                [_vm._v(_vm._s(sub.title))]
+                                                [
+                                                  _c(
+                                                    "a",
+                                                    {
+                                                      staticClass:
+                                                        "widget-list-link",
+                                                      attrs: { href: cat.url }
+                                                    },
+                                                    [_vm._v("Pogledajte sve")]
+                                                  )
+                                                ]
                                               )
                                             ]
-                                          )
-                                        ]
+                                          ),
+                                          _vm._v(" "),
+                                          _vm._l(cat.subs, function(
+                                            subcategory
+                                          ) {
+                                            return _c(
+                                              "ul",
+                                              { staticClass: "widget-list" },
+                                              [
+                                                _c(
+                                                  "li",
+                                                  {
+                                                    staticClass:
+                                                      "widget-list-item"
+                                                  },
+                                                  [
+                                                    _c(
+                                                      "a",
+                                                      {
+                                                        staticClass:
+                                                          "widget-list-link",
+                                                        attrs: {
+                                                          href: subcategory.url
+                                                        }
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            subcategory.title
+                                                          ) + " "
+                                                        )
+                                                      ]
+                                                    )
+                                                  ]
+                                                )
+                                              ]
+                                            )
+                                          })
+                                        ],
+                                        2
                                       )
-                                    }),
-                                    0
+                                    ]
                                   )
                                 ]
                               )
-                            ]
-                          )
+                            : _c(
+                                "div",
+                                {
+                                  staticClass: "collapse ",
+                                  attrs: {
+                                    id: "id" + cat.id,
+                                    "data-bs-parent": "#shop-categories"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    { staticClass: " pt-2 pb-2 pe-2" },
+                                    [
+                                      _c(
+                                        "div",
+                                        { staticClass: "widget widget-links" },
+                                        [
+                                          _c(
+                                            "ul",
+                                            { staticClass: "widget-list" },
+                                            [
+                                              _c(
+                                                "li",
+                                                {
+                                                  staticClass:
+                                                    "widget-list-item"
+                                                },
+                                                [
+                                                  _c(
+                                                    "a",
+                                                    {
+                                                      staticClass:
+                                                        "widget-list-link",
+                                                      attrs: { href: cat.url }
+                                                    },
+                                                    [_vm._v("Pogledajte sve")]
+                                                  )
+                                                ]
+                                              )
+                                            ]
+                                          ),
+                                          _vm._v(" "),
+                                          _vm._l(cat.subs, function(
+                                            subcategory
+                                          ) {
+                                            return _c(
+                                              "ul",
+                                              { staticClass: "widget-list" },
+                                              [
+                                                _c(
+                                                  "li",
+                                                  {
+                                                    staticClass:
+                                                      "widget-list-item"
+                                                  },
+                                                  [
+                                                    _c(
+                                                      "a",
+                                                      {
+                                                        staticClass:
+                                                          "widget-list-link",
+                                                        attrs: {
+                                                          href: subcategory.url
+                                                        }
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            subcategory.title
+                                                          ) + " "
+                                                        )
+                                                      ]
+                                                    )
+                                                  ]
+                                                )
+                                              ]
+                                            )
+                                          })
+                                        ],
+                                        2
+                                      )
+                                    ]
+                                  )
+                                ]
+                              )
                         ])
                       }),
                       0
-                    ),
-                    _vm._v(" "),
-                    _vm.category && !_vm.subcategory
-                      ? _c(
-                          "button",
-                          {
-                            staticClass: "btn btn-outline-light mt-4 ",
-                            attrs: { type: "button", onclick: "history.back()" }
-                          },
-                          [
-                            _c("i", { staticClass: "ci-arrow-left" }),
-                            _vm._v(" Povratak")
-                          ]
-                        )
-                      : _vm._e()
+                    )
                   ]
                 )
               : _vm._e()
