@@ -35,53 +35,28 @@ class FilterController extends Controller
         $author = $params['author'] ? Author::where('slug', $params['author'])->first() : null;
         $publisher = $params['publisher'] ? Publisher::where('slug', $params['publisher'])->first() : null;
 
-        if ( ! $params['cat'] && ! $params['subcat']) {
-            // Ako je normal kategorija
-            if ($params['group']) {
-                $categories = Helper::resolveCache('categories')->remember($params['group'], config('cache.life'), function () use ($params) {
-                    return Category::active()->topList($params['group'])->sortByName()->withCount('products')->get()->toArray();
-                });
+        // Ako je normal kategorija
+        if ($params['group']) {
+            $categories = Helper::resolveCache('categories')->remember($params['group'], config('cache.life'), function () use ($params) {
+                return Category::active()->topList($params['group'])->sortByName()->with('subcategories')->withCount('products')->get()->toArray();
+            });
 
-                $response = $this->resolveCategoryArray($categories, 'categories');
-            }
-
-            // Ako je autor
-            if ( ! $params['group'] && $params['author']) {
-                $a_cats = $author->categories();
-                $response = $this->resolveCategoryArray($a_cats, 'author', $author);
-            }
-
-            // Ako je nakladnik
-            if ( ! $params['group'] && $params['publisher']) {
-                $a_cats = $publisher->categories();
-                $response = $this->resolveCategoryArray($a_cats, 'publisher', $publisher);
-            }
-        }
-        //
-        if ($params['cat'] && ! $params['subcat']) {
-            $cat = Category::where('id', $params['cat'])->first();
-
-            if ($params['group']) {
-                $item = Helper::resolveCache('categories')->remember($cat['id'], config('cache.life'), function () use ($cat) {
-                    return Category::active()->where('parent_id', $cat['id'])->sortByName()->withCount('products')->get()->toArray();
-                });
-
-                $response = $this->resolveCategoryArray($item, 'categories', null, $cat['slug']);
-            }
-
-            // Ako je autor
-            if ( ! $params['group'] && $params['author']) {
-                $a_cats = (new Author())->categories($cat['id']);
-                $response = $this->resolveCategoryArray($a_cats, 'author', $author, $cat['slug']);
-            }
-
-            // Ako je nakladnik
-            if ( ! $params['group'] && $params['publisher']) {
-                $a_cats = (new Publisher())->categories($cat['id']);
-                $response = $this->resolveCategoryArray($a_cats, 'publisher', $publisher, $cat['slug']);
-            }
+            $response = $this->resolveCategoryArray($categories, 'categories');
         }
 
+        // Ako je autor
+        if ( ! $params['group'] && $params['author']) {
+            $a_cats = $author->categories();
+            $response = $this->resolveCategoryArray($a_cats, 'author', $author);
+        }
+
+        // Ako je nakladnik
+        if ( ! $params['group'] && $params['publisher']) {
+            $a_cats = $publisher->categories();
+            $response = $this->resolveCategoryArray($a_cats, 'publisher', $publisher);
+        }
+
+        // Ako su posebni ID artikala.
         if ($params['ids'] && $params['ids'] != '[]') {
             $_ids = collect(explode(',', substr($params['ids'], 1, -1)))->unique();
 
@@ -110,13 +85,30 @@ class FilterController extends Controller
 
         foreach ($categories as $category) {
             $url = $this->resolveCategoryUrl($category, $type, $target, $parent_slug);
+            $subs = null;
+
+            if (isset($category['subcategories']) && ! empty($category['subcategories'])) {
+                foreach ($category['subcategories'] as $subcategory) {
+                    $sub_url = $this->resolveCategoryUrl($subcategory, $type, $target, $category['slug']);
+
+                    $subs[] = [
+                        'id' => $subcategory['id'],
+                        'title' => $subcategory['title'],
+                        'count' => Category::find($subcategory['id'])->products()->count(),
+                        'url' => $sub_url
+                    ];
+                }
+            }
 
             $response[] = [
                 'id' => $category['id'],
                 'title' => $category['title'],
                 'count' => $category['products_count'],
-                'url' => $url
+                'url' => $url,
+                'subs' => $subs
             ];
+
+
         }
 
         return $response;
