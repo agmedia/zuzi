@@ -75,9 +75,10 @@
             <h2>Trenutno nema proizvoda</h2>
             <p> Pogledajte u nekoj drugoj kategoriji ili probajte sa tražilicom :-)</p>
             <hr class="d-sm-none">
-        </div
+        </div>
     </section>
 </template>
+
 <script>
     export default {
         name: 'ProductsList',
