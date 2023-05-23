@@ -18,24 +18,17 @@
             </div>
             <div class="d-flex pb-3"><span class="fs-sm text-dark btn btn-white btn-sm text-nowrap ms-2 d-none d-sm-block">Ukupno {{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }} artikala</span></div>
         </div>
-
         <!-- Products grid-->
         <div class="row mx-n2 mb-3" v-if="products.total">
-
             <div class="col-md-3 col-6 px-2 mb-4 d-flex align-items-stretch" v-for="product in products.data">
                 <div class="card product-card shadow pb-2">
                     <span class="badge rounded-pill bg-primary mt-1 ms-1 badge-shadow" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
                        <a class="card-img-top d-block overflow-hidden" :href="origin + product.url">
-
                            <img load="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
-                    </a>
+                   n  </a>
                     <div class="card-body py-2">
-
-                        <h3 class="product-title fs-sm "><a :href="origin + product.url">{{ product.name }}</a></h3>
-
-
+                        <h3 class="product-title fs-sm mt-2 mb-1"><a :href="origin + product.url">{{ product.name }}</a></h3>
                         <div class="product-price">
-
                             <span class="text-muted"  v-if="product.special"><small>NC 30 dana: {{ product.main_price_text }} </small></span>
                         </div>
                         <div class="product-price">
@@ -59,9 +52,7 @@
             <div class="col-md-12 d-flex justify-content-center mt-4">
                 <div class="spinner-border text-primary opacity-75" role="status" style="width: 9rem; height: 9rem;"></div>
             </div>
-
         </div>
-
         <div class="col-md-12 d-flex justify-content-center mt-4" v-if="products.total">
             <p class="fs-sm">Prikazano
                 <span class="font-weight-bolder mx-1">{{ products.from ? Number(products.from).toLocaleString('hr-HR') : 0 }}</span> do
@@ -69,7 +60,6 @@
                 <span class="font-weight-bold mx-1">{{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }}</span> {{ hr_total }}
             </p>
         </div>
-
         <div class="col-md-12 px-2 mb-4" v-if="products_loaded && search_zero_result">
             <h2>Nema rezultata pretrage</h2>
             <p> Vaša pretraga za  <mark>{{ search_query }}</mark> pronašla je 0 rezultata.</p>
@@ -81,16 +71,13 @@
             </ul>
             <hr class="d-sm-none">
         </div>
-
         <div class="col-md-12 px-2 mb-4" v-if="products_loaded && navigation_zero_result">
             <h2>Trenutno nema proizvoda</h2>
             <p> Pogledajte u nekoj drugoj kategoriji ili probajte sa tražilicom :-)</p>
             <hr class="d-sm-none">
-        </div>
-
+        </div
     </section>
 </template>
-
 <script>
     export default {
         name: 'ProductsList',
