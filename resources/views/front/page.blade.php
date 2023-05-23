@@ -49,7 +49,7 @@
 
         <div class=" bg-dark pt-4 pb-3" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
             <div class="container d-lg-flex justify-content-between py-2 py-lg-3">
-                <div class="order-lg-2 mb-3 mb-lg-0 pt-lg-2">
+                <div class="order-lg-2 mb-1 mb-lg-0 pt-lg-2">
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
                             <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
@@ -62,7 +62,7 @@
                 </div>
             </div>
         </div>
-
+        <section class="spikesg" ></section>
         <div class="container">
             <div class="mt-5 mb-5">
                 {!! $page->description !!}

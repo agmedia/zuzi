@@ -112,11 +112,13 @@
     </div>
 </div>
 
+<section class="spikes"></section>
+
 <div id="agapp">
     @include('front.layouts.partials.header')
 
     @yield('content')
-
+    <section class="spikesw"></section>
     @include('front.layouts.partials.footer')
 
     @include('front.layouts.partials.handheld')

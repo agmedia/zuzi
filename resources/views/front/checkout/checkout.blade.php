@@ -22,14 +22,14 @@
         </div>
     </div>
 
-    <div class="container pb-5 mb-2 mb-md-4">
+
 
 
                 @livewire('front.checkout', ['step' => $step, 'is_free_shipping' => $is_free_shipping])
 
             <!-- Sidebar-->
 
-    </div>
+
 
 @endsection
 

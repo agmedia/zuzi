@@ -47,7 +47,7 @@
     <!-- Page Title-->
     <div class="page-title bg-dark pt-2 pb-2" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
         <div class="container d-lg-block justify-content-end py-2 py-lg-3">
-            <div class="order-lg-2 mb-3 mb-lg-0 pb-lg-1">
+            <div class="order-lg-2 mb-3 mt-3 mb-lg-0 pb-lg-1">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center ">
                         <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
@@ -84,6 +84,7 @@
 
         </div>
     </div>
+    <section class="spikesg" ></section>
     <div class="container">
         <!-- Gallery + details-->
         <div class="bg-light  rounded-3 px-4 py-3 mb-3">

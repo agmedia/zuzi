@@ -35,7 +35,7 @@
 @section('content')
 
     <!-- Page Title-->
-    <div class="page-title bg-dark pt-4 pb-4 mb-4" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
+    <div class="page-title bg-dark pt-4 pb-4 mb-0" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
         <div class="container d-lg-block justify-content-start py-2 py-lg-3">
 
             @if (isset($group) && $group)
@@ -68,6 +68,7 @@
                     @endif
 
                 </div>
+
             @endif
 
             @if (Route::currentRouteName() == 'pretrazi')
@@ -127,8 +128,10 @@
             @endif
 
         </div>
+
     </div>
-    <div class="container pb-4 mb-2 mb-md-4" id="filter-app" v-cloak>
+    <section class="spikesg" ></section>
+    <div class="container pb-4 mb-2 mb-md-4 mt-4" id="filter-app" v-cloak>
         <div class="row">
             <filter-view ids="{{ isset($ids) ? $ids : null }}"
                          group="{{ isset($group) ? $group : null }}"

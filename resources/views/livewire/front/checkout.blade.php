@@ -1,7 +1,8 @@
 <div>
+    <div class="container  ">
     <div class="row">
     <section class="col-lg-12">
-    <div class="steps steps-light pt-2 pb-3 mb-5">
+    <div class="steps steps-light pt-2 pb-3 mb-0">
         <a class="step-item active" href="{{ route('kosarica') }}">
             <div class="step-progress"><span class="step-count">1</span></div>
             <div class="step-label"><i class="ci-cart"></i>Košarica</div>
@@ -24,7 +25,15 @@
         </a>
     </div>
     </section>
+    </div>
+    </div>
 
+
+
+        <section class="spikesg mb-5 " ></section>
+
+    <div class="container pb-5 mb-2 mb-md-4">
+        <div class="row">
     @if ( ! empty($gdl) && ! $gdl_shipping && ! $gdl_payment)
         @section('google_data_layer')
             <script>
@@ -310,7 +319,7 @@
 
     </div>
 </div>
-
+</div>
 
 @push('js_after')
 {{--    <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">--}}
