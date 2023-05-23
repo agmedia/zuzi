@@ -1,6 +1,6 @@
 <aside class="col-lg-4">
     <!-- Sidebar-->
-    <div class="offcanvas offcanvas-collapse bg-white w-100 rounded-3 shadow-lg py-1" id="shop-sidebar" style="max-width: 22rem;" wire:ignore.self>
+    <div class="offcanvas offcanvas-collapse bg-white w-100 rounded-3 shadow-lg py-1 pt-0" id="shop-sidebar" style="max-width: 22rem;" wire:ignore.self>
         <div class="offcanvas-cap align-items-center shadow-sm" wire:ignore>
             <h2 class="h5 mb-0">Filtriraj</h2>
             <button class="btn-close ms-auto" type="button" data-bs-dismiss="offcanvas" aria-label="Close"></button>

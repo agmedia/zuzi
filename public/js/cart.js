@@ -6673,16 +6673,18 @@ var render = function() {
       "div",
       {
         staticClass:
-          "offcanvas offcanvas-collapse bg-dark w-100 rounded-3 shadow-lg py-1",
+          "offcanvas offcanvas-collapse bg-dark w-100 rounded-3 shadow-lg py-1 pt-0",
         staticStyle: { "min-width": "22rem" },
         attrs: { id: "shop-sidebar" }
       },
       [
         _c(
           "div",
-          { staticClass: "offcanvas-cap align-items-center shadow-sm" },
+          {
+            staticClass: "offcanvas-cap bg-white align-items-center shadow-sm"
+          },
           [
-            _c("h2", { staticClass: "h3 mb-0 text-color" }, [
+            _c("h2", { staticClass: "h3 mb-0 text-primary" }, [
               _vm._v("Filtriraj")
             ]),
             _vm._v(" "),
@@ -7306,7 +7308,7 @@ var render = function() {
                         expression: "sorting"
                       }
                     ],
-                    staticClass: "form-select",
+                    staticClass: "form-select pe-2",
                     on: {
                       change: function($event) {
                         var $$selectedVal = Array.prototype.filter
@@ -7607,7 +7609,7 @@ var staticRenderFns = [
             "aria-expanded": "false"
           }
         },
-        [_c("i", { staticClass: "ci-filter-alt" })]
+        [_vm._v("Kategorije")]
       )
     ])
   },

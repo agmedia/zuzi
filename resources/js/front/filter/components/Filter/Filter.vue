@@ -1,9 +1,9 @@
 <template>
     <aside class="col-lg-auto">
         <!-- Sidebar-->
-        <div class="offcanvas offcanvas-collapse bg-dark w-100 rounded-3 shadow-lg py-1" id="shop-sidebar" style="min-width: 22rem;">
-            <div class="offcanvas-cap align-items-center shadow-sm">
-                <h2 class="h3 mb-0 text-color">Filtriraj</h2>
+        <div class="offcanvas offcanvas-collapse bg-dark w-100 rounded-3 shadow-lg py-1 pt-0" id="shop-sidebar" style="min-width: 22rem;">
+            <div class="offcanvas-cap bg-white align-items-center shadow-sm">
+                <h2 class="h3 mb-0 text-primary">Filtriraj</h2>
                 <button class="btn-close ms-auto" type="button" data-bs-dismiss="offcanvas" v-on:click="closeWindow" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body py-grid-gutter px-lg-grid-gutter">
