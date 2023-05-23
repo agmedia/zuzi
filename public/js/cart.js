@@ -3401,8 +3401,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
-//
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -7227,23 +7225,6 @@ var render = function() {
                     ),
                     _vm._v(" "),
                     _c("div", { staticClass: "card-body py-2" }, [
-                      _c(
-                        "a",
-                        {
-                          staticClass: "product-meta d-block fs-xs pb-1",
-                          attrs: {
-                            href: product.author
-                              ? _vm.origin + product.author.url
-                              : "#"
-                          }
-                        },
-                        [
-                          _vm._v(
-                            _vm._s(product.author ? product.author.title : "")
-                          )
-                        ]
-                      ),
-                      _vm._v(" "),
                       _c("h3", { staticClass: "product-title fs-sm " }, [
                         _c("a", { attrs: { href: _vm.origin + product.url } }, [
                           _vm._v(_vm._s(product.name))
@@ -7318,7 +7299,7 @@ var render = function() {
       }),
       _vm._v(" "),
       !_vm.products_loaded
-        ? _c("div", { staticClass: "row" }, [_vm._m(1), _vm._v(" "), _vm._m(2)])
+        ? _c("div", { staticClass: "row" }, [_vm._m(1)])
         : _vm._e(),
       _vm._v(" "),
       _vm.products.total
@@ -7375,7 +7356,7 @@ var render = function() {
             _vm._v(" "),
             _c("h4", { staticClass: "h5" }, [_vm._v("Savjeti i smjernica")]),
             _vm._v(" "),
-            _vm._m(3),
+            _vm._m(2),
             _vm._v(" "),
             _c("hr", { staticClass: "d-sm-none" })
           ])
@@ -7427,24 +7408,10 @@ var staticRenderFns = [
       { staticClass: "col-md-12 d-flex justify-content-center mt-4" },
       [
         _c("div", {
-          staticClass: "spinner-border text-muted opacity-75",
+          staticClass: "spinner-border text-primary opacity-75",
           staticStyle: { width: "9rem", height: "9rem" },
           attrs: { role: "status" }
         })
-      ]
-    )
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c(
-      "div",
-      { staticClass: "col-md-12 d-flex justify-content-center mt-4" },
-      [
-        _c("p", { staticClass: "fs-3 fw-lighter opacity-50" }, [
-          _vm._v("Učitavanje knjiga...")
-        ])
       ]
     )
   },

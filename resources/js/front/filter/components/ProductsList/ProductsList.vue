@@ -30,7 +30,7 @@
                            <img load="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
                     </a>
                     <div class="card-body py-2">
-                        <a class="product-meta d-block fs-xs pb-1" :href="product.author ? (origin + product.author.url) : '#'">{{ product.author ? product.author.title : '' }}</a>
+
                         <h3 class="product-title fs-sm "><a :href="origin + product.url">{{ product.name }}</a></h3>
 
 
@@ -57,11 +57,9 @@
 
         <div class="row" v-if="!products_loaded">
             <div class="col-md-12 d-flex justify-content-center mt-4">
-                <div class="spinner-border text-muted opacity-75" role="status" style="width: 9rem; height: 9rem;"></div>
+                <div class="spinner-border text-primary opacity-75" role="status" style="width: 9rem; height: 9rem;"></div>
             </div>
-            <div class="col-md-12 d-flex justify-content-center mt-4">
-                <p class="fs-3 fw-lighter opacity-50">Učitavanje knjiga...</p>
-            </div>
+
         </div>
 
         <div class="col-md-12 d-flex justify-content-center mt-4" v-if="products.total">
