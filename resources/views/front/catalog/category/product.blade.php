@@ -11,7 +11,7 @@
         <a class="card-img-top d-block overflow-hidden" href="{{ url($product->url) }}">
         <img load="lazy" src="{{ $product->thumb }}" width="250" height="300" alt="{{ $product->name }}">
             </a>
-                <div class="card-body pt-2" style="min-height: 126px;">
+                <div class="card-body pt-2" style="min-height: 136px;">
 
                              <h3 class="product-title pt-2 fs-sm"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
 
