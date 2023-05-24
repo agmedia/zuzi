@@ -3,7 +3,7 @@
 
 
 <!-- Become Courier / Partner CTA-->
-<section class=" pb-4 pt-lg-5 pb-sm-5">
+<section class=" pb-4 pt-lg-0 pb-sm-5">
     <div class="container">
     <div class="row pt-4 mt-2 mt-lg-3 mb-md-2">
         <div class="col-lg-6 mb-grid-gutter">
@@ -71,7 +71,7 @@
 </section>
 <section class="spikesg"></section>
 <!-- Reviews-->
-<section class="bg-secondary py-5">
+<section class="bg-secondary py-5" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});z-index: 10;-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover;background-size: cover;background-position: bottom">
     <div class="container py-md-4 pt-3 pb-0 py-sm-3">
         <h2 class="text-center text-dark fw-bold mb-4 mb-md-5">Komentari kupaca</h2>
 
@@ -79,7 +79,7 @@
         <div class="tns-carousel mb-3">
             <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;controls&quot;: false, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:1, &quot;gutter&quot;:20}, &quot;576&quot;:{&quot;items&quot;:2, &quot;gutter&quot;:20},&quot;850&quot;:{&quot;items&quot;:3, &quot;gutter&quot;:20},&quot;1080&quot;:{&quot;items&quot;:3, &quot;gutter&quot;:25}}}">
                 <blockquote class="mb-2">
-                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                    <div class="card card-body fs-md  border-0 shadow-sm">
                         <div class="mb-2">
                             <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
                             </div>
@@ -93,7 +93,7 @@
                 </blockquote>
 
                 <blockquote class="mb-2">
-                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                    <div class="card card-body fs-md  border-0 shadow-sm">
                         <div class="mb-2">
                             <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
                             </div>
@@ -106,7 +106,7 @@
 
                 </blockquote>
                 <blockquote class="mb-2">
-                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                    <div class="card card-body fs-md  border-0 shadow-sm">
                         <div class="mb-2">
                             <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
                             </div>
@@ -120,7 +120,7 @@
                 </blockquote>
 
                 <blockquote class="mb-2">
-                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                    <div class="card card-body fs-md  border-0 shadow-sm">
                         <div class="mb-2">
                             <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
                             </div>
@@ -134,7 +134,7 @@
                 </blockquote>
 
                 <blockquote class="mb-2">
-                    <div class="card card-body fs-md text-muted border-0 shadow-sm">
+                    <div class="card card-body fs-md  border-0 shadow-sm">
                         <div class="mb-2">
                             <div class="star-rating"><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i><i class="star-rating-icon ci-star-filled active"></i>
                             </div>
