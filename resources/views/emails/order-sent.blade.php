@@ -3,10 +3,10 @@
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-            <td class="ag-mail-tableset">{!! __('Pozdrav ' . $order->payment_fname) !!}</td>
+            <td class="ag-mail-tableset">{!! __('Pozdrav ' . $order->payment_fname. ', hvala vam na vašoj narudžbi.') !!}</td>
         </tr>
         <tr>
-            <td class="ag-mail-tableset"> <h3>Narudžba broj: {{ $order->id }} </h3></td>
+            <td class="ag-mail-tableset"> <h3 style="line-height:0px">Narudžba broj: {{ $order->id }} </h3></td>
         </tr>
         <tr>
             <td class="ag-mail-tableset">
