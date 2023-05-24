@@ -17,7 +17,7 @@
 
                             @if ($product->main_price > $product->main_special)
                                 <div class="product-price"><small><span class="text-muted">NC 30 dana: {{ $product->main_special_text }}  @if($product->secondary_price_text) {{ $product->secondary_special_text }} @endif</span></small></div>
-                                <div class="product-price"><span class="text-primary">{{ $product->main_price_text }}  @if($product->secondary_price_text) {{ $product->secondary_price_text }} @endif</span></div>
+                        <div class="product-price"><span class="text-primary">{{ $product->main_price_text }}  @if($product->secondary_price_text) <small class="text-muted">{{ $product->secondary_price_text }}</small> @endif</span></div>
                             @else
                                 <div class="product-price"><span class="text-primary">{{ $product->main_price_text }}  @if($product->secondary_price_text) <small class="text-muted">{{ $product->secondary_price_text }} </small>@endif</span></div>
                             @endif
