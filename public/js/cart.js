@@ -2771,6 +2771,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -6981,31 +6982,6 @@ var render = function() {
                                         "div",
                                         { staticClass: "widget widget-links" },
                                         [
-                                          _c(
-                                            "ul",
-                                            { staticClass: "widget-list" },
-                                            [
-                                              _c(
-                                                "li",
-                                                {
-                                                  staticClass:
-                                                    "widget-list-item"
-                                                },
-                                                [
-                                                  _c(
-                                                    "a",
-                                                    {
-                                                      staticClass:
-                                                        "widget-list-link",
-                                                      attrs: { href: cat.url }
-                                                    },
-                                                    [_vm._v("Pogledajte sve")]
-                                                  )
-                                                ]
-                                              )
-                                            ]
-                                          ),
-                                          _vm._v(" "),
                                           _vm._l(cat.subs, function(
                                             subcategory
                                           ) {
@@ -7041,7 +7017,32 @@ var render = function() {
                                                 )
                                               ]
                                             )
-                                          })
+                                          }),
+                                          _vm._v(" "),
+                                          _c(
+                                            "ul",
+                                            { staticClass: "widget-list" },
+                                            [
+                                              _c(
+                                                "li",
+                                                {
+                                                  staticClass:
+                                                    "widget-list-item"
+                                                },
+                                                [
+                                                  _c(
+                                                    "a",
+                                                    {
+                                                      staticClass:
+                                                        "widget-list-link",
+                                                      attrs: { href: cat.url }
+                                                    },
+                                                    [_vm._v("Pogledajte sve")]
+                                                  )
+                                                ]
+                                              )
+                                            ]
+                                          )
                                         ],
                                         2
                                       )
