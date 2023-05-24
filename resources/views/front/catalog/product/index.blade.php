@@ -216,7 +216,7 @@
 
     <!-- Product carousel (You may also like)-->
     <div class="container-fluid py-5 bg-white bg-size-cover bg-position-center" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck-transparent.svg' }});">
-        <div class=" my-md-3" >
+        <div class="container my-md-3" >
             <h2 class="h3 text-center pb-4">Izdvojeno iz kategorije</h2>
             <div class="tns-carousel tns-controls-static tns-controls-outside">
                 <div class="tns-carousel-inner pb-3" data-carousel-options='{"items": 2, "controls": true, "nav": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 10},"500":{"items":2, "gutter": 18},"768":{"items":3, "gutter": 20}, "1100":{"items":5, "gutter": 30}}}'>
