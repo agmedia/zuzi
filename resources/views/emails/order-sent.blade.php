@@ -39,7 +39,7 @@
 
                     <p style="font-size:12px">ILI JEDNOSTAVNO POSKENIRAJTE 2D BARKOD</p>
 
-                    <p><img src="{{ asset('media/img/qr/'.$order->id) }}.png" style="max-width:80%; border:1px solid #ccc; height:auto"></p>
+                    <p><img src="{{ asset('media/img/qr/'.$order->id) }}.jpg" style="max-width:80%; border:1px solid #ccc; height:auto"></p>
 
                 @elseif ($order->payment_code == 'cod')
                     <b>{{ __('Gotovinom prilikom pouzeća') }}</b>

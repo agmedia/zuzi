@@ -81,14 +81,14 @@ class Bank
                     'receiver'    =>
                         array(
                             'name'      => 'Fortuna d.o.o.',
-                            'street'    => 'Palmotićeva 28',
+                            'street'    => 'Antuna Šoljana 33',
                             'place'     => '10000 Zagreb',
                             'iban'      => 'HR3123600001101595832',
                             'model'     => '00',
                             'reference' => $pozivnabroj,
                         ),
                     'purpose'     => 'CMDT',
-                    'description' => 'Web narudžba Antikvarijat Biblos',
+                    'description' => 'Web narudžba Zuzi Shop',
                 ),
         );
 
