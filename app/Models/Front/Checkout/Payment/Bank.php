@@ -83,7 +83,7 @@ class Bank
                             'name'      => 'Fortuna d.o.o.',
                             'street'    => 'Antuna Šoljana 33',
                             'place'     => '10000 Zagreb',
-                            'iban'      => 'HR3123600001101595832',
+                            'iban'      => 'HR1624020061140345999',
                             'model'     => '00',
                             'reference' => $pozivnabroj,
                         ),
