@@ -15,14 +15,14 @@
     <!--[if mso]>
     <style>
         * {
-            font-family: sans-serif !important;
+            font-family: "Quicksand", sans-serif; !important;
         }
     </style>
     <![endif]-->
 
     <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
     <!--[if !mso]><!-->
-    <!-- insert web font reference, eg: <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
+   <link href='https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap' rel='stylesheet' type='text/css'>
     <!--<![endif]-->
 
     <!-- Web Font / @font-face : END -->
@@ -279,7 +279,7 @@
     <!-- Email Footer : BEGIN -->
     <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto;" class="email-container">
         <tr>
-            <td style="padding: 20px; font-family: sans-serif; font-size: 12px; line-height: 15px; text-align: center; color: #ffffff;">
+            <td style="padding: 20px; font-family: sans-serif; font-size: 12px; line-height: 15px; text-align: center; color: #555;">
                 Zuzi - Shop © {{ now()->year }}. Sva prava pridržana. <br><a href="https://www.zuzi.hr/info/uvjeti-prodaje" style="color:#ffffff;">Uvjeti korištenja</a>
                 <br>
             </td>
