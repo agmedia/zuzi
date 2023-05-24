@@ -5616,11 +5616,11 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "cart mb-4 d-flex align-items-center" }, [
+  return _c("div", { staticClass: "cart mb-4 text-center text-lg-start" }, [
     _c(
       "button",
       {
-        staticClass: "btn btn-primary btn-shadow d-block ",
+        staticClass: "btn btn-primary btn-shadow ",
         on: {
           click: function($event) {
             return _vm.addToCart()
