@@ -58,7 +58,7 @@
                     </nav>
                 </div>
                 <div class="order-lg-1 pe-lg-4 text-center text-lg-start">
-                    <h1 class="text-light">{{ $page->title }}</h1>
+                    <h1 class="h2 text-light">{{ $page->title }}</h1>
                 </div>
             </div>
         </div>

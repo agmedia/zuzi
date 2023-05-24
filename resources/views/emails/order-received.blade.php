@@ -32,7 +32,7 @@
                 @endif
                 <br><br>
 
-                Lijep pozdrav,<br>Antikvarijat Biblos
+                Lijep pozdrav,<br>Zuzi Shop
             </td>
         </tr>
 

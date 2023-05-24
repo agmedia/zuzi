@@ -214,7 +214,7 @@
             width: 200px;
             min-height: 20px;
             padding: 10px;
-            background-color: #152c18;
+            background-color: #e50077;
             border-radius: 3px;
             color: #ffffff;
             font-size: 14px;
@@ -235,8 +235,8 @@
 	2. center tag: for Gmail and Inbox mobile apps and web versions of Gmail, GSuite, Inbox, Yahoo, AOL, Libero, Comcast, freenet, Mail.ru, Orange.fr
 	3. mso conditional: For Windows 10 Mail
 -->
-<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #152c18;">
-<center style="width: 100%; background-color: #152c18;">
+<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #fff;">
+<center style="width: 100%; background-color: #fff;">
     <!--[if mso | IE]>
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #152c18;">
         <tr>
@@ -245,7 +245,7 @@
 
     <!-- Visually Hidden Preheader Text : BEGIN -->
     <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
-       Narudžba Antikvarijat Biblos
+       Narudžba Zuzi Shop
     </div>
     <!-- Visually Hidden Preheader Text : END -->
 
@@ -260,7 +260,7 @@
         <!-- Email Header : BEGIN -->
         <tr>
             <td style="padding: 20px 0 15px 0; text-align: center">
-                <label class="large bold" style="color: white;">   <img src="https://biblos.selectpo.lin48.host25.com/media/img/logo-biblos.png" alt="Antikvarijat Biblos" border="0" style="max-width:200px;height: auto;"></label>
+                <label class="large bold" style="color: white;">   <img src="{{ asset('media/img/zuzi-logo.png') }}" alt="Zuzi Shop" border="0" style="max-width:200px;height: auto;"></label>
             </td>
         </tr>
         <!-- Email Header : END -->
@@ -280,7 +280,7 @@
     <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto;" class="email-container">
         <tr>
             <td style="padding: 20px; font-family: sans-serif; font-size: 12px; line-height: 15px; text-align: center; color: #ffffff;">
-                Antikvarijat Biblos © {{ now()->year }}. Sva prava pridržana. <br><a href="https://www.antikvarijat-biblos.hr/info/opci-uvjeti-kupnje" style="color:#ffffff;">Uvjeti korištenja</a>
+                Zuzi - Shop © {{ now()->year }}. Sva prava pridržana. <br><a href="https://www.zuzi.hr/info/uvjeti-prodaje" style="color:#ffffff;">Uvjeti korištenja</a>
                 <br>
             </td>
         </tr>
