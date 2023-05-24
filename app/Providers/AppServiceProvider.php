@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
         $knjige = Category::active()->topList('Knjige')->sortByName()->select('id', 'title', 'group', 'slug')->get();
         View::share('knjige', $knjige);
 
-        $kategorijefeatured = Category::active()->topList('Knjige')->where('image', '!=', 'media/avatars/avatar0.jpg')->sortByName()->select('id','image','title', 'group', 'slug')->get();
+        $kategorijefeatured = Category::active()->where('image', '!=', 'media/avatars/avatar0.jpg')->sortByName()->select('id','image','title', 'group', 'slug')->get();
         View::share('kategorijefeatured', $kategorijefeatured);
 
         $zemljovidi_vedute = Category::active()->topList('Zemljovidi i vedute')->select('id', 'title', 'group', 'slug')->sortByName()->get();
