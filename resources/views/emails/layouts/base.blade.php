@@ -15,7 +15,7 @@
     <!--[if mso]>
     <style>
         * {
-            font-family: "Quicksand", sans-serif; !important;
+            font-family: "Quicksand", sans-serif!important;
         }
     </style>
     <![endif]-->
@@ -199,7 +199,7 @@
 
         .ag-mail-tableset {
             padding: 20px;
-            font-family: sans-serif;
+            font-family: "Quicksand", sans-serif!important;
             font-size: 14px;
             line-height: 20px;
             color: #555555;
@@ -244,14 +244,14 @@
     <![endif]-->
 
     <!-- Visually Hidden Preheader Text : BEGIN -->
-    <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
+    <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
        Narudžba Zuzi Shop
     </div>
     <!-- Visually Hidden Preheader Text : END -->
 
     <!-- Create white space after the desired preview text so email clients don’t pull other distracting text into the inbox preview. Extend as necessary. -->
     <!-- Preview Text Spacing Hack : BEGIN -->
-    <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
+    <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; ">
     </div>
     <!-- Preview Text Spacing Hack : END -->
 
@@ -279,7 +279,7 @@
     <!-- Email Footer : BEGIN -->
     <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto;" class="email-container">
         <tr>
-            <td style="padding: 20px; font-family: sans-serif; font-size: 12px; line-height: 15px; text-align: center; color: #555;">
+            <td style="padding: 20px;  font-size: 12px; line-height: 15px; text-align: center; color: #555;">
                 Zuzi - Shop © {{ now()->year }}. Sva prava pridržana. <br><a href="https://www.zuzi.hr/info/uvjeti-prodaje" style="color:#ffffff;">Uvjeti korištenja</a>
                 <br>
             </td>
