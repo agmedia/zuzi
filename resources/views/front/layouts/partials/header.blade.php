@@ -24,15 +24,15 @@
                 </form>
 
                 <ul class="navbar-nav justify-content-centerpe-lg-2 me-lg-2">
-                    <li class="nav-item  d-none d-lg-block"><a class="nav-link" href="{{ route('catalog.route', ['group' => 'knjige']) }}"><span>Web shop</span></a></li>
-                    <li class="nav-item d-inloine-block d-lg-none"><a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Web shop</a>
+                    <li class="nav-item "><a class="nav-link" href="{{ route('catalog.route', ['group' => 'knjige']) }}"><span>Web shop</span></a></li>
+                   <!-- <li class="nav-item d-inloine-block d-lg-none"><a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Web shop</a>
                         <ul class="dropdown-menu">
                             <li class="dropdown"><a class="nav-link dropdown-item " href="{{ route('catalog.route', ['group' => 'knjige']) }}">Sve knjige</a></li>
                             @foreach($knjige as $navitem)
                             <li class="dropdown"><a class="nav-link dropdown-item " href="{{ url(\Illuminate\Support\Str::slug($navitem->group) . '/' . $navitem->slug) }}">{{ $navitem->title}}</a></li>
                             @endforeach
                         </ul>
-                    </li>
+                    </li>-->
 
 
 
