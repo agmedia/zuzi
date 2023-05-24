@@ -3,7 +3,7 @@
     @if ($data['container'])
 
                 <h2 class="h3 text-center">{{ $data['title'] }}</h2>
-                <p class="text-muted-light text-center ">{{ $data['subtitle'] }}</p>
+        @if($data['subtitle'])  <p class="text-muted-light text-center ">{{ $data['subtitle'] }}</p> @endif
                 @if($data['url'] !='/')
                     <p class=" text-center">  <a class="btn btn-primary btn-shadow " href="{{ url($data['url']) }}">Pogledajte ponudu <i class="ci-arrow-right "></i></a></p>
                 @endif
@@ -22,7 +22,7 @@
     @else
         <div class="container">
             <h2 class="text-center fw-bold pt-4 pt-sm-3">{{ $data['title'] }}</h2>
-            <p class="text-muted text-center mb-5">{{ $data['subtitle'] }}</p>
+            @if($data['subtitle'])  <p class="text-muted text-center mb-5">{{ $data['subtitle'] }}</p> @endif
         @if($data['url'] !='/')
             <p class=" text-center">  <a class="btn btn-primary btn-shadow " href="{{ url($data['url']) }}">Pogledajte ponudu <i class="ci-arrow-right "></i></a></p>
         @endif
