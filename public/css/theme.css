@@ -16240,7 +16240,7 @@ a.nav-link:hover .media-tab-media {
         position: relative;
         border-radius: 5px;
         padding:10px 15px;
-        background-color: #373f50 !important;
+        background-color: var(--cz-primary) !important;
         color:#fff;
     }
 
@@ -16249,7 +16249,7 @@ a.nav-link:hover .media-tab-media {
         position: absolute;
         top: 100%;
         left: calc(50% - 5px);
-        background: #373f50;
+        background:var(--cz-primary);
         width: 10px;
         height: 10px;
 
@@ -16259,13 +16259,13 @@ a.nav-link:hover .media-tab-media {
 
 
     .navbar-expand-lg .navbar-nav .nav-link span:hover {
-        background-color: var(--cz-primary)!important;
+        background-color: #373f50!important;
         color:#fff
     }
 
     .navbar-expand-lg .navbar-nav .nav-link span:hover::after {
 
-        background: var(--cz-primary);
+        background: #373f50;
 
 
         /* The points are: (left top: x y, right top: x y, center bottom: x y) */
