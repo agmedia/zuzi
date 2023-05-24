@@ -215,6 +215,28 @@ ul.spec{max-width:400px}
     background-position: 0 0;
 }
 
+
+.spikesgtop {
+    position: relative;
+    background: #373f50;
+    height: 0px;
+
+}
+
+.spikesgtop::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    left: -0%;
+    top: 100%;
+    z-index: 10;
+    display: block;
+    height: 15px;
+    background-size: 15px 100%;
+    background-image: linear-gradient(315deg, #373f50 25%, transparent 25%), linear-gradient(45deg, #373f50 25%, transparent 25%);
+    background-position: 0 0;
+}
+
 h6, .h6, h5, .h5, h4, .h4, h3, .h3, h2, .h2, h1, .h1 {
   margin-top: 0;
   margin-bottom: 0.75rem;

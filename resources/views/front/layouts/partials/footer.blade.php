@@ -3,15 +3,27 @@
 
     <div class="container pt-2 pb-3">
         <div class="row">
-            <div class="col-md-6  text-center text-md-start mb-4">
+            <div class="col-md-3  text-center text-md-start mb-4">
 
-                <h3 class="widget-title fw-700 d-none d-md-block text-white"><span>O nama</span></h3>
-                <p class=" text-white  fs-md pb-1 d-none d-sm-block">Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja<br> i naručivanja željenih naslova putem web stranice zuzi.hr<br> iz udobnosti naslonjača.</p>
+                <h3 class="widget-title fw-700 d-none d-md-block text-white"><span>Knjižara</span></h3>
+                <p class=" text-white  fs-md pb-1 d-none d-sm-block">
+
+                    <strong>Adresa</strong><br>Antuna Šoljana 33, 10000 Zagreb</p>
+
+
+                <p class=" text-white  fs-md pb-1 d-none d-sm-block">  <strong>Broj telefona</strong><br>
+                    091 604 7126</p>
+
+                <p class=" text-white  fs-md pb-1 d-none d-sm-block">  <strong>Radno vrijeme</strong><br>
+                    Pon-Pet: 8-20<br>
+                    Sub: 9-15
+
+                </p>
 
 
                 <div class="widget mt-4 text-md-nowrap text-center text-sm-start">
-                    <a class="btn-social bs-light bs-instagram me-2 mb-2" href="https://www.instagram.com/antikvarijat_biblos/"><i class="ci-instagram"></i></a>
-                    <a class="btn-social bs-light bs-facebook me-2 mb-2" href="https://www.facebook.com/AntikvarijatBiblos/"><i class="ci-facebook"></i></a>
+                    <a class="btn-social bs-light bg-primary bs-instagram me-2 mb-2" href="https://www.instagram.com/antikvarijat_biblos/"><i class="ci-instagram"></i></a>
+                    <a class="btn-social bs-light bg-primary bs-facebook me-2 mb-2" href="https://www.facebook.com/AntikvarijatBiblos/"><i class="ci-facebook"></i></a>
                 </div>
             </div>
             <!-- Mobile dropdown menu (visible on screens below md)-->
@@ -25,6 +37,25 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- Desktop menu (visible on screens above md)-->
+            <div class="col-md-3 d-none d-md-block text-center text-md-start mb-4">
+                <div class="widget widget-links widget-light pb-2">
+                    <h3 class="widget-title fw-700 text-white"><span>Zuzi Shop</span></h3>
+                    <ul class="widget-list">
+
+                        <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => 'knjige']) }}">Web shop</a></li>
+
+                        <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route.author') }}">Autori</a>
+                        <li class="widget-list-item"><a class="widget-list-link" href="">Rijetke knjige</a>
+                        <li class="widget-list-item"><a class="widget-list-link" href="">Svezalice - pidžame za knjige</a>
+                        <li class="widget-list-item"><a class="widget-list-link" href="">Akcije</a>
+                        <li class="widget-list-item"><a class="widget-list-link" href="">Outlet</a>
+
+                    </ul>
+                </div>
+            </div>
+
             <!-- Desktop menu (visible on screens above md)-->
             <div class="col-md-3 d-none d-md-block text-center text-md-start mb-4">
                 <div class="widget widget-links widget-light pb-2">
@@ -60,7 +91,7 @@
 
 
             <div class="d-md-flex justify-content-between pt-2">
-                <div class="pb-4 fs-xs text-light opacity-50 text-center text-md-start">© Sva prava pridržana. Web by <a class="text-light" title="Izrada web shopa - B2C ili B2B web trgovina - AG media" href="https://www.agmedia.hr/usluge/izrada-web-shopa/" target="_blank" rel="noopener">AG media</a></div>
+                <div class="pb-4 fs-sm text-light  text-center text-md-start">© 2023. Sva prava pridržana Zuzi. Web by <a class="text-light" title="Izrada web shopa - B2C ili B2B web trgovina - AG media" href="https://www.agmedia.hr/usluge/izrada-web-shopa/" target="_blank" rel="noopener">AG media</a></div>
                 <div class="widget widget-links widget-light pb-4 text-center text-md-end">
                     <img class="d-inline-block" style="width: 55px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/visa.svg" width="55" height="35" alt="Visa"/>
                     <img class="d-inline-block" style="width: 55px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/maestro.svg" width="55" height="35" alt="Maestro"/>
