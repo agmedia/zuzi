@@ -1,6 +1,6 @@
-<div class="article pb-2" >
+<div class="article 0" >
 
-<div class="card product-card d-flex align-items-stretch shadow pb-3">
+<div class="card product-card d-flex align-items-stretch shadow ">
     @if ($product->main_price > $product->main_special)
         <span class="badge rounded-pill bg-primary mt-1 ms-1 badge-shadow">-{{ number_format(floatval(\App\Helpers\Helper::calculateDiscount($product->price, $product->special())), 0) }}%</span>
 
