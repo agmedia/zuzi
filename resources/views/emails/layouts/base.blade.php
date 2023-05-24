@@ -15,7 +15,7 @@
     <!--[if mso]>
     <style>
         * {
-            font-family: "Quicksand", sans-serif!important;
+            font-family: sans-serif;
         }
     </style>
     <![endif]-->
@@ -38,6 +38,7 @@
             padding: 0 !important;
             height: 100% !important;
             width: 100% !important;
+            font-family: "Quicksand", sans-serif!important;
         }
 
         /* What it does: Stops email clients resizing small text. */
@@ -154,8 +155,8 @@
         }
         .button-td-primary:hover,
         .button-a-primary:hover {
-            background: #555555 !important;
-            border-color: #555555 !important;
+            background: #373f50 !important;
+            border-color: #373f50 !important;
         }
 
         /* Media Queries */
@@ -202,7 +203,7 @@
             font-family: "Quicksand", sans-serif!important;
             font-size: 14px;
             line-height: 20px;
-            color: #555555;
+            color: #373f50;
         }
 
         .ag-right {
@@ -279,7 +280,7 @@
     <!-- Email Footer : BEGIN -->
     <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto;" class="email-container">
         <tr>
-            <td style="padding: 20px;  font-size: 12px; line-height: 15px; text-align: center; color: #555;">
+            <td style="padding: 20px;  font-size: 12px; line-height: 15px; text-align: center; color: #373f50;">
                 Zuzi - Shop © {{ now()->year }}. Sva prava pridržana. <br><a href="https://www.zuzi.hr/info/uvjeti-prodaje" style="color:#ffffff;">Uvjeti korištenja</a>
                 <br>
             </td>
