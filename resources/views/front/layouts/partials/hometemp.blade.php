@@ -44,93 +44,25 @@
 
     </div>
     <section class="spikeswtop"></section>
-
 </section>
 
-
 <section class="bg-white " >
-
     <div class="container py-4  ">
     <h2 class="text-center fw-bold pt-0">Popularne kategorije</h2>
     <p class="text-muted text-center mb-5">Odaberite željeni naslov iz jedne od naših kategorija</p>
-
-
         <div class="tns-carousel">
             <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 20},"740":{"items":2, "gutter": 20},"900":{"items":3, "gutter": 20}, "1100":{"items":4, "gutter": 30}}}'>
-
-                    <!--item start -->
+                @foreach ($kategorijefeatured as $cat)
                     <div class="article mb-grid-gutter">
-                        <a class="card border-0 shadow" href="#">
-                            <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
-                            <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Alternativne-knjige_600x600-optimized.jpg" alt="">
+                        <a class="card border-0 shadow" href="{{ url(\Illuminate\Support\Str::slug($cat->group) . '/' . $cat->slug) }}">
+                            <span class="blog-entry-meta-label fs-sm"><i class="ci-heart text-primary"></i></span>
+                            <img class="card-img-top" src="{{ $cat->image }}" alt="{{ $cat->title }}">
                             <div class="card-body py-3 text-center">
-                                <h3 class="h6 mt-1">Alternativne knjige</h3>
+                                <h3 class="h6 mt-1">{{ $cat->title }}</h3>
                             </div>
                         </a>
                     </div>
-                <!--item end -->
-
-                <!--item start -->
-                <div class="article mb-grid-gutter">
-                    <a class="card border-0 shadow" href="#">
-                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
-                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Autobiografije_600x600-optimized.jpg" alt="">
-                        <div class="card-body py-3 text-center">
-                            <h3 class="h6 mt-1">Biografije i autobiografije</h3>
-                        </div>
-                    </a>
-                </div>
-                <!--item end -->
-
-                <!--item start -->
-                <div class="article mb-grid-gutter">
-                    <a class="card border-0 shadow" href="#">
-                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
-                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Horori_600x600-optimized.jpg" alt="">
-                        <div class="card-body py-3 text-center">
-                            <h3 class="h6 mt-1">Horrori</h3>
-                        </div>
-                    </a>
-                </div>
-                <!--item end -->
-
-                <!--item start -->
-                <div class="article mb-grid-gutter">
-                    <a class="card border-0 shadow" href="#">
-                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
-                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Krimici_600x600-optimized.jpg" alt="">
-                        <div class="card-body py-3 text-center">
-                            <h3 class="h6 mt-1">Krimići</h3>
-                        </div>
-                    </a>
-                </div>
-                <!--item end -->
-
-                <!--item start -->
-                <div class="article mb-grid-gutter">
-                    <a class="card border-0 shadow" href="#">
-                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
-                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Ljubavni_600x600-optimized.jpg" alt="">
-                        <div class="card-body py-3 text-center">
-                            <h3 class="h6 mt-1">Ljubići</h3>
-                        </div>
-                    </a>
-                </div>
-                <!--item end -->
-
-                <!--item start -->
-                <div class="article mb-grid-gutter">
-                    <a class="card border-0 shadow" href="#">
-                        <span class="blog-entry-meta-label fs-sm"><i class="ci-book"></i><span class="fs-ms">1258 naslova</span></span>
-                        <img class="card-img-top" src="https://www.zuzi.hr/wp-content/uploads/2022/03/Povijesne_600x600-optimized.jpg" alt="">
-                        <div class="card-body py-3 text-center">
-                            <h3 class="h6 mt-1">Povijesne</h3>
-                        </div>
-                    </a>
-                </div>
-                <!--item end -->
-
-
+                @endforeach
             </div>
 
         </div>
