@@ -42,9 +42,9 @@
 
 
                     <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.author') }}"><span>Autori</span></a>
-                    <li class="nav-item"><a class="nav-link" href=""><span>Rijetke knjige</span></a>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route', ['group' => 'knjige/rijetke-knjige']) }}"><span>Rijetke knjige</span></a>
                     <li class="nav-item"><a class="nav-link" href=""><span>Akcije</span></a>
-                    <li class="nav-item"><a class="nav-link" href=""><span>Outlet</span></a>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route', ['group' => 'knjige/outlet']) }}"><span>Outlet</span></a>
                     <li class="nav-item"><a class="nav-link" href="{{ route('kontakt') }}"><span>Kontakt</span></a></li>
 {{--                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.actions') }}"><i class="ci-discount d-none d-xl-inline-block align-middle mt-n1 me-1"></i>Sniženje</a></li>
 
