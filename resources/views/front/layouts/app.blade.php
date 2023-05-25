@@ -75,7 +75,7 @@
 
 </head>
 <!-- Body-->
-<body class="handheld-toolbar-enabled bg-secondary">
+<body class="bg-secondary">
 
 @if (config('app.env') == 'production')
     <!-- Google Tag Manager (noscript) -->
