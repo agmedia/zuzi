@@ -3140,6 +3140,17 @@ textarea.form-control-lg {
   background-color: var(--cz-btn-hover-bg);
   border-color: var(--cz-btn-hover-border-color);
 }
+
+.scrolling-wrapper .btn:hover {
+    color: #fff!important;
+    background-color: #e50077;
+    border-color: #e50077;
+}
+
+.scrolling-wrapper .btn:hover h3 {
+    color: #fff!important;
+
+}
 .btn-check + .btn:hover {
   color: var(--cz-btn-color);
   background-color: var(--cz-btn-bg);
@@ -3170,7 +3181,7 @@ textarea.form-control-lg {
   color: var(--cz-btn-disabled-color);
   pointer-events: none;
   background-color: var(--cz-btn-disabled-bg);
-  border-color: var(--cz-btn-disabled-border-color);
+  border-color: #373f50;
   opacity: var(--cz-btn-disabled-opacity);
   box-shadow: none;
 }
@@ -3283,7 +3294,7 @@ textarea.form-control-lg {
   --cz-btn-border-color: #f34770;
   --cz-btn-hover-color: #000;
   --cz-btn-hover-bg: #f56385;
-  --cz-btn-hover-border-color: #f4597e;
+  --cz-btn-hover-border-color: #e50077;
   --cz-btn-focus-shadow-rgb: 207, 60, 95;
   --cz-btn-active-color: #000;
   --cz-btn-active-bg: #f56c8d;
@@ -3441,9 +3452,9 @@ textarea.form-control-lg {
   --cz-btn-active-bg: #f34770;
   --cz-btn-active-border-color: #f34770;
   --cz-btn-active-shadow: unset;
-  --cz-btn-disabled-color: #f34770;
+  --cz-btn-disabled-color: #373f50;
   --cz-btn-disabled-bg: transparent;
-  --cz-btn-disabled-border-color: #f34770;
+  --cz-btn-disabled-border-color: #373f50;
   --cz-gradient: none;
 }
 
@@ -4556,6 +4567,12 @@ textarea.form-control-lg {
   border: var(--cz-card-border-width) solid var(--cz-card-border-color);
   border-radius: var(--cz-card-border-radius);
   box-shadow: var(--cz-card-box-shadow);
+}
+
+.card.border-bottom-primary{
+    border:none;
+    border-bottom:1px solid #e50077;
+    border-radius: 0;
 }
 .card > hr {
   margin-right: 0;
@@ -14851,7 +14868,7 @@ input[type=search]::-webkit-search-results-decoration {
 }
 
 .btn-outline-primary {
-  --cz-btn-border-color: rgba(254, 105, 106, 0.35);
+  --cz-btn-border-color: rgb(229, 0, 119);
 }
 
 .btn-outline-accent {

@@ -10,7 +10,7 @@
             <div class="d-block d-sm-flex justify-content-between align-items-center bg-dark rounded-3 shadow">
                 <div class="pt-5 py-sm-5 px-4 ps-md-5 mb-3 text-center text-sm-start">
                     <h2 class="h3 text-white fw-bold">Rijetke knjige</h2>
-                    <p class=" pb-2 text-white">Pogledajte našu kolekeciju popularnih i rijetkih naslova.</p><a class="btn mb-3 btn-primary" href="#">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
+                    <p class=" pb-2 text-white">Pogledajte našu kolekeciju popularnih i rijetkih naslova.</p><a class="btn mb-3 btn-primary" href="{{ route('catalog.route', ['group' => 'knjige/rijetke-knjige']) }}">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
                 </div>
                 <img class="d-block mx-auto mx-sm-0 rounded-end rounded-xs pb-4 pb-sm-0" src="{{ asset('media/img/rijetke.jpg') }}"  width="250" alt="Become a Courier">
             </div>

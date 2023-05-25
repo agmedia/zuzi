@@ -36,8 +36,8 @@
                 <div class="scrolling-wrapper">
                 @foreach ($letters as $item)
                     <a href="{{ route('catalog.route.author', ['author' => null, 'letter' => $item['value']]) }}"
-                       class="btn btn-dark btn-icon  mb-2 @if( ! $item['active']) disabled @endif @if($item['value'] == $letter) bg-dark  @endif">
-                        <h3 class="h6  @if($item['value'] == $letter) text-primary @else text-white @endif  py-0 mb-0 px-1">{{ $item['value'] }}</h3></a>
+                       class="btn btn-outline-primary btn-sm  mb-2 @if( ! $item['active']) disabled @endif @if($item['value'] == $letter) bg-primary  @endif">
+                        <h3 class="h6  @if($item['value'] == $letter) text-white @else  @endif  py-0 mb-0 px-1">{{ $item['value'] }}</h3></a>
                 @endforeach
                 </div>
             </div>
@@ -50,7 +50,7 @@
             </div>
             @foreach ($authors as $author)
                 <div class=" col-sm-4 col-md-3 mb-3">
-                    <div class="card ">
+                    <div class="card border-bottom-primary">
                         <div class="card-body">
                             <h6 class="card-title mb-0"> <a href="{{ url($author['url']) }}" class="text-dark">{{ $author['title'] }} <span class="badge rounded-pill bg-secondary float-end">{{ $author['products_count'] }}</span></a></h6>
                         </div>
