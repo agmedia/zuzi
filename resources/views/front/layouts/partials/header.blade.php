@@ -3,7 +3,9 @@
         <div class="container"><a class="navbar-brand d-none d-sm-block flex-shrink-0 me-4 order-lg-1 p-0" href="{{ route('index') }}"><img src="{{ asset('media/img/zuzi-logo.png') }}" width="110"  alt="Web shop | ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop"></a><a class="navbar-brand d-sm-none me-0 order-lg-1 p-0" href="{{ route('index') }}"><img src="{{ asset('media/img/zuzi-logo.png') }}" width="70" alt="Antikvarijat Biblos"></a>
             <!-- Toolbar-->
             <div class="navbar-toolbar d-flex align-items-center order-lg-3">
-                @if (isset($group) && $group)
+
+
+                @if (isset($group) && $group && ! isset($prod))
                 <button class="navbar-toggler" type="button" data-bs-target="#shop-sidebar" data-bs-toggle="collapse" aria-expanded="false"><i class="ci-filter-alt"></i></button>
                 @endif
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"><span class="navbar-toggler-icon"></span></button>
