@@ -16821,6 +16821,13 @@ a.nav-link:hover .media-tab-media {
         box-shadow: 0 0.25rem 0.5625rem -0.0625rem rgba(0, 0, 0, 0.03), 0 0.275rem 1.25rem -0.0625rem rgba(0, 0, 0, 0.05);
         z-index: 1030;
     }
+    .navbar-sticky:not(.navbar-stuck) {
+
+    width: 100%;
+    -webkit-animation: navbar-show 0.45s;
+    animation: navbar-show 0.45s;
+
+}
     .navbar-sticky.navbar-stuck .navbar-stuck-toggler {
         display: flex;
     }
