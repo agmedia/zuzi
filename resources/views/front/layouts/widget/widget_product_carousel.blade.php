@@ -1,5 +1,5 @@
-<!-- {"title": "Simple Card Widget", "description": "Some description of a Simple Card Widget."} -->
-<section class="py-5 pb-3 pt-0 {{ $data['css'] }}"  >
+<!-- {"title": "Product Carousel", "description": "Some description of a Product Carousel."} -->
+<section class="container {{ $data['css'] }}" style="z-index: 10;">
     @if ($data['container'])
 
                 <h2 class="h3 text-center">{{ $data['title'] }}</h2>
