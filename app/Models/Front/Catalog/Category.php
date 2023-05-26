@@ -52,7 +52,7 @@ class Category extends Model
      */
     public function products()
     {
-        return $this->hasManyThrough(Product::class, CategoryProducts::class, 'category_id', 'id', 'id', 'product_id')->where('status', 1)->orderBy('sort_order');
+        return $this->hasManyThrough(Product::class, CategoryProducts::class, 'category_id', 'id', 'id', 'product_id')->where('status', 1)->where('quantity', '>', 0)->orderBy('sort_order');
     }
 
 
