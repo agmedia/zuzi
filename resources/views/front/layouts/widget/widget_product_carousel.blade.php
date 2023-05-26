@@ -1,4 +1,4 @@
-
+<!-- {"title": "Simple Card Widget", "description": "Some description of a Simple Card Widget."} -->
 <section class="py-5 pb-3 pt-0 {{ $data['css'] }}"  >
     @if ($data['container'])
 
