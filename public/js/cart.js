@@ -6250,148 +6250,127 @@ var render = function() {
             }
           },
           [
-            _c("div", { staticClass: "py-2 px-xl-2" }, [
-              _c(
-                "div",
-                { staticClass: "widget mb-3" },
-                [
-                  _c("h2", { staticClass: "widget-title text-center mb-2" }, [
-                    _vm._v("Sažetak narudžbe")
-                  ]),
-                  _vm._v(" "),
-                  _vm._l(_vm.$store.state.cart.items, function(item) {
-                    return _c(
-                      "div",
-                      {
-                        staticClass:
-                          "d-flex align-items-center pb-2 border-bottom"
-                      },
-                      [
-                        _c(
-                          "a",
+            _vm.user
+              ? _c("div", { staticClass: "py-2 px-xl-2" }, [
+                  _c(
+                    "div",
+                    { staticClass: "widget mb-3" },
+                    [
+                      _c(
+                        "h2",
+                        { staticClass: "widget-title text-center mb-2" },
+                        [_vm._v("Sažetak narudžbe")]
+                      ),
+                      _vm._v(" "),
+                      _vm._l(_vm.$store.state.cart.items, function(item) {
+                        return _c(
+                          "div",
                           {
-                            staticClass: "d-block flex-shrink-0",
-                            attrs: {
-                              href: _vm.base_path + item.attributes.path
-                            }
+                            staticClass:
+                              "d-flex align-items-center pb-2 border-bottom"
                           },
                           [
-                            _c("img", {
-                              attrs: {
-                                src: item.associatedModel.image,
-                                alt: item.name,
-                                width: "64"
-                              }
-                            })
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "ps-2" }, [
-                          _c("h6", { staticClass: "widget-product-title" }, [
                             _c(
                               "a",
                               {
+                                staticClass: "d-block flex-shrink-0",
                                 attrs: {
                                   href: _vm.base_path + item.attributes.path
                                 }
                               },
-                              [_vm._v(_vm._s(item.name))]
-                            )
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "widget-product-meta" }, [
-                            _c("span", { staticClass: "text-accent me-2" }, [
-                              _vm._v(
-                                _vm._s(
-                                  Object.keys(item.conditions).length
-                                    ? item.associatedModel.main_special_text
-                                    : item.associatedModel.main_price_text
-                                )
-                              )
-                            ]),
-                            _c("span", { staticClass: "text-muted" }, [
-                              _vm._v("x " + _vm._s(item.quantity))
-                            ])
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "widget-product-meta" }, [
-                            item.associatedModel.secondary_price_text
-                              ? _c(
-                                  "span",
-                                  { staticClass: "text-accent me-2" },
-                                  [
-                                    _vm._v(
-                                      _vm._s(
-                                        Object.keys(item.conditions).length
-                                          ? item.associatedModel
-                                              .secondary_special_text
-                                          : item.associatedModel
-                                              .secondary_price_text
+                              [
+                                _c("img", {
+                                  attrs: {
+                                    src: item.associatedModel.image,
+                                    alt: item.name,
+                                    width: "64"
+                                  }
+                                })
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "ps-2" }, [
+                              _c(
+                                "h6",
+                                { staticClass: "widget-product-title" },
+                                [
+                                  _c(
+                                    "a",
+                                    {
+                                      attrs: {
+                                        href:
+                                          _vm.base_path + item.attributes.path
+                                      }
+                                    },
+                                    [_vm._v(_vm._s(item.name))]
+                                  )
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "widget-product-meta" },
+                                [
+                                  _c(
+                                    "span",
+                                    { staticClass: "text-primary me-2" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          Object.keys(item.conditions).length
+                                            ? item.associatedModel
+                                                .main_special_text
+                                            : item.associatedModel
+                                                .main_price_text
+                                        )
                                       )
-                                    )
-                                  ]
-                                )
-                              : _vm._e(),
-                            _c("span", { staticClass: "text-muted" }, [
-                              _vm._v("x " + _vm._s(item.quantity))
+                                    ]
+                                  ),
+                                  _c("span", { staticClass: "text-muted" }, [
+                                    _vm._v("x " + _vm._s(item.quantity))
+                                  ])
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "widget-product-meta" },
+                                [
+                                  item.associatedModel.secondary_price_text
+                                    ? _c(
+                                        "span",
+                                        { staticClass: "text-muted me-2" },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              Object.keys(item.conditions)
+                                                .length
+                                                ? item.associatedModel
+                                                    .secondary_special_text
+                                                : item.associatedModel
+                                                    .secondary_price_text
+                                            )
+                                          )
+                                        ]
+                                      )
+                                    : _vm._e(),
+                                  _c("span", { staticClass: "text-muted" }, [
+                                    _vm._v("x " + _vm._s(item.quantity))
+                                  ])
+                                ]
+                              )
                             ])
-                          ])
-                        ])
-                      ]
-                    )
-                  })
-                ],
-                2
-              ),
-              _vm._v(" "),
-              _c(
-                "ul",
-                { staticClass: "list-unstyled fs-sm pb-2 border-bottom" },
-                [
-                  _c(
-                    "li",
-                    {
-                      staticClass:
-                        "d-flex justify-content-between align-items-center"
-                    },
-                    [
-                      _c("span", { staticClass: "me-2" }, [_vm._v("Ukupno:")]),
-                      _c("span", { staticClass: "text-end" }, [
-                        _vm._v(
-                          _vm._s(
-                            _vm.$store.state.service.formatMainPrice(
-                              _vm.$store.state.cart.subtotal
-                            )
-                          )
+                          ]
                         )
-                      ])
-                    ]
+                      })
+                    ],
+                    2
                   ),
                   _vm._v(" "),
-                  _vm.$store.state.cart.secondary_price
-                    ? _c(
-                        "li",
-                        {
-                          staticClass:
-                            "d-flex justify-content-between align-items-center"
-                        },
-                        [
-                          _c("span", { staticClass: "me-2" }),
-                          _c("span", { staticClass: "text-end" }, [
-                            _vm._v(
-                              _vm._s(
-                                _vm.$store.state.service.formatSecondaryPrice(
-                                  _vm.$store.state.cart.subtotal
-                                )
-                              )
-                            )
-                          ])
-                        ]
-                      )
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm._l(_vm.$store.state.cart.detail_con, function(condition) {
-                    return _c("div", [
+                  _c(
+                    "ul",
+                    { staticClass: "list-unstyled fs-sm pb-2 border-bottom" },
+                    [
                       _c(
                         "li",
                         {
@@ -6400,13 +6379,13 @@ var render = function() {
                         },
                         [
                           _c("span", { staticClass: "me-2" }, [
-                            _vm._v(_vm._s(condition.name))
+                            _vm._v("Ukupno:")
                           ]),
                           _c("span", { staticClass: "text-end" }, [
                             _vm._v(
                               _vm._s(
                                 _vm.$store.state.service.formatMainPrice(
-                                  condition.value
+                                  _vm.$store.state.cart.subtotal
                                 )
                               )
                             )
@@ -6427,50 +6406,99 @@ var render = function() {
                                 _vm._v(
                                   _vm._s(
                                     _vm.$store.state.service.formatSecondaryPrice(
-                                      condition.value
+                                      _vm.$store.state.cart.subtotal
                                     )
                                   )
                                 )
                               ])
                             ]
                           )
-                        : _vm._e()
-                    ])
-                  })
-                ],
-                2
-              ),
-              _vm._v(" "),
-              _c(
-                "h3",
-                { staticClass: "fw-bold text-primary text-center my-2" },
-                [
-                  _vm._v(
-                    _vm._s(
-                      _vm.$store.state.service.formatMainPrice(
-                        _vm.$store.state.cart.total
-                      )
-                    )
-                  )
-                ]
-              ),
-              _vm._v(" "),
-              _vm.$store.state.cart.secondary_price
-                ? _c("h4", { staticClass: "fs-sm text-center my-2" }, [
-                    _vm._v(
-                      _vm._s(
-                        _vm.$store.state.service.formatSecondaryPrice(
-                          _vm.$store.state.cart.total
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm._l(_vm.$store.state.cart.detail_con, function(
+                        condition
+                      ) {
+                        return _c("div", [
+                          _c(
+                            "li",
+                            {
+                              staticClass:
+                                "d-flex justify-content-between align-items-center"
+                            },
+                            [
+                              _c("span", { staticClass: "me-2" }, [
+                                _vm._v(_vm._s(condition.name))
+                              ]),
+                              _c("span", { staticClass: "text-end" }, [
+                                _vm._v(
+                                  _vm._s(
+                                    _vm.$store.state.service.formatMainPrice(
+                                      condition.value
+                                    )
+                                  )
+                                )
+                              ])
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _vm.$store.state.cart.secondary_price
+                            ? _c(
+                                "li",
+                                {
+                                  staticClass:
+                                    "d-flex justify-content-between align-items-center"
+                                },
+                                [
+                                  _c("span", { staticClass: "me-2" }),
+                                  _c("span", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(
+                                        _vm.$store.state.service.formatSecondaryPrice(
+                                          condition.value
+                                        )
+                                      )
+                                    )
+                                  ])
+                                ]
+                              )
+                            : _vm._e()
+                        ])
+                      })
+                    ],
+                    2
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "h3",
+                    { staticClass: "fw-bold text-primary text-center my-2" },
+                    [
+                      _vm._v(
+                        _vm._s(
+                          _vm.$store.state.service.formatMainPrice(
+                            _vm.$store.state.cart.total
+                          )
                         )
                       )
-                    )
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _vm.$store.state.cart.secondary_price
+                    ? _c("h4", { staticClass: "fs-sm text-center my-2" }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.$store.state.service.formatSecondaryPrice(
+                              _vm.$store.state.cart.total
+                            )
+                          )
+                        )
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "small text-center mt-0 mb-0" }, [
+                    _vm._v("PDV uračunat u cijeni")
                   ])
-                : _vm._e(),
-              _vm._v(" "),
-              _c("p", { staticClass: "small text-center mt-0 mb-0" }, [
-                _vm._v("PDV uračunat u cijeni")
-              ])
-            ])
+                ])
+              : _vm._e()
           ]
         )
       : _vm._e(),
