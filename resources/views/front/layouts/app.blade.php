@@ -86,7 +86,7 @@
 
 
 <!-- Light topbar -->
-<div class="topbar topbar-light sticky bg-dark">
+<div class="topbar topbar-light  bg-dark">
     <div class="container">
 
         <div class="topbar-text text-nowrap  d-inline-block">
