@@ -2234,7 +2234,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -5913,35 +5912,18 @@ var render = function() {
                       )
                     ]),
                     _vm._v(" "),
-                    _vm.$store.state.cart.secondary_price ? _c("br") : _vm._e(),
-                    _vm._v(" "),
                     _vm.$store.state.cart.secondary_price
                       ? _c("span", { staticClass: "text-muted" }, [
-                          _vm._v("                ")
-                        ])
-                      : _vm._e(),
-                    _c("span", { staticClass: "text-dark fs-sm ms-1" }, [
-                      _vm._v(
-                        _vm._s(
-                          _vm.$store.state.service.formatSecondaryPrice(
-                            _vm.$store.state.cart.total
+                          _vm._v(
+                            _vm._s(
+                              _vm.$store.state.service.formatSecondaryPrice(
+                                _vm.$store.state.cart.total
+                              )
+                            )
                           )
-                        )
-                      )
-                    ])
-                  ]),
-                  _vm._v(" "),
-                  _c(
-                    "a",
-                    {
-                      staticClass: "btn btn-outline-secondary btn-sm",
-                      attrs: { href: _vm.carturl }
-                    },
-                    [
-                      _vm._v("Košarica"),
-                      _c("i", { staticClass: "ci-arrow-right ms-1 me-n1" })
-                    ]
-                  )
+                        ])
+                      : _vm._e()
+                  ])
                 ]
               ),
               _c(
@@ -6247,7 +6229,10 @@ var render = function() {
                   staticClass: "btn btn-primary btn-shadow d-block w-100 mt-4",
                   attrs: { href: _vm.checkouturl }
                 },
-                [_vm._v("NASTAVI NA NAPLATU")]
+                [
+                  _vm._v("NASTAVI NA NAPLATU "),
+                  _c("i", { staticClass: "ci-arrow-right fs-sm" })
+                ]
               )
             ])
           ]

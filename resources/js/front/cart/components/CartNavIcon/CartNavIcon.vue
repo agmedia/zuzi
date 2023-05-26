@@ -19,10 +19,9 @@
                 <div class="d-flex flex-wrap justify-content-between align-items-center py-3">
                     <div class="fs-sm me-2 py-2">
                         <span class="text-muted">Ukupno:</span><span class="text-primary fs-base ms-1">{{ $store.state.service.formatMainPrice($store.state.cart.total) }}</span>
-                        <br v-if="$store.state.cart.secondary_price">
-                        <span v-if="$store.state.cart.secondary_price" class="text-muted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="text-dark fs-sm ms-1">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</span>
+                        <span v-if="$store.state.cart.secondary_price" class="text-muted">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</span>
                     </div>
-                    <a class="btn btn-outline-secondary btn-sm" :href="carturl">Košarica<i class="ci-arrow-right ms-1 me-n1"></i></a>
+
                 </div><a class="btn btn-primary btn-sm d-block w-100" :href="carturl"><i class="ci-card me-2 fs-base align-middle"></i>Dovrši kupnju</a>
             </div>
             <div class="widget widget-cart px-3 pt-2 pb-3" style="width: 20rem;" v-else>
