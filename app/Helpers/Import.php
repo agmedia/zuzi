@@ -27,7 +27,7 @@ class Import
 
         foreach ($images as $key => $image) {
             if ($image) {
-                $time = time();
+                $time = time() . Str::random(9);
 
                 $image_saved = Storage::disk('local')->put('temp/' . $key . '.jpg', file_get_contents($image));
 
