@@ -135,7 +135,7 @@
 <script src="{{ asset('js/smooth-scroll.polyfills.min.js?v=1.2') }}"></script>
 <!-- Main theme script-->
 
-<script src="{{ asset('js/cart.js?v=2.0.7') }}"></script>
+<script src="{{ asset('js/cart.js?v=2.0.8') }}"></script>
 
 <script src="{{ asset('js/theme.min.js') }}"></script>
 

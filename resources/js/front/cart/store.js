@@ -188,14 +188,22 @@ class AgService {
     }
 
 
-    resolvePrice(currency_list, price) {
+    resolvePrice(currency_list, price, main = true) {
         let list = currency_list;
         let main_currency = {};
 
         list.forEach((item) => {
-            if (item.main) {
-                main_currency = item;
+            if (main) {
+                if (item.main) {
+                    main_currency = item;
+                }
+            } else {
+                if ( ! item.main) {
+                    main_currency = item;
+                    return;
+                }
             }
+
         });
 
         let left = main_currency.symbol_left ? main_currency.symbol_left + ' ' : '';
@@ -211,20 +219,14 @@ class AgService {
      * @returns {string}
      */
     formatSecondaryPrice(price) {
-        let list = store.state.settings['currency.list'];
-        let main_currency = {};
+        if (!store.state.settings) {
+            this.getSettings().then((response) => {
+                return this.resolvePrice(response['currency.list'], price, false);
+            });
 
-        list.forEach((item) => {
-            if ( ! item.main) {
-                main_currency = item;
-                return;
-            }
-        });
-
-        let left = main_currency.symbol_left ? main_currency.symbol_left + ' ' : '';
-        let right = main_currency.symbol_right ? ' ' + main_currency.symbol_right : '';
-
-        return left + Number(price * main_currency.value).toFixed(main_currency.decimal_places) + right;
+        } else {
+            return this.resolvePrice(store.state.settings['currency.list'], price, false);
+        }
     }
 
     /**
