@@ -270,7 +270,7 @@ class CatalogRouteController extends Controller
      */
     public function actions(Request $request, Category $cat = null, $subcat = null)
     {
-        $ids = collect();
+        $ids = Product::query()->whereNotNull('special')->pluck('id');
         $group = 'snizenja';
 
         $crumbs = null;
