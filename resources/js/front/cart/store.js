@@ -176,7 +176,20 @@ class AgService {
      * @returns {string}
      */
     formatMainPrice(price) {
-        let list = store.state.settings['currency.list'];
+
+        if (!store.state.settings) {
+            this.getSettings().then((response) => {
+                return this.resolvePrice(response['currency.list'], price);
+            });
+
+        } else {
+            return this.resolvePrice(store.state.settings['currency.list'], price);
+        }
+    }
+
+
+    resolvePrice(currency_list, price) {
+        let list = currency_list;
         let main_currency = {};
 
         list.forEach((item) => {
