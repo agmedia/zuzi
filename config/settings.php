@@ -24,9 +24,10 @@ return [
     'search_keyword'    => 'pojam',
     'author_path'       => 'autor',
     'publisher_path'    => 'nakladnik',
+    'group_path'        => 'Knjige',
     'unknown_author'    => 6,
     'unknown_publisher' => 6,
-    'images_domain' =>  env('APP_IMAGE_DOMAIN'),
+    'images_domain'     =>  env('APP_IMAGE_DOMAIN'),
 
     'eur_divide_amount' => 0.13272280,
 
@@ -67,8 +68,8 @@ return [
 
     'payment' => [
         'providers' => [
-            'wspay'  => \App\Models\Front\Checkout\Payment\Wspay::class,
-            'payway' => \App\Models\Front\Checkout\Payment\Payway::class,
+            //'wspay'  => \App\Models\Front\Checkout\Payment\Wspay::class,
+            //'payway' => \App\Models\Front\Checkout\Payment\Payway::class,
             'corvus' => \App\Models\Front\Checkout\Payment\Corvus::class,
             'cod'    => \App\Models\Front\Checkout\Payment\Cod::class,
             'bank'   => \App\Models\Front\Checkout\Payment\Bank::class,

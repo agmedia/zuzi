@@ -227,4 +227,16 @@ class Settings extends Model
             'updated_at' => Carbon::now()
         ]);
     }
+
+
+    /**
+     * @param string $code
+     * @param string $key
+     *
+     * @return mixed
+     */
+    public static function erase(string $code, string $key)
+    {
+        return self::where('code', $code)->where('key', $key)->delete();
+    }
 }
