@@ -142,12 +142,12 @@
                             </div>
 
                             @if($prod->secondary_price_text)
-                                <div class="mb-1 mt-1 text-center text-lg-start">
+                                <div class="mb-3 mt-1 text-center text-lg-start">
                                     @if ($prod->main_price > $prod->main_special)
                                         <span class=" fs-sm text-muted me-1"> {{ $prod->secondary_special_text }}</span>
                                         <span class="text-muted fs-sm me-3">*{{ $prod->secondary_price_text }}</span>
                                     @else
-                                        <span class="fs-sm text-muted mb-3 me-1">{{ $prod->secondary_price_text }}</span>
+                                        <span class="fs-sm text-muted  me-1">{{ $prod->secondary_price_text }}</span>
                                     @endif
                                 </div>
                             @endif
