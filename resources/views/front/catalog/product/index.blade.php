@@ -147,7 +147,7 @@
                                         <span class=" fs-sm text-muted me-1"> {{ $prod->secondary_special_text }}</span>
                                         <span class="text-muted fs-sm me-3">*{{ $prod->secondary_price_text }}</span>
                                     @else
-                                        <span class="fs-sm text-muted me-1">{{ $prod->secondary_price_text }}</span>
+                                        <span class="fs-sm text-muted mb-3 me-1">{{ $prod->secondary_price_text }}</span>
                                     @endif
                                 </div>
                             @endif
@@ -157,10 +157,6 @@
                                     <span class=" fs-sm text-muted me-1"> *Najniža cijena u zadnjih 30 dana.</span>
                                 </div>
 
-                            @else
-                                <div class="mb-2 text-center text-lg-start">
-
-                                </div>
                             @endif
                             <add-to-cart-btn id="{{ $prod->id }}"></add-to-cart-btn>
 
