@@ -133,7 +133,7 @@
                             <div class="mb-0 mt-4 text-center text-lg-start">
                                 @if ($prod->main_price > $prod->main_special)
                                     <span class="h3 fw-normal text-primary me-1">{{ $prod->main_special_text }}</span>
-                                    <del class="text-muted fw-normal me-3">{{ $prod->main_price_text }}</del>
+                                    <span class="text-muted fs-sm me-3">NC 30 dana: {{ $prod->main_price_text }}</span>
 
                                 @else
                                     <span class="h3 fw-medium text-primary me-1">{{ $prod->main_price_text }}</span>
@@ -144,8 +144,8 @@
                             @if($prod->secondary_price_text)
                                 <div class="mb-3 mt-1 text-center text-lg-start">
                                     @if ($prod->main_price > $prod->main_special)
-                                        <span class=" fs-sm text-muted me-1">NC zadnjih 30 dana: {{ $prod->secondary_special_text }}</span>
-                                        <del class="text-muted fs-sm me-3">{{ $prod->secondary_price_text }}</del>
+                                        <span class=" fs-sm text-muted me-1"> {{ $prod->secondary_special_text }}</span>
+                                        <span class="text-muted fs-sm me-3">NC 30 dana: {{ $prod->secondary_price_text }}</span>
                                     @else
                                         <span class="fs-sm text-muted me-1">{{ $prod->secondary_price_text }}</span>
                                     @endif
