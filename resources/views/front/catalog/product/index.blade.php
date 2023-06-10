@@ -152,7 +152,10 @@
                                 </div>
                             @endif
                             @if ($prod->main_price > $prod->main_special)
-                            * Najniža cijena u zadnjih 30 dana.
+
+                                <div class="mb-3 mt-1 text-center text-lg-start">
+                                    <span class=" fs-sm text-muted me-1"> *Najniža cijena u zadnjih 30 dana.</span>
+                                </div>
                             @endif
                             <add-to-cart-btn id="{{ $prod->id }}"></add-to-cart-btn>
 
