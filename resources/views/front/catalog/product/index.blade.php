@@ -156,6 +156,11 @@
                                 <div class="mb-3 mt-1 text-center text-lg-start">
                                     <span class=" fs-sm text-muted me-1"> *Najniža cijena u zadnjih 30 dana.</span>
                                 </div>
+
+                            @else
+                                <div class="mb-2 text-center text-lg-start">
+
+                                </div>
                             @endif
                             <add-to-cart-btn id="{{ $prod->id }}"></add-to-cart-btn>
 
