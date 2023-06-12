@@ -110,8 +110,10 @@ class PaymentMethod
         $geo = (new GeoZone())->findApplicableToAll();
 
         foreach ($this->methods as $method) {
-            if ($method->geo_zone == $geo->id || ! $method->geo_zone) {
-                $this->response_methods->put($method->code, $method);
+            if (isset($geo->id)) {
+                if ($method->geo_zone == $geo->id || ! $method->geo_zone) {
+                    $this->response_methods->put($method->code, $method);
+                }
             }
         }
 
