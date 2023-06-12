@@ -435,10 +435,13 @@ class DashboardController extends Controller
             'group' => Helper::categoryGroupPath(true)
         ]);
 
-        foreach (Product::all() as $product) {
+        $products = Product::query()->where('push', 0)->get();
+
+        foreach ($products as $product) {
             $product->update([
                 'url'             => ProductHelper::url($product),
-                'category_string' => ProductHelper::categoryString($product)
+                'category_string' => ProductHelper::categoryString($product),
+                'push'            => 1
             ]);
         }
 
