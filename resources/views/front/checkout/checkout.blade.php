@@ -6,7 +6,7 @@
 
 @section('content')
 
-    <div class="page-title-overlap bg-dark pt-4"  style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
+    <div class="page-title-overlap bg-accent pt-4" >
         <div class="container d-lg-flex justify-content-between py-2 py-lg-3">
             <div class="order-lg-2 mb-3 mb-lg-0 pt-lg-2">
                 <nav aria-label="breadcrumb">
@@ -22,14 +22,17 @@
         </div>
     </div>
 
-
-
-
+    <div class="container pb-5 mb-2 mb-md-4">
+        <div class="row">
+            <section class="col-lg-8">
                 @livewire('front.checkout', ['step' => $step, 'is_free_shipping' => $is_free_shipping])
-
+            </section>
             <!-- Sidebar-->
-
-
+            <aside class="col-lg-4 pt-4 pt-lg-0 ps-xl-5 d-none d-lg-block">
+                <cart-view-aside route="naplata" continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}" checkouturl="{{ route('naplata') }}"></cart-view-aside>
+            </aside>
+        </div>
+    </div>
 
 @endsection
 

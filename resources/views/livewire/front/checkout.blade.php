@@ -1,8 +1,5 @@
 <div>
-    <div class="container  ">
-    <div class="row">
-    <section class="col-lg-12">
-    <div class="steps steps-light pt-2 pb-3 mb-0">
+    <div class="steps steps-light pt-2 pb-3 mb-5">
         <a class="step-item active" href="{{ route('kosarica') }}">
             <div class="step-progress"><span class="step-count">1</span></div>
             <div class="step-label"><i class="ci-cart"></i>Košarica</div>
@@ -24,16 +21,7 @@
             <div class="step-label"><i class="ci-check-circle"></i>Pregledaj</div>
         </a>
     </div>
-    </section>
-    </div>
-    </div>
 
-
-
-        <section class="spikesg mb-5 " ></section>
-
-    <div class="container pb-5 mb-2 mb-md-4">
-        <div class="row">
     @if ( ! empty($gdl) && ! $gdl_shipping && ! $gdl_payment)
         @section('google_data_layer')
             <script>
@@ -79,8 +67,6 @@
     @endif
 
     @if ($step == 'podaci')
-
-        <section class="col-lg-8">
         <h2 class="h6 pt-1 pb-3 mb-3 border-bottom">Adresa dostave</h2>
 
         @if (session()->has('login_success'))
@@ -91,9 +77,12 @@
         @endif
 
         @if (auth()->guest())
-
-                <div class="mb-3"><a data-bs-toggle="collapse" href="#collapseLogin" role="button" aria-expanded="false" aria-controls="collapseLogin" class="alert-link">Prijava za registrirane kupce </a> </div>
-
+            <div class="alert alert-secondary d-flex mb-3" role="alert">
+                <div class="alert-icon">
+                    <i class="ci-user"></i>
+                </div>
+                <div><a data-bs-toggle="collapse" href="#collapseLogin" role="button" aria-expanded="false" aria-controls="collapseLogin" class="alert-link">Prijava </a> za registrirane korisnike!</div>
+            </div>
 
             @if (session()->has('error'))
                 <div class="alert alert-primary alert-dismissible fade show" role="alert">
@@ -103,8 +92,9 @@
             @endif
 
             <div id="collapseLogin" aria-expanded="false" class="collapse">
-
-                        <div class="row mt-3 mb-5">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row mb-3">
                             <div class="col-sm-6">
                                 <div class="mb-3">
                                     <label class="form-label" for="si-email">Email adresa</label>
@@ -129,12 +119,13 @@
                                         <input class="form-check-input" type="checkbox" wire:model.defer="login.remember" id="si-remember">
                                         <label class="form-check-label" for="si-remember">Zapamti me</label>
                                     </div>
-                                    <a class="fs-sm" href="{{ route('register') }}">Registriraj se</a>
+                                    <a class="fs-sm" href="{{ route('register') }}">Registriraj se..!</a>
                                 </div>
                                 <button class="btn btn-primary btn-shadow d-block w-100" wire:click="authUser()" type="button">Prijava</button>
                             </div>
                         </div>
-
+                    </div>
+                </div>
             </div>
         @endif
 
@@ -230,12 +221,11 @@
             <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100" href="{{ route('kosarica') }}"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na košaricu</span><span class="d-inline d-sm-none">Povratak</span></a></div>
             <div class="w-50 ps-2"><a class="btn btn-primary d-block w-100" wire:click="changeStep('dostava')" href="javascript:void(0);"><span class="d-none d-sm-inline">Na odabir dostave</span><span class="d-inline d-sm-none">Nastavi</span><i class="ci-arrow-right mt-sm-0 ms-1"></i></a></div>
         </div>
-        </section>
+
     @endif
 
 
     @if ($step == 'dostava')
-            <section class="col-lg-8">
         <h2 class="h6 pt-1 pb-3 mb-3 ">Odaberite način dostave</h2>
         <div class="table-responsive">
             <table class="table table-hover fs-sm border-top">
@@ -266,9 +256,9 @@
                                 @endif
                             @else
                                 € {{ $s_method->data->price }}
-                                @if ($secondary_price)
-                                    <br>{{ $s_method->data->price ? number_format($s_method->data->price * $secondary_price, 2) : '0' }} kn
-                                @endif
+                                    @if ($secondary_price)
+                                        <br>{{ $s_method->data->price ? number_format($s_method->data->price * $secondary_price, 2) : '0' }} kn
+                                    @endif
                             @endif
                         </td>
                     </tr>
@@ -281,12 +271,10 @@
             <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100" wire:click="changeStep('podaci')" href="javascript:void(0);"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na unos podataka</span><span class="d-inline d-sm-none">Povratak</span></a></div>
             <div class="w-50 ps-2"><a class="btn btn-primary d-block w-100" wire:click="changeStep('placanje')" href="javascript:void(0);"><span class="d-none d-sm-inline">Na odabir plaćanja</span><span class="d-inline d-sm-none">Nastavi</span><i class="ci-arrow-right mt-sm-0 ms-1"></i></a></div>
         </div>
-            </section>
     @endif
 
 
     @if ($step == 'placanje')
-            <section class="col-lg-8">
         <h2 class="h6 pt-1 pb-3 mb-3 ">Odaberite način plaćanja</h2>
         <div class="table-responsive">
             <table class="table table-hover fs-sm border-top">
@@ -310,20 +298,14 @@
             <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100" wire:click="changeStep('dostava')" href="javascript:void(0);"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na odabir dostave</span><span class="d-inline d-sm-none">Povratak</span></a></div>
             <div class="w-50 ps-2"><a class="btn btn-primary d-block w-100" href="{{ ($payment != '') ? route('pregled') : '#' }}"><span class="d-none d-sm-inline">Pregledajte narudžbu</span><span class="d-inline d-sm-none">Nastavi</span><i class="ci-arrow-right mt-sm-0 ms-1"></i></a></div>
         </div>
-            </section>
     @endif
 
-    <aside class="col-lg-4 pt-4 pt-lg-0 ps-xl-5 d-none d-lg-block">
-        <cart-view-aside route="naplata" continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}" checkouturl="{{ route('naplata') }}"></cart-view-aside>
-    </aside>
+</div>
 
-    </div>
-</div>
-</div>
 
 @push('js_after')
-{{--    <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">--}}
-{{--    <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>--}}
+    {{--    <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">--}}
+    {{--    <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>--}}
 
     <script>
         $( document ).ready(function() {
