@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Helper
 {
@@ -386,6 +387,16 @@ class Helper
         }
 
         return null;
+    }
+
+
+    public static function categoryGroupPath(bool $slug = false): string
+    {
+        if ($slug) {
+            return Str::slug(config('settings.group_path'));
+        }
+
+        return config('settings.group_path');
     }
 
 }

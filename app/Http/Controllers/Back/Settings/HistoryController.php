@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Back\Settings;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Settings\History;
 use App\Models\Back\Settings\Page;
@@ -21,7 +22,7 @@ class HistoryController extends Controller
         $query = (new History())->newQuery();
 
         if ($request->has('trazi')) {
-            if ($request->input('trazi') == 'knjige') {
+            if ($request->input('trazi') == Helper::categoryGroupPath(true)) {
                 $query->where('target', 'product');
 
                 if ($request->has('pojam') && $request->input('pojam') != '') {

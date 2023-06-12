@@ -56,11 +56,11 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::get('setRoles', [DashboardController::class, 'setRoles'])->name('roles.set');
     Route::get('import', [DashboardController::class, 'import'])->name('import.initial');
     Route::get('mailing-test', [DashboardController::class, 'mailing'])->name('mailing.test');
-
     Route::get('letters', [DashboardController::class, 'letters'])->name('letters.import');
     Route::get('slugs', [DashboardController::class, 'slugs'])->name('slugs.revision');
     Route::get('statuses', [DashboardController::class, 'statuses'])->name('statuses.cron');
     Route::get('duplicate/{target?}', [DashboardController::class, 'duplicate'])->name('duplicate.revision');
+    Route::get('set/category-group', [DashboardController::class, 'setCategoryGroup'])->name('group.set');
 
     // CATALOG
     Route::prefix('catalog')->group(function () {
@@ -338,12 +338,12 @@ Route::post('reset-password', [ForgotPasswordController::class, 'submitResetPass
  * https://www.antikvarijat-biblos.hr/kategorija-proizvoda/knjige/
  */
 Route::get('proizvod/{prod?}/', [CatalogRouteController::class, 'resolveOldUrl']);
-Route::get('kategorija-proizvoda/{group?}/{cat?}/{subcat?}', [CatalogRouteController::class, 'resolveOldCategoryUrl']);
+//Route::get('kategorija-proizvoda/{group?}/{cat?}/{subcat?}', [CatalogRouteController::class, 'resolveOldCategoryUrl']);
 //
 Route::get(config('settings.author_path') . '/{author?}/{cat?}/{subcat?}', [CatalogRouteController::class, 'author'])->name('catalog.route.author');
 Route::get(config('settings.publisher_path') . '/{publisher?}/{cat?}/{subcat?}', [CatalogRouteController::class, 'publisher'])->name('catalog.route.publisher');
 //
-Route::get('snizenja/{cat?}/{subcat?}', [CatalogRouteController::class, 'actions'])->name('catalog.route.actions');
+Route::get('akcijska-ponuda/{cat?}/{subcat?}', [CatalogRouteController::class, 'actions'])->name('catalog.route.actions');
 //
 Route::get('{group}/{cat?}/{subcat?}/{prod?}', [CatalogRouteController::class, 'resolve'])->name('catalog.route');
 

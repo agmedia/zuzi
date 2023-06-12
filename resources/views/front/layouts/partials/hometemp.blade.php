@@ -16,7 +16,7 @@
                         <span class="badge bg-dark fw-semibold fs-lg p-2 mb-4 rounded-1 from-bottom delay-3">30% popusta</span>
                         <h2 class="text-light display-6 fw-bold from-bottom delay-1">Antikvarni naslovi</h2>
                         <p class="fs-xl text-light pb-3 from-bottom delay-3">Sve antikvarne knjige na popustu su do kraja travnja!</p>
-                        <div class="scale-up delay-4 mx-auto mx-lg-0"><a class="btn btn-primary" href="{{ route('catalog.route', ['group' => 'knjige/antikvarne-knjige']) }}">Saznajte više<i class="ci-arrow-right ms-2 me-n1"></i></a></div>
+                        <div class="scale-up delay-4 mx-auto mx-lg-0"><a class="btn btn-primary" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/antikvarne-knjige']) }}">Saznajte više<i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                     </div>
                 </div>
             </div>

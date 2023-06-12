@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Helpers\Helper;
 use App\Models\Front\Catalog\Category;
 use App\Models\Front\Page;
 use App\Models\User;
@@ -44,7 +45,7 @@ class AppServiceProvider extends ServiceProvider
         $users = User::count();
         View::share('users', $users);
 
-        $knjige = Category::active()->topList('Knjige')->sortByName()->select('id', 'title', 'group', 'slug')->get();
+        $knjige = Category::active()->topList(Helper::categoryGroupPath(true))->sortByName()->select('id', 'title', 'group', 'slug')->get();
         View::share('knjige', $knjige);
 
         $kategorijefeatured = Category::active()->where('image', '!=', 'media/avatars/avatar0.jpg')->sortByName()->select('id','image','title', 'group', 'slug')->get();

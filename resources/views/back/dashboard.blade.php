@@ -16,26 +16,44 @@
     </div>
     <!-- END Hero -->
 
-    @if (auth()->user()->can('*'))
-        <div class="block block-rounded">
-            <div class="block-content block-content-full">
-                <div class="content pt-0">
-                    <a href="{{ route('roles.set') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Set Roles</a>
-                    <a href="{{ route('import.initial') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Initial Import</a>
-                    <a href="{{ route('mailing.test') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Mail Test</a>
-                    <a href="{{ route('letters.import') }}" class="btn btn-hero-sm btn-rounded btn-hero-warning mb-3 mr-3">First Letters Import</a>
-                    <a href="{{ route('statuses.cron') }}" class="btn btn-hero-sm btn-rounded btn-hero-success mb-3 mr-3">Statuses</a>
-                    <a href="{{ route('slugs.revision') }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Slugs revision</a>
-                    <a href="{{ route('duplicate.revision', ['target' => 'images']) }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Duplicate Images revision</a>
-                    <a href="{{ route('duplicate.revision', ['target' => 'publishers']) }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Duplicate Publishers revision</a>
-                </div>
-            </div>
-        </div>
-    @endif
-
     <!-- Page Content -->
     <div class="content">
         @include('back.layouts.partials.session')
+        <!-- Super-admin view -->
+        @if (auth()->user()->can('*'))
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="block block-rounded block-mode-hidden">
+                        <div class="block-header block-header-default">
+                            <h3 class="block-title">Superadmin dashboard</h3>
+                            <div class="block-options">
+                                <button type="button" class="btn-block-option" data-toggle="block-option" data-action="content_toggle"></button>
+                            </div>
+                        </div>
+                        <div class="block-content">
+                            <a href="{{ route('roles.set') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Set Roles</a>
+                            <a href="{{ route('import.initial') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Initial Import</a>
+                            <a href="{{ route('mailing.test') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Mail Test</a>
+                            <a href="{{ route('letters.import') }}" class="btn btn-hero-sm btn-rounded btn-hero-warning mb-3 mr-3">First Letters Import</a>
+                            <a href="{{ route('statuses.cron') }}" class="btn btn-hero-sm btn-rounded btn-hero-success mb-3 mr-3">Statuses</a>
+                            <a href="{{ route('slugs.revision') }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Slugs revision</a>
+                            <a href="{{ route('duplicate.revision', ['target' => 'images']) }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Duplicate Images revision</a>
+                            <a href="{{ route('duplicate.revision', ['target' => 'publishers']) }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Duplicate Publishers revision</a>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <hr class="rule">
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ route('group.set') }}" class="btn btn-info mb-3 mr-3">Set New Category Group</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Quick Overview -->
         <div class="row row-deck">
             <div class="col-6 col-lg-3">

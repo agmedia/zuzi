@@ -24,7 +24,7 @@ return [
     'search_keyword'    => 'pojam',
     'author_path'       => 'autor',
     'publisher_path'    => 'nakladnik',
-    'group_path'        => 'Knjige',
+    'group_path'        => 'Kategorije proizvoda',
     'unknown_author'    => 6,
     'unknown_publisher' => 6,
     'images_domain'     =>  env('APP_IMAGE_DOMAIN'),

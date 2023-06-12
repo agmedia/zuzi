@@ -126,7 +126,7 @@ class Import
                 'description'      => '',
                 'meta_title'       => $name,
                 'meta_description' => $name,
-                'group'            => 'Knjige',
+                'group'            => Helper::categoryGroupPath(true),
                 'lang'             => 'hr',
                 'status'           => 1,
                 'slug'             => Str::slug($name),

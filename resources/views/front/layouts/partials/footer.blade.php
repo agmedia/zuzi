@@ -44,13 +44,13 @@
                     <h3 class="widget-title fw-700 text-white"><span>Zuzi Shop</span></h3>
                     <ul class="widget-list">
 
-                        <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => 'knjige']) }}">Web shop</a></li>
+                        <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true)]) }}">Web shop</a></li>
 
                         <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route.author') }}">Autori</a>
-                        <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => 'knjige/rijetke-knjige']) }}">Rijetke knjige</a>
+                        <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/rijetke-knjige']) }}">Rijetke knjige</a>
                         <li class="widget-list-item"><a class="widget-list-link" href="">Svezalice - pidžame za knjige</a>
                         <li class="widget-list-item"><a class="widget-list-link" href="">Akcije</a>
-                        <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => 'knjige/outlet']) }}">Outlet</a>
+                        <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/outlet']) }}">Outlet</a>
 
                     </ul>
                 </div>

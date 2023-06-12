@@ -138,9 +138,7 @@ class Checkout extends Component
 
         $this->secondary_price = Currency::secondary() ? Currency::secondary()->value : false;
 
-        if (session()->has(config('session.cart'))) {
-            $this->cart = new AgCart(session(config('session.cart')));
-        }
+        $this->checkCart();
 
         $this->changeStep($this->step);
     }
@@ -175,6 +173,8 @@ class Checkout extends Component
      */
     public function changeStep(string $step = '')
     {
+        $this->checkCart();
+        
         if (in_array($step, ['', 'podaci']) && $this->cart) {
             $this->gdl = TagManager::getGoogleCartDataLayer($this->cart->get());
             $this->gdl_event = 'begin_checkout';
@@ -206,6 +206,11 @@ class Checkout extends Component
                 $this->gdl = TagManager::getGoogleCartDataLayer($this->cart->get());
                 $this->gdl_event = 'add_payment_info';
             }
+        }
+
+        // Dostava
+        if ($step == 'dostava') {
+            $this->validate($this->address_rules);
         }
 
         // Plaćanje
@@ -362,6 +367,17 @@ class Checkout extends Component
             $this->gdl_payment = 'pouzeće';
         } else {
             $this->gdl_payment = 'kartica';
+        }
+    }
+
+
+    /**
+     * @return void
+     */
+    private function checkCart(): void
+    {
+        if (session()->has(config('session.cart'))) {
+            $this->cart = new AgCart(session(config('session.cart')));
         }
     }
 }

@@ -424,4 +424,25 @@ class DashboardController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function setCategoryGroup(Request $request)
+    {
+        Category::query()->update([
+            'group' => Helper::categoryGroupPath(true)
+        ]);
+
+        foreach (Product::all() as $product) {
+            $product->update([
+                'url'             => ProductHelper::url($product),
+                'category_string' => ProductHelper::categoryString($product)
+            ]);
+        }
+
+        return redirect()->route('dashboard');
+    }
+
 }
