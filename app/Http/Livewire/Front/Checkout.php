@@ -275,6 +275,10 @@ class Checkout extends Component
     {
         $geo = (new GeoZone())->findState($this->address['state'] ?: 'Croatia');
 
+        if ( ! isset($geo->id)) {
+            $geo->id = 1;
+        }
+
         return view('livewire.front.checkout', [
             'shippingMethods' => (new ShippingMethod())->findGeo($geo->id),
             'paymentMethods' => (new PaymentMethod())->findGeo($geo->id)->checkShipping($this->shipping)->resolve(),
