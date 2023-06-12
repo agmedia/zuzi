@@ -22,6 +22,7 @@ class ProductHelper
         $data        = static::resolveCategories($product, $category, $subcategory);
         $category    = $data['category'];
         $subcategory = $data['subcategory'];
+        $catstring   = '';
 
         if ($category) {
             $catstring = '<span class="fs-xs ms-1"><a href="' . route('catalog.route', ['group' => Str::slug($category->group), 'cat' => $category->slug]) . '">' . $category->title . '</a> ';
