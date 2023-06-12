@@ -23,7 +23,9 @@ class ProductHelper
         $category    = $data['category'];
         $subcategory = $data['subcategory'];
 
-        $catstring = '<span class="fs-xs ms-1"><a href="' . route('catalog.route', ['group' => Str::slug($category->group), 'cat' => $category->slug]) . '">' . $category->title . '</a> ';
+        if ($category) {
+            $catstring = '<span class="fs-xs ms-1"><a href="' . route('catalog.route', ['group' => Str::slug($category->group), 'cat' => $category->slug]) . '">' . $category->title . '</a> ';
+        }
 
         if ($subcategory) {
             $substring = '</span><span class="fs-xs ms-1"><a href="' . route('catalog.route',
