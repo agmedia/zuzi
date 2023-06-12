@@ -157,8 +157,8 @@
                 min: $('#corvus-min').val(),
                 data: {
                     price: $('#corvus-price').val(),
-                    short_description: $('#corvus-short-description').val(),,
-                    description: $('#corvus-description').val(),,
+                    short_description: $('#corvus-short-description').val(),
+                    description: $('#corvus-description').val(),
                     shop_id: $('#corvus-shop-id').val(),
                     secret_key: $('#corvus-secret-key').val(),
                     type: $('#corvus-type').val(),
