@@ -244,7 +244,7 @@
                     intersect: false,
                     callbacks: {
                         label: function(tooltipItems, data) {
-                            return  tooltipItems.yLabel + 'kn';
+                            return  tooltipItems.yLabel + '€';
                         }
                     }
                 }

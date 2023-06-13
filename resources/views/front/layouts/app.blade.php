@@ -94,7 +94,7 @@
             <span class=" me-1">Podrška</span>
             <a class="topbar-link" href="tel:00385916047126">091 604 7126</a>
         </div>
-        <div class="topbar-text  d-none  d-md-inline-block">Besplatna dostava za sve narudžbe iznad 67 €</div>
+        <div class="topbar-text  d-none  d-md-inline-block">Besplatna dostava za sve narudžbe iznad 70 €</div>
         <div class="ms-3 text-nowrap ">
             <a class="topbar-link me-2 d-inline-block" href="https://www.facebook.com/zuziobrt/">
                 <i class="ci-facebook"></i>
