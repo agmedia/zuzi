@@ -115,11 +115,7 @@
                                 </td>
                                 <td class="text-center">{{ $order->products->count() }}</td>
                                 <td class="text-right">
-                                    @if ($order->id > 4627)
-                                        <strong>€ {{ number_format($order->total, 2, ',', '.') }}</strong>
-                                    @else
-                                        <strong>{{ number_format($order->total, 2, ',', '.') }} kn</strong>
-                                    @endif
+                                    <strong>€ {{ number_format($order->total, 2, ',', '.') }}</strong>
                                 </td>
                                 <td class="text-right font-size-base">
                                     <a class="btn btn-sm btn-alt-secondary" href="{{ route('orders.show', ['order' => $order]) }}">
