@@ -2,7 +2,7 @@
 
 namespace App\Models\Front\Checkout\Payment;
 
-use App\Models\Front\Checkout\Order;
+use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\Transaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
