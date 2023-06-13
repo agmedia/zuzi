@@ -96,15 +96,15 @@
         </div>
         <div class="topbar-text  d-none  d-md-inline-block">Besplatna dostava za sve narudžbe iznad 67 €</div>
         <div class="ms-3 text-nowrap ">
-            <a class="topbar-link me-2 d-inline-block" href="#">
+            <a class="topbar-link me-2 d-inline-block" href="https://www.facebook.com/zuziobrt/">
                 <i class="ci-facebook"></i>
             </a>
 
-            <a class="topbar-link me-2 d-inline-block" href="#">
+            <a class="topbar-link me-2 d-inline-block" href="https://www.instagram.com/zuziobrt/">
                 <i class="ci-instagram"></i>
             </a>
 
-            <a class="topbar-link me-0 d-inline-block" href="#">
+            <a class="topbar-link me-0 d-inline-block" href="mailto:info@zuzi.hr">
                 <i class="ci-mail"></i>
             </a>
 

@@ -22,8 +22,8 @@
 
 
                 <div class="widget mt-4 text-md-nowrap text-center text-sm-start">
-                    <a class="btn-social bs-light bg-primary bs-instagram me-2 mb-2" href="https://www.instagram.com/antikvarijat_biblos/"><i class="ci-instagram"></i></a>
-                    <a class="btn-social bs-light bg-primary bs-facebook me-2 mb-2" href="https://www.facebook.com/AntikvarijatBiblos/"><i class="ci-facebook"></i></a>
+                    <a class="btn-social bs-light bg-primary bs-instagram me-2 mb-2" href="https://www.instagram.com/zuziobrt/"><i class="ci-instagram"></i></a>
+                    <a class="btn-social bs-light bg-primary bs-facebook me-2 mb-2" href="https://www.facebook.com/zuziobrt/"><i class="ci-facebook"></i></a>
                 </div>
             </div>
             <!-- Mobile dropdown menu (visible on screens below md)-->
