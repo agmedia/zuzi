@@ -1,6 +1,6 @@
 <header class="bg-light shadow-sm navbar-sticky" style="background-color: #f2f5fc;">
     <div class="navbar navbar-expand-lg navbar-light">
-        <div class="container"><a class="navbar-brand d-none d-sm-block flex-shrink-0 me-4 order-lg-1 p-0" href="{{ route('index') }}"><img src="{{ asset('media/img/zuzi-logo.png') }}" width="110"  alt="Web shop | ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop"></a><a class="navbar-brand d-sm-none me-0 order-lg-1 p-0" href="{{ route('index') }}"><img src="{{ asset('media/img/zuzi-logo.png') }}" width="70" alt="Antikvarijat Biblos"></a>
+        <div class="container"><a class="navbar-brand d-none d-sm-block flex-shrink-0 me-4 order-lg-1 p-0" href="{{ route('index') }}"><img src="{{ asset('media/img/zuzi-logo.png') }}" width="110"  alt="Web shop | ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop"></a><a class="navbar-brand d-sm-none me-0 order-lg-1 p-0" href="{{ route('index') }}"><img src="{{ asset('media/img/zuzi-logo.png') }}" width="70" alt="Žuži Shop"></a>
 
             <!-- Toolbar -->
             <div class="navbar-toolbar d-flex align-items-center order-lg-3">
