@@ -448,4 +448,21 @@ class DashboardController extends Controller
         return redirect()->route('dashboard');
     }
 
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function setPdvProducts(Request $request)
+    {
+        $ids = ProductCategory::query()->whereIn('category_id', [174, 175])->pluck('product_id');
+
+        Product::query()->whereIn('id', $ids)->update([
+            'tax_id' => 2
+        ]);
+
+        return redirect()->route('dashboard')->with(['success' => 'PDV je obnovljen na kategoriji svezalice..! ' . $ids->count() . ' proizvoda obnovljeno.']);
+    }
+
 }

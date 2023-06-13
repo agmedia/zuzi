@@ -60,7 +60,8 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::get('slugs', [DashboardController::class, 'slugs'])->name('slugs.revision');
     Route::get('statuses', [DashboardController::class, 'statuses'])->name('statuses.cron');
     Route::get('duplicate/{target?}', [DashboardController::class, 'duplicate'])->name('duplicate.revision');
-    Route::get('set/category-group', [DashboardController::class, 'setCategoryGroup'])->name('group.set');
+    Route::get('set/category-group', [DashboardController::class, 'setCategoryGroup'])->name('set.group');
+    Route::get('set/pdv/products', [DashboardController::class, 'setPdvProducts'])->name('set.pdv.products');
 
     // CATALOG
     Route::prefix('catalog')->group(function () {
