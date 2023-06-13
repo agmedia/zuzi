@@ -85,8 +85,6 @@ class Order extends Model
      */
     public function setData(string $id)
     {
-
-        $id = str_replace('-' . date('Y'), '', $id);
         $data = \App\Models\Back\Orders\Order::where('id', $id)->first();
 
         if ($data) {
