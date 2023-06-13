@@ -374,7 +374,9 @@ class Order extends Model
         if ($this->isCreated()) {
             $method = new PaymentMethod($this->oc_data['payment_code']);
 
-            return $method->finish($this->oc_data, $request);
+            $order = Order::query()->where('id', $this->oc_data['id'])->first();
+
+            return $method->finish($order, $request);
         }
 
         return null;
