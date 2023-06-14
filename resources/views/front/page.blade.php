@@ -13,8 +13,8 @@
     <meta property="og:description" content="Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja i naručivanja željenih naslova putem web stranice zuzi.hr iz udobnosti naslonjača." />
     <meta property="og:url" content="{{ env('APP_URL')}}"  />
     <meta property="og:site_name" content="ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop" />
-    <meta property="og:image" content="{{ asset('media/img/cover-zuzi.jpg') }}" />
-    <meta property="og:image:secure_url" content="{{ asset('media/img/cover-zuzi.jpg') }}" />
+    <meta property="og:image" content="{{ asset('media/cover-zuzi.jpg') }}" />
+    <meta property="og:image:secure_url" content="{{ asset('media/cover-zuzi.jpg') }}" />
     <meta property="og:image:width" content="1920" />
     <meta property="og:image:height" content="720" />
     <meta property="og:image:type" content="image/jpeg" />
@@ -22,7 +22,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop" />
     <meta name="twitter:description" content="Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja i naručivanja željenih naslova putem web stranice zuzi.hr iz udobnosti naslonjača." />
-    <meta name="twitter:image" content="{{ asset('media/img/cover-zuzi.jpg') }}" />
+    <meta name="twitter:image" content="{{ asset('media/cover-zuzi.jpg') }}" />
 
 @endpush
 
