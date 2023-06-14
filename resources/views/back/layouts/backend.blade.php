@@ -62,7 +62,7 @@
                             Crafted with <i class="fa fa-heart text-danger"></i> by <a class="font-w600" href="https://www.agmedia.hr" target="_blank">AG media</a>
                         </div>
                         <div class="col-sm-6 order-sm-1 text-center text-sm-left">
-                            <a class="font-w600" href="https://www.antikvarijat-biblos.hr" target="_blank">Zuzi Shop</a> &copy; <span data-toggle="year-copy"></span>
+                            <a class="font-w600" href="https://www.zuzi.hr" target="_blank">Zuzi Shop</a> &copy; <span data-toggle="year-copy"></span>
                         </div>
                     </div>
                 </div>

@@ -56,7 +56,7 @@
                         <div class="card-body text-center"><i class="ci-mail h3 mt-2 mb-4 text-primary"></i>
                             <h3 class="h6 mb-3">Email adresa</h3>
                             <ul class="list-unstyled fs-sm mb-0">
-                                <li><a class="nav-link-style text-primary" href="mailto:info@antikvarijat-biblos.hr">info@antikvarijat-biblos.hr</a></li>
+                                <li><a class="nav-link-style text-primary" href="mailto:info@zuzi.hr">info@zuzi.hr</a></li>
 
                             </ul>
                         </div>
