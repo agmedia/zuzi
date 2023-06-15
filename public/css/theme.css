@@ -177,8 +177,8 @@ ul.spec{max-width:400px}
     position: relative;
     background: #fff;
     height: 0px;
-    margin-top:-60px;
-    margin-bottom:60px
+    margin-top: -15px;
+    margin-bottom: 25px;
 }
 
 .spikeswtop::after {

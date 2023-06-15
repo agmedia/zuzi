@@ -86,7 +86,7 @@
                         </div>Vrlo ljubazni, uslužni, pouzdani, često izađu u susret. Knjige očuvane i dobro zapakirane prilikom slanja. Surađujemo već dugo i svima preporuke.
 
                         <div class="pt-3">
-                            <h6 class="fs-sm mb-n1">Helena J.</h6>
+                            <p class="fs-sm mb-n1">Helena J.</p>
                         </div>
                     </div>
 
@@ -100,7 +100,7 @@
                         </div>Odlična trgovina, vrhunska usluga i ljubazni prodavači. Svaka preporuka.
 
                         <div class="pt-3">
-                            <h6 class="fs-sm mb-n1">Katarina H.</h6>
+                            <p class="fs-sm mb-n1">Katarina H.</p>
                         </div>
                     </div>
 
@@ -113,7 +113,7 @@
                         </div>Predivan mali antikvarijat, sa jako ljubaznim i susretljivim prodavačima, kao stvoren za prave ljubitelje knjige.
 
                         <div class="pt-3">
-                            <h6 class="fs-sm mb-n1">Mija S.</h6>
+                            <p class="fs-sm mb-n1">Mija S.</p>
                         </div>
                     </div>
 
@@ -127,7 +127,7 @@
                         </div>Napokon i u Španskom mjesto za knjigoljupce, knjigu koju sam tražila po cijelom gradu našla samo kod njih!
 
                         <div class="pt-3">
-                            <h6 class="fs-sm mb-n1">Kornelija B.</h6>
+                            <p class="fs-sm mb-n1">Kornelija B.</p>
                         </div>
                     </div>
 
@@ -141,7 +141,7 @@
                         </div>Dečko mi je naručio knjigu koju isprva nismo mogli pronaći ali Vi ste ju naravno imali na stanju. Brza dostava, uredno zapakirano i najbitnije odličan izbor knjiga. Vidi se da volite to što radite. Velika pohvala i topla preporuka svima
 
                         <div class="pt-3">
-                            <h6 class="fs-sm mb-n1">Valentina J.</h6>
+                            <p class="fs-sm mb-n1">Valentina J.</p>
                         </div>
                     </div>
 
