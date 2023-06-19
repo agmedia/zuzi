@@ -18,7 +18,8 @@
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
                                 <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
-                                <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('blog') }}"><i class="ci-home"></i>Naslovnica</a></li>
+                                <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('catalog.route.blog') }}"><i class="ci-home"></i>Blog</a></li>
+
                                 <li class="breadcrumb-item text-nowrap active" aria-current="page">Iz medija</li>
                             </ol>
                         </nav>
