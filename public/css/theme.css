@@ -4671,8 +4671,7 @@ textarea.form-control-lg {
 .card-img-top,
 .card-img-bottom {
   width: 100%;
-    filter: grayscale(30%);
-    transition: filter .3s ease-in-out;
+
 }
 
 .card-img:hover, .card-img-top:hover, .card-img-bottom:hover{
