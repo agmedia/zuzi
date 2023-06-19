@@ -1,9 +1,9 @@
 @extends('front.layouts.app')
 @if(isset($blogs))
-        @section ( 'title', 'Iz medija - Antikvarijat Biblos' )
-        @section ( 'description', 'Medijske objave, članci i obavijesti -  Antikvarijat Biblos' )
+        @section ( 'title', 'Blog - Zuzi Shop' )
+        @section ( 'description', 'Medijske objave, članci i obavijesti -  Zuzi Shop' )
 @else
-    @section ( 'title', $blog->title. ' - Antikvarijat Biblos' )
+    @section ( 'title', $blog->title. ' - Zuzi Shop' )
 @section ( 'description', $blog->meta_description )
 
 @endif
@@ -18,6 +18,7 @@
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
                                 <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
+                                <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('blog') }}"><i class="ci-home"></i>Naslovnica</a></li>
                                 <li class="breadcrumb-item text-nowrap active" aria-current="page">Iz medija</li>
                             </ol>
                         </nav>
@@ -25,7 +26,7 @@
             </div>
             <div class="order-lg-1 pe-lg-4 text-center text-lg-start">
                 @if(isset($blogs))
-            <h1 class="text-light">Iz medija</h1>
+            <h1 class="text-light">Blog</h1>
                 @else
                     <h1 class="text-light">{{ $blog->title }}</h1>
                 @endif
