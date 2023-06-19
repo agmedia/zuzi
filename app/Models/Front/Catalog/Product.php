@@ -363,7 +363,7 @@ class Product extends Model
      */
     public function scopeLast(Builder $query, $count = 12): Builder
     {
-        return $query->where('status', 1)->orderBy('updated_at', 'desc')->limit($count);
+        return $query->where('status', 1)->orderBy('created_at', 'desc')->limit($count);
     }
 
 
