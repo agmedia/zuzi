@@ -315,11 +315,7 @@ class Helper
     {
         $prods = (new Product())->newQuery();
 
-        $prods->active()->available();
-
-        if (isset($data['new']) && $data['new'] == 'on') {
-            $prods->last();
-        }
+        $prods->active()->available()->last();
 
         if (isset($data['popular']) && $data['popular'] == 'on') {
             $prods->popular();
