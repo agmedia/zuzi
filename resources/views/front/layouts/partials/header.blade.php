@@ -34,6 +34,8 @@
                     <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/rijetke-knjige']) }}"><span>Rijetke knjige</span></a>
                     <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.actions') }}"><span>Akcije</span></a>
                     <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/outlet']) }}"><span>Outlet</span></a>
+
+                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.blog') }}"><span>Blog</span></a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('kontakt') }}"><span>Kontakt</span></a></li>
                 </ul>
 
