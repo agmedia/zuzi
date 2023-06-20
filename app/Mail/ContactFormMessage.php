@@ -10,12 +10,18 @@ use Illuminate\Support\Facades\Log;
 
 class ContactFormMessage extends Mailable
 {
+
     use Queueable, SerializesModels;
 
     /**
      * @var array
      */
     private $contact;
+
+    /**
+     * @var mixed
+     */
+    public $from;
 
 
     /**
@@ -26,6 +32,7 @@ class ContactFormMessage extends Mailable
     public function __construct($contact)
     {
         $this->contact = $contact;
+        $this->from    = $contact['email'];
     }
 
 
