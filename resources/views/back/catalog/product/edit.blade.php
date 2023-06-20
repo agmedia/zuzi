@@ -40,9 +40,16 @@
                         <i class="fa fa-arrow-left mr-1"></i> Povratak
                     </a>
                     <div class="block-options">
-                        <div class="custom-control custom-switch custom-control-success">
-                            <input type="checkbox" class="custom-control-input" id="product-switch" name="status"{{ (isset($product->status) and $product->status) ? 'checked' : '' }}>
-                            <label class="custom-control-label" for="product-switch">Aktiviraj</label>
+                        <div class="dropdown">
+                            <div class="custom-control custom-switch custom-control-info block-options-item ml-4">
+                                <input type="checkbox" class="custom-control-input" id="product-decrease-switch" name="decrease"{{ (isset($product->decrease) and $product->decrease) ? '' : 'checked' }}>
+                                <label class="custom-control-label pt-1" for="product-decrease-switch">Neograničena Količina</label>
+                            </div>
+
+                            <div class="custom-control custom-switch custom-control-success block-options-item ml-4">
+                                <input type="checkbox" class="custom-control-input" id="product-switch" name="status"{{ (isset($product->status) and $product->status) ? 'checked' : '' }}>
+                                <label class="custom-control-label pt-1" for="product-switch">Aktiviraj</label>
+                            </div>
                         </div>
                     </div>
                 </div>

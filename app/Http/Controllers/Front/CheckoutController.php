@@ -136,12 +136,16 @@ class CheckoutController extends Controller
             });
 
             foreach ($order->products as $product) {
-                $product->real->decrement('quantity', $product->quantity);
+                $real = $product->real;
 
-                if ( ! $product->real->quantity) {
-                    $product->real->update([
-                        'status' => 0
-                    ]);
+                if ($real->decrease) {
+                    $real->decrement('quantity', $product->quantity);
+
+                    if ( ! $real->quantity) {
+                        $real->update([
+                            'status' => 0
+                        ]);
+                    }
                 }
             }
 
