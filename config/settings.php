@@ -63,7 +63,10 @@ return [
             'canceled'   => 5,
             'paid'       => 3,
             'send'       => 4,
-        ]
+        ],
+        // Can be number or array.
+        'new_status' => 1,
+        'canceled_status' => [7, 5],
     ],
 
     'payment' => [

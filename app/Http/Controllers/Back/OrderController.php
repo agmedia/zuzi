@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Back;
 
 use App\Helpers\Country;
+use App\Helpers\OrderHelper;
+use App\Helpers\ProductHelper;
 use App\Http\Controllers\Controller;
 use App\Mail\StatusCanceled;
 use App\Mail\StatusPaid;
@@ -139,6 +141,14 @@ class OrderController extends Controller
                 'order_status_id' => $request->input('selected')
             ]);
 
+            if (OrderHelper::isCanceled((int) $request->input('selected'))) {
+                $orders = Order::query()->whereIn('id', $orders)->pluck('id');
+
+                foreach ($orders as $order_id) {
+                    ProductHelper::makeAvailable($order_id);
+                }
+            }
+
             return response()->json(['message' => 'Statusi su uspješno promijenjeni..!']);
         }
 
@@ -147,25 +157,26 @@ class OrderController extends Controller
                 Order::where('id', $request->input('order_id'))->update([
                     'order_status_id' => $request->input('status')
                 ]);
-            }
 
-            /*$order = Order::find($request->input('order_id'));
-            $status = $order->status($request->input('status'));*/
+                if (OrderHelper::isCanceled((int) $request->input('selected'))) {
+                    ProductHelper::makeAvailable($request->input('order_id'));
+                }
 
-            if ($request->input('status') == config('settings.order.status.paid')) {
-                $order = Order::find($request->input('order_id'));
+                if ($request->input('status') == config('settings.order.status.paid')) {
+                    $order = Order::find($request->input('order_id'));
 
-                dispatch(function () use ($order) {
-                    Mail::to($order->payment_email)->send(new StatusPaid($order));
-                });
-            }
+                    dispatch(function () use ($order) {
+                        Mail::to($order->payment_email)->send(new StatusPaid($order));
+                    });
+                }
 
-            if ($request->input('status') == config('settings.order.status.canceled')) {
-                $order = Order::find($request->input('order_id'));
+                if ($request->input('status') == config('settings.order.status.canceled')) {
+                    $order = Order::find($request->input('order_id'));
 
-                dispatch(function () use ($order) {
-                    Mail::to($order->payment_email)->send(new StatusCanceled($order));
-                });
+                    dispatch(function () use ($order) {
+                        Mail::to($order->payment_email)->send(new StatusCanceled($order));
+                    });
+                }
             }
 
             OrderHistory::store($request->input('order_id'), $request);

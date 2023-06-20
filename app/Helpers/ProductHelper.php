@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\Back\Catalog\Product\Product;
+use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\Catalog\Category;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -158,5 +159,22 @@ class ProductHelper
     public static function setFullImageTitle(string $title): string
     {
         return $title . '-' . Str::random(4);
+    }
+
+
+    /**
+     * @param int|string $order_id
+     *
+     * @return bool
+     */
+    public static function makeAvailable($order_id): bool
+    {
+        $ops = OrderProduct::query()->where('order_id', $order_id)->get();
+
+        foreach ($ops as $op) {
+            Product::query()->where('id', $op->product_id)->increment('quantity', $op->quantity);
+        }
+
+        return true;
     }
 }
