@@ -459,6 +459,7 @@ class DashboardController extends Controller
         $products = ProductCategory::query()->where('category_id', 25)->pluck('product_id');
 
         Product::query()->whereIn('id', $products)->update([
+            'quantity' => 100,
             'decrease' => 0,
             'status' => 1
         ]);
