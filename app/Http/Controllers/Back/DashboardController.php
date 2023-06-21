@@ -454,6 +454,23 @@ class DashboardController extends Controller
      *
      * @return \Illuminate\Http\RedirectResponse
      */
+    public function setProductsUnlimitedQty(Request $request)
+    {
+        $products = ProductCategory::query()->where('category_id', 25)->pluck('product_id');
+
+        Product::query()->whereIn('id', $products)->update([
+            'decrease' => 0
+        ]);
+
+        return redirect()->route('dashboard')->with(['success' => 'Proizvodi su namješteni na neograničenu količinu..! ' . $products->count() . ' proizvoda obnovljeno.']);
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function setPdvProducts(Request $request)
     {
         $ids = ProductCategory::query()->whereIn('category_id', [174, 175])->pluck('product_id');

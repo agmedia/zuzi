@@ -62,6 +62,7 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::get('duplicate/{target?}', [DashboardController::class, 'duplicate'])->name('duplicate.revision');
     Route::get('set/category-group', [DashboardController::class, 'setCategoryGroup'])->name('set.group');
     Route::get('set/pdv/products', [DashboardController::class, 'setPdvProducts'])->name('set.pdv.products');
+    Route::get('set/unlimited-qty', [DashboardController::class, 'setProductsUnlimitedQty'])->name('set.unlimited');
 
     // CATALOG
     Route::prefix('catalog')->group(function () {
