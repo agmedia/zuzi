@@ -176,10 +176,11 @@
                                     <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Stanje</span><span class="text-muted">{{ $prod->condition ?: '...' }}</span></li>
 
                                     @if ($prod->quantity)
-
-                                        <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Dostupnost</span><span class="text-muted">Na stanju</span></li>
-
-
+                                        @if ($prod->decrease)
+                                            <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Dostupnost</span><span class="text-muted">Na stanju</span></li>
+                                        @else
+                                            <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Dostupnost</span><span class="text-muted">Po Narudžbi. 7 - 14 dana.</span></li>
+                                        @endif
                                     @else
                                         <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Dostupnost</span><span class="text-muted">Rasprodano</span></li>
                                     @endif
