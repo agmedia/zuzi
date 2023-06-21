@@ -459,7 +459,8 @@ class DashboardController extends Controller
         $products = ProductCategory::query()->where('category_id', 25)->pluck('product_id');
 
         Product::query()->whereIn('id', $products)->update([
-            'decrease' => 0
+            'decrease' => 0,
+            'status' => 1
         ]);
 
         return redirect()->route('dashboard')->with(['success' => 'Proizvodi su namješteni na neograničenu količinu..! ' . $products->count() . ' proizvoda obnovljeno.']);
