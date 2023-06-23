@@ -37,7 +37,7 @@
             <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-truck text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
-                        <h6 class="text-light fs-base mb-1">Brza dostava</h6>
+                        <p class="text-light fw-bold fs-base mb-1">Brza dostava</p>
                         <p class="text-light fs-ms opacity-70 mb-0">Unutar 5 radnih dana</p>
                     </div>
                 </div>
@@ -45,7 +45,7 @@
             <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-security-check text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
-                        <h6 class="text-light fs-base mb-1">Sigurna kupovina</h6>
+                        <p class="text-light fw-bold fs-base mb-1">Sigurna kupovina</p>
                         <p class="text-light fs-ms opacity-70 mb-0">SSL certifitikat i CorvusPay</p>
                     </div>
                 </div>
@@ -53,7 +53,7 @@
             <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-bag text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
-                        <h6 class="text-light fs-base mb-1">Besplatna dostava</h6>
+                        <p class="text-light fw-bold fs-base mb-1">Besplatna dostava</p>
                         <p class="text-light fs-ms opacity-70 mb-0">Za narudžbe iznad 67 €</p>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
             <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-locked text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
-                        <h6 class="text-light fs-base mb-1">Zaštita kupca</h6>
+                        <p class="text-light fw-bold fs-base mb-1">Zaštita kupca</p>
                         <p class="text-light fs-ms opacity-70 mb-0">Od narudžbe pa sve do dostave</p>
                     </div>
                 </div>
