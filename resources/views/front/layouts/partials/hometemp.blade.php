@@ -5,7 +5,7 @@
 <section class="tns-carousel tns-controls-lg mb-0 bg-white">
     <div class="tns-carousel-inner" data-carousel-options="{&quot;mode&quot;: &quot;gallery&quot;, &quot;responsive&quot;: {&quot;0&quot;:{&quot;nav&quot;:false, &quot;controls&quot;: false},&quot;992&quot;:{&quot;nav&quot;:false, &quot;controls&quot;: false}}}">
         <!-- Item-->
-        <div class="px-lg-5" style="background-image: url({{ asset('media/img/pexels-suzy-hazelwood-3765180.jpg') }});box-shadow: inset 0 0 0 1000px rgba(55, 63, 80,.7);
+        <div class="px-lg-5" style="background-image: url({{ asset('media/img/pexels-suzy-hazelwood-3765180-1.webp') }});box-shadow: inset 0 0 0 1000px rgba(55, 63, 80,.7);
             -webkit-background-size: cover;
             -moz-background-size: cover;
             -o-background-size: cover;
