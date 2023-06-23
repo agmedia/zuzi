@@ -17007,13 +17007,13 @@ a.nav-link:hover .media-tab-media {
     color: rgba(125, 135, 156, 0.9) !important;
 }
 .topbar-light .topbar-link:hover {
-    color: #373f50;
+    color: #e50077;
 }
 .topbar-light .topbar-link.active {
-    color: #373f50;
+    color:#e50077;
 }
 .topbar-light .show .topbar-link {
-    color: #373f50;
+    color: #e50077;
 }
 .topbar-light .tns-carousel [data-controls] {
     color: rgba(75, 86, 107, 0.9);
