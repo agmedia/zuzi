@@ -48,8 +48,8 @@
 
                         <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route.author') }}">Autori</a>
                         <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/rijetke-knjige']) }}">Rijetke knjige</a>
-                        <li class="widget-list-item"><a class="widget-list-link" href="">Svezalice - pidžame za knjige</a>
-                        <li class="widget-list-item"><a class="widget-list-link" href="">Akcije</a>
+                        <li class="widget-list-item"><a class="widget-list-link" href="https://www.zuzi.hr/kategorije-proizvoda/svezalice-pidzame-za-knjige">Svezalice - pidžame za knjige</a>
+                        <li class="widget-list-item"><a class="widget-list-link" href="https://www.zuzi.hr/akcijska-ponuda">Akcije</a>
                         <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/outlet']) }}">Outlet</a>
 
                     </ul>
@@ -71,11 +71,11 @@
                 <div class="widget widget-links widget-light pb-2">
                     <h3 class="widget-title fw-700 text-white"><span>Načini plaćanja</span></h3>
                     <ul class="widget-list  ">
-                        <li class="widget-list-item"><a class="widget-list-link" > kreditnom karticom jednokratno ili na rate</a></li>
-                        <li class="widget-list-item"><a class="widget-list-link" > virmanom / općom uplatnicom / internet bankarstvom</a></li>
-                        <li class="widget-list-item"><a class="widget-list-link" >gotovinom prilikom pouzeća</a></li>
+                        <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" > kreditnom karticom jednokratno ili na rate</a></li>
+                        <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" > virmanom / općom uplatnicom / internet bankarstvom</a></li>
+                        <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" >gotovinom prilikom pouzeća</a></li>
 
-                        <li class="widget-list-item"><a class="widget-list-link" >osobno preuzimanje i plaćanje u antikvarijatu</a></li>
+                        <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" >osobno preuzimanje i plaćanje u antikvarijatu</a></li>
                     </ul>
 
                 </div>
