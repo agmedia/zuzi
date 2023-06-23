@@ -39,7 +39,7 @@
                     <div class="article mb-grid-gutter">
                         <a class="card border-0 shadow" href="{{ url(\Illuminate\Support\Str::slug($cat->group) . '/' . $cat->slug) }}">
                             <span class="blog-entry-meta-label fs-sm"><i class="ci-heart text-primary me-0"></i></span>
-                            <img class="card-img-top" loading="lazy" src="{{ $cat->image }}" alt="{{ $cat->title }}">
+                            <img class="card-img-top" loading="lazy" width="310" height="310" src="{{ $cat->image }}" alt="{{ $cat->title }}">
                             <div class="card-body py-3 text-center">
                                 <h3 class="h6 mt-1 text-primary">{{ $cat->title }}</h3>
                             </div>
