@@ -21,7 +21,7 @@
                     <h2 class="h3 fw-bold text-white">Svezalice - pidžame za knjige</h2>
                     <p class="text-white pb-2">Za praktičnije čuvanje knjige, ručno izrađeno s puno ljubavi.
 
-                        </p><a class="btn btn-primary mb-3" href="https://www.zuzi.hr/kategorije-proizvoda/svezalice-pidzame-za-knjige">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
+                        </p><a class="btn btn-primary mb-3" href="https://www.zuzi.hr/kategorija-proizvoda/svezalice-pidzame-za-knjige">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
                 </div><img class="d-block mx-auto mx-sm-0 rounded-end rounded-xs pb-sm-0 pb-4" src="{{ asset('media/img/svezalice.webp') }}" width="250"    alt="Become a Partner">
             </div>
         </div>
