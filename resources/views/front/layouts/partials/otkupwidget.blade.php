@@ -54,7 +54,7 @@
                 <div class="d-inline-flex align-items-center text-start"><i class="ci-bag text-primary" style="font-size: 3rem;"></i>
                     <div class="ps-3">
                         <p class="text-light fw-bold fs-base mb-1">Besplatna dostava</p>
-                        <p class="text-light fs-ms opacity-70 mb-0">Za narudžbe iznad 67 €</p>
+                        <p class="text-light fs-ms opacity-70 mb-0">Za narudžbe iznad 70€</p>
                     </div>
                 </div>
             </div>
