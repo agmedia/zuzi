@@ -15,8 +15,10 @@
                     <div class="pb-lg-5 mb-lg-5 pt-lg-5 mt-lg-5 text-center">
                         <span class="badge bg-dark fw-semibold fs-lg p-2 mb-4 rounded-1 from-bottom delay-0">ZUZI SHOP</span>
                         <h1 class="text-light display-6 fw-bold from-bottom delay-1">Online knjižara i antikvarijat</h1>
-                        <p class="fs-xl text-light pb-1 from-bottom delay-3">Prodaja i otkup rabljenih i novih knjiga</p>
-                        <p class="text-light pb-2 from-bottom delay-4">Knjižara: <a class="text-light" href="https://goo.gl/maps/n9hHexFj7vVxUGGi8">Ul. Antuna Šoljana 33, 10090, Zagreb</a></p>
+                        <p class="fs-xl text-light pb-0 from-bottom delay-3">Prodaja i otkup rabljenih i novih knjiga</p>
+                        <p class="text-light pb-0 from-bottom delay-4">Knjižara: <a class="text-light" href="https://goo.gl/maps/n9hHexFj7vVxUGGi8">Ul. Antuna Šoljana 33, 10090, Zagreb</a></p>
+                        <p class="text-light pb-2 from-bottom delay-4"> Radno vrijeme: Pon-Pet: 8-20, Sub: 9-15</p>
+
                         <div class="scale-up delay-5 mx-auto mx-lg-0"><a class="btn btn-primary" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true)]) }}">Pogledajte ponudu<i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                     </div>
                 </div>
