@@ -129,13 +129,18 @@ class AgCart extends Model
         // Updejtaj artikl sa apsolutnom količinom.
         foreach ($this->cart->getContent() as $item) {
             if ($item->id == $request['item']['id']) {
+                $quantity = $request['item']['quantity'];
                 $product = Product::where('id', $request['item']['id'])->first();
 
-                if (($request['item']['quantity'] + $item->quantity) > $product->quantity) {
+                if (($quantity + $item->quantity) > $product->quantity) {
                     return ['error' => 'Nažalost nema dovoljnih količina artikla..!'];
                 }
 
-                return $this->updateCartItem($item->id, $request);
+                if ($item->quantity > $quantity) {
+                    $quantity = $item->quantity + 1;
+                }
+
+                return $this->updateCartItem($item->id, $quantity);
             }
         }
 
@@ -264,16 +269,16 @@ class AgCart extends Model
 
     /**
      * @param $id
-     * @param $request
+     * @param $quantity
      *
      * @return array
      */
-    private function updateCartItem($id, $request): array
+    private function updateCartItem($id, $quantity): array
     {
         $this->cart->update($id, [
             'quantity' => [
                 'relative' => false,
-                'value'    => $request['item']['quantity']
+                'value'    => $quantity
             ],
         ]);
 
