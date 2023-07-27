@@ -158,7 +158,7 @@
                                 </div>
 
                             @endif
-                            <add-to-cart-btn id="{{ $prod->id }}"></add-to-cart-btn>
+                            <add-to-cart-btn id="{{ $prod->id }}" available="{{ $prod->quantity }}"></add-to-cart-btn>
 
 
 

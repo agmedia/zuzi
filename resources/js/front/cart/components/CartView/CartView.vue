@@ -70,8 +70,6 @@
 
             this.checkIfEmpty();
             this.setCoupon();
-
-
         },
 
         methods: {
