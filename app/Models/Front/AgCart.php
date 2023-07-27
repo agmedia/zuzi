@@ -132,12 +132,14 @@ class AgCart extends Model
                 $quantity = $request['item']['quantity'];
                 $product = Product::where('id', $request['item']['id'])->first();
 
-                if (($quantity + $item->quantity) > $product->quantity) {
+                if ($quantity > $product->quantity) {
                     return ['error' => 'Nažalost nema dovoljnih količina artikla..!'];
                 }
 
-                if ($item->quantity > $quantity) {
-                    $quantity = $item->quantity + 1;
+                if ($quantity == 1 && ($item->quantity == 1 || $item->quantity > $quantity)) {
+                    if ( ! $id) {
+                        $quantity = $item->quantity + 1;
+                    }
                 }
 
                 return $this->updateCartItem($item->id, $quantity);
