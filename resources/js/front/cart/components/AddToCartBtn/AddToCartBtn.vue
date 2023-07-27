@@ -1,7 +1,11 @@
 <template>
-    <div class="cart mb-4 text-center text-lg-start">
-        <input class="form-control" type="number" v-model="quantity" min="1" :max="available">
-        <button class="btn btn-primary btn-shadow " @click="addToCart()"><i class=" ci-bag"></i> Dodaj u Košaricu</button>
+    <div class="cart d-flex flex-wrap align-items-center pt-2 pb-2 mb-3">
+
+
+
+
+        <input class="form-control me-3 mb-1" type="number" v-model="quantity" min="1" :max="available" style="width: 5rem;">
+        <button class="btn btn-primary btn-shadow me-3 mb-1 " @click="addToCart()"><i class=" ci-bag"></i> Dodaj u Košaricu</button>
     </div>
 </template>
 
