@@ -122,7 +122,7 @@
  {"id":123, "name":"Lithuania", "iso_code_2":"LT", "iso_code_3":"LTU", "status":1},
  {"id":124, "name":"Luxembourg", "iso_code_2":"LU", "iso_code_3":"LUX", "status":1},
  {"id":125, "name":"Macau", "iso_code_2":"MO", "iso_code_3":"MAC", "status":1},
- {"id":126, "name":"FYROM", "iso_code_2":"MK", "iso_code_3":"MKD", "status":1},
+ {"id":126, "name":"North Macedonia", "iso_code_2":"MK", "iso_code_3":"MKD", "status":1},
  {"id":127, "name":"Madagascar", "iso_code_2":"MG", "iso_code_3":"MDG", "status":1},
  {"id":128, "name":"Malawi", "iso_code_2":"MW", "iso_code_3":"MWI", "status":1},
  {"id":129, "name":"Malaysia", "iso_code_2":"MY", "iso_code_3":"MYS", "status":1},
