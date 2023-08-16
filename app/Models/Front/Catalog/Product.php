@@ -436,7 +436,7 @@ class Product extends Model
     {
         $query = $this->newQuery();
 
-        $query->active()->hasStock()->last();
+        $query->active()->hasStock();
 
         if ($ids && $ids->count() && ! \request()->has('pojam')) {
             $query->whereIn('id', $ids->unique());
@@ -546,7 +546,7 @@ class Product extends Model
                 $query->orderBy('name', 'desc');
             }
         } else {
-            $query->orderBy('updated_at', 'desc');
+            $query->orderBy('created_at', 'desc');
         }
 
         return $query;
