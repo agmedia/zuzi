@@ -55,6 +55,8 @@ class CatalogRouteController extends Controller
                 abort(404);
             }
 
+            $prod->increment('viewed', 1);
+
             $seo = Seo::getProductData($prod);
             $gdl = TagManager::getGoogleProductDataLayer($prod);
 
