@@ -315,11 +315,14 @@ class Helper
     {
         $prods = (new Product())->newQuery();
 
-        $prods->active()->available()->last();
+        $prods->active()->available();
 
         if (isset($data['popular']) && $data['popular'] == 'on') {
+
             $prods->popular();
         }
+
+
 
         if (isset($data['list']) && $data['list']) {
             $prods->whereIn('id', $data['list']);
