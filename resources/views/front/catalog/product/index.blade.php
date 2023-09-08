@@ -187,14 +187,14 @@
 
 
 
-                                    {{--
+
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Broj stranica</span><span class="text-muted">{{ $prod->pages ?: '...' }}</span></li>
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Godina izdanja</span><span class="text-muted">{{ $prod->year ?: '...' }}</span></li>
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Dimenzije</span><span class="text-muted">{{ $prod->dimensions.' cm' ?: '...' }}</span></li>
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Mjesto izdavanja</span><span class="text-muted">{{ $prod->origin ?: '...' }}</span></li>
                                 <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Pismo</span><span class="text-muted">{{ $prod->letter ?: '...' }}</span></li>
 
-                                <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Uvez</span><span class="text-muted">{{ $prod->binding ?: '...' }}</span></li> --}}
+                                <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Uvez</span><span class="text-muted">{{ $prod->binding ?: '...' }}</span></li>
                             </ul>
 
                             <div class="row align-items-center pt-1">
