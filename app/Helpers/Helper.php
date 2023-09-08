@@ -318,11 +318,10 @@ class Helper
         $prods->active()->available();
 
         if (isset($data['popular']) && $data['popular'] == 'on') {
-
             $prods->popular();
         }
 
-
+        $prods->last()->distinct();
 
         if (isset($data['list']) && $data['list']) {
             $prods->whereIn('id', $data['list']);
