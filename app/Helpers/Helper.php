@@ -321,7 +321,7 @@ class Helper
             $prods->popular();
         }
 
-        $prods->last()->distinct();
+        $prods->distinct()->last();
 
         if (isset($data['list']) && $data['list']) {
             $prods->whereIn('id', $data['list']);
