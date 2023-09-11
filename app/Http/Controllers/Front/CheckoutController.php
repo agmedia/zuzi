@@ -138,6 +138,8 @@ class CheckoutController extends Controller
             foreach ($order->products as $product) {
                 $real = $product->real;
 
+                Log::info('Before...' . $real->quantity);
+
                 if ($real->decrease) {
                     $real->decrement('quantity', $product->quantity);
 
@@ -147,6 +149,8 @@ class CheckoutController extends Controller
                         ]);
                     }
                 }
+
+                Log::info('After...' . $real->quantity);
             }
 
             CheckoutSession::forgetOrder();
