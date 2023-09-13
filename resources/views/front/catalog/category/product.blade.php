@@ -26,7 +26,7 @@
         </div>
 
         <div class="product-floating-btn">
-            <add-to-cart-btn-simple id="{{ $product->id }}"></add-to-cart-btn-simple>
+            <add-to-cart-btn-simple id="{{ $product->id }}" available="{{ $product->quantity }}"></add-to-cart-btn-simple>
         </div>
     </div>
 
