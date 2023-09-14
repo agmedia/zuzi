@@ -180,7 +180,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td class="text-center font-size-sm" colspan="7">
+                                <td class="text-center font-size-sm" colspan="12">
                                     <label>Nema proizvoda...</label>
                                 </td>
                             </tr>

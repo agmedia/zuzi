@@ -358,6 +358,8 @@ class Product extends Model
         if ($request->has('category') && ! empty($request->input('category'))) {
             $query->whereHas('categories', function ($query) use ($request) {
                 $query->where('id', $request->input('category'));
+            })->orWhereHas('subcategories', function ($query) use ($request) {
+                $query->where('id', $request->input('category'));
             });
         }
 
