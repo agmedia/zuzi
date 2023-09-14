@@ -67,9 +67,7 @@ export default {
         },
 
         checkAvailability() {
-            console.log(this.available, this.quantity);
-
-            if (this.available <= this.quantity) {
+            if (this.available < this.quantity) {
                 this.disabled = true;
                 this.quantity = this.available;
             }
