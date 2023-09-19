@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      *
@@ -24,14 +25,13 @@ class OrderController extends Controller
      */
     public function index(Request $request, Order $order)
     {
-        $orders = $order->filter($request)->paginate(config('settings.pagination.back'));
-
+        $orders   = $order->filter($request)->paginate(config('settings.pagination.back'));
         $statuses = Settings::get('order', 'statuses');
 
         return view('back.order.index', compact('orders', 'statuses'));
     }
-    
-    
+
+
     /**
      * Show the form for creating a new resource.
      *
@@ -41,8 +41,8 @@ class OrderController extends Controller
     {
         return view('back.order.edit');
     }
-    
-    
+
+
     /**
      * Store a newly created resource in storage.
      *
@@ -89,14 +89,14 @@ class OrderController extends Controller
     public function edit(Order $order)
     {
         $countries = Country::list();
-        $statuses = Settings::get('order', 'statuses');
+        $statuses  = Settings::get('order', 'statuses');
         $shippings = Settings::getList('shipping');
-        $payments = Settings::getList('payment');
+        $payments  = Settings::getList('payment');
 
         return view('back.order.edit', compact('order', 'countries', 'statuses', 'shippings', 'payments'));
     }
-    
-    
+
+
     /**
      * Update the specified resource in storage.
      *
@@ -115,8 +115,8 @@ class OrderController extends Controller
 
         return redirect()->back()->with(['error' => 'Oops..! Dogodila se greška prilikom snimanja.']);
     }
-    
-    
+
+
     /**
      * Remove the specified resource from storage.
      *
@@ -124,7 +124,9 @@ class OrderController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request) {}
+    public function destroy(Request $request)
+    {
+    }
 
 
     /**

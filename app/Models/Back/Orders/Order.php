@@ -387,15 +387,15 @@ class Order extends Model
         }
 
         if ($request->has('search') && ! empty($request->input('search'))) {
-            //dd($request->toArray());
             $query->where(function ($query) use ($request) {
-                $query->where('id', 'like', '%' . $request->input('search') . '%')
-                      ->orWhere('payment_fname', 'like', '%' . $request->input('search'))
-                      ->orWhere('payment_lname', 'like', '%' . $request->input('search'))
-                      ->orWhere('payment_email', 'like', '%' . $request->input('search'));
-            })/*->whereHas('products', function ($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->input('pojam'));
-            })*/;
+                return $query->where('id', 'like', '%' . $request->input('search') . '%')
+                             ->orWhere('payment_fname', 'like', '%' . $request->input('search') . '%')
+                             ->orWhere('payment_lname', 'like', '%' . $request->input('search') . '%')
+                             ->orWhere('payment_email', 'like', '%' . $request->input('search') . '%')
+                             ->orWhereHas('products', function ($query) use ($request) {
+                                 $query->where('name', 'like', '%' . $request->input('search') . '%');
+                             });
+            });
         }
 
         return $query->orderBy('created_at', 'desc');
