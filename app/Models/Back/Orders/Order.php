@@ -392,6 +392,8 @@ class Order extends Model
                       ->orWhere('payment_fname', 'like', '%' . $request->input('search'))
                       ->orWhere('payment_lname', 'like', '%' . $request->input('search'))
                       ->orWhere('payment_email', 'like', '%' . $request->input('search'));
+            })->orWhereHas('products', function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->input('pojam') . '%');
             });
         }
 
