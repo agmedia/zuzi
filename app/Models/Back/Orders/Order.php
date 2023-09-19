@@ -380,21 +380,22 @@ class Order extends Model
      */
     public function filter(Request $request): Builder
     {
-        $query = $this->newQuery();
+        $query = $this->newQuery()->with('products');
 
         if ($request->has('status')) {
             $query->where('order_status_id', '=', $request->input('status'));
         }
 
         if ($request->has('search') && ! empty($request->input('search'))) {
+            //dd($request->toArray());
             $query->where(function ($query) use ($request) {
                 $query->where('id', 'like', '%' . $request->input('search') . '%')
                       ->orWhere('payment_fname', 'like', '%' . $request->input('search'))
                       ->orWhere('payment_lname', 'like', '%' . $request->input('search'))
                       ->orWhere('payment_email', 'like', '%' . $request->input('search'));
-            })->orWhereHas('products', function ($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->input('pojam') . '%');
-            });
+            })/*->whereHas('products', function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->input('pojam'));
+            })*/;
         }
 
         return $query->orderBy('created_at', 'desc');
