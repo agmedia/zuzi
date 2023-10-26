@@ -55,4 +55,23 @@
     </div>
 </section>
 
+<section class=" pb-0 pt-lg-0 pb-sm-5">
+    <div class="container">
+        <div class="row pt-0 mt-2 mt-lg-3 mb-md-2">
+            <div class="col-lg-12 mb-grid-gutter">
+                <div class="d-block d-sm-flex justify-content-between align-items-center bg-dark rounded-3 shadow">
+                    <div class="pt-5 py-sm-5 px-4 ps-md-5 mb-3 text-center text-sm-start">
 
+                        <span class="badge bg-black fw fs-lg p-2 mb-4 rounded-1 from-bottom delay-0">Posebna ponuda</span>
+                        <p class="fs-xl fw-bold text-light pb-0 from-bottom delay-3">Stephen King: Kula tmine II i III </p>
+                        <p class="fs-xl text-light pb-0 from-bottom delay-3"><small>+ GRATIS knjiga na poklon: Gospodar prstenova - dvije kule</small></p>
+                        <p class=" h4 pb-2 font-bold mb-3 text-white"><small>Prije:</small> 48,71 €   <small>Sada:</small> 13,27 €</p>
+                        <a class="btn mb-3 btn-primary" href="https://www.zuzi.hr/kategorija-proizvoda/beletristika/stephen-king-kula-tmine-iiiii-gospodar-prstenova-dvije-kule">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
+                    </div>
+                   <a href="https://www.zuzi.hr/kategorija-proizvoda/beletristika/stephen-king-kula-tmine-iiiii-gospodar-prstenova-dvije-kule"> <img class="d-block mx-auto mx-sm-0 rounded-end rounded-xs pb-4 pb-sm-0" src="{{ asset('media/img/stephen-king-kula.webp') }}"  width="480" alt="Become a Courier"> </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
