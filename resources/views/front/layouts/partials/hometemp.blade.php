@@ -55,7 +55,7 @@
     </div>
 </section>
 
-<section class=" pb-0 pt-lg-0 pb-sm-5">
+<section class=" pb-0 pt-lg-0 ">
     <div class="container">
         <div class="row pt-0 mt-2 mt-lg-3 mb-md-2">
             <div class="col-lg-12 mb-grid-gutter">
