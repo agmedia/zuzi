@@ -12,7 +12,7 @@
             background-size: cover;">
             <div class="d-lg-flex justify-content-center align-items-center ps-lg-4">
                 <div class="position-relative mx-auto py-5 px-4 mb-lg-5 order-lg-1" style="max-width: 42rem; z-index: 10;">
-                    <div class="pb-lg-3 mb-lg-3 pt-lg-3 mt-lg-3 text-center">
+                    <div class="pb-lg-5 mb-lg-5 pt-lg-5 mt-lg-5 text-center">
                         <p class="fs-lg text-light pb-2 from-bottom delay-0">Poštovani kupci, zbog velikog broja narudžbi molimo vas za strpljenje prilikom obrade. Vaš Žuži team</p>
                         <span class="badge bg-dark fw-semibold fs-lg p-2 mb-4 rounded-1 from-bottom delay-0">ZUZI SHOP</span>
                         <h1 class="text-light display-6 fw-bold from-bottom delay-1">Online knjižara i antikvarijat</h1>
@@ -63,15 +63,12 @@
                 <div class="d-block d-sm-flex justify-content-between align-items-center bg-dark rounded-3 shadow">
                     <div class="pt-5 py-sm-5 px-4 ps-md-5 mb-3 text-center text-sm-start">
 
-
-
                         <span class="badge bg-black fw fs-lg p-2 mb-4 rounded-1 from-bottom delay-0">Posebna ponuda</span>
                         <p class="fs-xl fw-bold text-light pb-0 from-bottom delay-3">Stephen King: Kula tmine II i III </p>
                         <p class="fs-xl text-light pb-0 from-bottom delay-3"><small>+ GRATIS knjiga na poklon: Gospodar prstenova - dvije kule</small></p>
                         <p class=" h4 pb-2 font-bold mb-3 text-white"><small>Prije:</small> 48,71 €   <small>Sada:</small> 13,27 €</p>
                         <a class="btn mb-3 btn-primary" href="https://www.zuzi.hr/kategorija-proizvoda/beletristika/stephen-king-kula-tmine-iiiii-gospodar-prstenova-dvije-kule">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a>
-
-
+                    </div>
                    <a href="https://www.zuzi.hr/kategorija-proizvoda/beletristika/stephen-king-kula-tmine-iiiii-gospodar-prstenova-dvije-kule"> <img class="d-block mx-auto mx-sm-0 rounded-end rounded-xs pb-4 pb-sm-0" src="{{ asset('media/img/stephen-king-kula.webp') }}"  width="480" alt="Become a Courier"> </a>
                 </div>
             </div>
