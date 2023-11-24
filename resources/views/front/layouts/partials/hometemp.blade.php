@@ -13,7 +13,7 @@
             <div class="d-lg-flex justify-content-center align-items-center ps-lg-4">
                 <div class="position-relative mx-auto py-5 px-4 mb-lg-5 order-lg-1" style="max-width: 42rem; z-index: 10;">
                     <div class="pb-lg-5 mb-lg-5 pt-lg-5 mt-lg-5 text-center">
-                        <p class="fs-lg text-light pb-2 from-bottom delay-0">Poštovani kupci, zbog velikog broja narudžbi molimo vas za strpljenje prilikom obrade. Vaš Žuži team</p>
+
                         <span class="badge bg-dark fw-semibold fs-lg p-2 mb-4 rounded-1 from-bottom delay-0">ZUZI SHOP</span>
                         <h1 class="text-light display-6 fw-bold from-bottom delay-1">Online knjižara i antikvarijat</h1>
                         <p class="fs-xl text-light pb-0 from-bottom delay-3">Prodaja i otkup rabljenih i novih knjiga</p>
