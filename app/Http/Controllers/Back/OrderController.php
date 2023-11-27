@@ -8,6 +8,7 @@ use App\Helpers\ProductHelper;
 use App\Http\Controllers\Controller;
 use App\Mail\StatusCanceled;
 use App\Mail\StatusPaid;
+use App\Mail\StatusReady;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderHistory;
 use App\Models\Back\Settings\Settings;
@@ -177,6 +178,14 @@ class OrderController extends Controller
 
                     dispatch(function () use ($order) {
                         Mail::to($order->payment_email)->send(new StatusCanceled($order));
+                    });
+                }
+
+                if ($request->input('status') == config('settings.order.status.ready')) {
+                    $order = Order::find($request->input('order_id'));
+
+                    dispatch(function () use ($order) {
+                        Mail::to($order->payment_email)->send(new StatusReady($order));
                     });
                 }
             }
