@@ -43,8 +43,8 @@
         <tr>
             <td>{{ $product->name }} - {{ $product->product->sku}}</td>
             <td style="text-align: center;">{{ $product->quantity }}</td>
-            <td style="text-align: right;">{{ number_format($product->price, 2, ',', '.') }}</td>
-            <td style="text-align: right;">{{ number_format($product->total, 2, ',', '.') }}</td>
+            <td style="text-align: right;">€ {{ number_format($product->price, 2, ',', '.') }}</td>
+            <td style="text-align: right;">€ {{ number_format($product->total, 2, ',', '.') }}</td>
         </tr>
     @endforeach
 </table>
@@ -57,7 +57,7 @@
             @if ($order->shipping_state != 'Croatia' && $total->code == 'shipping')
                 <td style="border-left: none; text-align: right; {{ $total->code == 'shipping' ? '' : 'font-weight: bold;' }}" width="20%">Trošak dostave će Vam biti poslan u roku od 24h.</td>
             @else
-                <td style="border-left: none; text-align: right; {{ $total->code == 'shipping' ? '' : 'font-weight: bold;' }}" width="20%">{{ number_format($total->value, 2, ',', '.') }}</td>
+                <td style="border-left: none; text-align: right; {{ $total->code == 'shipping' ? '' : 'font-weight: bold;' }}" width="20%">€ {{ number_format($total->value, 2, ',', '.') }}</td>
             @endif
         </tr>
     @endforeach

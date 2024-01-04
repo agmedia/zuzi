@@ -80,7 +80,9 @@ class AgCart extends Model
      */
     public function getEur()
     {
-        return Currency::secondary()->value;
+        if (isset(Currency::secondary()->value)) {
+            return Currency::secondary()->value;
+        }
 
         if (isset($eur->status) && $eur->status) {
             return $eur->value;
@@ -136,9 +138,21 @@ class AgCart extends Model
                     return ['error' => 'Nažalost nema dovoljnih količina artikla..!'];
                 }
 
+                Log::info($quantity);
+                Log::info($item->quantity);
+                Log::info($product->quantity);
+
                 if ($quantity == 1 && ($item->quantity == 1 || $item->quantity > $quantity)) {
                     if ( ! $id) {
                         $quantity = $item->quantity + 1;
+                    } else {
+                        if (($item->quantity + $quantity) < $product->quantity) {
+                            $quantity = $item->quantity + $quantity;
+                        }
+                    }
+                } else {
+                    if (($item->quantity + $quantity) < $product->quantity) {
+                        $quantity = $item->quantity + $quantity;
                     }
                 }
 
