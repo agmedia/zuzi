@@ -22,6 +22,7 @@ use App\Http\Controllers\Back\Settings\HistoryController;
 use App\Http\Controllers\Back\Settings\PageController;
 use App\Http\Controllers\Back\Settings\QuickMenuController;
 use App\Http\Controllers\Back\Settings\SettingsController;
+use App\Http\Controllers\Back\Settings\ApiController;
 use App\Http\Controllers\Back\UserController;
 use App\Http\Controllers\Back\Widget\WidgetController;
 use App\Http\Controllers\Back\Widget\WidgetGroupController;
@@ -151,6 +152,11 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
 
     // POSTAVKE
     Route::prefix('settings')->group(function () {
+
+        // API
+        Route::get('api', [ApiController::class, 'index'])->name('api.index');
+
+
         // INFO PAGES
         Route::get('pages', [PageController::class, 'index'])->name('pages');
         Route::get('page/create', [PageController::class, 'create'])->name('pages.create');
@@ -250,6 +256,11 @@ Route::prefix('api/v2')->group(function () {
         Route::prefix('widget')->group(function () {
             Route::post('destroy', [WidgetController::class, 'destroy'])->name('widget.destroy');
             Route::get('get-links', [WidgetController::class, 'getLinks'])->name('widget.api.get-links');
+        });
+        // API
+        Route::prefix('api')->group(function () {
+            Route::post('import', [ApiController::class, 'import'])->name('api.api.import');
+            Route::post('upload/excel', [ApiController::class, 'upload'])->name('api.api.upload');
         });
         // APPLICATION SETTINGS
         Route::prefix('app')->group(function () {
