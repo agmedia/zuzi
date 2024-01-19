@@ -249,7 +249,7 @@
                         <td class="align-middle"><span class="text-dark fw-medium">{{ $s_method->title }}</span><br><span class="text-muted">{!! $s_method->data->short_description !!}</span></td>
                         <td class="align-middle">{{ $s_method->data->time }}</td>
                         <td class="align-middle">
-                            @if ($is_free_shipping)
+                            @if ($is_free_shipping and $s_method->geo_zone == 1)
                                 € 0
                                 @if ($secondary_price)
                                     <br>0 kn

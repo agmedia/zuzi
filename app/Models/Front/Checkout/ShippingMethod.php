@@ -97,7 +97,7 @@ class ShippingMethod
         if ($shipping) {
             $value = $shipping->data->price;
 
-            if ($cart->getTotal() > config('settings.free_shipping')) {
+            if ($cart->getTotal() > config('settings.free_shipping') and $shipping->geo_zone == 1) {
                 $value = 0;
             }
 
