@@ -98,7 +98,6 @@ class PlavaKrava
                         'name'                 => $item[3],
                         'sku'                  => $item[4],
                         'polica'               => null,
-                        'isbn'                 => $item[24],
                         'description'          => $item[7],
                         'slug'                 => Helper::resolveSlug($item, '3'),
                         'price'                => $item[11],
