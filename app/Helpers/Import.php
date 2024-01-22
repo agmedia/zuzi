@@ -76,7 +76,7 @@ class Import
     public function resolveStringCategories(string $categories)
     {
        // $default = config('settings.eng_default_category');
-       // $response[] = $default;
+        $response[] = '';
 
         $categories = explode(', ', $categories);
 
