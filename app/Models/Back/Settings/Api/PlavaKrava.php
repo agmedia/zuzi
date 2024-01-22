@@ -125,14 +125,14 @@ class PlavaKrava
                     ]);
 
                     if ($id) {
-                        $image = config('settings.image_default');
+                      /*  $image = config('settings.image_default');
                         try {
                             $image_path = public_path('/media/img/products/plava-krava/' . $item[10]);
                             $image = $import->resolveImages($image_path, $item[3], $id);
                         } catch (\ErrorException $e) {
                             Log::info('Image not imported. Product SKU: (' . $item[4] . ') - ' . $item[3]);
                             Log::info($e->getMessage());
-                        }
+                        }*/
 
                         $categories = $import->resolveStringCategories($item[9]);
 
@@ -141,7 +141,7 @@ class PlavaKrava
                         $product = Product::query()->find($id);
 
                         $product->update([
-                            'image'           => $image,
+                           /* 'image'           => $image,*/
                             'url'             => ProductHelper::url($product),
                             'category_string' => ProductHelper::categoryString($product)
                         ]);
