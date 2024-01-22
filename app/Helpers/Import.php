@@ -202,7 +202,7 @@ class Import
 
             Log::info('$publisher..... ' . $publisher);
 
-            /*$exist = Publisher::where('title', $publisher)->first();
+            $exist = Publisher::where('title', $publisher)->first();
 
             if ( ! $exist) {
                 return Publisher::insertGetId([
@@ -221,7 +221,7 @@ class Import
                 ]);
             }
 
-            return $exist->id;*/
+            return $exist->id;
         }
 
         return config('settings.unknown_publisher');
