@@ -25,8 +25,9 @@ return [
     'author_path'       => 'autor',
     'publisher_path'    => 'nakladnik',
     'group_path'        => 'Kategorija proizvoda',
-    'unknown_author'    => 6,
-    'unknown_publisher' => 6,
+
+    'unknown_author'    => 3282,
+    'unknown_publisher' => 376,
     'images_domain'     =>  env('APP_IMAGE_DOMAIN'),
     'default_tax_id'       => 1,
     'eur_divide_amount' => 0.13272280,
