@@ -168,7 +168,7 @@ class Import
     public function resolveAuthor(string $author = null): int
     {
         if ($author) {
-            $author = substr($author, 0, strpos($author, ':'));
+            $author = trim($author);
 
             $exist = Author::where('title', $author)->first();
 
