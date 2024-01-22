@@ -71,9 +71,13 @@ class PlavaKrava
     {
         $count = 0;
 
+       // Log::info('Error downloading image: ' . $data);
+
         foreach ($data as $key => $item) {
+
+
             if ($key > 1) {
-                $exist = Product::query()->where('sku', $item[6])->first();
+                $exist = Product::query()->where('sku', $item[4])->first();
 
                 if ( ! $exist && ! empty($item[3])) {
                     $import       = new Import();
@@ -92,23 +96,23 @@ class PlavaKrava
                         'publisher_id'         => $publisher_id,
                         'action_id'            => 0,
                         'name'                 => $item[3],
-                        'sku'                  => $item[6],
+                        'sku'                  => $item[4],
                         'polica'               => null,
-                        'isbn'                 => $item[6],
+                        'isbn'                 => $item[24],
                         'description'          => $item[7],
                         'slug'                 => Helper::resolveSlug($item, '3'),
-                        'price'                => $item[12],
-                        'quantity'             => $item[13] ?: 0,
+                        'price'                => $item[11],
+                        'quantity'             => $item[12] ?: 0,
                         'decrease'             => 1,
                         'tax_id'               => config('settings.default_tax_id'),
                         'special'              => null,
                         'special_from'         => null,
                         'special_to'           => null,
-                        'meta_title'           => $item[16],
-                        'meta_description'     => $item[17],
-                        'pages'                => $item[18],
-                        'dimensions'           => $item[19],
-                        'origin'               => $item[22],
+                        'meta_title'           => $item[15],
+                        'meta_description'     => $item[16],
+                        'pages'                => $item[17],
+                        'dimensions'           => $item[18],
+                        'origin'               => $item[19],
                         'letter'               => null,
                         'condition'            => null,
                         'binding'              => $item[20],
@@ -135,7 +139,7 @@ class PlavaKrava
                             $image_path = public_path('/media/img/products/plava-krava/' . $item[10]);
                             $image = $import->resolveImages($image_path, $item[3], $id);
                         } catch (\ErrorException $e) {
-                            Log::info('Image not imported. Product SKU: (' . $item[6] . ') - ' . $item[3]);
+                            Log::info('Image not imported. Product SKU: (' . $item[4] . ') - ' . $item[3]);
                             Log::info($e->getMessage());
                         }
 
