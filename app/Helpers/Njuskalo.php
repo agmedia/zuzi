@@ -60,7 +60,9 @@ class Njuskalo
         $str = '';
 
         if ($product->description != '') {
-            $str .= $product->description . '<br><br>';
+            $str .=  preg_replace('/[[:cntrl:]]/', '', $product->description) . '<br><br>';
+
+
         }
         if ($product->pages) {
             $str .= 'Stranica: ' . $product->pages . '<br>';
