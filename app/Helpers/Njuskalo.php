@@ -26,7 +26,7 @@ class Njuskalo
         $products = Product::query()->where('status', 1)
                                     ->where('price', '!=', 0)
                                     ->where('quantity', '!=', 0)
-                                    ->select('id', 'name', 'description', 'quantity', 'status', 'price', 'image', 'pages', 'dimensions', 'origin', 'slug', 'letter', 'condition', 'binding', 'year')
+                                    ->select('id', 'name', 'description', 'quantity', 'status', 'price', 'image', 'pages', 'dimensions', 'origin', 'url', 'letter', 'condition', 'binding', 'year')
                                     ->with(['categories' => function ($query) {
                                         return $query->select('id', 'slug');
                                     }])
@@ -41,7 +41,7 @@ class Njuskalo
                 'description' => $this->getDescription($product),
                 'group' => config('settings.njuskalo.sync.' . $category),
                 'price' => $product->price,
-                'slug' => $product->slug,
+                'slug' => $product->url,
                 'image' => asset($product->image),
             ];
         }
