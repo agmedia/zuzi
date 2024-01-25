@@ -88,6 +88,53 @@ return [
         2 => 'products',
         3 => 'authors',
         4 => 'publishers'
+    ],
+
+    'njuskalo' => [
+        'sync' => [
+            'fantasy' => 9760, //*
+            'djecje-knjige' => 9752,
+            'beletristika' => 9751, //*
+            'proza' => 9760, //*
+            'sf' => 9760, //*
+            'knjizevnost' => 9753, //*
+            'outlet' => 9760,
+            'duhovne-knjige' => 9754, //*
+            'povijest' => 9760,
+            'autobiografije-i-biografije' => 13117, // Ostala literatura
+            'kompleti' => 9760,
+            'alternativne-knjige' => 9760,
+            'savjetnici' => 9760, //*
+            'psihologija' => 9760,
+            'rijetke-knjige' => 9750,
+            'erotske-knjige' => 9760,
+            'nakladnici' => 9760,
+            'knjige-na-stranom-jeziku' => 9760,
+            'religija-i-mitologija' => 9754,
+            'antikvarne-knjige' => 9750,
+            'militarija' => 9760,
+            'kuharice' => 13116,
+            'publicistika' => 9760,
+            'ostala-literatura' => 9760,
+            'strucna-literatura' => 9756,
+            'enciklopedije-i-leksikon' => 9756,
+            'monografije' => 13118,
+            'putopisi' => 9760,
+            'rjecnici' => 13095,
+            'filozofija' => 9760,
+            'poezija' => 9760,
+            'stripovi' => 12408,
+            'wattpad-i-domaci-pisci' => 9760,
+            'nekategorizirane' => 9760,
+            'casopisi' => 9755,
+            'bookmarkeri' => 9760,
+            'fotografija' => 9760,
+            'bojanke-za-odrasle' => 9760,
+            'rokovnici' => 9760,
+            'gift-program' => 9760,
+            'karte' => 9760,
+            'svezalice-pidzame-za-knjige' => 9760
+        ]
     ]
 
 ];
