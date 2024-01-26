@@ -2,6 +2,8 @@
 
 namespace App\Models\Back\Orders;
 
+use App\Helpers\Mailchimp;
+use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Users\Client;
 use App\User;
@@ -399,6 +401,64 @@ class Order extends Model
         }
 
         return $query->orderBy('created_at', 'desc');
+    }
+
+
+    /**
+     * @param $products
+     *
+     * @return $this
+     */
+    public function decreaseCartItems($products)
+    {
+        foreach ($products as $product) {
+            $real = $product->real;
+
+            if ($real->decrease) {
+                $real->decrement('quantity', $product->quantity);
+
+                if ( ! $real->quantity) {
+                    $real->update([
+                        'status' => 0
+                    ]);
+                }
+            }
+        }
+
+        return $this;
+    }
+
+
+    /**
+     * @return bool
+     */
+    public function forgetSession()
+    {
+        CheckoutSession::forgetOrder();
+        CheckoutSession::forgetStep();
+        CheckoutSession::forgetPayment();
+        CheckoutSession::forgetShipping();
+
+        return $this;
+    }
+
+
+    /**
+     * @param string $email
+     * @param string $f_name
+     * @param string $l_name
+     *
+     * @return $this
+     */
+    public function addToMailchimp(string $email, string $f_name, string $l_name)
+    {
+        $mailchimp = new Mailchimp();
+        $mailchimp->addMemberToList(
+            config('services.mailchimp.audience_id'),
+            $email, $f_name, $l_name
+        );
+
+        return $this;
     }
 
 

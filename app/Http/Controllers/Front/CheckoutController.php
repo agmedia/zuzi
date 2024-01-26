@@ -135,28 +135,10 @@ class CheckoutController extends Controller
                 Mail::to($order->payment_email)->send(new OrderSent($order));
             });
 
-            foreach ($order->products as $product) {
-                $real = $product->real;
+            $order->decreaseCartItems($order->products)
+                  ->addToMailchimp($order->payment_email, $order->payment_fname, $order->payment_lname)
+                  ->forgetSession();
 
-                Log::info('Before...' . $real->quantity);
-
-                if ($real->decrease) {
-                    $real->decrement('quantity', $product->quantity);
-
-                    if ( ! $real->quantity) {
-                        $real->update([
-                            'status' => 0
-                        ]);
-                    }
-                }
-
-                Log::info('After...' . $real->quantity);
-            }
-
-            CheckoutSession::forgetOrder();
-            CheckoutSession::forgetStep();
-            CheckoutSession::forgetPayment();
-            CheckoutSession::forgetShipping();
             $this->shoppingCart()->flush();
 
             $data['google_tag_manager'] = TagManager::getGoogleSuccessDataLayer($order);
@@ -176,11 +158,23 @@ class CheckoutController extends Controller
         return view('front.checkout.error');
     }
 
-
     /*******************************************************************************
      *                                Copyright : AGmedia                           *
      *                              email: filip@agmedia.hr                         *
      *******************************************************************************/
+
+    /**
+     * @return AgCart
+     */
+    private function shoppingCart(): AgCart
+    {
+        if (session()->has(config('session.cart'))) {
+            return new AgCart(session(config('session.cart')));
+        }
+
+        return new AgCart(config('session.cart'));
+    }
+
 
     /**
      * @return array
@@ -222,15 +216,14 @@ class CheckoutController extends Controller
 
 
     /**
-     * @return AgCart
+     * @return void
      */
-    private function shoppingCart(): AgCart
+    private function forgetCheckoutCache(): void
     {
-        if (session()->has(config('session.cart'))) {
-            return new AgCart(session(config('session.cart')));
-        }
-
-        return new AgCart(config('session.cart'));
+        CheckoutSession::forgetOrder();
+        CheckoutSession::forgetStep();
+        CheckoutSession::forgetPayment();
+        CheckoutSession::forgetShipping();
     }
 
 }
