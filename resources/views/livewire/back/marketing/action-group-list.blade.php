@@ -1,11 +1,13 @@
 <div class="block block-rounded">
     <div class="block-content bg-body-light" style="padding: 12px 20px;">
         <div class="row">
-            <div class="col-md-3">
-                <h3 class="block-title pt-1">Stavke</h3>
+            <div class="col-md-12">
+                <p class="text-sm font-weight-bold mb-1">{!! $title !!}</p>
             </div>
-            <div class="col-md-9">
-                <div class="block-options">
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="block-options pl-0">
                     <input type="search" wire:model.debounce.300ms="search" class="form-control" style="display: block;" placeholder="Traži...">
                     @if( ! empty($search_results))
                         <div class="autocomplete" >
@@ -19,7 +21,6 @@
                 </div>
             </div>
         </div>
-
     </div>
     <div class="block-content">
         <!-- All Products Table -->

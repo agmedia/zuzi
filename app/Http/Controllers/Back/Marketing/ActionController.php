@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Back\Marketing;
 
+use App\Helpers\Currency;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Marketing\Action;
@@ -18,9 +19,12 @@ class ActionController extends Controller
      */
     public function index(Request $request)
     {
+        $groups = Settings::get('action', 'group_list');
         $actions = Action::paginate(12);
 
-        return view('back.marketing.action.index', compact('actions'));
+        //dd($actions->first()->discount_text);
+
+        return view('back.marketing.action.index', compact('actions', 'groups'));
     }
 
 
@@ -85,6 +89,7 @@ class ActionController extends Controller
      */
     public function update(Request $request, Action $action)
     {
+        //dd($request->toArray());
         $updated = $action->validateRequest($request)->edit();
 
         if ($updated) {

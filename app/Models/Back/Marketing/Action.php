@@ -2,6 +2,7 @@
 
 namespace App\Models\Back\Marketing;
 
+use App\Helpers\Currency;
 use App\Helpers\Helper;
 use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Product\Product;
@@ -17,8 +18,6 @@ use Illuminate\Support\Str;
 class Action extends Model
 {
 
-    use HasFactory;
-
     /**
      * @var string
      */
@@ -30,9 +29,44 @@ class Action extends Model
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
     /**
+     * @var string[]
+     */
+    protected $appends = ['discount_text'];
+
+    /**
      * @var Request
      */
     protected $request;
+
+
+    /**
+     * @param $value
+     *
+     * @return mixed
+     */
+    public function getDataAttribute($value)
+    {
+        return json_decode($value, true);
+    }
+
+
+    /**
+     * @param $value
+     *
+     * @return bool|\Illuminate\Support\Collection|mixed|string
+     */
+    public function getDiscountTextAttribute($value)
+    {
+        if ($this->type == 'F') {
+            return Currency::main($this->discount, true);
+        }
+
+        if ($this->type == 'P') {
+            return number_format($this->discount) . ' %';
+        }
+
+        return $this->discount;
+    }
 
 
     /**
@@ -70,32 +104,12 @@ class Action extends Model
      */
     public function create()
     {
-        $links = collect(['all']);
-
-        if ($this->request->action_list) {
-            $links = collect($this->request->action_list);
-        }
-
-        $status = (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0;
-        $start  = $this->request->date_start ? Carbon::make($this->request->date_start) : null;
-        $end    = $this->request->date_end ? Carbon::make($this->request->date_end) : null;
-
-        $id = $this->insertGetId([
-            'title'      => $this->request->title,
-            'type'       => $this->request->type,
-            'discount'   => $this->request->discount,
-            'group'      => $this->request->group,
-            'links'      => $links->flatten()->toJson(),
-            'date_start' => $start,
-            'date_end'   => $end,
-            'status'     => $status,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
-        ]);
+        $data = $this->getRequestData();
+        $id   = $this->insertGetId($this->getModelArray());
 
         if ($id) {
-            if ($status) {
-                $this->updateProducts($this->resolveTarget($links), $id, $start, $end);
+            if ($this->shouldUpdateProducts($data)) {
+                $this->updateProducts($this->resolveTarget($data['links']), $id, $data['start'], $data['end']);
             }
 
             return $this->find($id);
@@ -112,34 +126,12 @@ class Action extends Model
      */
     public function edit()
     {
-        $links = collect(['all']);
-
-        if ($this->request->action_list) {
-            $links = collect($this->request->action_list);
-        }
-
-        $status = (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0;
-        $start  = $this->request->date_start ? Carbon::make($this->request->date_start) : null;
-        $end    = $this->request->date_end ? Carbon::make($this->request->date_end) : null;
-
-        $updated = $this->update([
-            'title'      => $this->request->title,
-            'type'       => $this->request->type,
-            'discount'   => $this->request->discount,
-            'group'      => $this->request->group,
-            'links'      => $links->flatten()->toJson(),
-            'date_start' => $start,
-            'date_end'   => $end,
-            'status'     => $status,
-            'updated_at' => Carbon::now()
-        ]);
+        $data    = $this->getRequestData();
+        $updated = $this->update($this->getModelArray(false));
 
         if ($updated) {
-            $this->truncateProducts();
-
-            if ($status) {
-                $ids = $this->resolveTarget($links);
-                $this->updateProducts($ids, $this->id, $start, $end);
+            if ($this->shouldUpdateProducts($data)) {
+                $this->updateProducts($this->resolveTarget($data['links']), $this->id, $data['start'], $data['end']);
             }
 
             return $this;
@@ -152,9 +144,139 @@ class Action extends Model
     /**
      * @return bool
      */
-    public function listRequired(): bool
+    public function isValid(string $coupon = ''): bool
     {
-        if ($this->request->group == 'all') {
+        $is_valid = false;
+
+        $from = now()->subDay();
+        $to   = now()->addDay();
+
+        if ($this->date_start && $this->date_start != '0000-00-00 00:00:00') {
+            $from = Carbon::make($this->date_start);
+        }
+        if ($this->date_end && $this->date_end != '0000-00-00 00:00:00') {
+            $to = Carbon::make($this->date_end);
+        }
+
+        if ($from <= now() && now() <= $to) {
+            $is_valid = true;
+        }
+
+        if ($is_valid) {
+            $is_valid = false;
+
+            if ($this->coupon && $coupon != '' && $coupon == $this->coupon) {
+                $is_valid = true;
+            }
+
+            if ( ! $this->coupon) {
+                $is_valid = true;
+            }
+        }
+
+        return $is_valid;
+    }
+
+
+    /**
+     * @param bool $insert
+     *
+     * @return array
+     */
+    private function getModelArray(bool $insert = true): array
+    {
+        $data = $this->getRequestData();
+
+        $response = [
+            'title'      => $this->request->title,
+            'type'       => $this->request->type,
+            'discount'   => $this->request->discount,
+            'group'      => $this->request->group,
+            'links'      => $data['links']->flatten()->toJson(),
+            'date_start' => $data['start'],
+            'date_end'   => $data['end'],
+            'data'       => $data['data'],
+            'coupon'     => $this->request->coupon,
+            'quantity'   => $data['coupon_quantity'],
+            'status'     => $data['status'],
+            'updated_at' => Carbon::now()
+        ];
+
+        if ($insert) {
+            $response['created_at'] = Carbon::now();
+        }
+
+        return $response;
+    }
+
+
+    /**
+     * @return array
+     */
+    private function getRequestData(): array
+    {
+        $links = collect([$this->request->group]);
+
+        if ($this->request->action_list) {
+            $links = collect($this->request->action_list);
+        }
+
+        $data = $this->setActionData();
+
+        return [
+            'links'           => $links,
+            'status'          => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
+            'start'           => $this->request->date_start ? Carbon::make($this->request->date_start) : null,
+            'end'             => $this->request->date_end ? Carbon::make($this->request->date_end) : null,
+            'coupon_quantity' => (isset($this->request->coupon_quantity) and $this->request->coupon_quantity == 'on') ? 1 : 0,
+            'data'            => ! empty($data) ? collect($data)->toJson() : null
+        ];
+    }
+
+
+    /**
+     * @return array
+     */
+    private function setActionData(): array
+    {
+        $response = [];
+
+        if ($this->request->min) {
+            $response['min'] = $this->request->min;
+        }
+        if ($this->request->max) {
+            $response['max'] = $this->request->max;
+        }
+
+        return $response;
+    }
+
+
+    /**
+     * @param array $data
+     *
+     * @return bool
+     */
+    private function shouldUpdateProducts(array $data): bool
+    {
+        if ($this->request->group == 'total') {
+            return false;
+        }
+
+        if ($data['status']) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * @return bool
+     */
+    private function listRequired(): bool
+    {
+        if (in_array($this->request->group, ['all', 'total'])) {
             return false;
         }
 
@@ -185,27 +307,37 @@ class Action extends Model
             return Product::whereIn('publisher_id', $links)->pluck('id')->unique();
         }
 
-        if ($this->request->group == 'all') {
-            return 'all';
+        if ($this->request->group == 'all' && $links->first() != 'all') {
+            return Product::query()->whereNotIn('publisher_id', $links)->pluck('id')->unique();
         }
+
+        return $this->request->group;
     }
 
 
     /**
-     * @param     $ids
+     * @param     $target
      * @param int $id
      * @param     $start
      * @param     $end
      */
-    private function updateProducts($ids, int $id, $start, $end): void
+    private function updateProducts($target, int $id, $start, $end): void
     {
         $query = [];
+        $products = Product::query();
 
-        if ($ids == 'all') {
-            $products = Product::pluck('price', 'id');
-        } else {
-            $products = Product::whereIn('id', $ids)->pluck('price', 'id');
+        if ($target != 'all') {
+            $products->whereIn('id', $target);
         }
+
+        if ($this->request->min) {
+            $products->where('price', '>', $this->request->min);
+        }
+        if ($this->request->max) {
+            $products->where('price', '<', $this->request->max);
+        }
+
+        $products = $products->pluck('price', 'id');
 
         foreach ($products->all() as $k_id => $price) {
             $query[] = [
@@ -215,11 +347,11 @@ class Action extends Model
         }
 
         $start = $start ?: 'null';
-        $end = $end ?: 'null';
+        $end   = $end ?: 'null';
 
         DB::table('temp_table')->truncate();
 
-        foreach (array_chunk($query,500) as $chunk) {
+        foreach (array_chunk($query, 500) as $chunk) {
             DB::table('temp_table')->insert($chunk);
         }
 
@@ -228,17 +360,4 @@ class Action extends Model
         DB::table('temp_table')->truncate();
     }
 
-
-    /**
-     * @return mixed
-     */
-    public function truncateProducts()
-    {
-        return Product::where('action_id', $this->id)->update([
-            'action_id'    => 0,
-            'special'      => null,
-            'special_from' => null,
-            'special_to'   => null,
-        ]);
-    }
 }
