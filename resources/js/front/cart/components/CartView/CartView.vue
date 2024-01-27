@@ -7,13 +7,6 @@
             <p class="text-dark mb-0">Vaša košarica je prazna!</p>
         </div>
 
-      <!--  <div class="d-flex border p-2" style="background-color: rgba(245,245,245,0.96);" v-if="$store.state.cart.total < freeship && $store.state.cart.count">
-            <p class="small mb-0">Još € {{ $store.state.service.formatMainPrice(freeship - $store.state.cart.total) }} <span v-if="$store.state.cart.secondary_price">({{ $store.state.service.formatSecondaryPrice(freeship - $store.state.cart.total) }})</span> do besplatne dostave!</p>
-        </div>
-        <div class="d-flex border p-2" style="background-color: rgba(245,245,245,0.96);" v-if="$store.state.cart.total > freeship && $store.state.cart.count">
-            <p class="small mb-0">Ostvarili ste pravo na besplatnu dostavu!</p>
-        </div>-->
-
         <!-- Item-->
         <div class="d-sm-flex justify-content-between align-items-center my-2 pb-3 border-bottom" v-for="item in $store.state.cart.items">
             <div class="d-block d-sm-flex align-items-center text-center text-sm-start">
@@ -23,8 +16,18 @@
                 <div class="pt-2">
                     <h3 class="product-title fs-base mb-2"><a :href="base_path + item.attributes.path">{{ item.name }}</a></h3>
 
-                    <div class="fs-lg text-primary pt-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</div>
-                    <div class="fs-sm text-dark pt-2" v-if="item.associatedModel.secondary_price">{{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}</div>
+                    <div class="fs-lg text-primary pt-2">
+                        {{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}
+                        <span class="text-primary fs-md fw-light" style="margin-left: 20px;"
+                              v-if="Object.keys(item.conditions).length && item.associatedModel.action && item.associatedModel.action.coupon == $store.state.cart.coupon">
+                            {{ item.associatedModel.action.title }} ({{ Math.round(item.associatedModel.action.discount).toFixed(0) }}
+                            {{ item.associatedModel.action.type == 'F' ? '€' : '%' }})
+                        </span>
+                    </div>
+
+                    <div class="fs-sm text-dark pt-2" v-if="item.associatedModel.secondary_price">
+                        {{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}
+                    </div>
                 </div>
             </div>
             <div class="pt-2 pt-sm-0 ps-sm-3 mx-auto mx-sm-0 text-center text-sm-start" style="max-width: 9rem;">

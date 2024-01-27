@@ -187,7 +187,13 @@ class AgService {
         }
     }
 
-
+    /**
+     *
+     * @param currency_list
+     * @param price
+     * @param main
+     * @returns {string}
+     */
     resolvePrice(currency_list, price, main = true) {
         let list = currency_list;
         let main_currency = {};
@@ -206,8 +212,8 @@ class AgService {
 
         });
 
-        let left = main_currency.symbol_left ? main_currency.symbol_left + ' ' : '';
-        let right = main_currency.symbol_right ? ' ' + main_currency.symbol_right : '';
+        let left = main_currency.symbol_left ? main_currency.symbol_left + '' : '';
+        let right = main_currency.symbol_right ? '' + main_currency.symbol_right : '';
 
         return left + Number(price * main_currency.value).toFixed(main_currency.decimal_places) + right;
     }
