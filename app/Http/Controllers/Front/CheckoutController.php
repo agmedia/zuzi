@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Front;
 
+use App\Helpers\OrderHelper;
 use App\Helpers\Session\CheckoutSession;
 use App\Http\Controllers\Controller;
 use App\Mail\OrderReceived;
@@ -9,6 +10,7 @@ use App\Mail\OrderSent;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
+use App\Models\Back\Orders\Order as AdminOrderModel;
 use App\Models\TagManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -44,7 +46,7 @@ class CheckoutController extends Controller
             $step = $request->input('step');
         }
 
-        $is_free_shipping = (config('settings.free_shipping') < $this->shoppingCart()->get()['total']) ? true : false;
+        $is_free_shipping = OrderHelper::isFreeShipping($this->shoppingCart()->get());
 
         return view('front.checkout.checkout', compact('step', 'is_free_shipping'));
     }
@@ -74,15 +76,18 @@ class CheckoutController extends Controller
         if (CheckoutSession::hasOrder()) {
             $data['id'] = CheckoutSession::getOrder()['id'];
 
-            $order->updateData($data);
-            $order->setData($data['id']);
-
+            $order->updateData($data)
+                  ->setData($data['id']);
         } else {
             $order->createFrom($data);
         }
 
         if ($order->isCreated()) {
             CheckoutSession::setOrder($order->getData());
+        }
+
+        if ( ! isset($data['id'])) {
+            $data['id'] = CheckoutSession::getOrder()['id'];
         }
 
         $data['payment_form'] = $order->resolvePaymentForm();
@@ -99,6 +104,8 @@ class CheckoutController extends Controller
     public function order(Request $request)
     {
         $order = new Order();
+
+        ag_log($request->toArray(), title: 'Response ORDER ::::::::::::::::::::::::::::::::::::::');
 
         if ($request->has('provjera')) {
             $order->setData($request->input('provjera'));
@@ -127,21 +134,19 @@ class CheckoutController extends Controller
             return redirect()->route('index');
         }
 
-        $order = \App\Models\Back\Orders\Order::where('id', $data['order']['id'])->first();
+        $order = OrderHelper::get($data['order']['id']);
 
-        if ($order) {
-            dispatch(function () use ($order) {
-                Mail::to(config('mail.admin'))->send(new OrderReceived($order));
-                Mail::to($order->payment_email)->send(new OrderSent($order));
-            });
+        if ($order->isValid()) {
+            $order->sendEmails()
+                  ->decreaseCartItems()
+                  ->addCustomerToMailchimp()
+                  ->forgetCheckoutCache();
 
-            $order->decreaseCartItems($order->products)
-                  ->addToMailchimp($order->payment_email, $order->payment_fname, $order->payment_lname)
-                  ->forgetSession();
+            $this->shoppingCart()
+                 ->flush()
+                 ->resolveDB();
 
-            $this->shoppingCart()->flush();
-
-            $data['google_tag_manager'] = TagManager::getGoogleSuccessDataLayer($order);
+            $data['google_tag_manager'] = TagManager::getGoogleSuccessDataLayer($order->getOrder());
 
             return view('front.checkout.success', compact('data'));
         }
@@ -212,18 +217,6 @@ class CheckoutController extends Controller
         $response['order_status_id'] = $order_status_id;
 
         return $response;
-    }
-
-
-    /**
-     * @return void
-     */
-    private function forgetCheckoutCache(): void
-    {
-        CheckoutSession::forgetOrder();
-        CheckoutSession::forgetStep();
-        CheckoutSession::forgetPayment();
-        CheckoutSession::forgetShipping();
     }
 
 }

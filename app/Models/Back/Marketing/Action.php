@@ -342,7 +342,7 @@ class Action extends Model
         foreach ($products->all() as $k_id => $price) {
             $query[] = [
                 'product_id' => $k_id,
-                'special'    => Helper::calculateDiscountPrice($price, $this->request->discount)
+                'special'    => Helper::calculateDiscountPrice($price, $this->request->discount, $this->request->type)
             ];
         }
 

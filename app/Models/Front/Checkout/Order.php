@@ -176,9 +176,9 @@ class Order extends Model
     /**
      * @param array $data
      *
-     * @return $this|null
+     * @return $this
      */
-    public function updateData(array $data)
+    public function updateData(array $data): static
     {
         if ( ! empty($data)) {
             $this->order = $data;
@@ -219,7 +219,7 @@ class Order extends Model
             return $this->setData($data['id']);
         }
 
-        return null;
+        return $this;
     }
 
 

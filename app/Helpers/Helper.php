@@ -10,7 +10,9 @@ use App\Models\Front\Blog;
 use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
+use Darryldecode\Cart\CartCondition;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -27,8 +29,12 @@ class Helper
      *
      * @return float|int
      */
-    public static function calculateDiscountPrice(float $price, int $discount)
+    public static function calculateDiscountPrice(float $price, int $discount, string $type)
     {
+        if ($type == 'F') {
+            return $price - $discount;
+        }
+
         return $price - ($price * ($discount / 100));
     }
 
@@ -39,7 +45,7 @@ class Helper
      *
      * @return float|int
      */
-    public static function calculateDiscount($list_price, $seling_price)
+    public static function calculateDiscount($list_price, $seling_price, string $type = 'P')
     {
         if (is_string($list_price)) {
             $list_price = str_replace('.', '', $list_price);
@@ -48,6 +54,10 @@ class Helper
         if (is_string($seling_price)) {
             $seling_price = str_replace('.', '', $seling_price);
             $seling_price = str_replace(',', '.', $seling_price);
+        }
+
+        if ($type == 'F') {
+            return $list_price - $seling_price;
         }
 
         return (($list_price - $seling_price) / $list_price) * 100;
@@ -60,31 +70,6 @@ class Helper
     public static function abc()
     {
         return ['A', 'B', 'C', 'Ć', 'Č', 'D', 'Đ', 'Dž', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'Lj', 'M', 'N', 'Nj', 'O', 'P', 'R', 'S', 'Š', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Ž'];
-    }
-
-
-    /**
-     * @param string $price
-     *
-     * @return string
-     */
-    public static function priceString($price): string
-    {
-        if (is_float($price)) {
-            $price = '"' . number_format($price, 2) . '"';
-        }
-
-        if ( ! is_string($price)) {
-            return 'Not a number.!';
-        }
-
-        $set = explode('.', $price);
-
-        if ( ! isset($set[1])) {
-            $set[1] = '00';
-        }
-
-        return number_format($price, 0, '', '.') . ',<small>' . substr($set[1], 0, 2) . 'kn</small>';
     }
 
 
@@ -175,6 +160,33 @@ class Helper
 
 
     /**
+     * @param $cat
+     * @param $subcat
+     *
+     * @return mixed
+     */
+    public static function getRelated($cat = null, $subcat = null)
+    {
+        $related = [];
+
+        if ($subcat) {
+            $related = $subcat->products()->inRandomOrder()->take(10)->get();
+
+        } else {
+            if ($cat) {
+                $related = $cat->products()->inRandomOrder()->take(10)->get();
+            }
+        }
+
+        if ($related->count() < 9) {
+            $related->merge(Product::query()->inRandomOrder()->take(10 - $related->count())->get());
+        }
+
+        return $related;
+    }
+
+
+    /**
      * @param string $description
      *
      * @return false|string
@@ -184,28 +196,34 @@ class Helper
         if ($description == '') {
             return '';
         }
-        $iterator = substr_count($description, '++');
-        $offset = 0;
-        $ids = [];
 
-        for ($i = 0; $i < $iterator / 2; $i++) {
-            $from = strpos($description, '++', $offset) + 2;
-            $to = strpos($description, '++', $from + 2);
-            $ids[] = substr($description, $from, $to - $from);
+        $ids = Cache::remember('wg_ids', config('cache.life'), function () use ($description) {
+            $iterator = substr_count($description, '++');
+            $offset   = 0;
+            $ids      = [];
 
-            $offset = $to + 2;
-        }
+            for ($i = 0; $i < $iterator / 2; $i++) {
+                $from  = strpos($description, '++', $offset) + 2;
+                $to    = strpos($description, '++', $from + 2);
+                $ids[] = substr($description, $from, $to - $from);
 
-        $wgs = WidgetGroup::whereIn('id', $ids)->orWhereIn('slug', $ids)->where('status', 1)->with('widgets')->get();
+                $offset = $to + 2;
+            }
+
+            return $ids;
+        });
+
+        $wgs = Cache::remember('wgs', config('cache.life'), function () use ($ids) {
+            return WidgetGroup::whereIn('id', $ids)->orWhereIn('slug', $ids)->where('status', 1)->with('widgets')->get();
+        });
 
         foreach ($ids as $id) {
-            $description = Cache::remember('wg.' . $id, config('cache.widget_life'), function () use ($wgs, $description, $id) {
+            $description = Cache::remember('wg.' . $id, config('cache.life'), function () use ($wgs, $description, $id) {
                 return static::resolveDescription($wgs, $description, $id);
             });
-            //$description = static::resolveDescription($wgs, $description, $id);
         }
 
-        return substr($description, 3, -4);
+        return $description;
     }
 
 
@@ -220,7 +238,6 @@ class Helper
     {
         $wg = $wgs->where('id', $id)->first();
 
-
         if ( ! $wg) {
             $wg = $wgs->where('slug', $id)->first();
         }
@@ -229,37 +246,62 @@ class Helper
 
         if ($wg->template == 'product_carousel' || $wg->template == 'page_carousel') {
             $widget = $wg->widgets()->first();
-            $data = unserialize($widget->data);
+            $data   = unserialize($widget->data);
 
             if (static::isDescriptionTarget($data, 'product')) {
-                $items = static::products($data)->get();
+                $items     = static::products($data)->get();
+                $tablename = 'product';
             }
 
             if (static::isDescriptionTarget($data, 'blog')) {
-                $items = static::blogs($data)->get();
+                $items     = static::blogs($data)->get();
+                $tablename = 'blog';
+            }
+
+            if (static::isDescriptionTarget($data, 'category')) {
+                $items     = static::category($data)->get();
+                $tablename = 'category';
+            }
+
+            if (static::isDescriptionTarget($data, 'publisher')) {
+                $items     = static::publisher($data)->get();
+                $tablename = 'publisher';
+            }
+
+            if (static::isDescriptionTarget($data, 'reviews')) {
+                $items     = static::reviews($data)->get();
+                $tablename = 'reviews';
             }
 
             $widgets = [
-                'title' => $widget->title,
-                'subtitle' => $widget->subtitle,
-                'url' => $widget->url,
-                'css' => $data['css'],
-                'container' => (isset($data['container']) && $data['container'] == 'on') ? 1 : null,
+                'title'      => $widget->title,
+                'subtitle'   => $widget->subtitle,
+                'url'        => $widget->url,
+                'tablename'  => $tablename,
+                'css'        => $data['css'],
+                'container'  => (isset($data['container']) && $data['container'] == 'on') ? 1 : null,
                 'background' => (isset($data['background']) && $data['background'] == 'on') ? 1 : null,
-                'items' => $items
+                'items'      => $items
             ];
 
         } else {
             foreach ($wg->widgets()->orderBy('sort_order')->get() as $widget) {
                 $data = unserialize($widget->data);
 
+                $searches = Storage::disk('assets')->get('searches.csv');
+
+                $searches = explode(PHP_EOL, $searches);
+
+
                 $widgets[] = [
-                    'title' => $widget->title,
+                    'title'    => $widget->title,
                     'subtitle' => $widget->subtitle,
-                    'url' => $widget->url,
-                    'image' => str_replace('.jpg', '.webp', $widget->image),
-                    'width' => $widget->width,
-                    'right' => (isset($data['right']) && $data['right'] == 'on') ? 1 : null,
+                    'color'    => $widget->badge,
+                    'searches' => $searches,
+                    'url'      => $widget->url,
+                    'image'    => str_replace('.jpg', '.webp', $widget->image),
+                    'width'    => $widget->width,
+                    'right'    => (isset($data['right']) && $data['right'] == 'on') ? 1 : null,
                 ];
             }
         }
@@ -280,8 +322,12 @@ class Helper
      */
     public static function isDescriptionTarget(array $data, string $target): bool
     {
-        if (isset($data['target']) && $data['target'] == $target) { return true; }
-        if (isset($data['group']) && $data['group'] == $target) { return true; }
+        if (isset($data['target']) && $data['target'] == $target) {
+            return true;
+        }
+        if (isset($data['group']) && $data['group'] == $target) {
+            return true;
+        }
 
         return false;
     }
@@ -361,6 +407,60 @@ class Helper
 
 
     /**
+     * @param array $data
+     *
+     * @return Builder
+     */
+    private static function category(array $data): Builder
+    {
+        $category = (new Category())->newQuery();
+
+        $category->active();
+
+        if (isset($data['new']) && $data['new'] == 'on') {
+            $category->latest();
+        }
+
+        if (isset($data['popular']) && $data['popular'] == 'on') {
+            $category->latest();
+        }
+
+        if (isset($data['list']) && $data['list']) {
+            $category->whereIn('id', $data['list']);
+        }
+
+        return $category;
+    }
+
+
+    /**
+     * @param array $data
+     *
+     * @return Builder
+     */
+    private static function publisher(array $data): Builder
+    {
+        $publisher = (new Publisher())->newQuery();
+
+        $publisher->active();
+
+        if (isset($data['new']) && $data['new'] == 'on') {
+            $publisher->latest();
+        }
+
+        if (isset($data['popular']) && $data['popular'] == 'on') {
+            $publisher->latest();
+        }
+
+        if (isset($data['list']) && $data['list']) {
+            $publisher->whereIn('id', $data['list']);
+        }
+
+        return $publisher;
+    }
+
+
+    /**
      * @param string $tag
      *
      * @return \Illuminate\Cache\TaggedCache|mixed|object
@@ -376,20 +476,26 @@ class Helper
 
 
     /**
-     * @return null
+     * @param string $tag
+     * @param string $key
+     *
+     * @return object|bool|mixed|null
      */
-    public static function getEur()
+    public static function flushCache(string $tag, string $key)
     {
-        $eur = Settings::get('currency', 'list')->where('code', 'EUR')->first();
-
-        if (isset($eur->status) && $eur->status) {
-            return $eur->value;
+        if (env('APP_ENV') == 'local') {
+            return Cache::getFacadeRoot();
         }
 
-        return null;
+        return Cache::tags([$tag])->forget($key);
     }
 
 
+    /**
+     * @param bool $slug
+     *
+     * @return string
+     */
     public static function categoryGroupPath(bool $slug = false): string
     {
         if ($slug) {
@@ -432,6 +538,127 @@ class Helper
         }
 
         return $slug;
+    }
+
+
+    /**
+     * @param $cart
+     *
+     * @return CartCondition|false
+     * @throws \Darryldecode\Cart\Exceptions\InvalidConditionException
+     */
+    public static function hasSpecialCartCondition($cart = null)
+    {
+        $condition     = false;
+        $has_condition = false;
+
+        if ($cart->getTotal() > 50) {
+            $has_condition = 10;
+        }
+        if ($cart->getTotal() > 100) {
+            $has_condition = 15;
+        }
+        if ($cart->getTotal() > 200) {
+            $has_condition = 20;
+        }
+
+        if ($has_condition && self::isDateBetween()) {
+            $value    = self::calculateDiscountPrice($cart->getTotal(), $has_condition, 'P');
+            $discount = $cart->getTotal() - $value;
+
+            $condition = new CartCondition(array(
+                'name'       => config('settings.special_action.title'),
+                'type'       => 'special',
+                'target'     => 'total', // this condition will be applied to cart's subtotal when getSubTotal() is called.
+                'value'      => '-' . $discount,
+                'attributes' => [
+                    'description' => '',
+                    'geo_zone'    => ''
+                ]
+            ));
+        }
+
+        return $condition;
+    }
+
+
+    /**
+     * @param        $cart
+     * @param string $coupon
+     *
+     * @return CartCondition|false
+     * @throws \Darryldecode\Cart\Exceptions\InvalidConditionException
+     */
+    public static function hasCouponCartConditions($cart, string $coupon = '')
+    {
+        $condition = false;
+        $actions   = Action::query()->where('group', 'total')->get();
+
+        if ($actions->count()) {
+            foreach ($actions as $action) {
+                if ($action->isValid($coupon)) {
+                    $value    = self::calculateDiscountPrice($cart->getTotal(), $action->discount, $action->type);
+                    $discount = $cart->getTotal() - $value;
+
+                    $condition = new CartCondition(array(
+                        'name'       => $action->title,
+                        'type'       => 'special',
+                        'target'     => 'total', // this condition will be applied to cart's subtotal when getSubTotal() is called.
+                        'value'      => '-' . $discount,
+                        'attributes' => $action->setConditionAttributes($coupon)
+                    ));
+                }
+            }
+        }
+
+        return $condition;
+    }
+
+
+    /**
+     * @param $cart
+     *
+     * @return false|mixed
+     */
+    public static function isCouponUsed($cart)
+    {
+        $coupon = false;
+        $items = $cart->getContent();
+
+        foreach ($items as $item) {
+            if ($item->getConditions()->getType() == 'coupon') {
+                $coupon = $item->getConditions()->getTarget();
+            }
+        }
+
+        foreach ($cart->getConditions() as $condition) {
+            if (isset($condition->getAttributes()['type']) && $condition->getAttributes()['type'] == 'coupon' && floatval($condition->getValue()) < 0) {
+                $coupon = $condition->getAttributes()['description'];
+            }
+        }
+
+
+
+        return $coupon;
+    }
+
+
+    /**
+     * @param $date
+     *
+     * @return bool
+     */
+    public static function isDateBetween($date = null): bool
+    {
+        $now   = $date ?: Carbon::now();
+        $start = Carbon::createFromFormat('d/m/Y H:i:s', config('settings.special_action.start'));
+        $end   = Carbon::createFromFormat('d/m/Y H:i:s', config('settings.special_action.end'));
+
+        if ($now->isBetween($start, $end)) {
+            return true;
+        }
+
+        return false;
     }
 
 }

@@ -265,4 +265,21 @@ class CheckoutSession
     {
         return session()->forget(static::$session_string . '.order');
     }
+
+    /*******************************************************************************
+    *                                Copyright : AGmedia                           *
+    *                              email: filip@agmedia.hr                         *
+    *******************************************************************************/
+
+    /**
+     * @return void
+     */
+    public static function forgetCheckout(): void
+    {
+        CheckoutSession::forgetOrder();
+        CheckoutSession::forgetStep();
+        CheckoutSession::forgetPayment();
+        CheckoutSession::forgetShipping();
+    }
+
 }
