@@ -136,7 +136,7 @@ class CheckoutController extends Controller
             });
 
             $order->decreaseCartItems($order->products)
-                  ->addToMailchimp($order->payment_email, $order->payment_fname, $order->payment_lname)
+                  // ->addToMailchimp($order->payment_email, $order->payment_fname, $order->payment_lname)
                   ->forgetSession();
 
             $this->shoppingCart()->flush();
