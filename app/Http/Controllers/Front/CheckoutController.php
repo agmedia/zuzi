@@ -139,7 +139,7 @@ class CheckoutController extends Controller
         if ($order->isValid()) {
             $order->sendEmails()
                   ->decreaseCartItems()
-                  ->addCustomerToMailchimp()
+                  /*->addCustomerToMailchimp()*/
                   ->forgetCheckoutCache();
 
             $this->shoppingCart()

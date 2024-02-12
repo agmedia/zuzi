@@ -477,12 +477,8 @@ class Product extends Model
                 // Kategorija...
                 $group = $request->input('group');
 
-                if ($group == 'zemljovidi-i-vedute') {
-                    $group = 'Zemljovidi i vedute';
-                }
-
                 $query->whereHas('categories', function ($query) use ($request, $group) {
-                    $query->where('group', 'like', '%' . $group . '%');
+                    $query->where('group', $group);
                 });
             }
         }

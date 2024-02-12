@@ -61,7 +61,7 @@ if ( ! function_exists('ag_log')) {
             \Illuminate\Support\Facades\Log::channel('debug')->debug($value);
         }
 
-        if (in_array($level, ['d', 'test'])) {
+        if (in_array($level, ['t', 'test'])) {
             if ($title) \Illuminate\Support\Facades\Log::channel('test')->info($title);
 
             \Illuminate\Support\Facades\Log::channel('test')->debug($value);
