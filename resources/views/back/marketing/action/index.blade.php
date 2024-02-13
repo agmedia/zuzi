@@ -40,6 +40,7 @@
                         <thead>
                         <tr>
                             <th class="text-left">Naziv</th>
+                            <th class="text-left">Grupa</th>
                             <th>Vrijedi od</th>
                             <th>Vrijedi do</th>
                             <th>Popust</th>
@@ -53,9 +54,12 @@
                                 <td class="font-size-sm">
                                     <a class="font-w600" href="{{ route('actions.edit', ['action' => $action]) }}">{{ $action->title }}</a>
                                 </td>
-                                <td class="font-size-sm">{{ $action->date_start ? \Illuminate\Support\Carbon::make($action->date_start)->format('d.m.Y') : '' }}</td>
-                                <td class="font-size-sm">{{ $action->date_end ? \Illuminate\Support\Carbon::make($action->date_end)->format('d.m.Y') : '' }}</td>
-                                <td class="font-size-sm">{{ $action->discount }}</td>
+                                <td class="font-size-sm">
+                                    {{ $groups->where('id', $action->group)->first()->title }}
+                                </td>
+                                <td class="font-size-sm">{{ $action->date_start ? \Illuminate\Support\Carbon::make($action->date_start)->format('d.m.Y') : '...' }}</td>
+                                <td class="font-size-sm">{{ $action->date_end ? \Illuminate\Support\Carbon::make($action->date_end)->format('d.m.Y') : '...' }}</td>
+                                <td class="font-size-sm">{{ $action->discount_text }}</td>
                                 <td class="text-center font-size-sm">
                                     @include('back.layouts.partials.status', ['status' => $action->status, 'simple' => true])
                                 </td>

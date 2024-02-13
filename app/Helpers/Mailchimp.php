@@ -2,9 +2,7 @@
 
 namespace App\Helpers;
 
-
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Log;
 use MailchimpMarketing\ApiClient;
 
 /**
@@ -88,15 +86,16 @@ class Mailchimp
             return $this->mailchimp->lists->setListMember($list_id, $user_hash, [
                 "email_address" => $email,
                 "status_if_new" => "subscribed",
-                "status" => "subscribed",
-                "merge_fields" => [
+                "status"        => "subscribed",
+                "merge_fields"  => [
                     "FNAME" => $f_name,
                     "LNAME" => $l_name,
                 ]
             ]);
         } catch (RequestException $exception) {
-            Log::info($exception->getMessage());
-            Log::info($exception->getResponse()->getBody());
+            ag_log($exception->getResponse()->getReasonPhrase(), 'error');
+            ag_log($exception->getMessage(), 'error');
+            ag_log($exception->getResponse()->getBody(), 'error');
         }
     }
 }

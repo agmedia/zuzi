@@ -56,6 +56,27 @@ class Currency
 
 
     /**
+     * @return string
+     */
+    public static function main_symbol(): string
+    {
+        return Cache::rememberForever('currency_symbol', function () {
+            $currency = self::main();
+
+            if ($currency) {
+                return $currency->symbol_left ?: $currency->symbol_right;
+            }
+
+            return '€';
+        });
+    }
+
+    /*******************************************************************************
+    *                                Copyright : AGmedia                           *
+    *                              email: filip@agmedia.hr                         *
+    *******************************************************************************/
+
+    /**
      * @param      $currency
      * @param      $price
      * @param bool $text_price

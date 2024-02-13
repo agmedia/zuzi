@@ -199,8 +199,22 @@ class Product extends Model
      */
     public function special()
     {
+        $action = $this->action;
+        $coupon_session_key = config('session.cart') . '_coupon';
+        $coupon_ok = false;
+
+        if ( ! $action || ($action && ! $action->coupon)) {
+            $coupon_ok = true;
+        }
+
+        if (isset($action->status) && $action->status) {
+            if ((isset($action->coupon) && $action->coupon) && session()->has($coupon_session_key) && session($coupon_session_key) == $action->coupon) {
+                $coupon_ok = true;
+            }
+        }
+
         // If special is set, return special.
-        if ($this->special) {
+        if ($this->special && $coupon_ok) {
             $from = now()->subDay();
             $to = now()->addDay();
 
@@ -217,6 +231,29 @@ class Product extends Model
         }
 
         return $this->price;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function coupon(): string
+    {
+        $action = $this->action;
+        $coupon_session_key = config('session.cart') . '_coupon';
+        $coupon_ok = '';
+
+        if ( ! $action || ($action && ! $action->coupon)) {
+            $coupon_ok = '';
+        }
+
+        if ($action && $action->status) {
+            if ((isset($action->coupon) && $action->coupon) && session()->has($coupon_session_key) && session($coupon_session_key) == $action->coupon) {
+                $coupon_ok = true;
+            }
+        }
+
+        return $coupon_ok;
     }
 
 
@@ -266,27 +303,6 @@ class Product extends Model
         return $this->hasOneThrough(Category::class, CategoryProducts::class, 'product_id', 'id', 'id', 'category_id')
             ->where('parent_id', '!=', 0)
             ->first();
-    }
-
-
-    /**
-     * @return string
-     */
-    public function priceString(string $price = null)
-    {
-        if ($price) {
-            $set = explode('.', $price);
-
-            if ( ! isset($set[1])) {
-                $set[1] = '00';
-            }
-
-            return number_format($price, 0, '', '.') . ',' . substr($set[1], 0, 2) . ' kn';
-        }
-
-        $set = explode('.', $this->price);
-
-        return number_format($this->price, 0, '', '.') . ',' . substr($set[1], 0, 2) . ' kn';
     }
 
 
@@ -461,12 +477,8 @@ class Product extends Model
                 // Kategorija...
                 $group = $request->input('group');
 
-                if ($group == 'zemljovidi-i-vedute') {
-                    $group = 'Zemljovidi i vedute';
-                }
-
                 $query->whereHas('categories', function ($query) use ($request, $group) {
-                    $query->where('group', 'like', '%' . $group . '%');
+                    $query->where('group', $group);
                 });
             }
         }
@@ -558,15 +570,6 @@ class Product extends Model
      *                              email: filip@agmedia.hr                         *
      *******************************************************************************/
     // Static functions
-
-    /**
-     * @return mixed
-     */
-    public static function getMenu()
-    {
-        return self::where('status', 1)->select('id', 'name')->get();
-    }
-
 
     /**
      * Return the list usually for

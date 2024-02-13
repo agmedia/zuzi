@@ -58,7 +58,6 @@
                                                 @foreach ($groups as $group)
                                                     <option value="{{ $group->id }}" {{ (isset($action) and $group->id == $action->group) ? 'selected="selected"' : '' }}>{{ $group->title }}</option>
                                                 @endforeach
-                                                <option value="all" {{ (isset($action) and 'all' == $action->group) ? 'selected="selected"' : '' }}>Svi Artikli</option>
                                             </select>
                                         </div>
                                     </div>
@@ -67,7 +66,7 @@
                                             <label for="type-select">Vrsta popusta <span class="text-danger">*</span></label>
                                             <select class="form-control" id="type-select" name="type">
                                                 @foreach ($types as $type)
-                                                    <option value="{{ $type->id }}" {{ (isset($action) and $type->id == 'P') ? 'selected="selected"' : '' }}>{{ $type->title }}</option>
+                                                    <option value="{{ $type->id }}" {{ (isset($action) and $type->id == $action->type) ? 'selected="selected"' : '' }}>{{ $type->title }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -96,6 +95,33 @@
                                                 <input type="text" class="form-control" id="date-end-input" name="date_end"
                                                        value="{{ isset($action) && $action->date_end ? \Illuminate\Support\Carbon::make($action->date_end)->format('d.m.Y') : '' }}"
                                                        placeholder="do" data-week-start="1" data-autoclose="true" data-today-highlight="true">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row items-push mb-2">
+                                        <div class="col-md-6">
+                                            <label for="min-input">Obuhvati artikle u rasponu cijene</label>
+                                            <input type="text" class="form-control" id="min-input" name="min" placeholder="Cijena od" value="{{ isset($action->data['min']) ? $action->data['min'] : old('min') }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="max-input">&nbsp;</label>
+                                            <input type="text" class="form-control" id="max-input" name="max" placeholder="Cijena do" value="{{ isset($action->data['max']) ? $action->data['max'] : old('max') }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row items-push mb-0 mt-4">
+                                        <div class="col-md-4 pt-2">
+                                            <label>Zahtjeva Kupon kod @include('back.layouts.partials.popover', ['title' => 'Ako upišete Kupon Kod', 'content' => 'Smatrat će se da ga zahtjevate prilikom kupnje za ostvarivanje akcije i pripadajučeg popusta...'])</label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <input type="text" class="form-control" name="coupon" placeholder="Upišite kupon kod..." value="{{ isset($action) ? $action->coupon : old('coupon') }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row items-push mb-2">
+                                        <div class="col-md-4 pt-2"></div>
+                                        <div class="col-md-8">
+                                            <div class="custom-control custom-switch custom-control-success">
+                                                <input type="checkbox" class="custom-control-input" id="coupon-quantity" name="coupon_quantity" @if (isset($action) and $action->quantity) checked @endif>
+                                                <label class="custom-control-label" for="coupon-quantity">Koristi kupon samo jednom</label>
                                             </div>
                                         </div>
                                     </div>
@@ -174,18 +200,32 @@
                 minimumResultsForSearch: Infinity
             });
             $('#type-select').on('change', function (e) {
-                if (e.currentTarget.value == 'F') {
-                    $('#discount-append-badge').text('kn');
-                } else {
-                    $('#discount-append-badge').text('%');
-                }
+                setType(e.currentTarget.value);
             });
 
-            @if (isset($action))
-            $('#group-select').attr("disabled", true);
+            @if (isset($action) && ! in_array($action->group, ['total']))
+                let group = '{{ $action->group }}';
+                let links = '{{ $action->links }}';
+                links = JSON.parse(links.replace(/&quot;/g,'"'));
+
+                $('#group-select').attr("disabled", true);
+
+                if (group == 'all' && links[0] == 'all') {
+                    $('#group-select').attr("disabled", false);
+                }
+
+                setType('{{ $action->type }}');
             @endif
 
         })
+
+        function setType(type) {
+            if (type == 'F') {
+                $('#discount-append-badge').text('{{ main_currency_symbol() }}');
+            } else {
+                $('#discount-append-badge').text('%');
+            }
+        }
     </script>
 
 @endpush
