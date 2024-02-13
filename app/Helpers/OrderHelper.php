@@ -115,7 +115,7 @@ class OrderHelper
             foreach ($this->order->products as $product) {
                 $real = $product->real;
 
-                if ($real->decrease) {
+                if ($real->decrease && $real->quantity >= $product->quantity ) {
                     $real->decrement('quantity', $product->quantity);
                 }
 
