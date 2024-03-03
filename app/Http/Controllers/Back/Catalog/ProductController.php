@@ -34,7 +34,7 @@ class ProductController extends Controller
         if ($request->has('status')) {
             if ($request->input('status') == 'with_action' || $request->input('status') == 'without_action') {
                 $products = collect();
-                $temps = Product::all();
+                $temps    = Product::all();
 
                 if ($request->input('status') == 'with_action') {
                     foreach ($temps as $product) {
@@ -74,7 +74,7 @@ class ProductController extends Controller
     {
         $product = new Product();
 
-        $data = $product->getRelationsData();
+        $data           = $product->getRelationsData();
         $active_actions = ProductAction::active()->get();
 
         return view('back.catalog.product.edit', compact('data', 'active_actions'));
@@ -180,7 +180,7 @@ class ProductController extends Controller
     {
         if ($request->has('id')) {
             $id = $request->input('id');
-            
+
             ProductImage::where('product_id', $id)->delete();
             ProductCategory::where('product_id', $id)->delete();
 
@@ -207,8 +207,9 @@ class ProductController extends Controller
      */
     public function paginateColl($items, $perPage = 20, $page = null, $options = []): LengthAwarePaginator
     {
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $page  = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
+
         return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     }
 }

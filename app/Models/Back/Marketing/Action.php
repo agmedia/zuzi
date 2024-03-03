@@ -109,7 +109,7 @@ class Action extends Model
 
         if ($id) {
             if ($this->shouldUpdateProducts($data)) {
-                $this->updateProducts($this->resolveTarget($data['links']), $id, $data['start'], $data['end']);
+                $this->updateProducts($this->resolveTarget($data['links']), $id, $data);
             }
 
             return $this->find($id);
@@ -131,7 +131,11 @@ class Action extends Model
 
         if ($updated) {
             if ($this->shouldUpdateProducts($data)) {
-                $this->updateProducts($this->resolveTarget($data['links']), $this->id, $data['start'], $data['end']);
+                $this->updateProducts($this->resolveTarget($data['links']), $this->id, $data);
+            }
+
+            if ($this->shouldRemoveActions($data)) {
+                $this->deleteProductActions();
             }
 
             return $this;
@@ -179,6 +183,31 @@ class Action extends Model
 
 
     /**
+     * @param int $action_id
+     *
+     * @return int
+     */
+    public function deleteProductActions(int $action_id = 0): int
+    {
+        if ( ! $action_id) {
+            $action_id = $this->id;
+        }
+
+        return Product::query()->where('action_id', $action_id)->update([
+            'action_id'    => 0,
+            'special'      => null,
+            'special_from' => null,
+            'special_to'   => null,
+            'special_lock' => 0,
+        ]);
+    }
+
+    /*******************************************************************************
+    *                                Copyright : AGmedia                           *
+    *                              email: filip@agmedia.hr                         *
+    *******************************************************************************/
+
+    /**
      * @param bool $insert
      *
      * @return array
@@ -198,6 +227,7 @@ class Action extends Model
             'data'       => $data['data'],
             'coupon'     => $this->request->coupon,
             'quantity'   => $data['coupon_quantity'],
+            'lock'       => $data['lock'],
             'status'     => $data['status'],
             'updated_at' => Carbon::now()
         ];
@@ -229,6 +259,7 @@ class Action extends Model
             'start'           => $this->request->date_start ? Carbon::make($this->request->date_start) : null,
             'end'             => $this->request->date_end ? Carbon::make($this->request->date_end) : null,
             'coupon_quantity' => (isset($this->request->coupon_quantity) and $this->request->coupon_quantity == 'on') ? 1 : 0,
+            'lock'            => (isset($this->request->lock) and $this->request->lock == 'on') ? 1 : 0,
             'data'            => ! empty($data) ? collect($data)->toJson() : null
         ];
     }
@@ -272,6 +303,21 @@ class Action extends Model
 
 
     /**
+     * @param array $data
+     *
+     * @return bool
+     */
+    private function shouldRemoveActions(array $data): bool
+    {
+        if ( ! $data['status']) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**
      * @return bool
      */
     private function listRequired(): bool
@@ -291,24 +337,34 @@ class Action extends Model
      */
     private function resolveTarget($links)
     {
-        if ($this->request->group == 'product') {
-            return $links;
-        }
+        if (in_array($this->request->group, ['product', 'category', 'author', 'publisher', 'all'])) {
+            $products = Product::query();
 
-        if ($this->request->group == 'category') {
-            return ProductCategory::whereIn('category_id', $links)->pluck('product_id')->unique();
-        }
+            if ($this->request->group == 'product') {
+                $products->whereIn('id', $links);
+            }
 
-        if ($this->request->group == 'author') {
-            return Product::whereIn('author_id', $links)->pluck('id')->unique();
-        }
+            if ($this->request->group == 'category') {
+                $ids = ProductCategory::whereIn('category_id', $links)->pluck('product_id')->unique();
 
-        if ($this->request->group == 'publisher') {
-            return Product::whereIn('publisher_id', $links)->pluck('id')->unique();
-        }
+                $products->whereIn('id', $ids);
+            }
 
-        if ($this->request->group == 'all' && $links->first() != 'all') {
-            return Product::query()->whereNotIn('publisher_id', $links)->pluck('id')->unique();
+            if ($this->request->group == 'author') {
+                return $products->whereIn('author_id', $links);
+            }
+
+            if ($this->request->group == 'publisher') {
+                return $products->whereIn('publisher_id', $links);
+            }
+
+            if ($this->request->group == 'all' && $links->first() != 'all') {
+                return $products->whereNotIn('publisher_id', $links);
+            }
+
+            return $products->where('special_lock', 0)
+                            ->pluck('id')
+                            ->unique();
         }
 
         return $this->request->group;
@@ -316,14 +372,15 @@ class Action extends Model
 
 
     /**
-     * @param     $target
-     * @param int $id
-     * @param     $start
-     * @param     $end
+     * @param       $target
+     * @param int   $id
+     * @param array $data
+     *
+     * @return void
      */
-    private function updateProducts($target, int $id, $start, $end): void
+    private function updateProducts($target, int $id, array $data): void
     {
-        $query = [];
+        $query    = [];
         $products = Product::query();
 
         if ($target != 'all') {
@@ -346,18 +403,61 @@ class Action extends Model
             ];
         }
 
-        $start = $start ?: 'null';
-        $end   = $end ?: 'null';
-
         DB::table('temp_table')->truncate();
 
         foreach (array_chunk($query, 500) as $chunk) {
             DB::table('temp_table')->insert($chunk);
         }
 
-        DB::select(DB::raw("UPDATE products p INNER JOIN temp_table tt ON p.id = tt.product_id SET p.special = tt.special, p.action_id = " . $id . ", p.special_from = '" . $start . "', p.special_to = '" . $end . "';"));
+        DB::select(DB::raw("UPDATE products p INNER JOIN temp_table tt ON p.id = tt.product_id SET p.special = tt.special, p.action_id = " . $id . ", p.special_from = '" . $data['start'] . "', p.special_to = '" . $data['end'] . "', p.special_lock = " . $data['lock'] . ";"));
 
         DB::table('temp_table')->truncate();
+    }
+
+    /*******************************************************************************
+    *                                Copyright : AGmedia                           *
+    *                              email: filip@agmedia.hr                         *
+    *******************************************************************************/
+
+    /**
+     * @param int     $product_id
+     * @param Request $request
+     * @param int     $action_id
+     *
+     * @return int
+     */
+    public static function createFromProduct(int $product_id, Request $request, int $action_id = 0): int
+    {
+        if ($action_id) {
+            $has = self::query()->where('id', $action_id)->first();
+
+            if ($has) {
+                return $has->id;
+            }
+        }
+
+        $discount = $request->price;
+
+        if ($request->special && $request->special < $discount) {
+            $discount = $request->price - $request->special;
+        }
+
+        return self::query()->insertGetId([
+            'title'      => 'Posebne ponuda',
+            'type'       => 'F',
+            'discount'   => $discount,
+            'group'      => 'single',
+            'links'      => '["' . $product_id . '"]',
+            'date_start' => $request->special_from ? Carbon::make($request->special_from) : null,
+            'date_end'   => $request->special_to ? Carbon::make($request->special_to) : null,
+            'data'       => null,
+            'coupon'     => null,
+            'quantity'   => 0,
+            'lock'       => 1,
+            'status'     => 1,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+        ]);
     }
 
 }

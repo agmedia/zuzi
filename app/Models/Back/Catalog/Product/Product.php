@@ -7,6 +7,7 @@ use App\Helpers\ProductHelper;
 use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Publisher;
+use App\Models\Back\Marketing\Action;
 use App\Models\Back\Settings\Settings;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -130,6 +131,9 @@ class Product extends Model
     }
 
 
+    /**
+     * @return string
+     */
     public function imageName()
     {
         $from   = strrpos($this->image, '/') + 1;
@@ -174,40 +178,7 @@ class Product extends Model
      */
     public function create()
     {
-        $slug = $this->resolveSlug();
-
-        $id = $this->insertGetId([
-            'author_id'        => $this->request->author_id ?: 6,
-            'publisher_id'     => $this->request->publisher_id ?: 2,
-            'action_id'        => $this->request->action ?: 0,
-            'name'             => $this->request->name,
-            'sku'              => $this->request->sku,
-            'polica'           => $this->request->polica,
-            'description'      => $this->cleanHTML($this->request->description),
-            'slug'             => $slug,
-            'price'            => $this->request->price,
-            'quantity'         => $this->request->quantity ?: 0,
-            'decrease'         => (isset($this->request->decrease) and $this->request->decrease == 'on') ? 0 : 1,
-            'tax_id'           => $this->request->tax_id ?: 1,
-            'special'          => $this->request->special,
-            'special_from'     => $this->request->special_from ? Carbon::make($this->request->special_from) : null,
-            'special_to'       => $this->request->special_to ? Carbon::make($this->request->special_to) : null,
-            'meta_title'       => $this->request->meta_title ?: $this->request->name/* . ($author ? '-' . $author->title : '')*/,
-            'meta_description' => $this->request->meta_description,
-            'pages'            => $this->request->pages,
-            'dimensions'       => $this->request->dimensions,
-            'origin'           => $this->request->origin,
-            'letter'           => $this->request->letter,
-            'condition'        => $this->request->condition,
-            'binding'          => $this->request->binding,
-            'year'             => $this->request->year,
-            'viewed'           => 0,
-            'sort_order'       => 0,
-            'push'             => 0,
-            'status'           => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
-            'created_at'       => Carbon::now(),
-            'updated_at'       => Carbon::now()
-        ]);
+        $id = $this->insertGetId($this->getModelArray());
 
         if ($id) {
             $this->resolveCategories($id);
@@ -216,7 +187,8 @@ class Product extends Model
 
             $product->update([
                 'url'             => ProductHelper::url($product),
-                'category_string' => ProductHelper::categoryString($product)
+                'category_string' => ProductHelper::categoryString($product),
+                'special_lock'    => $this->resolveActionLock($id)
             ]);
 
             return $product;
@@ -233,11 +205,39 @@ class Product extends Model
      */
     public function edit()
     {
-        $this->old_product = $this->setHistoryProduct();
+        $updated = $this->update($this->getModelArray(false));
 
-        $slug = $this->request->slug;//$this->resolveSlug('update');
+        if ($updated) {
+            $this->resolveCategories($this->id);
 
-        $updated = $this->update([
+            $this->update([
+                'url'             => ProductHelper::url($this),
+                'category_string' => ProductHelper::categoryString($this),
+                'special_lock'    => $this->resolveActionLock($this->id, false)
+            ]);
+
+            return $this;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * @param bool $insert
+     *
+     * @return array
+     */
+    private function getModelArray(bool $insert = true): array
+    {
+        if ($insert) {
+            $slug = $this->resolveSlug();
+        } else {
+            $this->old_product = $this->setHistoryProduct();
+            $slug              = $this->request->slug;
+        }
+
+        $response = [
             'author_id'        => $this->request->author_id ?: 6,
             'publisher_id'     => $this->request->publisher_id ?: 2,
             'action_id'        => $this->request->action ?: 0,
@@ -253,6 +253,7 @@ class Product extends Model
             'special'          => $this->request->special,
             'special_from'     => $this->request->special_from ? Carbon::make($this->request->special_from) : null,
             'special_to'       => $this->request->special_to ? Carbon::make($this->request->special_to) : null,
+            'special_lock'     => 0,
             'meta_title'       => $this->request->meta_title ?: $this->request->name/* . '-' . ($author ? '-' . $author->title : '')*/,
             'meta_description' => $this->request->meta_description,
             'pages'            => $this->request->pages,
@@ -267,20 +268,13 @@ class Product extends Model
             'push'             => 0,
             'status'           => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
             'updated_at'       => Carbon::now()
-        ]);
+        ];
 
-        if ($updated) {
-            $this->resolveCategories($this->id);
-
-            $this->update([
-                'url'             => ProductHelper::url($this),
-                'category_string' => ProductHelper::categoryString($this)
-            ]);
-
-            return $this;
+        if ($insert) {
+            $response['created_at'] = Carbon::now();
         }
 
-        return false;
+        return $response;
     }
 
 
@@ -413,6 +407,10 @@ class Product extends Model
         return $query;
     }
 
+    /*******************************************************************************
+    *                                Copyright : AGmedia                           *
+    *                              email: filip@agmedia.hr                         *
+    *******************************************************************************/
 
     /**
      * @param $request
@@ -473,6 +471,52 @@ class Product extends Model
         }
 
         return false;
+    }
+
+
+    /**
+     * @param int  $product_id
+     * @param bool $insert
+     *
+     * @return int
+     */
+    private function resolveActionLock(int $product_id, bool $insert = true): int
+    {
+        if ($insert) {
+            if ($this->request->special) {
+                return $this->createActionFromProduct($product_id);
+            }
+        }
+
+        $product = $this->newQuery()->find($product_id);
+
+        if ($product->special) {
+            if ( ! $product->action_id) {
+                return $this->createActionFromProduct($product_id);
+            }
+
+            if ($product->lock) {
+                return 1;
+            }
+        }
+
+        return 0;
+    }
+
+
+    /**
+     * @param int $product_id
+     *
+     * @return int
+     */
+    private function createActionFromProduct(int $product_id): int
+    {
+        $action_id = Action::createFromProduct($product_id, $this->request);
+
+        $this->newQuery()->where('id', $product_id)
+             ->update(['action_id' => $action_id]);
+
+        return 1;
     }
 
 

@@ -29,7 +29,21 @@
         <div class="block block-rounded">
             <div class="block-header block-header-default">
                 <h3 class="block-title">Sve akcije ({{ $actions->total() }})</h3>
-
+                <div class="block-options">
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-light" id="dropdown-ecom-filters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Filtriraj
+                            <i class="fa fa-angle-down ml-1"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown-ecom-filters">
+                            @foreach (config('settings.actions_sorting_list') as $item)
+                                <a class="dropdown-item d-flex align-items-center justify-content-between" href="@if($item['value']) javascript:setPageURL('{{ $item['type'] }}', '{{ $item['value'] }}') @else {{ route('actions') }} @endif">
+                                    <span class="font-size-sm font-weight-bold">{{ $item['title'] }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
             </div>
 
 
@@ -44,7 +58,9 @@
                             <th>Vrijedi od</th>
                             <th>Vrijedi do</th>
                             <th>Popust</th>
-                            <th class="text-center font-size-sm">Status</th>
+                            <th>Kupon</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Lock</th>
                             <th class="text-right" style="width: 10%;">Uredi</th>
                         </tr>
                         </thead>
@@ -60,8 +76,16 @@
                                 <td class="font-size-sm">{{ $action->date_start ? \Illuminate\Support\Carbon::make($action->date_start)->format('d.m.Y') : '...' }}</td>
                                 <td class="font-size-sm">{{ $action->date_end ? \Illuminate\Support\Carbon::make($action->date_end)->format('d.m.Y') : '...' }}</td>
                                 <td class="font-size-sm">{{ $action->discount_text }}</td>
+                                <td class="font-size-sm">{{ $action->coupon }}</td>
                                 <td class="text-center font-size-sm">
                                     @include('back.layouts.partials.status', ['status' => $action->status, 'simple' => true])
+                                </td>
+                                <td class="text-center font-size-sm">
+                                    @if($action->lock)
+                                        <i class="fa fa-lock text-danger-light"></i>
+                                    @else
+                                        <i class="fa fa-lock-open text-success-light"></i>
+                                    @endif
                                 </td>
                                 <td class="text-right font-size-sm">
                                     <a class="btn btn-sm btn-alt-secondary" href="{{ route('actions.edit', ['action' => $action]) }}">
@@ -72,7 +96,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td class="font-size-sm text-center" colspan="7">
+                                <td class="font-size-sm text-center" colspan="9">
                                     <label for="">Nema Akcija...</label>
                                 </td>
                             </tr>

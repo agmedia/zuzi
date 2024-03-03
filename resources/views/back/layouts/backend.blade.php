@@ -160,9 +160,37 @@
 
             /**
              *
+             * @param type
+             * @param search
+             * @param isValue
              */
-            function confirmDeleteItem(id, url) {
+            function setPageURL(type, search, isValue = false) {
+                let url = new URL(location.href);
+                let params = new URLSearchParams(url.search);
+                let keys = [];
 
+                for(var key of params.keys()) {
+                    if (key === type) {
+                        keys.push(key);
+                    }
+                }
+
+                keys.forEach((value) => {
+                    if (params.has(value) || search == 0) {
+                        params.delete(value);
+                    }
+                })
+
+                if (search) {
+                    params.append(type, search);
+                }
+
+                if (isValue && search) {
+                    params.append(type, search);
+                }
+
+                url.search = params;
+                location.href = url;
             }
         </script>
 

@@ -232,6 +232,7 @@ Route::prefix('api/v2')->group(function () {
     Route::post('/products/image/delete', [\App\Http\Controllers\Api\v2\ProductController::class, 'destroyImage'])->name('products.destroy.image');
     Route::post('/products/change/status', [\App\Http\Controllers\Api\v2\ProductController::class, 'changeStatus'])->name('products.change.status');
     Route::post('products/update-item/single', [\App\Http\Controllers\Api\v2\ProductController::class, 'updateItem'])->name('products.update.item');
+    Route::post('product/delete/action', [\App\Http\Controllers\Api\v2\ProductController::class, 'destroyAction'])->name('products.destroy.action');
 
     Route::post('/actions/destroy/api', [ActionController::class, 'destroyApi'])->name('actions.destroy.api');
     Route::post('/authors/destroy/api', [AuthorController::class, 'destroyApi'])->name('authors.destroy.api');

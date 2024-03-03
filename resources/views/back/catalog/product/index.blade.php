@@ -45,7 +45,7 @@
                                 <div class="form-group">
                                     <div class="input-group flex-nowrap">
                                         <input type="text" class="form-control py-3 text-center" name="search" id="search-input" value="{{ request()->input('search') }}" placeholder="Upiši pojam pretraživanja">
-                                        <button type="submit" class="btn btn-primary fs-base" onclick="setURL('search', $('#search-input').val());"><i class="fa fa-search"></i> </button>
+                                        <button type="submit" class="btn btn-primary fs-base" onclick="setPageURL('search', $('#search-input').val());"><i class="fa fa-search"></i> </button>
                                     </div>
                                     <div class="form-text small">Pretraži po imenu, šifri, godini izdanja ili šifri police.</div>
                                 </div>
@@ -222,22 +222,21 @@
 
             //
             $('#category-select').on('change', (e) => {
-                console.log(e.currentTarget.selectedOptions[0])
-                setURL('category', e.currentTarget.selectedOptions[0]);
+                setPageURL('category', e.currentTarget.selectedOptions[0]);
             });
             $('#status-select').on('change', (e) => {
-                setURL('status', e.currentTarget.selectedOptions[0]);
+                setPageURL('status', e.currentTarget.selectedOptions[0]);
             });
             $('#sort-select').on('change', (e) => {
-                setURL('sort', e.currentTarget.selectedOptions[0]);
+                setPageURL('sort', e.currentTarget.selectedOptions[0]);
             });
 
             //
             Livewire.on('authorSelect', (e) => {
-                setURL('author', e.author.id, true);
+                setPageURL('author', e.author.id, true);
             });
             Livewire.on('publisherSelect', (e) => {
-                setURL('publisher', e.publisher.id, true);
+                setPageURL('publisher', e.publisher.id, true);
             });
 
             /*$('#btn-inactive').on('click', () => {
@@ -251,40 +250,6 @@
             });*/
 
         });
-
-        /**
-         *
-         * @param type
-         * @param search
-         */
-        function setURL(type, search, isValue = false) {
-            let url = new URL(location.href);
-            let params = new URLSearchParams(url.search);
-            let keys = [];
-
-            for(var key of params.keys()) {
-                if (key === type) {
-                    keys.push(key);
-                }
-            }
-
-            keys.forEach((value) => {
-                if (params.has(value)) {
-                    params.delete(value);
-                }
-            })
-
-            if (search.value) {
-                params.append(type, search.value);
-            }
-
-            if (isValue && search) {
-                params.append(type, search);
-            }
-
-            url.search = params;
-            location.href = url;
-        }
 
         /**
          *

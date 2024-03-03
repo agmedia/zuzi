@@ -41,11 +41,11 @@
                             <i class="fa fa-angle-down ml-1"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown-ecom-filters">
-                            <a class="dropdown-item d-flex align-items-center justify-content-between" href="javascript:setURL('status', 0)">
+                            <a class="dropdown-item d-flex align-items-center justify-content-between" href="javascript:setPageURL('status', 0)">
                                 Sve narudžbe
                             </a>
                             @foreach ($statuses as $status)
-                                <a class="dropdown-item d-flex align-items-center justify-content-between" href="javascript:setURL('status', {{ $status->id }})">
+                                <a class="dropdown-item d-flex align-items-center justify-content-between" href="javascript:setPageURL('status', {{ $status->id }})">
                                     <span class="badge badge-pill badge-{{ $status->color }}">{{ $status->title }}</span>
                                 </a>
                             @endforeach
@@ -60,7 +60,7 @@
                         <div class="form-group">
                             <div class="input-group flex-nowrap">
                                 <input type="text" class="form-control py-3 text-center" name="search" id="search-input" value="{{ request()->input('search') }}" placeholder="Pretraži po broju narudžbe, imenu, prezimenu ili emailu kupca...">
-                                <button type="submit" class="btn btn-primary fs-base" onclick="setURL('search', $('#search-input').val());"><i class="fa fa-search"></i> </button>
+                                <button type="submit" class="btn btn-primary fs-base" onclick="setPageURL('search', $('#search-input').val());"><i class="fa fa-search"></i> </button>
                             </div>
                         </div>
                     </div>
@@ -87,8 +87,8 @@
                             <th>Kupac</th>
                             <th class="text-center">Artikli</th>
                             <th class="text-right">Vrijednost</th>
-                            <th class="text-right">GLS Labels</th>
-                            <th class="text-right">Detalji</th>
+                            <th class="text-center font-size-sm" style="width: 80px;">GLS</th>
+                            <th class="text-right font-size-sm" style="width: 100px;">Detalji</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -125,7 +125,7 @@
                                         <button type="button" class="btn btn-light btn-sm" onclick="sendGLS({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
                                     @endif
                                 </td>
-                                <td class="text-right font-size-base">
+                                <td class="text-right">
                                     <a class="btn btn-sm btn-alt-secondary" href="{{ route('orders.show', ['order' => $order]) }}">
                                         <i class="fa fa-fw fa-eye"></i>
                                     </a>
@@ -174,19 +174,20 @@
                     }
                 }
 
-                console.log('Selected ID: ' + selected);
-                console.log('Orders ID: ' + orders);
-
                 axios.get('{{ route('api.order.status.change') }}' + '?selected=' + selected + '&orders=' + orders)
                 .then((r) => {
                     location.reload();
                 })
                 .catch((e) => {
-                    console.log(e)
+                    return errorToast.fire();
                 })
             });
         });
 
+        /**
+         *
+         * @param order_id
+         */
         function sendGLS(order_id) {
             axios.post("{{ route('api.order.send.gls') }}", {order_id: order_id})
                 .then(response => {
@@ -202,37 +203,6 @@
                         return errorToast.fire(response.data.error);
                     }
                 });
-        }
-
-
-        /**
-         *
-         * @param type
-         * @param search
-         */
-        function setURL(type, search) {
-            let url = new URL(location.href);
-            let params = new URLSearchParams(url.search);
-            let keys = [];
-
-            for(var key of params.keys()) {
-                if (key === type) {
-                    keys.push(key);
-                }
-            }
-
-            keys.forEach((value) => {
-                if (params.has(value) || search == 0) {
-                    params.delete(value);
-                }
-            })
-
-            if (search) {
-                params.append(type, search);
-            }
-
-            url.search = params;
-            location.href = url;
         }
     </script>
     <script>

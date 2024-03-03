@@ -51,6 +51,11 @@ class ActionGroupList extends Component
      */
     public $dropdown_limit = 5;
 
+    /**
+     * @var bool
+     */
+    public $disabled = false;
+
 
     /**
      * @return void
@@ -143,7 +148,7 @@ class ActionGroupList extends Component
 
         if ($this->search != '') {
             switch ($this->group) {
-                case 'product':
+                case 'product' || 'single':
                     $this->search_results = Product::where('name', 'like', '%' . $this->search . '%')->orWhere('sku', 'like', '%' . $this->search . '%')->limit($this->dropdown_limit)->get();
                     break;
                 case 'category':
@@ -179,6 +184,10 @@ class ActionGroupList extends Component
                 case 'product':
                     $this->list[$id] = Product::where('id', $id)->first();
                     break;
+                case 'single':
+                    $this->list[$id] = Product::where('id', $id)->first();
+                    $this->disabled = true;
+                    break;
                 case 'category':
                     $this->list[$id] = Category::where('id', $id)->first();
                     break;
@@ -206,6 +215,10 @@ class ActionGroupList extends Component
     {
         if ($this->list[$id]) {
             unset($this->list[$id]);
+
+            if ($this->group == 'single') {
+                $this->disabled = false;
+            }
         }
     }
 

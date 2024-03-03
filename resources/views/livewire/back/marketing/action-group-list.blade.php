@@ -8,7 +8,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="block-options pl-0">
-                    <input type="search" wire:model.debounce.300ms="search" class="form-control" style="display: block;" placeholder="Traži...">
+                    <input type="search" wire:model.debounce.300ms="search" class="form-control" style="display: block;" placeholder="Traži..." @if($disabled) disabled @endif>
                     @if( ! empty($search_results))
                         <div class="autocomplete" >
                             <div id="myInputautocomplete-list" class="autocomplete-items">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v2;
 use App\Helpers\Helper;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductImage;
+use App\Models\Back\Marketing\Action;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
@@ -126,5 +127,42 @@ class ProductController extends Controller
         }
 
         return response()->json(['error' => 300]);
+    }
+
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyAction(Request $request)
+    {
+        if ($request->has('id')) {
+            $product = Product::query()->where('id', $request->input('id'))->first();
+
+            if ($product) {
+                $action = Action::query()->where('id', $product->action_id)->first();
+
+                if ($action && $action->group = 'single') {
+                    $action->delete();
+                }
+
+                $updated = $product->update([
+                    'action_id'    => 0,
+                    'special'      => null,
+                    'special_from' => null,
+                    'special_to'   => null,
+                    'special_lock' => 0,
+                ]);
+
+                if ($updated) {
+                    return response()->json(['success' => 200]);
+                }
+            }
+        }
+
+        return response()->json(['error' => 400]);
     }
 }

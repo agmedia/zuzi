@@ -55,6 +55,49 @@ return [
         ],
     ],
 
+    'actions_sorting_list' => [
+        0 => [
+            'title' => 'Sve akcije',
+            'type' => 'all',
+            'value' => 0
+        ],
+        1 => [
+            'title' => 'Zaključane',
+            'type' => 'lock',
+            'value' => 'da'
+        ],
+        2 => [
+            'title' => 'Otključane',
+            'type' => 'lock',
+            'value' => 'ne'
+        ],
+        3 => [
+            'title' => 'Sa kuponom',
+            'type' => 'coupon',
+            'value' => 'da'
+        ],
+        4 => [
+            'title' => 'Bez kupona',
+            'type' => 'coupon',
+            'value' => 'ne'
+        ],
+        5 => [
+            'title' => 'Aktivne',
+            'type' => 'status',
+            'value' => 'da'
+        ],
+        6 => [
+            'title' => 'Neaktivne',
+            'type' => 'status',
+            'value' => 'ne'
+        ],
+        7 => [
+            'title' => 'Samo jedan artikl',
+            'type' => 'group',
+            'value' => 'single'
+        ],
+    ],
+
     'order' => [
         'made_text' => 'Narudžba napravljena.',
         'status'    => [

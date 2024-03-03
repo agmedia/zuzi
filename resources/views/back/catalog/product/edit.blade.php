@@ -133,12 +133,20 @@
                                 <div class="col-md-6">
                                     <label for="special-from-input">Akcija vrijedi</label>
                                     <div class="input-daterange input-group" data-date-format="mm/dd/yyyy" data-week-start="1" data-autoclose="true" data-today-highlight="true">
-                                        <input type="text" class="form-control" id="special-from-input" name="special_from" placeholder="od" value="{{ isset($product->special_from) ? \Carbon\Carbon::make($product->special_from)->format('d.m.Y') : '' }}" data-week-start="1" data-autoclose="true" data-today-highlight="true">
+                                        <input type="text" class="form-control" id="special-from-input" name="special_from" placeholder="od" value="{{ (isset($product->special_from) && $product->special_from != '0000-00-00 00:00:00') ? \Carbon\Carbon::make($product->special_from)->format('d.m.Y') : '' }}" data-week-start="1" data-autoclose="true" data-today-highlight="true">
                                         <div class="input-group-prepend input-group-append">
                                             <span class="input-group-text font-w600"><i class="fa fa-fw fa-arrow-right"></i></span>
                                         </div>
-                                        <input type="text" class="form-control" id="special-to-input" name="special_to" placeholder="do" value="{{ isset($product->special_to) ? \Carbon\Carbon::make($product->special_to)->format('d.m.Y') : '' }}" data-week-start="1" data-autoclose="true" data-today-highlight="true">
+                                        <input type="text" class="form-control" id="special-to-input" name="special_to" placeholder="do" value="{{ (isset($product->special_to) && $product->special_to != '0000-00-00 00:00:00') ? \Carbon\Carbon::make($product->special_to)->format('d.m.Y') : '' }}" data-week-start="1" data-autoclose="true" data-today-highlight="true">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" style="padding: 0.17rem 0.45rem;">
+                                                <button onclick="deleteAction({{ isset($product) ? $product->id : null }});" type="button" class="btn btn-sm" data-toggle="tooltip" title="Obriši samo akciju">
+                                                    <i class="fa fa-trash-alt"></i>
+                                                </button>
+                                            </span>
+                                        </div>
                                     </div>
+                                    <input type="hidden" id="action-id" name="action" value="{{ isset($product) ? $product->action_id : 0 }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label for="price-input">Porez</label>
@@ -397,6 +405,24 @@
         function SetSEOPreview() {
             let title = $('#name-input').val();
             $('#slug-input').val(slugify(title));
+        }
+
+
+        function deleteAction(product_id) {
+            if (product_id) {
+                axios.post("{{ route('products.destroy.action') }}", { id: product_id })
+                .then((response) => {
+                    if (response.data.success) {
+                        successToast.fire();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    }
+                })
+                .catch((error) => {
+                    errorToast.fire();
+                });
+            }
         }
     </script>
 
