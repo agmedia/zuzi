@@ -183,6 +183,29 @@ class Action extends Model
 
 
     /**
+     * @param string $coupon
+     *
+     * @return string[]
+     */
+    public function setConditionAttributes(string $coupon = ''): array
+    {
+        $response = [
+            'type'        => '',
+            'description' => ''
+        ];
+
+        if ($coupon != '') {
+            $response = [
+                'type'        => 'coupon',
+                'description' => $coupon
+            ];
+        }
+
+        return $response;
+    }
+
+
+    /**
      * @param int $action_id
      *
      * @return int
