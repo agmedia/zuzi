@@ -195,6 +195,16 @@ class Product extends Model
 
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function action()
+    {
+        return $this->belongsTo(ProductAction::class, 'action_id', 'id')
+                    ->where('status', 1);
+    }
+
+
+    /**
      * @return false|float|int|mixed
      */
     public function special()
