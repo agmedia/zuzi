@@ -114,6 +114,12 @@ return [
         'canceled_status' => [7, 5],
     ],
 
+    'special_action' => [
+        'title' => 'Količinski popust',
+        'start' => null,
+        'end' => null
+    ],
+
     'payment' => [
         'providers' => [
             //'wspay'  => \App\Models\Front\Checkout\Payment\Wspay::class,

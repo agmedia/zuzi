@@ -650,12 +650,14 @@ class Helper
      */
     public static function isDateBetween($date = null): bool
     {
-        $now   = $date ?: Carbon::now();
-        $start = Carbon::createFromFormat('d/m/Y H:i:s', config('settings.special_action.start'));
-        $end   = Carbon::createFromFormat('d/m/Y H:i:s', config('settings.special_action.end'));
+        if (config('settings.special_action.start')) {
+            $now   = $date ?: Carbon::now();
+            $start = Carbon::createFromFormat('d/m/Y H:i:s', config('settings.special_action.start'));
+            $end   = Carbon::createFromFormat('d/m/Y H:i:s', config('settings.special_action.end'));
 
-        if ($now->isBetween($start, $end)) {
-            return true;
+            if ($now->isBetween($start, $end)) {
+                return true;
+            }
         }
 
         return false;
