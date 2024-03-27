@@ -148,7 +148,10 @@ class ActionGroupList extends Component
 
         if ($this->search != '') {
             switch ($this->group) {
-                case 'product' || 'single':
+                case 'product':
+                    $this->search_results = Product::where('name', 'like', '%' . $this->search . '%')->orWhere('sku', 'like', '%' . $this->search . '%')->limit($this->dropdown_limit)->get();
+                    break;
+                case 'single':
                     $this->search_results = Product::where('name', 'like', '%' . $this->search . '%')->orWhere('sku', 'like', '%' . $this->search . '%')->limit($this->dropdown_limit)->get();
                     break;
                 case 'category':
