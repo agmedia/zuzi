@@ -140,21 +140,22 @@ return [
     ],
 
     'njuskalo' => [
+        'user_id' => '968815',
         'sync' => [
-            'fantasy' => 9760, //*
-            'djecje-knjige' => 9752,
+            'fantasy' => 15360, //*
+            'djecje-knjige' => 15348,
             'beletristika' => 9751, //*
-            'proza' => 9760, //*
-            'sf' => 9760, //*
+            'proza' => 15358, //* Poezija
+            'sf' => 15369, //*
             'knjizevnost' => 9753, //*
             'outlet' => 9760,
             'duhovne-knjige' => 9754, //*
-            'povijest' => 9760,
-            'autobiografije-i-biografije' => 13117, // Ostala literatura
+            'povijest' => 15387,
+            'autobiografije-i-biografije' => 15363, //
             'kompleti' => 9760,
             'alternativne-knjige' => 9760,
             'savjetnici' => 9760, //*
-            'psihologija' => 9760,
+            'psihologija' => 15389,
             'rijetke-knjige' => 9750,
             'erotske-knjige' => 9760,
             'nakladnici' => 9760,
@@ -170,12 +171,12 @@ return [
             'monografije' => 13118,
             'putopisi' => 9760,
             'rjecnici' => 13095,
-            'filozofija' => 9760,
-            'poezija' => 9760,
+            'filozofija' => 15380,
+            'poezija' => 15358,
             'stripovi' => 12408,
             'wattpad-i-domaci-pisci' => 9760,
             'nekategorizirane' => 9760,
-            'casopisi' => 9755,
+            'casopisi' => 15347,
             'bookmarkeri' => 9760,
             'fotografija' => 9760,
             'bojanke-za-odrasle' => 9760,
