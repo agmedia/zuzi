@@ -2515,7 +2515,9 @@ __webpack_require__.r(__webpack_exports__);
      */
     setCoupon: function setCoupon() {
       var cart = this.$store.state.storage.getCart();
-      this.coupon = cart.coupon;
+      if (cart) {
+        this.coupon = cart.coupon;
+      }
     },
     /**
      *
@@ -2684,7 +2686,7 @@ __webpack_require__.r(__webpack_exports__);
       var cart = this.$store.state.storage.getCart();
 
       // Check coupon
-      if (cart.coupon != '' && cart.coupon != 'null') {
+      if (cart && cart.coupon != '' && cart.coupon != 'null') {
         this.coupon = cart.coupon;
       }
       if (cart && !cart.count && window.location.pathname != '/kosarica') {
@@ -2696,8 +2698,10 @@ __webpack_require__.r(__webpack_exports__);
      */
     setCoupon: function setCoupon() {
       var cart = this.$store.state.storage.getCart();
-      cart.coupon = this.coupon;
-      this.checkCoupon();
+      if (cart) {
+        cart.coupon = this.coupon;
+        this.checkCoupon();
+      }
     },
     /**
      *
@@ -3718,12 +3722,14 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
      */
     checkAvailables: function checkAvailables() {
       var cart = this.$store.state.storage.getCart();
-      for (var i = 0; i < this.products.data.length; i++) {
-        this.products.data[i].disabled = false;
-        for (var key in cart.items) {
-          if (this.products.data[i].id == cart.items[key].id) {
-            if (this.products.data[i].quantity <= cart.items[key].quantity) {
-              this.products.data[i].disabled = true;
+      if (cart) {
+        for (var i = 0; i < this.products.data.length; i++) {
+          this.products.data[i].disabled = false;
+          for (var key in cart.items) {
+            if (this.products.data[i].id == cart.items[key].id) {
+              if (this.products.data[i].quantity <= cart.items[key].quantity) {
+                this.products.data[i].disabled = true;
+              }
             }
           }
         }
@@ -3744,10 +3750,12 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
      */
     add: function add(id, product_quantity) {
       var cart = this.$store.state.storage.getCart();
-      for (var key in cart.items) {
-        if (id == cart.items[key].id) {
-          if (product_quantity <= cart.items[key].quantity) {
-            return window.ToastWarning.fire('Nažalost nema dovoljnih količina artikla..!');
+      if (cart) {
+        for (var key in cart.items) {
+          if (id == cart.items[key].id) {
+            if (product_quantity <= cart.items[key].quantity) {
+              return window.ToastWarning.fire('Nažalost nema dovoljnih količina artikla..!');
+            }
           }
         }
       }

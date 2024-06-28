@@ -145,7 +145,7 @@ export default {
             let cart = this.$store.state.storage.getCart();
 
             // Check coupon
-            if (cart.coupon != '' && cart.coupon != 'null') {
+            if (cart && cart.coupon != '' && cart.coupon != 'null') {
                 this.coupon = cart.coupon;
             }
 
@@ -159,9 +159,10 @@ export default {
          */
         setCoupon() {
             let cart = this.$store.state.storage.getCart();
-
-            cart.coupon = this.coupon;
-            this.checkCoupon();
+            if (cart) {
+                cart.coupon = this.coupon;
+                this.checkCoupon();
+            }
         },
 
         /**

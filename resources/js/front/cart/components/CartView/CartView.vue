@@ -123,8 +123,9 @@
              */
             setCoupon() {
                 let cart = this.$store.state.storage.getCart();
-
+                if (cart){
                 this.coupon = cart.coupon;
+                }
             },
 
             /**
