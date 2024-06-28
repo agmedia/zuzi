@@ -141,7 +141,7 @@
 <script src="{{ asset('js/shufflejs/dist/shuffle.min.js') }}"></script>
 <!-- Main theme script-->
 
-<script src="{{ asset('js/cart.js?v=2.1.3') }}"></script>
+<script src="{{ asset('js/cart.js') }}"></script>
 
 <script src="{{ asset('js/theme.min.js') }}"></script>
 
@@ -158,35 +158,7 @@
 
 @if (config('app.env') == 'production')
     <!-- Messenger Chat Plugin Code -->
-    <div id="fb-root"></div>
 
-    <!-- Your Chat Plugin code -->
-    <div id="fb-customer-chat" class="fb-customerchat"></div>
-
-    <!-- -->
-    <script>
-        var chatbox = document.getElementById('fb-customer-chat');
-        chatbox.setAttribute("page_id", "2149604518703728");
-        chatbox.setAttribute("attribution", "biz_inbox");
-    </script>
-
-    <!-- Your SDK code -->
-    <script>
-        window.fbAsyncInit = function() {
-            FB.init({
-                xfbml            : true,
-                version          : 'v17.0'
-            });
-        };
-
-        (function(d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) return;
-            js = d.createElement(s); js.id = id;
-            js.src = 'https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js';
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
-    </script>
 @endif
 
 @stack('js_after')
