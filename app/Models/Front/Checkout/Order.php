@@ -148,6 +148,7 @@ class Order extends Model
                 'shipping_code'    => $this->order['shipping']->code,
                 'company'          => $this->order['address']['company'],
                 'oib'              => $this->order['address']['oib'],
+                'comment'          => $this->order['comment'],
                 'created_at'       => Carbon::now(),
                 'updated_at'       => Carbon::now()
             ]);
@@ -183,7 +184,7 @@ class Order extends Model
         if ( ! empty($data)) {
             $this->order = $data;
         }
-        
+
         $updated = \App\Models\Back\Orders\Order::where('id', $data['id'])->update([
             'payment_fname'    => $this->order['address']['fname'],
             'payment_lname'    => $this->order['address']['lname'],
@@ -209,6 +210,7 @@ class Order extends Model
             'shipping_code'    => $this->order['shipping']->code,
             'company'          => $this->order['address']['company'],
             'oib'              => $this->order['address']['oib'],
+            'comment'          => $this->order['comment'],
             'updated_at'       => Carbon::now()
         ]);
 

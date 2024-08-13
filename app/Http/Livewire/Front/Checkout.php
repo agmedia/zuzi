@@ -83,6 +83,11 @@ class Checkout extends Component
 
     protected $cart = false;
 
+
+    public $comment = '';
+    public $view_comment = false;
+
+
     /**
      * @var string[]
      */
@@ -136,11 +141,22 @@ class Checkout extends Component
             $this->payment = CheckoutSession::getPayment();
         }
 
+        if (CheckoutSession::hasComment()) {
+            $this->comment = CheckoutSession::getComment();
+        }
+
         $this->secondary_price = Currency::secondary() ? Currency::secondary()->value : false;
 
         $this->checkCart();
 
         $this->changeStep($this->step);
+    }
+
+    public function updatingComment($value)
+    {
+        $this->comment = $value;
+
+        CheckoutSession::setComment($this->comment);
     }
 
 
@@ -233,6 +249,7 @@ class Checkout extends Component
 
         CheckoutSession::forgetShipping();
         $this->shipping = '';
+        $this->comment = '';
         CheckoutSession::forgetPayment();
         $this->payment = '';
 
@@ -354,6 +371,12 @@ class Checkout extends Component
             $this->gdl_shipping = 'osobno preuzimanje';
         } else {
             $this->gdl_shipping = 'dostava';
+        }
+
+        if ($shipping == 'gls_eu') {
+            $this->view_comment = true;
+        } else {
+            $this->view_comment = false;
         }
     }
 

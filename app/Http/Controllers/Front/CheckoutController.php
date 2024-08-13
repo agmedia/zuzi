@@ -139,7 +139,7 @@ class CheckoutController extends Controller
         if ($order->isValid()) {
             $order->sendEmails()
                   ->decreaseCartItems()
-                  ->addCustomerToMailchimp()
+                 // ->addCustomerToMailchimp()
                   ->forgetCheckoutCache();
 
             $this->shoppingCart()
@@ -190,7 +190,8 @@ class CheckoutController extends Controller
             return [
                 'address'  => CheckoutSession::getAddress(),
                 'shipping' => CheckoutSession::getShipping(),
-                'payment'  => CheckoutSession::getPayment()
+                'payment'  => CheckoutSession::getPayment(),
+                'comment'  => CheckoutSession::getComment()
             ];
         }
 
@@ -212,6 +213,7 @@ class CheckoutController extends Controller
         $response                    = [];
         $response['address']         = $data['address'];
         $response['shipping']        = $shipping;
+        $response['comment']         = isset($data['comment']) ? $data['comment'] : '';
         $response['payment']         = $payment;
         $response['cart']            = $this->shoppingCart()->get();
         $response['order_status_id'] = $order_status_id;

@@ -142,7 +142,7 @@ class OrderHelper
     public function addCustomerToMailchimp(string $email_column = 'payment', string $audience_id = null)
     {
         if ($this->order) {
-            $mailchimp   = new Mailchimp();
+         /*   $mailchimp   = new Mailchimp();
             $audience_id = $audience_id ?: config('services.mailchimp.audience_id');
 
             $mailchimp->addMemberToList(
@@ -150,10 +150,10 @@ class OrderHelper
                 $this->getEmail($email_column),
                 $this->order->payment_fname,
                 $this->order->payment_lname
-            );
+            );*/
         }
 
-        return $this;
+       // return $this;
     }
 
 
