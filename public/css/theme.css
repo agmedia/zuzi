@@ -16803,7 +16803,7 @@ a.nav-link:hover .media-tab-media {
         -webkit-animation: navbar-show 0.45s;
         animation: navbar-show 0.45s;
         box-shadow: 0 0.25rem 0.5625rem -0.0625rem rgba(0, 0, 0, 0.03), 0 0.275rem 1.25rem -0.0625rem rgba(0, 0, 0, 0.05);
-        z-index: 1030;
+        z-index: 111030;
     }
 
     .navbar-sticky.navbar-stuck .navbar-stuck-toggler {
