@@ -342,7 +342,7 @@ every time the user selects a new location.
             console.log(e.detail);
             //alert(e.detail.name);
 
-            document.getElementById('comment').value = e.detail.name +  e.detail.id;
+            document.getElementById('comment').value = e.detail.contact.address + ', ' + e.detail.contact.city + '_' + e.detail.id;
             document.getElementById("comment").dispatchEvent(new Event('input'));
         });
     </script>

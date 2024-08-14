@@ -213,6 +213,8 @@ class OrderController extends Controller
         $gls = new Gls($order);
         $label = $gls->resolve();
 
+
+
         if (isset($label['ParcelIdList'])) {
             return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $label['ParcelIdList'][0]]);
         }

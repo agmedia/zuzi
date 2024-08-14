@@ -333,6 +333,7 @@ class CheckoutSession
         CheckoutSession::forgetStep();
         CheckoutSession::forgetPayment();
         CheckoutSession::forgetShipping();
+        CheckoutSession::forgetComment();
     }
 
 }
