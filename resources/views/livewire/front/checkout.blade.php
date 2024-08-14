@@ -283,9 +283,9 @@
                     <div style="height: 600px">
                         <gls-dpm country="hr" id="test-map"></gls-dpm>
                     </div>
-<div wire:ignore>
-                    <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="">
-</div>
+
+                    <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" required>
+
             @endif
 
 
@@ -340,7 +340,7 @@ every time the user selects a new location.
         var el = document.getElementById('test-map');
         el.addEventListener('change', (e) => {
             console.log(e.detail);
-            //alert(e.detail.name);
+            alert('Odabrali ste:' + e.detail.name);
 
             document.getElementById('comment').value = e.detail.contact.address + ', ' + e.detail.contact.city + '_' + e.detail.id;
             document.getElementById("comment").dispatchEvent(new Event('input'));
