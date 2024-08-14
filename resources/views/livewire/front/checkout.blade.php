@@ -286,6 +286,9 @@
 
                     <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" required>
 
+                @error('comment') <small class="text-danger">Obavezan odabir gls paketomata </small> @enderror
+
+
             @endif
 
 

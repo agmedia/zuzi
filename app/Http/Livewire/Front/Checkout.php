@@ -107,6 +107,12 @@ class Checkout extends Component
      */
     protected $shipping_rules = [
         'shipping' => 'required',
+
+    ];
+
+    protected $comment_rules = [
+
+        'comment'=> 'required',
     ];
 
     /**
@@ -233,6 +239,12 @@ class Checkout extends Component
         if ($step == 'placanje') {
             $this->validate($this->shipping_rules);
         }
+
+        if ($step == 'placanje' and $this->shipping == 'gls_eu') {
+            $this->validate($this->comment_rules);
+        }
+
+
 
         $this->step = $step;
 
