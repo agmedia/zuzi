@@ -52,6 +52,7 @@
                     <p style="font-size:12px">Uredno smo zaprimili Vašu narudžbu broj {{ $order->id }} i zahvaljujemo Vam.</p>
                 @endif
                 <br><br>
+                {{ __('Način dostave') }}: {{ $order->shipping_method }}<br> {{ $order->comment }}
 
                 Lijep pozdrav,<br>Zuzi Shop
             </td>

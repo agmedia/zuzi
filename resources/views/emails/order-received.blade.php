@@ -31,7 +31,7 @@
                     <b>{{ __('Plaćanje prilikom preuzimanja') }}</b>
                 @endif
                 <br><br>
-
+                {{ __('Način dostave') }}: {{ $order->shipping_method }}<br> {{ $order->comment }}
                 Lijep pozdrav,<br>Zuzi Shop
             </td>
         </tr>
