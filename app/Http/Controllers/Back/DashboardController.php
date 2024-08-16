@@ -42,6 +42,9 @@ class DashboardController extends Controller
         $data['finished']   = Order::whereIn('order_status_id', [4, 5, 6, 7])->count();
         $data['this_month'] = Order::whereMonth('created_at', '=', Carbon::now()->month)->count();
 
+        $data['this_month'] = Order::whereYear('created_at', '=', Carbon::now()->year)->whereMonth('created_at', '=', Carbon::now()->month)->count();
+
+
         $orders   = Order::last()->with('products')->get();
         $products = $orders->map(function ($item) {
             return $item->products()->get();

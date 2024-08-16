@@ -130,7 +130,7 @@
                     <div class="block-content">
                         <table class="table table-borderless table-striped table-vcenter font-size-sm">
                             <tbody>
-                            @foreach ($products as $product)
+                            @foreach ($products->take(9) as $product)
                                 <tr>
                                     <td class="text-center" style="width: 5%;">
                                         <a class="font-w600" href="{{ route('products.edit', ['product' => $product->product_id]) }}">{{ $product->id }}</a>
