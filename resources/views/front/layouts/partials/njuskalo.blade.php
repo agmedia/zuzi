@@ -18,9 +18,9 @@
                 </phone>
             </phone_list>
             <youtubeUrl></youtubeUrl>
-            <location_id>2656</location_id>
-            <gmap_lng></gmap_lng>
-            <gmap_lat></gmap_lat>
+            <location_id>2803</location_id>
+            <gmap_lng>45.802118274402126</gmap_lng>
+            <gmap_lat>15.890055457671485</gmap_lat>
             <videoCallOption>0</videoCallOption>
             <webshopLink>{{ url($item['slug']) }}</webshopLink>
             <image_list>
