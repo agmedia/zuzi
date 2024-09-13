@@ -71,46 +71,53 @@ class DashboardController extends Controller
      */
     public function import(Request $request)
     {
-        $xml = simplexml_load_file(public_path('assets/proizvodi.xml'));
+        $xml = simplexml_load_file(public_path('assets/laguna.xml'));
         $import = new Import();
         $count  = 0;
 
-        foreach ($xml->post as $item) {
-            $exist = Product::query()->where('sku', $item->Sku)->first();
+        foreach ($xml->product as $item) {
+            $exist = Product::query()->where('sku', $item->bar_kod)->first();
 
             if ( ! $exist) {
                 $categories = [];
                 $images = [];
-                $publisher = $import->resolvePublisher();
-                $author = $import->resolveAuthor($item->Title);
+                $publisher = 2049;
+                $author = 3282;
                 $action = ((float) $item->RegularPrice == (float) $item->Price) ? null : $item->Price;
+
+
+                $data['title'] = $item->Naziv;
+
+                $priceeur = ($item->PreporucenaMPC * 0.0085) * 2;
 
                 $count++;
 
-                foreach ($item->Kategorijeproizvoda as $category) {
+             /*   foreach ($item->Kategorijeproizvoda as $category) {
                     $categories[] = $category;
                 }
 
-                foreach ($item->ImageURL as $image) {
+              /  foreach ($item->Slika as $image) {
                     $images[] = $image;
-                }
+                }*/
+
+                $images[] = (string) $item->Slika;
 
                 $product_id = Product::insertGetId([
                     'author_id'        => $author ?: config('settings.unknown_author'),
                     'publisher_id'     => $publisher ?: config('settings.unknown_publisher'),
                     'action_id'        => 0,
-                    'name'             => $item->Title,
-                    'sku'              => $item->Sku,
-                    'description'      => '<p>' . str_replace('\n', '<br>', $item->Excerpt) . '</p>',
-                    'slug'             => $item->Slug,
-                    'price'            => $item->RegularPrice ?: '0',
-                    'quantity'         => $item->Stock ?: '0',
+                    'name'             => $item->Naziv,
+                    'sku'              => $item->bar_kod,
+                    'description'      => '<p>' . str_replace('\n', '<br>', $item->Opis) . '</p>',
+                    'slug'             => Helper::resolveSlug($data),
+                    'price'            => $priceeur ?: '0',
+                    'quantity'         => 1,
                     'tax_id'           => 1,
-                    'special'          => $action,
+                    'special'          => '',
                     'special_from'     => null,
                     'special_to'       => null,
-                    'meta_title'       => $item->Title,
-                    'meta_description' => $item->Content,
+                    'meta_title'       => $item->Naziv,
+                    'meta_description' => $item->Opis,
                     'pages'            => null,
                     'dimensions'       => null,
                     'origin'           => null,
@@ -121,13 +128,13 @@ class DashboardController extends Controller
                     'viewed'           => 0,
                     'sort_order'       => 0,
                     'push'             => 0,
-                    'status'           => $item->Stock ? 1 : 0,
+                    'status'           => 1,
                     'created_at'       => Carbon::now(),
                     'updated_at'       => Carbon::now()
                 ]);
 
                 if ($product_id) {
-                    $images = $import->resolveImages($images, $item->Title, $product_id);
+                    $images = $import->resolveImages($images, $item->Naziv, $product_id);
 
                     if ($images && ! empty($images)) {
                         for ($k = 0; $k < count($images); $k++) {
@@ -139,7 +146,7 @@ class DashboardController extends Controller
                                 ProductImage::insert([
                                     'product_id' => $product_id,
                                     'image'      => $images[$k],
-                                    'alt'        => $item->Title,
+                                    'alt'        => $item->Naziv,
                                     'published'  => 1,
                                     'sort_order' => $k,
                                     'created_at' => Carbon::now(),
@@ -149,7 +156,7 @@ class DashboardController extends Controller
                         }
                     }
 
-                    $categories = $import->resolveCategories($categories);
+                /*    $categories = $import->resolveCategories($categories);
 
                     if ($categories) {
                         foreach ($categories as $category) {
@@ -158,7 +165,13 @@ class DashboardController extends Controller
                                 'category_id' => $category
                             ]);
                         }
-                    }
+                    }*/
+
+
+                    ProductCategory::insert([
+                        'product_id'  => $product_id,
+                        'category_id' => 115
+                    ]);
 
                     $product = Product::find($product_id);
 
@@ -169,7 +182,7 @@ class DashboardController extends Controller
 
                     $count++;
 
-                    if ($count > 100000) {
+                    if ($count > 1000) {
                         return redirect()->route('dashboard');
                     }
                 }
