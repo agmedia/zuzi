@@ -168,6 +168,11 @@ class DashboardController extends Controller
                         }
                     }*/
 
+                    ProductCategory::query()->insert([
+                        'product_id'  => $product_id,
+                        'category_id' => 25,
+                    ]);
+
 
                     ProductCategory::insert([
                         'product_id'  => $product_id,
