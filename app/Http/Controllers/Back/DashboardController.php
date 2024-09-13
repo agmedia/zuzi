@@ -76,7 +76,7 @@ class DashboardController extends Controller
         $count  = 0;
 
         foreach ($xml->product as $item) {
-            $exist = Product::query()->where('sku', $item->bar_kod)->first();
+            $exist = Product::query()->where('ean', $item->bar_kod)->first();
 
             if ( ! $exist) {
                 $categories = [];
@@ -107,7 +107,8 @@ class DashboardController extends Controller
                     'publisher_id'     => $publisher ?: config('settings.unknown_publisher'),
                     'action_id'        => 0,
                     'name'             => $item->Naziv,
-                    'sku'              => $item->bar_kod,
+                    'sku'              => 'lg'.$item->Šifra,
+                    'ean'              => $item->bar_kod,
                     'description'      => '<p class="text-primary">Rok dostave 20 radnih dana!</p><p>' . str_replace('\n', '<br>', $item->Opis) . '</p>',
                     'slug'             => Helper::resolveSlug($data),
                     'price'            => $priceeur ?: '0',
