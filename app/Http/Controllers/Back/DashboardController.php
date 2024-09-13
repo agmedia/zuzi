@@ -107,7 +107,7 @@ class DashboardController extends Controller
                     'publisher_id'     => $publisher ?: config('settings.unknown_publisher'),
                     'action_id'        => 0,
                     'name'             => $item->Naziv,
-                    'sku'              => 'lg'.$item->Šifra,
+                    'sku'             => $item->bar_kod,
                     'ean'              => $item->bar_kod,
                     'description'      => '<p class="text-primary">Rok dostave 20 radnih dana!</p><p>' . str_replace('\n', '<br>', $item->Opis) . '</p>',
                     'slug'             => Helper::resolveSlug($data),
