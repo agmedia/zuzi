@@ -76,7 +76,7 @@ class DashboardController extends Controller
         $count  = 0;
 
         foreach ($xml->product as $item) {
-            $exist = Product::query()->where('ean', $item->bar_kod)->first();
+            $exist = Product::query()->where('sku', $item->bar_kod)->first();
 
             if ( ! $exist) {
                 $categories = [];
