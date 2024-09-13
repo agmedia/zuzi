@@ -114,7 +114,7 @@ class DashboardController extends Controller
                     'price'            => $priceeur ?: '0',
                     'quantity'         => 1,
                     'tax_id'           => 1,
-                    'special'          => '',
+                    'special'          => NULL,
                     'special_from'     => null,
                     'special_to'       => null,
                     'meta_title'       => $item->Naziv,
