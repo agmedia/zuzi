@@ -108,7 +108,7 @@ class DashboardController extends Controller
                     'action_id'        => 0,
                     'name'             => $item->Naziv,
                     'sku'              => $item->bar_kod,
-                    'description'      => '<p>' . str_replace('\n', '<br>', $item->Opis) . '</p>',
+                    'description'      => '<p class="text-primary">Rok dostave 20 radnih dana!</p><p>' . str_replace('\n', '<br>', $item->Opis) . '</p>',
                     'slug'             => Helper::resolveSlug($data),
                     'price'            => $priceeur ?: '0',
                     'quantity'         => 1,
