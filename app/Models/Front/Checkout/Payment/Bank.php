@@ -80,7 +80,7 @@ class Bank
                         ),
                     'receiver'    =>
                         array(
-                            'name'      => 'Fortuna d.o.o.',
+                            'name'      => 'ZUZI, obrt',
                             'street'    => 'Antuna Šoljana 33',
                             'place'     => '10000 Zagreb',
                             'iban'      => 'HR1624020061140345999',
