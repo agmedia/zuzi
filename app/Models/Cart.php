@@ -4,6 +4,7 @@ namespace App\Models;
 
 
 use App\Models\Front\AgCart;
+use App\Models\Front\Catalog\Product;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -86,7 +87,15 @@ class Cart extends Model
                         $has_item_in_cart = $cart_items->where('id', $item['id'])->first();
 
                         if ( ! $has_item_in_cart) {
-                            $cart->add($cart->resolveItemRequest($item));
+                            $cart_item = $cart->resolveItemRequest($item);
+
+                            if (isset($cart_item['item']['id']) && isset($cart_item['item']['quantity'])) {
+                                $product = Product::where('id', $cart_item['item']['id'])->first();
+
+                                if ($product && $cart_item['item']['quantity'] < $product->quantity) {
+                                    $cart->add($cart_item);
+                                }
+                            }
                         }
                     }
                 }
