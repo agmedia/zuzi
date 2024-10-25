@@ -17,7 +17,7 @@ return [
     'free_shipping' => 70,
 
     'pagination' => [
-        'front' => 40,
+        'front' => 32,
         'back'  => 30
     ],
 

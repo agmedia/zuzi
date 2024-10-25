@@ -36,7 +36,7 @@ class FilterController extends Controller
 
         // Ako je normal kategorija
         if ($params['group']) {
-            //$response = Helper::resolveCache('categories')->remember($params['group'], config('cache.life'), function () use ($params) {
+            $response = Helper::resolveCache('categories')->remember($params['group'], config('cache.life'), function () use ($params) {
                 $response = Category::active()->topList($params['group'])->sortByName()->with('subcategories')->withCount([
                     'products',
                     'products as products_count' => function (Builder $query) {
@@ -46,7 +46,7 @@ class FilterController extends Controller
                     }])->get()->toArray();
 
                 return $this->resolveCategoryArray($response, 'categories');
-            //});
+            });
         }
 
         // Ako su posebni ID artikala.

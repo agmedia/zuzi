@@ -210,14 +210,12 @@
             this.checkCategory();
             this.getCategories();
 
-
-
-            if (this.author == '') {
+            if (this.author) {
                 this.show_authors = true;
                 this.getAuthors();
             }
 
-            if (this.publisher == '') {
+            if (this.publisher) {
                 this.show_publishers = true;
                 this.getPublishers();
             }
