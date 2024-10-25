@@ -274,7 +274,7 @@ class ProductImage extends Model
         })->resizeCanvas(250, null);
 
         $path_webp_thumb = $path_thumb . 'webp';
-        Storage::disk('products')->put($path_webp_thumb, $img->encode('webp'));
+        Storage::disk('products')->put($path_webp_thumb, $img->encode('webp', 80));
 
         return $path_jpg;
     }

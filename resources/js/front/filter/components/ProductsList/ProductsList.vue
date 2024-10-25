@@ -24,7 +24,7 @@
                 <div class="card product-card shadow pb-2">
                     <span class="badge rounded-pill bg-primary mt-1 ms-1 badge-shadow" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
                        <a class="card-img-top d-block overflow-hidden" :href="origin + product.url">
-                           <img load="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
+                           <img loading="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
                     </a>
                     <div class="card-body py-2">
                         <h3 class="product-title fs-sm mt-2 mb-1"><a :href="origin + product.url">{{ product.name }}</a></h3>
