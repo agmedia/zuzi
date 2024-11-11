@@ -12,6 +12,7 @@ use App\Models\Front\Page;
 use App\Models\Sitemap;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Intervention\Image\Facades\Image;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -79,13 +80,11 @@ class HomeController extends Controller
             return back()->withErrors(['error' => 'ReCaptcha Error! Kontaktirajte administratora!']);
         }
 
-        $message = $request->toArray();
+        dispatch(function () use ($request) {
+            Mail::to(config('mail.admin'))->send(new ContactFormMessage($request->toArray()));
+        })->afterResponse();
 
-        dispatch(function () use ($message) {
-            Mail::to(config('mail.admin'))->send(new ContactFormMessage($message));
-        });
-
-        return view('front.contact')->with(['success' => 'Vaša poruka je uspješno poslana.! Odgovoriti ćemo vam uskoro.']);
+        return redirect()->route('kontakt')->with(['success' => 'Vaša poruka je uspješno poslana.! Odgovoriti ćemo vam uskoro.']);
     }
 
 

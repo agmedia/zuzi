@@ -19,7 +19,7 @@ class ContactFormMessage extends Mailable
     private $contact;
 
     /**
-     * @var mixed
+     * @var array
      */
     public $from;
 
@@ -29,10 +29,11 @@ class ContactFormMessage extends Mailable
      *
      * @param $contact
      */
-    public function __construct($contact)
+    public function __construct(array $contact)
     {
         $this->contact = $contact;
-        $this->from    = $contact['email'];
+        $this->from[]    = $contact;
+        $this->from[0]['address'] = $contact['email'];
     }
 
 
