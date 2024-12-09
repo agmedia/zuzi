@@ -22,7 +22,9 @@
             <gmap_lng>45.802118274402126</gmap_lng>
             <gmap_lat>15.890055457671485</gmap_lat>
             <isOnlinePaymentEnabled>1</isOnlinePaymentEnabled>
-            <availableParcelShops>boxNow</availableParcelShops>
+            <availableParcelShops>
+                <item>boxNow</item>
+            </availableParcelShops>
             <deliveryPackageWeight>1</deliveryPackageWeight>
             <videoCallOption>0</videoCallOption>
             <webshopLink>{{ url($item['slug']) }}</webshopLink>
