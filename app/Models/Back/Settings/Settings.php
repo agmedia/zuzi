@@ -2,6 +2,7 @@
 
 namespace App\Models\Back\Settings;
 
+use App\Helpers\Helper;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -41,7 +42,9 @@ class Settings extends Model
      */
     public static function get(string $code, string $key)
     {
-        $styles = Settings::where('code', $code)->where('key', $key)->first();
+        $styles = Helper::resolveCache('settings')->remember($code.$key, config('cache.life'), function () use ($code, $key) {
+            return Settings::where('code', $code)->where('key', $key)->first();
+        });
 
         if ($styles) {
             if ($styles->json) {
@@ -63,7 +66,9 @@ class Settings extends Model
      */
     public static function getList(string $code, string $key = 'list.%', bool $only_active = true)
     {
-        $styles = Settings::where('code', $code)->where('key', 'like', $key)->get();
+        $styles = Helper::resolveCache('settings')->remember($code, config('cache.life'), function () use ($code, $key) {
+            return Settings::where('code', $code)->where('key', 'like', $key)->get();
+        });
 
         if ($styles->count()) {
             $return_styles = collect();

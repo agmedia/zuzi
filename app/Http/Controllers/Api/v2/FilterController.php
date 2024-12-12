@@ -233,7 +233,9 @@ class FilterController extends Controller
         }
 
         $request_data['page'] = $request->input('page');
+
         $cache_string .= 'page=' . $request_data['page'];
+        $cache_string = md5($cache_string);
 
         $request = new Request($request_data);
 
@@ -243,7 +245,7 @@ class FilterController extends Controller
                                        ->paginate(config('settings.pagination.front'));
         } else {
 
-            $products = Helper::resolveCache('products')->remember(md5($cache_string), config('cache.life'), function () use ($request) {
+            $products = Helper::resolveCache('products')->remember($cache_string, config('cache.life'), function () use ($request) {
                 $products = (new Product())->filter($request)
                                            ->with('author')
                                            ->paginate(config('settings.pagination.front'));
