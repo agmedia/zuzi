@@ -194,38 +194,46 @@ class FilterController extends Controller
 
         if (isset($params['group']) && $params['group']) {
             $request_data['group'] = $params['group'];
-            $cache_string .= '&group=' . $params['group'];
+            $cache_string .= 'group=' . $params['group'];
         }
 
         if (isset($params['cat']) && $params['cat']) {
             $request_data['cat'] = $params['cat'];
+            $cache_string .= 'cat=' . $params['cat'];
         }
 
         if (isset($params['subcat']) && $params['subcat']) {
             $request_data['subcat'] = $params['subcat'];
+            $cache_string .= 'subcat=' . $params['subcat'];
         }
 
         if (isset($params['autor']) && $params['autor']) {
             $request_data['autor'] = $this->authors;
+            $cache_string .= 'autor=' . implode($this->authors);
         }
 
         if (isset($params['nakladnik']) && $params['nakladnik']) {
             $request_data['nakladnik'] = $this->publishers;
+            $cache_string .= 'nakladnik=' . implode($this->publishers);
         }
 
         if (isset($params['start']) && $params['start']) {
             $request_data['start'] = $params['start'];
+            $cache_string .= 'start=' . $params['start'];
         }
 
         if (isset($params['end']) && $params['end']) {
             $request_data['end'] = $params['end'];
+            $cache_string .= 'end=' . $params['end'];
         }
 
         if (isset($params['sort']) && $params['sort']) {
             $request_data['sort'] = $params['sort'];
+            $cache_string .= 'sort=' . $params['sort'];
         }
 
         $request_data['page'] = $request->input('page');
+        $cache_string .= 'page=' . $request_data['page'];
 
         $request = new Request($request_data);
 
@@ -234,15 +242,21 @@ class FilterController extends Controller
                                        ->with('author')
                                        ->paginate(config('settings.pagination.front'));
         } else {
-            /*$products = Helper::resolveCache('products')->remember($cache_string, config('cache.life'), function () use ($request) {
-                 return (new Product())->filter($request)
-                                       ->with('author')
-                                       ->paginate(config('settings.pagination.front'), ['*'], 'page', $request->input('page'));
-            });*/
 
-            $products = (new Product())->filter($request)
+            $products = Helper::resolveCache('products')->remember(md5($cache_string), config('cache.life'), function () use ($request) {
+                $products = (new Product())->filter($request)
+                                           ->with('author')
+                                           ->paginate(config('settings.pagination.front'));
+                return $products;
+
+                /*return (new Product())->filter($request)
+                                      ->with('author')
+                                      ->paginate(config('settings.pagination.front'), ['*'], 'page', $request->input('page'));*/
+            });
+
+            /*$products = (new Product())->filter($request)
                                        ->with('author')
-                                       ->paginate(config('settings.pagination.front'));
+                                       ->paginate(config('settings.pagination.front'));*/
         }
 
         return response()->json($products);

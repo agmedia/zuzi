@@ -81,10 +81,16 @@ class CatalogRouteController extends Controller
         }
 
         if ($cat) {
-            $cat->count = $cat->products()->count();
+            $cat->count = Helper::resolveCache('cats_count')->remember($cat->id, config('cache.life'), function () use ($cat) {
+                return $cat->products()->count();
+            });
+            //$cat->count = $cat->products()->count();
         }
         if ($subcat) {
-            $subcat->count = $subcat->products()->count();
+            $subcat->count = Helper::resolveCache('cats_count')->remember($cat->id, config('cache.life'), function () use ($subcat) {
+                return $subcat->products()->count();
+            });
+            //$subcat->products()->count();
         }
 
         $meta_tags = Seo::getMetaTags($request, 'filter');
