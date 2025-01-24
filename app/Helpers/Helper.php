@@ -288,18 +288,12 @@ class Helper
             foreach ($wg->widgets()->orderBy('sort_order')->get() as $widget) {
                 $data = unserialize($widget->data);
 
-                $searches = Storage::disk('assets')->get('searches.csv');
-
-                $searches = explode(PHP_EOL, $searches);
-
-
                 $widgets[] = [
                     'title'    => $widget->title,
                     'subtitle' => $widget->subtitle,
                     'color'    => $widget->badge,
-                    'searches' => $searches,
                     'url'      => $widget->url,
-                    'image'    => str_replace('.jpg', '.webp', $widget->image),
+                    'image'    => $widget->thumb,
                     'width'    => $widget->width,
                     'right'    => (isset($data['right']) && $data['right'] == 'on') ? 1 : null,
                 ];

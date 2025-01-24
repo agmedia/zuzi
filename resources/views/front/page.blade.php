@@ -36,7 +36,7 @@
     @if (request()->routeIs(['index']))
 
 
-        @include('front.layouts.partials.hometemp')
+
 
 
         {!! $page->description !!}
