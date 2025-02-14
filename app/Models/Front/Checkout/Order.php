@@ -240,7 +240,7 @@ class Order extends Model
             $price    = $item->price;
 
             if ($this->checkSpecial($item->associatedModel)) {
-                $price    = $item->associatedModel->special;
+                $price    = floatval($item->associatedModel->special);
                 $discount = Helper::calculateDiscount($item->price, $price);
             }
 
@@ -331,7 +331,24 @@ class Order extends Model
      */
     public function checkSpecial(Product $model): bool
     {
-        if ($model->special) {
+        $action = $model->action;
+        $coupon_ok = false;
+
+        if ( ! $action || ($action && ! $action->coupon)) {
+            $coupon_ok = true;
+        }
+
+        if ($action->status) {
+            if ($action->coupon && $action->coupon == $this->order['cart']['coupon']) {
+                $coupon_ok = true;
+            }
+
+            if ( ! $action->coupon) {
+                $coupon_ok = true;
+            }
+        }
+
+        if ($model->special && $coupon_ok) {
             $from = now()->subDay();
             $to = now()->addDay();
 

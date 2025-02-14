@@ -39,34 +39,29 @@
                             <th>Polica</th>
                             <th class="text-center">Kol</th>
                             <th class="text-right" style="width: 10%;">Cijena</th>
+                            <th class="text-right" style="width: 10%;">Rabat %</th>
                             <th class="text-right" style="width: 10%;">Ukupno</th>
                         </tr>
                         </thead>
                         <tbody class="js-gallery">
                         @foreach ($order->products as $product)
                             <tr>
-
-
-
-
                                 <td class="text-center"> <a class="img-link img-link-zoom-in img-lightbox" href="{{ ($product->product && $product->product->image) ? asset($product->product->image) : asset('media/avatars/avatar0.jpg') }}">
                                         <img src="{{ ($product->product && $product->product->image) ? asset($product->product->image) : asset('media/avatars/avatar0.jpg') }}" height="80px"/>
                                     </a>
                                 </td>
-
-
-
                                 <td><strong>{{ $product->name }} -  {{ $product->product ? $product->product->sku : '' }}</strong></td>
                                 <td>{{ $product->product ? $product->product->polica : '' }}</td>
                                 <td class="text-center"><strong>{{ $product->quantity }}</strong></td>
-                                <td class="text-right">{{ number_format($product->price, 2, ',', '.') }}</td>
+                                <td class="text-right">{{ number_format($product->org_price, 2, ',', '.') }}</td>
+                                <td class="text-right">{{ number_format($product->discount) }}</td>
                                 <td class="text-right">{{ number_format($product->total, 2, ',', '.') }}</td>
                             </tr>
                         @endforeach
 
                         @foreach ($order->totals as $total)
                             <tr>
-                                <td colspan="5" class="text-right"><strong>{{ $total->title }}:</strong></td>
+                                <td colspan="6" class="text-right"><strong>{{ $total->title }}:</strong></td>
                                 <td class="text-right">{{ number_format($total->value, 2, ',', '.') }}</td>
                             </tr>
                         @endforeach
