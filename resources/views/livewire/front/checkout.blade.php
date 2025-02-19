@@ -275,7 +275,7 @@
 
                         <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
 
-                        @error('comment') <small class="text-danger">Obavezan odabir gls paketomata </small> @enderror
+                        @error('comment') <small class="text-danger">Obavezan odabir BoxNow paketomata </small> @enderror
                             </td>
                         </tr>
 
