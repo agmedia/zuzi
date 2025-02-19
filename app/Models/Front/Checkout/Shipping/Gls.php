@@ -5,7 +5,7 @@ namespace App\Models\Front\Checkout\Shipping;
 use App\Models\Back\Orders\Order;
 use SoapClient;
 use \stdClass;
-
+use Illuminate\Support\Facades\Log;
 /**
  * Class Cod
  * @package App\Models\Front\Checkout\Payment
@@ -33,8 +33,56 @@ class Gls
     public function resolve()
     {
         try {
-            //These parameters are needed to be optimalise depending on the environment:
+
             ini_set('memory_limit', '1024M');
+            ini_set('max_execution_time', 600);
+
+            $brojracuna = $this->order['id'];
+
+            $order = $this->order;
+
+
+
+            $komentar = $this->order['comment'];
+
+            $idmjesta = substr($komentar, strpos($komentar, "_") + 1);
+
+            $mani = $this->order['total'];
+            $mani = number_format((float) $mani, 2, '.', '');
+
+            if($this->order['payment_code'] == 'cod'){
+
+                $paymentMode = 'cod';
+
+            } else{
+
+                $paymentMode = 'prepaid';
+
+            }
+
+            // Prepare items array based on the number of vouchers
+            $items = [];
+            foreach ($this->order->products as $prod) {
+                $items[] = [
+                    "id" => strval($prod['product_id']),
+                    "name" => $prod['name'],
+                    "value" => number_format((float)  $prod['total'], 2, '.', ''),
+                    "weight" => 0,
+                    "compartmentSize" => 1
+                ];
+            }
+
+
+
+           $items =  json_encode($items, true);
+
+
+
+
+            $newNumber = preg_replace("/^0/", "+385", $this->order['payment_phone']);
+
+            //These parameters are needed to be optimalise depending on the environment:
+         /*   ini_set('memory_limit', '1024M');
             ini_set('max_execution_time', 600);
 
             //Test ClientNumber:
@@ -45,11 +93,7 @@ class Gls
             $pwd      = "Mimizizi0510"; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
             $password = hash('sha512', $pwd, true);
 
-            $brojracuna = $this->order['id'];
 
-            $komentar = $this->order['comment'];
-
-            $idmjesta = substr($komentar, strpos($komentar, "_") + 1);
 
             $parcels                 = [];
             $parcel                  = new StdClass();
@@ -104,12 +148,113 @@ class Gls
             //Parcel service:
             $serviceName = "ParcelService";
 
-            return $this->PrepareLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order);
+            return $this->PrepareLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order); */
 
-        } catch (Exception $e) {
-            echo $e->getMessage();
+            $curl = curl_init();
+
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'https://api-production.boxnow.hr/api/v1/auth-sessions',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS =>'{
+                "grant_type": "client_credentials",
+                "client_id": "813f3a0c-bbea-4f83-bfb1-a605e79a11cd",
+                "client_secret": "8dc55b1ef55369e08c1b8eada89e2ba1bdf9256fdeb43c81cc1efc5f4755953b"
+                }',
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json'
+                ),
+            ));
+
+            $response = curl_exec($curl);
+
+
+            $response = json_decode($response, true);
+
+
+            curl_close($curl);
+
+
+            $access_token = $response['access_token'];
+
+
+
+
+            $curl = curl_init();
+
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'https://api-production.boxnow.hr/api/v1/delivery-requests',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS =>'{
+                    "orderNumber": "'. $brojracuna .'",
+                    "invoiceValue": "'. $mani .'",
+                    "paymentMode": "'.$paymentMode.'",
+                    "amountToBeCollected": "'. $this->getTotal() .'",
+                    "allowReturn": true,
+                    "origin": {
+                    "contactNumber": "+385 91 258 1981",
+                    "contactEmail": "info@zuzi.hr",
+                    "contactName": "Mirjana Vulić",
+                    "locationId": "7168"
+                    },
+                    "destination": {
+                    "contactNumber": "'.$newNumber.'",
+                    "contactEmail": "'.$this->order['payment_email'].'",
+                    "contactName": "'.$this->order['payment_fname'] . ' ' . $this->order['payment_lname'].'",
+                    "locationId": "'.$idmjesta.'"
+                    },
+                    "items":  '.$items.'
+                }',
+                CURLOPT_HTTPHEADER => array(
+                    'Authorization: Bearer ' .$access_token,
+                    'Content-Type: application/json'
+                ),
+            ));
+
+
+
+            $response = curl_exec($curl);
+
+            $var = json_decode($response, true);
+
+            Log::info($var);
+
+
+            curl_close($curl);
+
+
+
+            if (isset($var['parcels'][0]['id'])) {
+                $order->update(['printed' => 1]);
+
+
+            }
+
+           return $response;
+
+
+
+
+
+
+        } catch (Exception $response) {
+            echo $response->getMessage();
         }
     }
+
+
+
 
 
     private function getTotal()
@@ -119,7 +264,7 @@ class Gls
             $mani = number_format((float) $mani, 2, '.', '');
 
         } else {
-            $mani = 0;
+            $mani = 0.00;
         }
 
         return $mani;

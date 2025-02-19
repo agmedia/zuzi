@@ -288,6 +288,8 @@ class Helper
             foreach ($wg->widgets()->orderBy('sort_order')->get() as $widget) {
                 $data = unserialize($widget->data);
 
+
+
                 $widgets[] = [
                     'title'    => $widget->title,
                     'subtitle' => $widget->subtitle,
@@ -299,6 +301,8 @@ class Helper
                 ];
             }
         }
+
+
 
         return str_replace(
             '++' . $id . '++',

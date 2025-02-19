@@ -338,7 +338,7 @@ class Order extends Model
             $coupon_ok = true;
         }
 
-        if ($action->status) {
+        if (isset($action->status) && $action->status) {
             if ($action->coupon && $action->coupon == $this->order['cart']['coupon']) {
                 $coupon_ok = true;
             }

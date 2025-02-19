@@ -213,10 +213,10 @@ class OrderController extends Controller
         $gls = new Gls($order);
         $label = $gls->resolve();
 
+        $var = json_decode($label, true);
 
-
-        if (isset($label['ParcelIdList'])) {
-            return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $label['ParcelIdList'][0]]);
+        if (isset($var['parcels'][0]['id'])) {
+            return response()->json(['message' => 'BOXNOW je uspješno poslan sa ID: ' . $var['parcels'][0]['id']]);
         }
 
         return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);

@@ -280,9 +280,8 @@
         @foreach ($shippingMethods as $s_method)
             @if ($s_method->code == 'gls_eu' && $view_comment)
 
-                    <div style="height: 600px">
-                        <gls-dpm country="hr" id="test-map"></gls-dpm>
-                    </div>
+                <a href="javascript:;" class="boxnow-map-widget-button btn " style="color: #fff;padding: 10px 20px;margin-bottom: 15px;background-color: #6cd04e">Odaberite BOX NOW lokaciju</a>
+                <div id="boxnowmap" style=""></div>
 
                     <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
 
@@ -339,7 +338,7 @@
 Listening to changes. The web component fires a CustomEvent
 every time the user selects a new location.
 -->
-    <script>
+ <!--   <script>
         var el = document.getElementById('test-map');
         el.addEventListener('change', (e) => {
             console.log(e.detail);
@@ -348,12 +347,33 @@ every time the user selects a new location.
             document.getElementById('comment').value = e.detail.contact.address + ', ' + e.detail.contact.city + '_' + e.detail.id;
             document.getElementById("comment").dispatchEvent(new Event('input'));
         });
-    </script>
+    </script>-->
     <!--
     Javascript to initialize the custom element, it can be placed anywhere.
     -->
-    <script type="module"
-            src="https://map.gls-croatia.com/widget/gls-dpm.js"></script>
+  <!--  <script type="module"
+            src="https://map.gls-croatia.com/widget/gls-dpm.js"></script> -->
+
+    <script type="text/javascript">
+
+
+        var _bn_map_widget_config = {
+            type: "popup",
+            partnerId: 123,
+            parentElement: "#boxnowmap",
+            afterSelect: function (selected) {
+                if(selected.boxnowLockerPostalCode !== 'undefined'){
+                    document.getElementById('comment').value = selected.boxnowLockerPostalCode + ', ' + selected.boxnowLockerAddressLine1 + '_' + selected.boxnowLockerId;
+
+                    document.getElementById("comment").dispatchEvent(new Event('input'));
+
+                }
+
+
+            }
+        };
+        (function (d) { var e = d.createElement("script"); e.src = "https://widget-cdn.boxnow.hr/map-widget/client/v5.js"; e.async = true; e.defer = true; d.getElementsByTagName("head")[0].appendChild(e); })(document);
+    </script>
 
     <script>
         $( document ).ready(function() {

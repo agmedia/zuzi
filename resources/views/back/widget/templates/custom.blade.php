@@ -49,7 +49,7 @@
                                         <div class="col-md-10 offset-md-1" id="size-half">
                                             <div class="slim"
                                                  data-ratio="16:9"
-                                                 data-force-size="640,360"
+                                                 data-force-size="500,500"
                                                  data-max-file-size="2">
                                                 <img src="{{ isset($widget) && isset($widget->image) ? asset($widget->image) : '' }}" alt=""/>
                                                 <input type="file" name="image"/>

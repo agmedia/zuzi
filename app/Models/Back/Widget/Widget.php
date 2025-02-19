@@ -2,14 +2,10 @@
 
 namespace App\Models\Back\Widget;
 
-use App\Models\Back\Catalog\Product\Product;
+use App\Helpers\ImageHelper;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image;
 
 class Widget extends Model
 {
@@ -23,6 +19,11 @@ class Widget extends Model
      * @var array
      */
     protected $guarded = ['id', 'created_at', 'updated_at'];
+
+    /**
+     * @var string[]
+     */
+    protected $appends = ['webp','thumb'];
 
     /**
      * @var Request
@@ -40,9 +41,20 @@ class Widget extends Model
      *
      * @return array|string|string[]
      */
-    public function getImageAttribute($value)
+    public function getWebpAttribute($value)
     {
-        return config('settings.images_domain') . str_replace('.jpg', '.webp', $value);
+        return config('settings.images_domain') . str_replace('.jpg', '.webp', $this->image);
+    }
+
+
+    /**
+     * @param $value
+     *
+     * @return array|string|string[]
+     */
+    public function getThumbAttribute($value)
+    {
+        return config('settings.images_domain') . str_replace('.jpg', '-thumb.webp', $this->image);
     }
 
 
@@ -210,26 +222,16 @@ class Widget extends Model
             $data = json_decode($request->image_long);
         }
 
-        $img  = Image::make($data->output->image);
+        $group = $this->group()->first();
 
-        $str = $this->id . '/' . Str::slug($this->title) . '-' . time() . '.';
-
-        $path = $str . 'jpg';
-        Storage::disk('widget')->put($path, $img->encode('jpg'));
-
-        $path_webp = $str . 'webp';
-        Storage::disk('widget')->put($path_webp, $img->encode('webp'));
-
-        $default_path = config('filesystems.disks.widget.url') . 'default.jpg';
-
-        if ($this->image && $this->image != $default_path) {
-            $delete_path = str_replace(config('filesystems.disks.widget.url'), '', $this->image);
-
-            Storage::disk('widget')->delete($delete_path);
+        if ($group->template == 'custom' && str_contains($group->slug, 'slider')) {
+            $path = ImageHelper::makeImageSet($data->output->image, 'widget', $this->title, strval($this->id), 500, 500);
+        } else {
+            $path = ImageHelper::makeImageSet($data->output->image, 'widget', $this->title, strval($this->id));
         }
 
         return $this->update([
-            'image' => config('filesystems.disks.widget.url') . $path
+            'image' => $path
         ]);
     }
 
