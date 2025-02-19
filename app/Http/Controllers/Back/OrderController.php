@@ -13,6 +13,7 @@ use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderHistory;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\Checkout\Shipping\Gls;
+use App\Models\Front\Checkout\Shipping\Glsstari;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -217,6 +218,30 @@ class OrderController extends Controller
 
         if (isset($var['parcels'][0]['id'])) {
             return response()->json(['message' => 'BOXNOW je uspješno poslan sa ID: ' . $var['parcels'][0]['id']]);
+        }
+
+        return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function api_send_glsstari(Request $request)
+    {
+        $request->validate(['order_id' => 'required']);
+
+        $order = Order::where('id', $request->input('order_id'))->first();
+
+        $gls = new Glsstari($order);
+        $label = $gls->resolve();
+
+
+
+        if (isset($label['ParcelIdList'])) {
+            return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $label['ParcelIdList'][0]]);
         }
 
         return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);

@@ -84,10 +84,11 @@
                             <th class="text-center">Datum</th>
                             <th>Status</th>
                             <th>Plaćanje</th>
+                            <th>Dostava</th>
                             <th>Kupac</th>
                             <th class="text-center">Artikli</th>
                             <th class="text-right">Vrijednost</th>
-                            <th class="text-center font-size-sm" style="width: 80px;">GLS</th>
+                            <th class="text-center font-size-sm" style="width: 80px;">Pošalji</th>
                             <th class="text-right font-size-sm" style="width: 100px;">Detalji</th>
                         </tr>
                         </thead>
@@ -111,6 +112,7 @@
                                     <span class="badge badge-pill badge-{{ $order->status->color }}">{{ $order->status->title }}</span>
                                 </td>
                                 <td class="text-lwft">{{ $order->payment_method }}</td>
+                                <td class="text-lwft">{{ $order->shipping_method }}</td>
                                 <td>
                                     <a class="font-w600" href="{{ route('orders.show', ['order' => $order]) }}">{{ $order->shipping_fname }} {{ $order->shipping_lname }}</a>
                                 </td>
@@ -122,7 +124,13 @@
                                     @if($order->printed)
                                         <i class="fa fa-fw fa-check text-success"></i>
                                     @else
+
+                                        @if ($order->shipping_method == 'BoxNow')
                                         <button type="button" class="btn btn-light btn-sm" onclick="sendGLS({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
+                                        @else
+                                            <button type="button" class="btn btn-light btn-sm" onclick="sendGLSstari({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
+                                        @endif
+
                                     @endif
                                 </td>
                                 <td class="text-right">
@@ -190,6 +198,27 @@
          */
         function sendGLS(order_id) {
             axios.post("{{ route('api.order.send.gls') }}", {order_id: order_id})
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({
+                            timer: 1500,
+                            text: response.data.message,
+                        }).then(() => {
+                            location.reload();
+                        })
+
+                    } else {
+                        return errorToast.fire(response.data.error);
+                    }
+                });
+        }
+
+        /**
+         *
+         * @param order_id
+         */
+        function sendGLSstari(order_id) {
+            axios.post("{{ route('api.order.send.glsstari') }}", {order_id: order_id})
                 .then(response => {
                     if (response.data.message) {
                         successToast.fire({

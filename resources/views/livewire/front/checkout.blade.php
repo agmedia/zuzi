@@ -266,6 +266,24 @@
                         </td>
                     </tr>
 
+                    @if ($s_method->code == 'gls_eu' && $view_comment)
+                        <tr>
+                            <td colspan="4">
+                        <a href="javascript:;" class="boxnow-map-widget-button btn " style="color: #fff;padding: 10px 20px;margin-bottom: 15px;background-color: #6cd04e">Odaberite BOX NOW lokaciju</a>
+
+                        <div id="boxnowmap" style=""></div>
+
+                        <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
+
+                        @error('comment') <small class="text-danger">Obavezan odabir gls paketomata </small> @enderror
+                            </td>
+                        </tr>
+
+                    @endif
+
+
+
+
 
 
 
@@ -277,22 +295,7 @@
             </table>
         </div>
 
-        @foreach ($shippingMethods as $s_method)
-            @if ($s_method->code == 'gls_eu' && $view_comment)
 
-                <a href="javascript:;" class="boxnow-map-widget-button btn " style="color: #fff;padding: 10px 20px;margin-bottom: 15px;background-color: #6cd04e">Odaberite BOX NOW lokaciju</a>
-                <div id="boxnowmap" style=""></div>
-
-                    <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
-
-                @error('comment') <small class="text-danger">Obavezan odabir gls paketomata </small> @enderror
-
-
-            @endif
-
-
-
-        @endforeach
         @error('shipping') <small class="text-danger">Način dostave je obvezan</small> @enderror
         <div class=" d-flex pt-4 mt-3">
             <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100" wire:click="changeStep('podaci')" href="javascript:void(0);"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na unos podataka</span><span class="d-inline d-sm-none">Povratak</span></a></div>

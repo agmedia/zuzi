@@ -278,6 +278,7 @@ Route::prefix('api/v2')->group(function () {
 
                 Route::post('change', [OrderController::class, 'api_status_change'])->name('api.order.status.change');
                 Route::post('send/gls', [OrderController::class, 'api_send_gls'])->name('api.order.send.gls');
+                Route::post('send/glsstari', [OrderController::class, 'api_send_glsstari'])->name('api.order.send.glsstari');
             });
             // PAYMENTS
             Route::prefix('payment')->group(function () {
