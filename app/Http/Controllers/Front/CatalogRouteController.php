@@ -11,6 +11,7 @@ use App\Models\Front\Page;
 use App\Models\Front\Faq;
 use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Category;
+use App\Models\Front\Catalog\CategoryProducts;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
 use App\Models\Seo;
@@ -64,6 +65,8 @@ class CatalogRouteController extends Controller
             $crumbs = $bc->product($group, $cat, $subcat, $prod)->resolve();
             $bookscheme = $bc->productBookSchema($prod);
 
+            $prod->kat = CategoryProducts::where('product_id', $prod->id)->where('category_id', 109)->first();
+
             return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme', 'gdl'));
         }
 
@@ -74,6 +77,8 @@ class CatalogRouteController extends Controller
             }
 
             $categories = Category::where('group', $group)->first('id');
+
+
 
             if ( ! $categories) {
                 abort(404);

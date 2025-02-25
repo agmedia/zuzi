@@ -130,6 +130,8 @@
                                 <h1 class="h3 text-dark mb-0"> {{ $prod->name }}</h1>
                             </div>
 
+                            {{-- dd($prod->kat) --}}
+
                             <div class="mb-0 mt-4 text-center text-lg-start">
                                 @if ($prod->main_price > $prod->main_special)
                                     <span class="h3 fw-normal text-primary me-1">{{ $prod->main_special_text }}</span>
@@ -165,6 +167,14 @@
 
                             <!-- Product panels-->
                            <ul class="list-unstyled fs-sm spec">
+
+
+
+                               @if ($prod->kat)
+                                   <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-primary fw-medium">Regionalni naslovi</span><span class="text-primary"><i class="ci-truck"></i> Dostava do 20 radnih dana!</span></li>
+                               @endif
+
+
                                 @if ($prod->author)
                                     <li class="d-flex justify-content-between mb-2 pb-2 border-bottom"><span class="text-dark fw-medium">Autor</span><span class="text-muted"><a class="product-meta text-primary" href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">{{ $prod->author->title }}</a></span></li>
                                 @endif
