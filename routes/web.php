@@ -344,6 +344,8 @@ Route::get('sitemap/{sitemap?}', [HomeController::class, 'sitemapXML'])->name('s
 Route::get('image-sitemap', [HomeController::class, 'sitemapImageXML'])->name('sitemap');
 //
 Route::get('njuskalo/xml', [HomeController::class, 'njuskaloXML'])->name('njuskalo');
+
+Route::get('xmlexport', [HomeController::class, 'xmlexport'])->name('xmlexport');
 /**
  * Forgot password & login routes.
  */

@@ -61,9 +61,47 @@ class Product extends Model
      */
     public function subcategories()
     {
-        return $this->hasManyThrough(Category::class, ProductCategory::class, 'product_id', 'id', 'id', 'category_id')->where('parent_id', '=!', 0);
+        return $this->hasManyThrough(Category::class, ProductCategory::class, 'product_id', 'id', 'id', 'category_id')->where('parent_id', '!=', 0);
     }
 
+
+
+    /**
+     * @return Relation
+     */
+    public function kat()
+    {
+        return $this->hasManyThrough(Category::class, ProductCategory::class, 'product_id', 'id', 'id', 'category_id')->where('parent_id', '==', 0)->groupBy('title');
+    }
+
+
+
+
+    /**
+     * @return Relation
+     */
+    public function subkat()
+    {
+        return $this->hasManyThrough(Category::class, ProductCategory::class, 'product_id', 'id', 'id', 'category_id')->where('parent_id', '!=', 0)->groupBy('title');
+    }
+
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function author()
+    {
+        return $this->hasOne(Author::class, 'id', 'author_id');
+    }
+
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function publisher()
+    {
+        return $this->hasOne(Publisher::class, 'id', 'publisher_id');
+    }
 
     /**
      * @return Model|\Illuminate\Database\Eloquent\Relations\HasOneThrough|\Illuminate\Database\Query\Builder|mixed|object|null

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Helpers\Helper;
 use App\Helpers\Njuskalo;
+use App\Helpers\Xmlexport;
 use App\Helpers\Recaptcha;
 use App\Http\Controllers\Controller;
 use App\Imports\ProductImport;
@@ -186,6 +187,20 @@ class HomeController extends Controller
 
         return response()->view('front.layouts.partials.njuskalo', [
             'items' => $njuskalo->getItems()
+        ])->header('Content-Type', 'text/xml');
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function xmlexport(Request $request)
+    {
+        $xmlexport = new Xmlexport();
+
+        return response()->view('front.layouts.partials.xmlexport', [
+            'items' => $xmlexport->getItems()
         ])->header('Content-Type', 'text/xml');
     }
 
