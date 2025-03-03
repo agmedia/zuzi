@@ -71,7 +71,7 @@ class Gls
                 $name = $prod['name'];
             }
 
-            $items = [
+            $items[] = [
                 "id" => strval($id),
                 "name" => $name,
                 "value" => number_format((float) $total, 2, '.', ''),
