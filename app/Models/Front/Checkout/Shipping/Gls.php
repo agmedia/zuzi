@@ -61,20 +61,27 @@ class Gls
             }
 
             // Prepare items array based on the number of vouchers
-            $items = [];
+
+            $total = 0;
+            $id = 0;
+            $name = '';
             foreach ($this->order->products as $prod) {
-                $items[] = [
-                    "id" => strval($prod['product_id']),
-                    "name" => $prod['name'],
-                    "value" => number_format((float)  $prod['total'], 2, '.', ''),
-                    "weight" => 0,
-                    "compartmentSize" => 1
-                ];
+                $total += $prod['total'];
+                $id = $prod['product_id'];
+                $name = $prod['name'];
             }
 
+            $items = [
+                "id" => strval($id),
+                "name" => $name,
+                "value" => number_format((float) $total, 2, '.', ''),
+                "weight" => 0,
+                "compartmentSize" => 1
+            ];
 
 
-           $items =  json_encode($items, true);
+
+            $items =  json_encode($items, true);
 
 
 

@@ -23,7 +23,7 @@
             <binding>{{ $item['binding'] }}</binding>
             <year>{{ $item['year'] }}</year>
             <status>{{ $item['status'] }}</status>
-            <description>{{ $item['description'] }}</description>
+            <description><![CDATA[{{ $item['description'] }}]]></description>
             <webshopLink>{{ url($item['slug']) }}</webshopLink>
             @foreach ($item['cat'] as $cat)
             <category>{{ $cat['title'] }}</category>
