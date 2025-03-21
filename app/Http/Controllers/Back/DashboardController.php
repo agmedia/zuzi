@@ -282,7 +282,7 @@ class DashboardController extends Controller
      */
     public function slugs()
     {
-        $slugs = Product::query()->groupBy('slug')->havingRaw('COUNT(id) > 1')->pluck('slug', 'id')->toArray();
+        /*$slugs = Product::query()->groupBy('slug')->havingRaw('COUNT(id) > 1')->pluck('slug', 'id')->toArray();
 
         foreach ($slugs as $slug) {
             $products = Product::where('slug', $slug)->get();
@@ -295,6 +295,22 @@ class DashboardController extends Controller
                         'url' => $product->url . '-' . $time,
                     ]);
                 }
+            }
+        }*/
+
+        $products = Product::query()->whereNull('slug')->orWhere('slug', '=', '')->get();
+
+        foreach ($products as $product) {
+            $updated = $product->update([
+                'slug' => Str::slug($product->name) . '-' . time(),
+            ]);
+
+            if ($updated) {
+                $fp = \App\Models\Front\Catalog\Product::query()->find($product->id);
+
+                $product->update([
+                    'url' => ProductHelper::url($product, $fp->category(), $fp->subcategory()),
+                ]);
             }
         }
 
