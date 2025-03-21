@@ -272,7 +272,7 @@ class Product extends Model
             $slug = $this->resolveSlug();
         } else {
             $this->old_product = $this->setHistoryProduct();
-            $slug              = $this->request->slug;
+            $slug              = $this->request->slug ?: Str::slug($this->request->name);
         }
 
         $response = [
