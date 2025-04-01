@@ -407,7 +407,7 @@ class Action extends Model
         $products = Product::query();
 
         if ($target != 'all') {
-            $products->whereIn('id', $target);
+            $products->whereIn('id', $target->pluck('id'));
         }
 
         if ($this->request->min) {
