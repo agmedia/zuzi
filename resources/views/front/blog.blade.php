@@ -1,45 +1,67 @@
 @extends('front.layouts.app')
 @if(isset($blogs))
-        @section ( 'title', 'Blog - Zuzi Shop' )
-        @section ( 'description', 'Medijske objave, članci i obavijesti -  Zuzi Shop' )
+    @section ( 'title', 'Blog - Zuzi Shop' )
+    @section ( 'description', 'Medijske objave, članci i obavijesti -  Zuzi Shop' )
 @else
     @section ( 'title', $blog->title. ' - Zuzi Shop' )
 @section ( 'description', $blog->meta_description )
+
+    @push('meta_tags')
+
+
+
+
+        <link rel="canonical" href="{{ route('catalog.route.blog', ['blog' => $blog]) }}" />
+        <meta property="og:locale" content="hr_HR" />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content="{{ $blog->title }}" />
+        <meta property="og:description" content="{{ $blog->meta_description  }}" />
+        <meta property="og:url" content="{{ route('catalog.route.blog', ['blog' => $blog]) }}"  />
+        <meta property="og:site_name" content="ZUZI SHOP" />
+        <meta property="og:updated_time" content="{{ $blog->updated_at  }}" />
+        <meta property="og:image" content="{{ asset($blog->image) }}" />
+        <meta property="og:image:secure_url" content="{{ asset($blog->image) }}" />
+        <meta property="og:image:width" content="640" />
+        <meta property="og:image:height" content="480" />
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:image:alt" content="{{ asset($blog->image) }}" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="{{ $blog->title }}" />
+        <meta name="twitter:description" content="{{ $blog->meta_description }}" />
+        <meta name="twitter:image" content="{{ asset($blog->image) }}" />
+
+    @endpush
 
 @endif
 
 @section('content')
 
-    <!-- Page Title-->
-    <div class=" bg-dark pt-4 pb-3" style="background-image: url({{ config('settings.images_domain') . 'media/img/indexslika.jpg' }});-webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover;background-size: cover;">
-        <div class="container d-lg-block justify-content-end py-2 py-lg-3">
-            <div class="order-lg-2 mb-3 mb-lg-0 pb-lg-2">
+    <nav class="mb-4" aria-label="breadcrumb">
+        <ol class="breadcrumb flex-lg-nowrap">
+            <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
+            <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('catalog.route.blog') }}"><i class="ci-home"></i>Blog</a></li>
+        </ol>
+    </nav>
 
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
-                                <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
-                                <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('catalog.route.blog') }}"><i class="ci-home"></i>Blog</a></li>
 
-                                <li class="breadcrumb-item text-nowrap active" aria-current="page">Iz medija</li>
-                            </ol>
-                        </nav>
+    <section class="d-md-flex justify-content-between align-items-center mb-4 pb-2">
 
-            </div>
-            <div class="order-lg-1 pe-lg-4 text-center text-lg-start">
-                @if(isset($blogs))
-            <h1 class="text-light">Blog</h1>
-                @else
-                    <h1 class="text-light">{{ $blog->title }}</h1>
-                @endif
-        </div>
-        </div>
-    </div>
+
+        @if(isset($blogs))
+            <h1 class="h2 mb-3 mb-md-0 me-3">Blog</h1>
+        @else
+            <h1 class="h2 mb-3 mb-md-0 me-3">{{ $blog->title }}</h1>
+        @endif
+
+    </section>
+
+
 
     @if(isset($blogs))
 
-    <div class="container pb-5 mb-2 mb-md-4">
+    <div class=" pb-5 mb-2 mb-md-4">
 
-        <div class="pt-5 mt-md-2">
+
             <!-- Entries grid-->
             <div class="masonry-grid" data-columns="3">
                 @foreach ($blogs as $blog)
@@ -61,26 +83,23 @@
 
             </div>
 
-        </div>
+
 
     </div>
     @else
-        <div class="container pb-5">
-            <div class="row justify-content-center pt-5 mt-md-2">
-                <div class="col-lg-9">
+        <div class="mt-2 mb-5 fs-md" style="max-width:1240px">
                     <!-- Post meta-->
                     <!-- Gallery-->
                     <div class="gallery row pb-2">
-                        <div class="col-sm-12"><a class="gallery-item rounded-3 mb-grid-gutter" href="{{ asset($blog->image) }}" data-bs-sub-html="&lt;h6 class=&quot;fs-sm text-light&quot;&gt;Gallery image caption #1&lt;/h6&gt;"><img src="{{ asset($blog->image) }}" alt="Gallery image"><span class="gallery-item-caption">{{ $blog->title }}</span></a></div>
+                        <div class="col-sm-12 mb-2"><img src="{{ asset($blog->image) }}" alt="Gallery image"></div>
 
                     </div>
                     <!-- Post content-->
 
                     {!! $blog->description !!}
 
-                </div>
-            </div>
         </div>
+
 
     @endif
 

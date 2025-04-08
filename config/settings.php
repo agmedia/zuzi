@@ -17,7 +17,7 @@ return [
     'free_shipping' => 70,
 
     'pagination' => [
-        'front' => 32,
+        'front' => 30,
         'back'  => 30
     ],
 
@@ -29,6 +29,7 @@ return [
     'unknown_author'    => 3282,
     'unknown_publisher' => 376,
     'images_domain'     =>  env('APP_IMAGE_DOMAIN'),
+    'script_domain'     =>  env('APP_URL'),
     'default_tax_id'       => 1,
     'eur_divide_amount' => 0.13272280,
 

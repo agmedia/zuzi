@@ -1,5 +1,5 @@
 <div>
-    <div class="steps steps-light pt-2 pb-3 mb-5">
+    <div class="steps steps-light pt-2 pb-3 mb-0">
         <a class="step-item active" href="{{ route('kosarica') }}">
             <div class="step-progress"><span class="step-count">1</span></div>
             <div class="step-label"><i class="ci-cart"></i>Košarica</div>
@@ -67,6 +67,8 @@
     @endif
 
     @if ($step == 'podaci')
+
+        <div class="card p-3">
         <h2 class="h6 pt-1 pb-3 mb-3 border-bottom">Adresa dostave</h2>
 
         @if (session()->has('login_success'))
@@ -199,8 +201,8 @@
             </div>
         </div>
 
-        <h2 class="h6 pt-1 pb-3 mb-3 border-bottom">Trebate R1 račun?</h2>
-        <div class="row mt-3">
+        <h2 class="h6 pt-2 pb-3 mb-3 border-bottom">Trebate R1 račun?</h2>
+        <div class="row mt-0">
             <div class="col-sm-6">
                 <div class="mb-3">
                     <label class="form-label" for="checkout-company">Tvrtka</label>
@@ -216,16 +218,18 @@
                 </div>
             </div>
         </div>
-
+        </div>
         <div class="d-flex pt-4 mt-3">
             <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100" href="{{ route('kosarica') }}"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na košaricu</span><span class="d-inline d-sm-none">Povratak</span></a></div>
             <div class="w-50 ps-2"><a class="btn btn-primary d-block w-100" wire:click="changeStep('dostava')" href="javascript:void(0);"><span class="d-none d-sm-inline">Na odabir dostave</span><span class="d-inline d-sm-none">Nastavi</span><i class="ci-arrow-right mt-sm-0 ms-1"></i></a></div>
         </div>
 
+
     @endif
 
 
     @if ($step == 'dostava')
+        <div class="card p-3">
         <h2 class="h6 pt-1 pb-3 mb-3 ">Odaberite način dostave</h2>
         <div class="table-responsive">
             <table class="table table-hover fs-sm border-top">
@@ -294,7 +298,7 @@
 
             </table>
         </div>
-
+        </div>
 
         @error('shipping') <small class="text-danger">Način dostave je obvezan</small> @enderror
         <div class=" d-flex pt-4 mt-3">
@@ -305,6 +309,7 @@
 
 
     @if ($step == 'placanje')
+        <div class="card p-3">
         <h2 class="h6 pt-1 pb-3 mb-3 ">Odaberite način plaćanja</h2>
         <div class="table-responsive">
             <table class="table table-hover fs-sm border-top">
@@ -322,6 +327,7 @@
                 @endforeach
                 </tbody>
             </table>
+        </div>
         </div>
         @error('payment') <small class="text-danger">Način plaćanja je obvezan</small> @enderror
         <div class=" d-flex pt-4 mt-3">

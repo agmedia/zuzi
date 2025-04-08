@@ -2832,51 +2832,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2946,11 +2901,11 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     this.checkQuery(this.$route);
     this.checkCategory();
     this.getCategories();
-    if (this.author) {
+    if (this.author == '') {
       this.show_authors = true;
       this.getAuthors();
     }
-    if (this.publisher) {
+    if (this.publisher == '') {
       this.show_publishers = true;
       this.getPublishers();
     }
@@ -2958,8 +2913,8 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
   },
   methods: {
     /**
-    *
-    **/
+     *
+     **/
     getCategories: function getCategories() {
       var _this = this;
       var params = this.setParams();
@@ -3126,6 +3081,10 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
           this.selectedPublishers = [this.nakladnik];
         }
       }
+      console.log(location);
+      console.log(this.category);
+      console.log(this.subcategory);
+      console.log(this);
     },
     /**
      *
@@ -6377,10 +6336,7 @@ var render = function() {
       _vm.show_buttons
         ? _c(
             "div",
-            {
-              staticClass:
-                "d-block pt-3 pb-4 pb-sm-5 mt-1 text-center text-sm-start"
-            },
+            { staticClass: "d-block pt-3 pb-3 mt-1 text-center text-sm-start" },
             [
               _c(
                 "a",
@@ -6441,8 +6397,8 @@ var render = function() {
           {
             staticClass: " rounded-3  p-4",
             staticStyle: {
-              border: "2px dashed #e3e9ef",
-              "background-color": "#f6f9fc !important"
+              border: "1px dashed #e3e9ef",
+              "background-color": "#fff !important"
             }
           },
           [
@@ -6495,8 +6451,8 @@ var render = function() {
           {
             staticClass: "rounded-3 p-4 ms-lg-auto",
             staticStyle: {
-              border: "2px dashed #e3e9ef",
-              "background-color": "#f6f9fc !important"
+              border: "1px dashed #e3e9ef",
+              "background-color": "#fff !important"
             }
           },
           [
@@ -6727,8 +6683,8 @@ var render = function() {
           {
             staticClass: "rounded-3 p-4 ms-lg-auto",
             staticStyle: {
-              border: "2px dashed #e3e9ef",
-              "background-color": "#f6f9fc !important"
+              border: "1px dashed #e3e9ef",
+              "background-color": "#fff !important"
             }
           },
           [
@@ -6872,8 +6828,8 @@ var render = function() {
           {
             staticClass: "rounded-3 p-4 mt-3",
             staticStyle: {
-              border: "2px dashed #e3e9ef",
-              "background-color": "#f6f9fc !important"
+              border: "1px dashed #e3e9ef",
+              "background-color": "#fff !important"
             }
           },
           [
@@ -6962,400 +6918,386 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("aside", { staticClass: "col-lg-auto" }, [
-    _c(
-      "div",
-      {
-        staticClass:
-          "offcanvas offcanvas-collapse bg-dark w-100 rounded-3 shadow-lg py-1 pt-0",
-        staticStyle: { "min-width": "22rem" },
-        attrs: { id: "shop-sidebar" }
-      },
-      [
-        _c(
-          "div",
-          {
-            staticClass: "offcanvas-cap bg-white align-items-center shadow-sm"
-          },
-          [
-            _c("h2", { staticClass: "h3 mb-0 text-primary" }, [
-              _vm._v("Filtriraj")
-            ]),
-            _vm._v(" "),
-            _c("button", {
-              staticClass: "btn-close ms-auto",
-              attrs: {
-                type: "button",
-                "data-bs-dismiss": "offcanvas",
-                "aria-label": "Close"
-              },
-              on: { click: _vm.closeWindow }
-            })
-          ]
-        ),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "offcanvas-body py-grid-gutter px-lg-grid-gutter" },
-          [
-            _vm.categories
-              ? _c(
+  return _c(
+    "div",
+    {
+      staticClass: "sidebar-nav tab-pane fade show active",
+      attrs: { id: "categories", role: "tabpanel" }
+    },
+    [
+      _vm.categories
+        ? _c("div", { staticClass: "widget widget-categories" }, [
+            _c(
+              "div",
+              { staticClass: "accordion", attrs: { id: "shop-categories" } },
+              _vm._l(_vm.categories, function(cat) {
+                return _c(
                   "div",
-                  { staticClass: "widget widget-categories mb-2 pb-2 " },
+                  { staticClass: "accordion-item border-bottom" },
                   [
-                    _c("h3", { staticClass: "widget-title text-white" }, [
-                      _vm._v("Kategorije")
-                    ]),
+                    _vm.category && _vm.category.id == cat.id
+                      ? _c(
+                          "h3",
+                          {
+                            staticClass:
+                              "accordion-header px-grid-gutter bg-default"
+                          },
+                          [
+                            cat.subs
+                              ? _c(
+                                  "button",
+                                  {
+                                    staticClass:
+                                      "accordion-button collapsed py-3",
+                                    attrs: {
+                                      type: "button",
+                                      "data-bs-toggle": "collapse",
+                                      "data-bs-target": "#id" + cat.id,
+                                      "aria-expanded": "false",
+                                      "aria-controls": "id" + cat.id
+                                    }
+                                  },
+                                  [
+                                    _c(
+                                      "span",
+                                      {
+                                        staticClass: "d-flex align-items-center"
+                                      },
+                                      [_vm._v(_vm._s(cat.title) + " ")]
+                                    )
+                                  ]
+                                )
+                              : _vm._e(),
+                            _vm._v(" "),
+                            !cat.subs
+                              ? _c(
+                                  "a",
+                                  {
+                                    staticClass:
+                                      "nav-link-style d-block fs-md  py-3",
+                                    class: {
+                                      active: _vm.category.id == cat.id
+                                    },
+                                    attrs: { href: cat.url, role: "link" }
+                                  },
+                                  [
+                                    _c(
+                                      "span",
+                                      {
+                                        staticClass: "d-flex align-items-center"
+                                      },
+                                      [
+                                        _c("span", {
+                                          domProps: {
+                                            innerHTML: _vm._s(cat.icon)
+                                          }
+                                        }),
+                                        _vm._v(" " + _vm._s(cat.title) + " ")
+                                      ]
+                                    )
+                                  ]
+                                )
+                              : _vm._e()
+                          ]
+                        )
+                      : _c(
+                          "h3",
+                          { staticClass: "accordion-header px-grid-gutter" },
+                          [
+                            cat.subs
+                              ? _c(
+                                  "button",
+                                  {
+                                    staticClass:
+                                      "accordion-button collapsed py-3",
+                                    attrs: {
+                                      type: "button",
+                                      "data-bs-toggle": "collapse",
+                                      "data-bs-target": "#id" + cat.id,
+                                      "aria-expanded": "false",
+                                      "aria-controls": "id" + cat.id
+                                    }
+                                  },
+                                  [
+                                    _c(
+                                      "span",
+                                      {
+                                        staticClass: "d-flex align-items-center"
+                                      },
+                                      [_vm._v(_vm._s(cat.title) + " ")]
+                                    )
+                                  ]
+                                )
+                              : _vm._e(),
+                            _vm._v(" "),
+                            !cat.subs
+                              ? _c(
+                                  "a",
+                                  {
+                                    staticClass:
+                                      "nav-link-style d-block fs-md  py-3",
+                                    attrs: { href: cat.url, role: "link" }
+                                  },
+                                  [
+                                    _c(
+                                      "span",
+                                      {
+                                        staticClass: "d-flex align-items-center"
+                                      },
+                                      [
+                                        _c("span", {
+                                          domProps: {
+                                            innerHTML: _vm._s(cat.icon)
+                                          }
+                                        }),
+                                        _vm._v(" " + _vm._s(cat.title))
+                                      ]
+                                    )
+                                  ]
+                                )
+                              : _vm._e()
+                          ]
+                        ),
                     _vm._v(" "),
-                    _c(
-                      "div",
-                      {
-                        staticClass: "accordion mt-n1",
-                        attrs: { id: "shop-categories" }
-                      },
-                      _vm._l(_vm.categories, function(cat) {
-                        return _c("div", { staticClass: "accordion-item " }, [
-                          _vm.category && _vm.category.id == cat.id
-                            ? _c("h3", { staticClass: "accordion-header" }, [
-                                cat.subs
-                                  ? _c(
-                                      "a",
-                                      {
-                                        staticClass:
-                                          "accordion-button py-1 none",
-                                        attrs: {
-                                          href: cat.url,
-                                          "data-bs-toggle": "collapse",
-                                          "data-bs-target": "#id" + cat.id,
-                                          "aria-expanded": "true",
-                                          "aria-controls": "id" + cat.id,
-                                          role: "link"
-                                        }
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                " +
-                                            _vm._s(cat.title) +
-                                            "   "
-                                        ),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass:
-                                              "badge bg-dark ms-2 position-absolute end-0 fw-bold"
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                Number(
-                                                  cat.count
-                                                ).toLocaleString("hr-HR")
-                                              )
-                                            )
-                                          ]
-                                        )
-                                      ]
-                                    )
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                !cat.subs
-                                  ? _c(
-                                      "a",
-                                      {
-                                        staticClass:
-                                          "accordion-button py-1 none collapsed  ",
-                                        attrs: { href: cat.url, role: "link" }
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                " +
-                                            _vm._s(cat.title) +
-                                            "  "
-                                        ),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass:
-                                              "badge bg-dark ms-2 position-absolute end-0 fw-bold"
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                Number(
-                                                  cat.count
-                                                ).toLocaleString("hr-HR")
-                                              )
-                                            )
-                                          ]
-                                        )
-                                      ]
-                                    )
-                                  : _vm._e()
-                              ])
-                            : _c("h3", { staticClass: "accordion-header" }, [
-                                cat.subs
-                                  ? _c(
-                                      "a",
-                                      {
-                                        staticClass:
-                                          "accordion-button py-1 none collapsed   ",
-                                        attrs: {
-                                          href: cat.url,
-                                          "data-bs-toggle": "collapse",
-                                          "data-bs-target": "#id" + cat.id,
-                                          "aria-expanded": "false",
-                                          "aria-controls": "id" + cat.id,
-                                          role: "link"
-                                        }
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                " +
-                                            _vm._s(cat.title) +
-                                            "   "
-                                        ),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass:
-                                              "badge bg-dark ms-2 position-absolute end-0 fw-bold"
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                Number(
-                                                  cat.count
-                                                ).toLocaleString("hr-HR")
-                                              )
-                                            )
-                                          ]
-                                        )
-                                      ]
-                                    )
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                !cat.subs
-                                  ? _c(
-                                      "a",
-                                      {
-                                        staticClass:
-                                          "accordion-button py-1 none collapsed  ",
-                                        attrs: { href: cat.url, role: "link" }
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                " +
-                                            _vm._s(cat.title) +
-                                            "  "
-                                        ),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass:
-                                              "badge bg-dark ms-2 position-absolute end-0 fw-bold"
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                Number(
-                                                  cat.count
-                                                ).toLocaleString("hr-HR")
-                                              )
-                                            )
-                                          ]
-                                        )
-                                      ]
-                                    )
-                                  : _vm._e()
-                              ]),
-                          _vm._v(" "),
-                          cat.subs && _vm.category && _vm.category.id == cat.id
-                            ? _c(
-                                "div",
-                                {
-                                  staticClass: "collapse show",
-                                  attrs: {
-                                    id: "id" + cat.id,
-                                    "data-bs-parent": "#shop-categories"
-                                  }
-                                },
-                                [
-                                  _c(
-                                    "div",
-                                    { staticClass: " pt-2 pb-2 pe-2" },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "widget widget-links" },
+                    cat.subs && _vm.category && _vm.category.id == cat.id
+                      ? _c(
+                          "div",
+                          {
+                            staticClass: "collapse show",
+                            attrs: {
+                              id: "id" + cat.id,
+                              "data-bs-parent": "#shop-categories"
+                            }
+                          },
+                          [
+                            _c(
+                              "div",
+                              { staticClass: "px-grid-gutter pt-1 pb-4" },
+                              [
+                                _c(
+                                  "div",
+                                  { staticClass: "widget widget-links" },
+                                  [
+                                    _vm._l(cat.subs, function(sub) {
+                                      return _c(
+                                        "ul",
+                                        { staticClass: "widget-list" },
                                         [
-                                          _vm._l(cat.subs, function(
-                                            subcategory
-                                          ) {
-                                            return _c(
-                                              "ul",
-                                              { staticClass: "widget-list" },
-                                              [
-                                                _c(
-                                                  "li",
-                                                  {
-                                                    staticClass:
-                                                      "widget-list-item"
-                                                  },
-                                                  [
-                                                    _c(
-                                                      "a",
-                                                      {
-                                                        staticClass:
-                                                          "widget-list-link",
-                                                        attrs: {
-                                                          href: subcategory.url
-                                                        }
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            subcategory.title
-                                                          ) + " "
-                                                        )
-                                                      ]
-                                                    )
-                                                  ]
-                                                )
-                                              ]
-                                            )
-                                          }),
-                                          _vm._v(" "),
                                           _c(
-                                            "ul",
-                                            { staticClass: "widget-list" },
+                                            "li",
+                                            {
+                                              staticClass:
+                                                "widget-list-item pb-1",
+                                              class: {
+                                                active:
+                                                  _vm.subcategory &&
+                                                  _vm.subcategory.id == sub.id
+                                              }
+                                            },
                                             [
                                               _c(
-                                                "li",
+                                                "a",
                                                 {
                                                   staticClass:
-                                                    "widget-list-item"
+                                                    "widget-list-link",
+                                                  attrs: { href: sub.url }
                                                 },
                                                 [
-                                                  _c(
-                                                    "a",
-                                                    {
-                                                      staticClass:
-                                                        "widget-list-link",
-                                                      attrs: { href: cat.url }
-                                                    },
-                                                    [_vm._v("Pogledajte sve")]
+                                                  _vm._v(
+                                                    _vm._s(sub.title) + " "
                                                   )
                                                 ]
                                               )
                                             ]
                                           )
-                                        ],
-                                        2
+                                        ]
                                       )
-                                    ]
-                                  )
-                                ]
-                              )
-                            : _c(
-                                "div",
-                                {
-                                  staticClass: "collapse ",
-                                  attrs: {
-                                    id: "id" + cat.id,
-                                    "data-bs-parent": "#shop-categories"
-                                  }
-                                },
-                                [
-                                  _c(
-                                    "div",
-                                    { staticClass: " pt-2 pb-2 pe-2" },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "widget widget-links" },
-                                        [
-                                          _vm._l(cat.subs, function(
-                                            subcategory
-                                          ) {
-                                            return _c(
-                                              "ul",
-                                              { staticClass: "widget-list" },
-                                              [
-                                                _c(
-                                                  "li",
-                                                  {
-                                                    staticClass:
-                                                      "widget-list-item"
-                                                  },
-                                                  [
-                                                    _c(
-                                                      "a",
-                                                      {
-                                                        staticClass:
-                                                          "widget-list-link",
-                                                        attrs: {
-                                                          href: subcategory.url
-                                                        }
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            subcategory.title
-                                                          ) + " "
-                                                        )
-                                                      ]
-                                                    )
-                                                  ]
-                                                )
-                                              ]
+                                    }),
+                                    _vm._v(" "),
+                                    _c(
+                                      "ul",
+                                      { staticClass: "widget-list mt-2" },
+                                      [
+                                        _c(
+                                          "li",
+                                          { staticClass: "widget-list-item" },
+                                          [
+                                            _c(
+                                              "a",
+                                              {
+                                                staticClass: "widget-list-link",
+                                                attrs: { href: cat.url }
+                                              },
+                                              [_vm._v("Pogledajte sve")]
                                             )
-                                          }),
-                                          _vm._v(" "),
+                                          ]
+                                        )
+                                      ]
+                                    )
+                                  ],
+                                  2
+                                )
+                              ]
+                            )
+                          ]
+                        )
+                      : _c(
+                          "div",
+                          {
+                            staticClass: "collapse",
+                            attrs: {
+                              id: "id" + cat.id,
+                              "data-bs-parent": "#shop-categories"
+                            }
+                          },
+                          [
+                            _c(
+                              "div",
+                              { staticClass: "px-grid-gutter pt-1 pb-4 " },
+                              [
+                                _c(
+                                  "div",
+                                  { staticClass: "widget widget-links" },
+                                  [
+                                    _vm._l(cat.subs, function(subcategory) {
+                                      return _c(
+                                        "ul",
+                                        { staticClass: "widget-list" },
+                                        [
                                           _c(
-                                            "ul",
-                                            { staticClass: "widget-list" },
+                                            "li",
+                                            {
+                                              staticClass:
+                                                "widget-list-item pb-1"
+                                            },
                                             [
                                               _c(
-                                                "li",
+                                                "a",
                                                 {
                                                   staticClass:
-                                                    "widget-list-item"
+                                                    "widget-list-link",
+                                                  attrs: {
+                                                    href: subcategory.url
+                                                  }
                                                 },
                                                 [
-                                                  _c(
-                                                    "a",
-                                                    {
-                                                      staticClass:
-                                                        "widget-list-link",
-                                                      attrs: { href: cat.url }
-                                                    },
-                                                    [_vm._v("Pogledajte sve")]
+                                                  _vm._v(
+                                                    _vm._s(subcategory.title) +
+                                                      " "
                                                   )
                                                 ]
                                               )
                                             ]
                                           )
-                                        ],
-                                        2
+                                        ]
                                       )
-                                    ]
-                                  )
-                                ]
-                              )
-                        ])
-                      }),
-                      0
-                    )
+                                    }),
+                                    _vm._v(" "),
+                                    _c(
+                                      "ul",
+                                      { staticClass: "widget-list mt-2" },
+                                      [
+                                        _c(
+                                          "li",
+                                          { staticClass: "widget-list-item" },
+                                          [
+                                            _c(
+                                              "a",
+                                              {
+                                                staticClass: "widget-list-link",
+                                                attrs: { href: cat.url }
+                                              },
+                                              [_vm._v("Pogledajte sve")]
+                                            )
+                                          ]
+                                        )
+                                      ]
+                                    )
+                                  ],
+                                  2
+                                )
+                              ]
+                            )
+                          ]
+                        )
                   ]
                 )
-              : _vm._e()
-          ]
-        )
-      ]
-    )
-  ])
+              }),
+              0
+            ),
+            _vm._v(" "),
+            _c("div", { staticClass: "accordion-item border-bottom" }, [
+              _c("h3", { staticClass: "accordion-header px-grid-gutter" }, [
+                _c(
+                  "a",
+                  {
+                    staticClass: "nav-link-style d-block fs-md  py-3",
+                    attrs: { href: _vm.origin + "autor" }
+                  },
+                  [_vm._m(0)]
+                )
+              ])
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "accordion-item border-bottom" }, [
+              _c("h3", { staticClass: "accordion-header px-grid-gutter" }, [
+                _c(
+                  "a",
+                  {
+                    staticClass: "nav-link-style d-block fs-md  py-3",
+                    attrs: { href: _vm.origin + "nakladnik" }
+                  },
+                  [_vm._m(1)]
+                )
+              ])
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "accordion-item border-bottom" }, [
+              _c("h3", { staticClass: "accordion-header px-grid-gutter" }, [
+                _c(
+                  "a",
+                  {
+                    staticClass: "nav-link-style d-block fs-md  py-3",
+                    attrs: { href: _vm.origin + "blog" }
+                  },
+                  [_vm._m(2)]
+                )
+              ])
+            ])
+          ])
+        : _vm._e()
+    ]
+  )
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("span", { staticClass: "d-flex align-items-center" }, [
+      _c("i", { staticClass: "ci-add-user fs-lg mt-n1 me-2" }),
+      _vm._v("Autori")
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("span", { staticClass: "d-flex align-items-center" }, [
+      _c("i", { staticClass: "ci-edit  fs-lg mt-n1 me-2" }),
+      _vm._v("Izdavači")
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("span", { staticClass: "d-flex align-items-center" }, [
+      _c("i", { staticClass: "ci-list  fs-lg mt-n1 me-2" }),
+      _vm._v("Blog")
+    ])
+  }
+]
 render._withStripped = true
 
 
@@ -7675,14 +7617,14 @@ var render = function() {
       _vm.products.total
         ? _c(
             "div",
-            { staticClass: "row mx-n2 mb-3" },
+            {
+              staticClass:
+                " row row-cols-2 row-cols-sm-3 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 row-cols-xxxl-6 mb-3 px-2"
+            },
             _vm._l(_vm.products.data, function(product) {
               return _c(
                 "div",
-                {
-                  staticClass:
-                    "col-md-3 col-6 px-2 mb-4 d-flex align-items-stretch"
-                },
+                { staticClass: "col px-2 mb-4 d-flex align-items-stretch " },
                 [
                   _c("div", { staticClass: "card product-card shadow pb-2" }, [
                     product.special
@@ -7710,7 +7652,8 @@ var render = function() {
                     _c(
                       "a",
                       {
-                        staticClass: "card-img-top d-block overflow-hidden",
+                        staticClass:
+                          "card-img-top d-block overflow-hidden text-center",
                         attrs: { href: _vm.origin + product.url }
                       },
                       [
@@ -7741,7 +7684,7 @@ var render = function() {
                       _vm._v(" "),
                       _c("div", { staticClass: "product-price" }, [
                         product.special
-                          ? _c("span", { staticClass: "text-muted" }, [
+                          ? _c("span", { staticClass: "text-muted p-0" }, [
                               _c("small", [
                                 _vm._v(
                                   "NC 30 dana: " +

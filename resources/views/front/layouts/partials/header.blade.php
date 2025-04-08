@@ -1,61 +1,103 @@
-<header class="bg-light shadow-sm navbar-sticky" style="background-color: #f2f5fc;">
-    <div class="navbar navbar-expand-lg navbar-light">
-        <div class="container"><a class="navbar-brand d-none d-sm-block flex-shrink-0 me-4 order-lg-1 p-0" href="{{ route('index') }}"><img src="{{ asset('media/img/zuzi-logo.webp') }}" width="110"  alt="Web shop | ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop"></a><a class="navbar-brand d-sm-none me-0 order-lg-1 p-0" href="{{ route('index') }}"><img src="{{ asset('media/img/zuzi-logo.webp') }}" width="70" alt="Žuži Shop"></a>
-
-            <!-- Toolbar -->
-            <div class="navbar-toolbar d-flex align-items-center order-lg-3">
-                @if (isset($group) && $group && ! isset($prod))
-                    <button class="navbar-toggler" type="button" data-bs-target="#shop-sidebar" data-bs-toggle="collapse" aria-expanded="false"><i class="ci-filter-alt"></i></button>
-                @endif
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"><span class="navbar-toggler-icon"></span></button>
-                <a class="navbar-tool d-none d-lg-flex" href="javascript:void(0)" data-bs-toggle="collapse" data-bs-target="#searchBox" role="button" aria-expanded="false" aria-controls="searchBox"><span class="navbar-tool-tooltip">Pretraži</span>
-                    <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-search"></i></div>
-                </a>
-                <a class="navbar-tool ms-12" href="{{ route('login') }}" ><span class="navbar-tool-tooltip">Korisnički račun</span>
-                    <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-user-circle"></i></div>
-                </a>
-                <div style="width:46px">
-                    <cart-nav-icon carturl="{{ route('kosarica') }}" checkouturl="{{ route('naplata') }}"></cart-nav-icon>
+<!-- Navbar-->
+<header class="bg-dark shadow-sm fixed-top" data-fixed-element>
+    <div class="navbar navbar-expand-lg navbar-dark py-0">
+        <div class="container-fluid">
+            <a class="navbar-brand d-none d-md-block me-1 flex-shrink-0 py-0" href="{{ route('index') }}">
+                <div class="logo-bg" style="background-color:#fff;margin-left:-30px; padding: 0 0 0 30px; ">
+                    <img src="{{ asset('media/img/zuzi-logo.webp') }}" width="90"  alt="Web shop | ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop">
+                    <span class="arrow"></span>
                 </div>
-            </div>
+            </a>
+            <a class="navbar-brand pt-0 pb-0 d-md-none me-2" href="{{ route('index') }}">
+                <div class="logo-bg" style="background-color:#fff;margin-left:-30px; padding: 0 0 0 30px; ">
+                <img src="{{ asset('media/img/zuzi-logo.webp') }}" width="60" alt="Žuži Shop">
+                <span class="arrow"></span>
+                </div>
+            </a>
+            <!-- Search-->
+            <form action="{{ route('pretrazi') }}" id="search-form-first" class="w-100 d-none d-lg-flex flex-nowrap mx-4" method="get">
+                <div class="input-group "><i class="ci-search position-absolute top-50 start-0 translate-middle-y ms-3"></i>
+                    <input class="form-control rounded-start w-100" type="text" name="{{ config('settings.search_keyword') }}" value="{{ request()->query('pojam') ?: '' }}" placeholder="Pretražite po nazivu ili autoru">
+                </div>
+            </form>
+            <!-- Toolbar-->
+            <div class="navbar-toolbar d-flex flex-shrink-0 align-items-center ms-xl-2">
+                <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" aria-label="Open the menu" data-bs-target="#sideNav"><span class="navbar-toggler-icon" aria-hidden="true"></span></button><a class="navbar-tool d-flex d-lg-none" href="#searchBox" data-bs-toggle="collapse" aria-label="Search" role="button" aria-expanded="false" aria-controls="searchBox"><span class="navbar-tool-tooltip">Pretraži</span>
+                    <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-search"></i></div></a>
 
-            <div class="collapse navbar-collapse me-auto mx-auto order-lg-2 justify-content-center" id="navbarCollapse">
-                <form action="{{ route('pretrazi') }}" id="search-form-mobile" method="get">
-                    <div class="input-group d-lg-none my-3"><i class="ci-search position-absolute top-50 start-0 translate-middle-y text-muted fs-base ms-3"></i>
-                        <input class="form-control rounded-start" type="text" name="{{ config('settings.search_keyword') }}" value="{{ request()->query('pojam') ?: '' }}" placeholder="Pretražite po nazivu ili autoru">
-                        <button type="submit" class="btn btn-primary btn-lg fs-base"><i class="ci-search"></i></button>
-                    </div>
-                </form>
+                @if(auth()->user())
+                    <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2" aria-label="My account" href="{{ route('login') }}" >
+                        <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-user"></i></div>
+                        <div class="navbar-tool-text ms-n3"><small>{{ auth()->user()->details->fname }} {{ auth()->user()->details->lname }}</small>Moj Račun</div>
+                    </a>
+                @else
+                    <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2" data-tab-id="pills-signin-tab" aria-label="Prijavi se" href="signin-tab"  role="button" data-bs-toggle="modal" data-bs-target="#signin-modal">
+                        <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-user"></i></div>
+                        <div class="navbar-tool-text ms-n3">Prijavi se</div>
+                    </a>
+                @endif
 
-                <!-- Navbar -->
-                <ul class="navbar-nav justify-content-centerpe-lg-2 me-lg-2">
-                    <li class="nav-item "><a class="nav-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true)]) }}"><span>Web shop</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.author') }}"><span>Autori</span></a>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/rijetke-knjige']) }}"><span>Rijetke knjige</span></a>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.actions') }}"><span>Akcije</span></a>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route', ['group' => \App\Helpers\Helper::categoryGroupPath(true) . '/outlet']) }}"><span>Outlet</span></a>
-
-                    <li class="nav-item"><a class="nav-link" href="{{ route('catalog.route.blog') }}"><span>Blog</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('kontakt') }}"><span>Kontakt</span></a></li>
-                </ul>
+                <cart-nav-icon carturl="{{ route('kosarica') }}" checkouturl="{{ route('naplata') }}"></cart-nav-icon>
 
             </div>
         </div>
     </div>
     <!-- Search collapse-->
-    <div class="search-box collapse" id="searchBox">
-        <div class="card bg-white pt-3 pb-3 border-0 rounded-0">
+    <div class="collapse" id="searchBox">
+        <div class="card pt-2 pb-4 border-0 rounded-0">
             <div class="container">
                 <form action="{{ route('pretrazi') }}" id="search-form" method="get">
-                    <div class="input-group">
-                        <input class="form-control rounded-start" type="text" name="{{ config('settings.search_keyword') }}" value="{{ request()->query('pojam') ?: '' }}" placeholder="Pretražite po nazivu ili autoru">
+                    <div class="input-group"><i class="ci-search position-absolute top-50 start-0 translate-middle-y ms-3"></i>
+                        <input class="form-control rounded-start" type="text" name="{{ config('settings.search_keyword') }}" value="{{ request()->query('pojam') ?: '' }}" placeholder="Pretražite proizvode">
                         <button type="submit" class="btn btn-primary btn-lg fs-base"><i class="ci-search"></i></button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <section class="spikesw"></section>
 </header>
 
+<!-- Sidebar menu-->
+<aside class="offcanvas offcanvas-expand w-100 border-end zindex-lg-5 pt-lg-5" id="sideNav" style="max-width: 18.875rem;">
 
+    <ul class="nav nav-tabs nav-justified mt-0 mt-lg-5 mb-0" role="tablist" >
+        <li class="nav-item"><a class="nav-link fw-medium active" href="#categories" data-bs-toggle="tab" role="tab">Kategorije</a></li>
+        <li class="nav-item"><a class="nav-link fw-medium" href="#menu" data-bs-toggle="tab" role="tab">Info</a></li>
+        <li class="nav-item d-lg-none"><a class="nav-link " href="#" data-bs-dismiss="offcanvas" aria-label="Close Navigation" role="tab"><i class="ci-close fs-xs me-2"></i></a></li>
+    </ul>
+    <div class="offcanvas-body px-0 pt-3 pb-0" data-simplebar>
+        <div class="tab-content">
+            <filter-view ids="{{ isset($ids) ? $ids : null }}"
+                         group="kategorija-proizvoda"
+                         cat="{{ isset($cat) ? $cat : null }}"
+                         subcat="{{ isset($subcat) ? $subcat : null }}"
+                         author="{{ isset($author) ? $author['slug'] : null }}"
+                         publisher="{{ isset($publisher) ? $publisher['slug'] : null }}">
+            </filter-view>
+            <!-- Menu-->
+            <div class="sidebar-nav tab-pane fade" id="menu" role="tabpanel">
+                <div class="widget widget-categories">
+                    <div class="accordion" id="shop-menu">
+                        <!-- Homepages-->
+                        @foreach ($uvjeti_kupnje->sortBy('title') as $page)
+                            <div class="accordion-item border-bottom">
+                                <h3 class="accordion-header px-grid-gutter"><a class="nav-link-style d-block fs-md  py-3" href="{{ route('catalog.route.page', ['page' => $page]) }}"><span class="d-flex align-items-center">{{ $page->title }}</span></a></h3>
+                            </div>
+                        @endforeach
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="offcanvas-footer d-block px-grid-gutter pt-4 pb-3 mb-2">
+
+
+       <a class="btn-social bs-outline bs-twitter me-2 mb-2" href="#"><i class="ci-twitter"></i></a><a class="btn-social bs-outline bs-facebook me-2 mb-2" href="#"><i class="ci-facebook"></i></a><a class="btn-social bs-outline bs-instagram me-2 mb-2" href="#"><i class="ci-instagram"></i></a><a class="btn-social bs-outline bs-youtube me-2 mb-2" href="#"><i class="ci-youtube"></i></a>
+
+
+
+
+
+    </div>
+</aside>

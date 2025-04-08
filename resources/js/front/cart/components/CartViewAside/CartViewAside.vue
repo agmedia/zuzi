@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class=" rounded-3  p-4" v-if="route == 'kosarica'" style="border: 2px dashed #e3e9ef;background-color: #f6f9fc !important;">
+        <div class=" rounded-3  p-4" v-if="route == 'kosarica'" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2" v-cloak>
                 <div class="text-center mb-2 pb-2">
                     <h2 class="h6 mb-3 pb-1">Ukupno</h2>
@@ -11,7 +11,7 @@
             </div>
         </div>
 
-        <div class="rounded-3 p-4 ms-lg-auto" v-if="route == 'naplata'" style="border: 2px dashed #e3e9ef;background-color: #f6f9fc !important;">
+        <div class="rounded-3 p-4 ms-lg-auto" v-if="route == 'naplata'" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2">
                 <div class="widget mb-3">
                     <h2 class="widget-title text-center mb-2">Sažetak narudžbe</h2>
@@ -41,7 +41,7 @@
             </div>
         </div>
 
-        <div class="rounded-3 p-4 ms-lg-auto" v-if="route == 'pregled'" style="border: 2px dashed #e3e9ef;background-color: #f6f9fc !important;">
+        <div class="rounded-3 p-4 ms-lg-auto" v-if="route == 'pregled'" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2">
                 <div class="widget mb-3">
                     <h2 class="widget-title text-center">Sažetak narudžbe</h2>
@@ -62,7 +62,7 @@
             </div>
         </div>
 
-        <div class="rounded-3 p-4 mt-3" v-if="route == 'kosarica' || route == 'naplata'" style="border: 2px dashed #e3e9ef;background-color: #f6f9fc !important;">
+        <div class="rounded-3 p-4 mt-3" v-if="route == 'kosarica' || route == 'naplata'" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2" v-cloak>
                 <div class="form-group">
 

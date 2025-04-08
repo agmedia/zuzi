@@ -37,7 +37,7 @@
             </div>
         </div>
 
-        <div class="d-block pt-3 pb-4 pb-sm-5 mt-1 text-center text-sm-start" v-if="show_buttons">
+        <div class="d-block pt-3 pb-3 mt-1 text-center text-sm-start" v-if="show_buttons">
             <a class="btn btn-outline-dark btn-sm ps-2" :href="continueurl"><i class="ci-arrow-left me-2"></i>Natrag na trgovinu</a>
         </div>
     </div>

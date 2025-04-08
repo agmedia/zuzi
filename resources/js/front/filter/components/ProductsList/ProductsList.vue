@@ -19,17 +19,17 @@
             <div class="d-flex pb-3"><span class="fs-sm text-dark btn btn-white btn-sm text-nowrap ms-2 d-none d-sm-block">Ukupno {{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }} artikala</span></div>
         </div>
         <!-- Products grid-->
-        <div class="row mx-n2 mb-3" v-if="products.total">
-            <div class="col-md-3 col-6 px-2 mb-4 d-flex align-items-stretch" v-for="product in products.data">
+        <div class=" row row-cols-2 row-cols-sm-3 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 row-cols-xxxl-6 mb-3 px-2" v-if="products.total">
+            <div class="col px-2 mb-4 d-flex align-items-stretch " v-for="product in products.data">
                 <div class="card product-card shadow pb-2">
                     <span class="badge rounded-pill bg-primary mt-1 ms-1 badge-shadow" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
-                       <a class="card-img-top d-block overflow-hidden" :href="origin + product.url">
+                       <a class="card-img-top d-block overflow-hidden text-center" :href="origin + product.url">
                            <img loading="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
                     </a>
                     <div class="card-body py-2">
                         <h3 class="product-title fs-sm mt-2 mb-1"><a :href="origin + product.url">{{ product.name }}</a></h3>
-                        <div class="product-price">
-                            <span class="text-muted"  v-if="product.special"><small>NC 30 dana: {{ product.main_price_text }} </small></span>
+                        <div class="product-price" >
+                            <span class="text-muted p-0" v-if="product.special" ><small >NC 30 dana: {{ product.main_price_text }} </small></span>
                         </div>
                         <div class="product-price">
                             <span class="text-primary" v-if="product.special">{{ product.main_special_text }}</span>

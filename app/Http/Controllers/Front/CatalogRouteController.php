@@ -6,6 +6,7 @@ use App\Helpers\Breadcrumb;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Imports\ProductImport;
+use App\Models\Back\Settings\Settings;
 use App\Models\Front\Blog;
 use App\Models\Front\Page;
 use App\Models\Front\Faq;
@@ -64,10 +65,12 @@ class CatalogRouteController extends Controller
             $bc = new Breadcrumb();
             $crumbs = $bc->product($group, $cat, $subcat, $prod)->resolve();
             $bookscheme = $bc->productBookSchema($prod);
+            $shipping_methods = Settings::getList('shipping', 'list.%', true);
+            $payment_methods = Settings::getList('payment', 'list.%', true);
 
             $prod->kat = CategoryProducts::where('product_id', $prod->id)->where('category_id', 109)->first();
 
-            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme', 'gdl'));
+            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme','shipping_methods','payment_methods', 'gdl'));
         }
 
         // If only group...

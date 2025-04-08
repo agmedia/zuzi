@@ -36,7 +36,7 @@ class Xmlexport
 
         $products = Product::query()
             ->with('images', 'kat', 'subkat', 'publisher', 'author')
-            ->take(200)
+            ->take(1000)
             ->get();
 
 
@@ -47,7 +47,7 @@ class Xmlexport
             $this->response[] = [
                 'id' => $product->id,
                 'name' => $product->name,
-                'description' => $product->description,
+                'description' => preg_replace('/[[:cntrl:]]/', '', $product->description),
                 'cat' =>  $product->kat,
                 'subcat' =>  $product->subkat,
                 'author' =>  $product->author,

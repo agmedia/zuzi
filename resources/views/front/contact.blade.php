@@ -2,50 +2,50 @@
 
 @section('content')
 
-    <!-- Page Title (Light)-->
-    <div class=" bg-dark pt-4 pb-3" style="background-image: url({{ config('settings.images_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
-        <div class="container d-lg-flex justify-content-between py-2 py-lg-3">
-            <div class="order-lg-2 mb-3 mb-lg-0 pt-lg-2">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb breadcrumb-light flex-lg-nowrap justify-content-center justify-content-lg-start">
-                        <li class="breadcrumb-item"><a class="text-nowrap" href="/"><i class="ci-home"></i>Naslovnica</a></li>
-                        <li class="breadcrumb-item text-nowrap active" aria-current="page">Kontakt</li>
-                    </ol>
-                </nav>
-            </div>
-            <div class="order-lg-1 pe-lg-4 text-center text-lg-start">
-                <h1 class="h3 text-light mb-0">Kontaktirajte nas</h1>
-            </div>
-        </div>
-    </div>
 
-    <section class="spikesg" ></section>
+
+
+    <nav class="mb-4" aria-label="breadcrumb">
+        <ol class="breadcrumb flex-lg-nowrap">
+            <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
+            <li class="breadcrumb-item text-nowrap active" aria-current="page">Kontakt</li>
+        </ol>
+    </nav>
+
+
+    <section class="d-md-flex justify-content-between align-items-center mb-4 pb-2">
+        <h1 class="h2 mb-3 mb-md-0 me-3">Kontakt</h1>
+
+    </section>
+
+
+
     <!-- Contact detail cards-->
-    <section class="container pt-grid-gutter">
+    <section class=" pt-grid-gutter">
         <div class="row">
 
             @include('front.layouts.partials.success-session')
 
             <div class="col-12 col-sm-6 mb-5">
 
-                        <h3 class=" mb-2">Impressum</h3>
-                        <p>
+                <h3 class=" mb-2">Impressum</h3>
+                <p>
 
-                           <strong> ZUZI, obrt za uslužne djelatnosti, VL. MIRJANA VULIĆ ŠALDIĆ</strong></p>
+                    <strong> ZUZI, obrt za uslužne djelatnosti, VL. MIRJANA VULIĆ ŠALDIĆ</strong></p>
 
                 <p> Sjedište: Antuna Šoljana 33, 10000 Zagreb<br><br>
 
-                            OIB: 69101336685<br>
-                            MBO: 97981036<br>
-                            Broj obrtnice: 21011606742<br>
+                    OIB: 69101336685<br>
+                    MBO: 97981036<br>
+                    Broj obrtnice: 21011606742<br>
                     <br>
-                            IBAN: HR1624020061140345999<br>
-                            Banka: ERSTE & STEIERMÄRKISCHE BANK d.d. Rijeka<br>
-                            Swift: ESBCHR22<br><br>
+                    IBAN: HR1624020061140345999<br>
+                    Banka: ERSTE & STEIERMÄRKISCHE BANK d.d. Rijeka<br>
+                    Swift: ESBCHR22<br><br>
 
-                            IBAN: HR0623900011101297120<br>
-                            Banka: HRVATSKA POSTANSKA BANKA d.d. Zagreb<br>
-                            Swift: HPBZHR2X
+                    IBAN: HR0623900011101297120<br>
+                    Banka: HRVATSKA POSTANSKA BANKA d.d. Zagreb<br>
+                    Swift: HPBZHR2X
                 </p>
 
             </div>
@@ -85,10 +85,6 @@
         </div>
     </section>
 
-
-
-
-    <!-- Split section: Map + Contact form-->
     <div class="container-fluid px-0" id="map">
         <div class="row g-0">
             <div class="col-lg-12 iframe-full-height-wrap">
@@ -99,6 +95,11 @@
 
         </div>
     </div>
+
+
+
+
+
 
 @endsection
 
