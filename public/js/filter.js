@@ -2827,6 +2827,13 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -4231,6 +4238,7 @@ var render = function() {
                       }
                     ],
                     staticClass: "form-select pe-2",
+                    staticStyle: { "min-width": "165px" },
                     on: {
                       change: function($event) {
                         var $$selectedVal = Array.prototype.filter
@@ -4525,11 +4533,12 @@ var staticRenderFns = [
       _c(
         "a",
         {
-          staticClass: "btn btn-primary dropdown-toggle collapsed",
+          staticClass: "btn btn-primary dropdown-toggle ",
           attrs: {
             href: "#shop-sidebar",
-            "data-bs-toggle": "collapse",
-            "aria-expanded": "false"
+            "data-bs-toggle": "offcanvas",
+            "aria-label": "Open the menu",
+            "data-bs-target": "#sideNav"
           }
         },
         [_vm._v("Kategorije")]

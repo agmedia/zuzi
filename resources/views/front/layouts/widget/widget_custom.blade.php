@@ -8,9 +8,9 @@
                     <div class="d-xl-flex justify-content-between align-items-center px-4  mx-auto" style="max-width: 1226px;">
                         <div class=" py-sm-3 pb-0 me-xl-4 mx-auto mx-xl-0" style="max-width: 550px;">
 
-                            <h2 class="h3 text-primary font-title mb-1">{{ $widget['title'] }} </h2>
+                            <h2 class="h3 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h2>
 
-                            <p class="text-dark pb-1 fs-md">{{ $widget['subtitle'] }}</p>
+                            <p class="text-dark d-none d-sm-block fs-md">{{ $widget['subtitle'] }}</p>
                             <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2" href="{{ url($widget['url']) }}" role="button">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                         </div>
                         <div class="p-3"><img src="{{ $widget['image'] }}" alt="{{ $widget['title'] }}" width="350" height="350"></div>

@@ -8,10 +8,10 @@
                     <span class="arrow"></span>
                 </div>
             </a>
-            <a class="navbar-brand pt-0 pb-0 d-md-none me-2" href="{{ route('index') }}">
+            <a class="navbar-brand pt-0 pb-0 d-md-none me-0" href="{{ route('index') }}">
                 <div class="logo-bg" style="background-color:#fff;margin-left:-30px; padding: 0 0 0 30px; ">
-                <img src="{{ asset('media/img/zuzi-logo.webp') }}" width="60" alt="Žuži Shop">
-                <span class="arrow"></span>
+                <img src="{{ asset('media/img/zuzi-logo.webp') }}" width="55" alt="Žuži Shop">
+                <span class="arrow-mb"></span>
                 </div>
             </a>
             <!-- Search-->
@@ -85,6 +85,10 @@
                             </div>
                         @endforeach
 
+                        <div class="accordion-item border-bottom">
+                            <h3 class="accordion-header px-grid-gutter"><a class="nav-link-style d-block fs-md  py-3" href="{{ route('kontakt') }}"><span class="d-flex align-items-center">Kontaktirajte nas</span></a></h3>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -93,7 +97,7 @@
     <div class="offcanvas-footer d-block px-grid-gutter pt-4 pb-3 mb-2">
 
 
-       <a class="btn-social bs-outline bs-twitter me-2 mb-2" href="#"><i class="ci-twitter"></i></a><a class="btn-social bs-outline bs-facebook me-2 mb-2" href="#"><i class="ci-facebook"></i></a><a class="btn-social bs-outline bs-instagram me-2 mb-2" href="#"><i class="ci-instagram"></i></a><a class="btn-social bs-outline bs-youtube me-2 mb-2" href="#"><i class="ci-youtube"></i></a>
+     <a class="btn-social bs-light bg-primary bs-facebook me-2 mb-2" href="https://www.facebook.com/zuziobrt/"><i class="ci-facebook"></i></a><a class="btn-social bs-light bg-primary bs-instagram me-2 mb-2" href="https://www.instagram.com/zuziobrt/"><i class="ci-instagram"></i></a>
 
 
 

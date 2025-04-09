@@ -44,7 +44,7 @@
                       <div class="alert-icon">
                           <i class="ci-gift"></i>
                       </div>
-                      <small>Besplatna dostava za narudžbe iznad 70€</small>
+                      <small>Besplatna dostava za narudžbe > 70€</small>
                   </div>
               </div>
           </div>

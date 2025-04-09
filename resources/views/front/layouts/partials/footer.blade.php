@@ -23,7 +23,7 @@
         <div class="px-lg-5 pt-2 pb-4">
             <div class="mx-auto px-3" >
 
-                <div class="row pt-3 text-center">
+                <div class="row pt-3 ">
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
                         <div class="d-inline-flex align-items-center text-start"><i class="ci-truck text-primary" style="font-size: 3rem;"></i>
                             <div class="ps-3">
