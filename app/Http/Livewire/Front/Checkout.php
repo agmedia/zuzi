@@ -322,6 +322,8 @@ class Checkout extends Component
     public function selectHpPak(string $paketomat)
     {
         $this->comment = $paketomat;
+        CheckoutSession::setComment($this->comment);
+        
         $this->hp_paketomat = $paketomat;
         $this->search_hp_paketomat_results = [];
     }
