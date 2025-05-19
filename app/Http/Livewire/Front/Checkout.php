@@ -13,6 +13,7 @@ use App\Models\Front\Checkout\PaymentMethod;
 use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\TagManager;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
@@ -87,6 +88,10 @@ class Checkout extends Component
     public $comment = '';
     public $view_comment = false;
 
+    public $hp_paketomat = '';
+    public $view_hp_paketomat = false;
+    public $search_hp_paketomat_results = [];
+
 
     /**
      * @var string[]
@@ -141,6 +146,7 @@ class Checkout extends Component
 
         if (CheckoutSession::hasShipping()) {
             $this->shipping = CheckoutSession::getShipping();
+            $this->checkShipping($this->shipping);
         }
 
         if (CheckoutSession::hasPayment()) {
@@ -163,6 +169,22 @@ class Checkout extends Component
         $this->comment = $value;
 
         CheckoutSession::setComment($this->comment);
+    }
+
+
+    public function updatingHpPaketomat($value)
+    {
+        if (strlen($value) > 2) {
+            $api_url = 'https://facility-api.posta.hr/api/facility/getfacilities';
+            $call = Http::post($api_url, ['facilityType' => 'PAK', 'nextWeek' => 0, 'searchText' => $value]);
+
+            $this->search_hp_paketomat_results = $call->json()['paketomatInfoList'];
+
+        } else {
+            $this->search_hp_paketomat_results = [];
+        }
+
+        //dd($call->json(), $call->status(), $call);
     }
 
 
@@ -297,6 +319,16 @@ class Checkout extends Component
     }
 
 
+    public function selectHpPak(string $paketomat)
+    {
+        $this->comment = $paketomat;
+        CheckoutSession::setComment($this->comment);
+        
+        $this->hp_paketomat = $paketomat;
+        $this->search_hp_paketomat_results = [];
+    }
+
+
     /**
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
@@ -389,6 +421,12 @@ class Checkout extends Component
             $this->view_comment = true;
         } else {
             $this->view_comment = false;
+        }
+
+        if ($shipping == 'hp_paketomat') {
+            $this->view_hp_paketomat = true;
+        } else {
+            $this->view_hp_paketomat = false;
         }
     }
 

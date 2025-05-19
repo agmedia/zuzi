@@ -270,27 +270,42 @@
                         </td>
                     </tr>
 
-                    @if ($s_method->code == 'gls_eu' && $view_comment)
+                    @if ($s_method->code == 'hp_paketomat' && $view_hp_paketomat)
                         <tr>
                             <td colspan="4">
-                        <a href="javascript:;" class="boxnow-map-widget-button btn " style="color: #fff;padding: 10px 20px;margin-bottom: 15px;background-color: #6cd04e">Odaberite BOX NOW lokaciju</a>
+                                <input class="form-control mt-2" type="text" id="hp-paketomat"  wire:model.debounce.300ms="hp_paketomat" placeholder="Potražite HP Paketomat..." required>
+                                @if( ! empty($search_hp_paketomat_results))
+                                    <div class="autocomplete">
+                                        <div class="autocomplete-items">
+                                            @foreach($search_hp_paketomat_results as $item)
+                                                <a href="javascript:void(0)" wire:click="selectHpPak('{{ $item['code'] . ': ' . $item['city'] . ', ' . $item['zip'] . ', ' . $item['address'] . ', ' . $item['name'] }}')">
+                                                    {{ $item['city'] . ', ' . $item['zip'] . ', ' . $item['address'] . ', ' . $item['name'] }}
+                                                </a>
+                                                <br>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
 
-                        <div id="boxnowmap" style=""></div>
-
-                        <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
-
-                        @error('comment') <small class="text-danger">Obavezan odabir BoxNow paketomata </small> @enderror
+                                @error('comment') <small class="text-danger">Obavezan odabir BoxNow paketomata </small> @enderror
                             </td>
                         </tr>
 
                     @endif
 
+                    @if ($s_method->code == 'gls_eu' && $view_comment)
+                        <tr>
+                            <td colspan="4">
+                                <a href="javascript:;" class="boxnow-map-widget-button btn " style="color: #fff;padding: 10px 20px;margin-bottom: 15px;background-color: #6cd04e">Odaberite BOX NOW lokaciju</a>
 
+                                <div id="boxnowmap" style=""></div>
 
+                                <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
 
-
-
-
+                                @error('comment') <small class="text-danger">Obavezan odabir BoxNow paketomata </small> @enderror
+                            </td>
+                        </tr>
+                    @endif
 
 
                 @endforeach
