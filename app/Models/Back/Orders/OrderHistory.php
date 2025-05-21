@@ -51,7 +51,13 @@ class OrderHistory extends Model
     }
 
 
-    public static function store(int $order_id, Request $request = null)
+    /**
+     * @param int          $order_id
+     * @param Request|null $request
+     *
+     * @return bool
+     */
+    public static function store(int $order_id, Request $request = null): bool
     {
         $id = self::insertGetId([
             'order_id'   => $order_id,
