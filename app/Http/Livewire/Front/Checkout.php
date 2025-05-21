@@ -297,11 +297,11 @@ class Checkout extends Component
     public function selectShipping(string $shipping)
     {
         $this->shipping = $shipping;
-
         $this->checkShipping($shipping);
-
         CheckoutSession::setShipping($shipping);
-
+        if($shipping = 'gls_eu'){
+            CheckoutSession::setComment('');
+        }
         return redirect()->route('naplata', ['step' => 'dostava']);
     }
 
@@ -322,8 +322,8 @@ class Checkout extends Component
     public function selectHpPak(string $paketomat)
     {
         $this->comment = $paketomat;
-        CheckoutSession::setComment($this->comment);
-        
+         CheckoutSession::setComment($this->comment);
+
         $this->hp_paketomat = $paketomat;
         $this->search_hp_paketomat_results = [];
     }

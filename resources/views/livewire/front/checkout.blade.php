@@ -273,17 +273,17 @@
                     @if ($s_method->code == 'hp_paketomat' && $view_hp_paketomat)
                         <tr>
                             <td colspan="4">
-                                <input class="form-control mt-2" type="text" id="hp-paketomat"  wire:model.debounce.300ms="hp_paketomat" placeholder="Potražite HP Paketomat..." required>
+                                <input class="form-control mt-2" type="text" id="hp-paketomat"  wire:model.debounce.300ms="hp_paketomat" placeholder="Pretraži željeni poštanski broj" required>
                                 @if( ! empty($search_hp_paketomat_results))
                                     <div class="autocomplete">
-                                        <div class="autocomplete-items">
+                                        <ul class="autocomplete-items list-group">
                                             @foreach($search_hp_paketomat_results as $item)
-                                                <a href="javascript:void(0)" wire:click="selectHpPak('{{ $item['code'] . ': ' . $item['city'] . ', ' . $item['zip'] . ', ' . $item['address'] . ', ' . $item['name'] }}')">
+                                                <li class="list-group-item"> <a href="javascript:void(0)" wire:click="selectHpPak('{{ $item['code'] . ': ' . $item['city'] . ', ' . $item['zip'] . ', ' . $item['address'] . ', ' . $item['name'] }}')">
                                                     {{ $item['city'] . ', ' . $item['zip'] . ', ' . $item['address'] . ', ' . $item['name'] }}
-                                                </a>
-                                                <br>
+                                                    </a></li>
+
                                             @endforeach
-                                        </div>
+                                        </ul>
                                     </div>
                                 @endif
 
