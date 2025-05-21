@@ -14,9 +14,11 @@ use App\Models\Back\Orders\OrderHistory;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\Checkout\Shipping\Gls;
 use App\Models\Front\Checkout\Shipping\Glsstari;
+use App\Models\Front\Checkout\Shipping\HP;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -200,6 +202,7 @@ class OrderController extends Controller
         return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
     }
 
+
     /**
      * @param Request $request
      *
@@ -211,7 +214,7 @@ class OrderController extends Controller
 
         $order = Order::where('id', $request->input('order_id'))->first();
 
-        $gls = new Gls($order);
+        $gls   = new Gls($order);
         $label = $gls->resolve();
 
         $var = json_decode($label, true);
@@ -229,16 +232,48 @@ class OrderController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
+    public function api_send_hp_pak(Request $request)
+    {
+        $request->validate(['order_id' => 'required']);
+
+        $order         = new Order();
+        $request_order = $order->newQuery()->where('id', $request->input('order_id'))->first();
+
+        $hp = (new HP($request_order))->createShipmentOrder();
+
+        if ($hp->isSuccessfulResponse()) {
+            $comment = 'HP Paketomat je uspješno poslan sa ID: ' . $hp->getPackageBarcode();
+
+            try {
+                $order->storeHistory($request_order->id, $comment);
+                Storage::disk('public')->put($request_order->id . '-hppak.pdf', $hp->getPdfLabel());
+
+            } catch (\Exception $e) { Log::error($e->getMessage()); }
+
+            return response()->json(['message' => $comment]);
+        }
+
+        $comment = 'HP Paketomat - ' . $hp->getErrorMessage();
+
+        Log::error($comment);
+
+        return response()->json(['error' => 'Greška..! ' . $comment]);
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function api_send_glsstari(Request $request)
     {
         $request->validate(['order_id' => 'required']);
 
         $order = Order::where('id', $request->input('order_id'))->first();
 
-        $gls = new Glsstari($order);
+        $gls   = new Glsstari($order);
         $label = $gls->resolve();
-
-
 
         if (isset($label['ParcelIdList'])) {
             return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $label['ParcelIdList'][0]]);

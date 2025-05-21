@@ -403,4 +403,16 @@ class Order extends Model
         return $query->orderBy('created_at', 'desc');
     }
 
+
+    /**
+     * @param int    $order_id
+     * @param string $comment
+     *
+     * @return bool
+     */
+    public function storeHistory(int $order_id, string $comment, int $status = 1): bool
+    {
+        return OrderHistory::store($order_id, new Request(['comment' => $comment, 'status' => $status]));
+    }
+
 }
