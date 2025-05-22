@@ -32,6 +32,7 @@
                         </div>
                         <div class="block-content">
                             <a href="{{ route('roles.set') }}" class="btn btn-hero-sm btn-rounded btn-hero-secondary mb-3 mr-3">Set Roles</a>
+                            <a href="{{ route('ping.hp') }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Ping HP</a>
                             <a href="{{ route('slugs.revision') }}" class="btn btn-hero-sm btn-rounded btn-hero-secondary mb-3 mr-3">Rewrite Empty Slugs</a>
                             <br>
                            <a href="{{ route('import.initial') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Import LAguna</a>
