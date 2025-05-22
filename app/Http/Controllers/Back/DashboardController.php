@@ -202,13 +202,11 @@ class DashboardController extends Controller
 
     public function pingHP(Request $request)
     {
-        $order = Order::getLatest()->first();
+        $order = Order::query()->latest('created_at')->first();
 
         $hp = new HP($order);
 
         $res = $hp->pingHP();
-
-        Log::info($res);
 
         return redirect()->route('dashboard')->with(['success' => 'HP je pingiran... provjeri LOG fajl.']);
     }
