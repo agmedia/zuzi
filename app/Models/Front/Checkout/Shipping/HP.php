@@ -101,6 +101,8 @@ class HP
 
             $this->response = Http::withToken($token)->post($url, $post)->json();
 
+            Log::info($this->response);
+
         } catch (Exception $response) {
             echo $response->getMessage();
         }
@@ -192,6 +194,8 @@ class HP
                 'username' => $this->username[$this->env],
                 'password' => $this->password[$this->env],
             ]);
+            
+            Log::info($response);
 
             if ($response->successful()) {
                 return $response->json('accessToken');
