@@ -104,6 +104,30 @@ class HP
             Log::info($this->response);
 
         } catch (Exception $response) {
+            Log::info($response->getMessage());
+
+            echo $response->getMessage();
+        }
+
+        return $this;
+    }
+
+
+    /**
+     * @return $this
+     */
+    public function pingHP(): HP
+    {
+        $url = $this->url_api[$this->env] . '/api/ping';
+
+        try {
+            $response = Http::get($url);
+
+            Log::info($response);
+
+        } catch (Exception $response) {
+            Log::info($response->getMessage());
+
             echo $response->getMessage();
         }
 
@@ -194,7 +218,7 @@ class HP
                 'username' => $this->username[$this->env],
                 'password' => $this->password[$this->env],
             ]);
-            
+
             Log::info($response);
 
             if ($response->successful()) {
@@ -202,6 +226,8 @@ class HP
             }
 
         } catch (Exception $response) {
+            Log::info($response->getMessage());
+
             echo $response->getMessage();
         }
 

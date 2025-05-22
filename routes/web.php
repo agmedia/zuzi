@@ -55,6 +55,7 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::match(['get', 'post'], '/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('setRoles', [DashboardController::class, 'setRoles'])->name('roles.set');
+    Route::get('pingHP', [DashboardController::class, 'pingHP'])->name('ping.hp');
     Route::get('import', [DashboardController::class, 'import'])->name('import.initial');
     Route::get('mailing-test', [DashboardController::class, 'mailing'])->name('mailing.test');
     Route::get('letters', [DashboardController::class, 'letters'])->name('letters.import');
