@@ -165,7 +165,7 @@ class OrderController extends Controller
                     'order_status_id' => $request->input('status')
                 ]);
 
-                if (OrderHelper::isCanceled((int) $request->input('selected'))) {
+                if (OrderHelper::isCanceled((int) $request->input('status'))) {
                     ProductHelper::makeAvailable($request->input('order_id'));
                 }
 

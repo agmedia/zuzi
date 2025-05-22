@@ -173,6 +173,7 @@ class ProductHelper
 
         foreach ($ops as $op) {
             Product::query()->where('id', $op->product_id)->increment('quantity', $op->quantity);
+            Product::query()->where('id', $op->product_id)->update(['status' => 1]);
         }
 
         return true;
