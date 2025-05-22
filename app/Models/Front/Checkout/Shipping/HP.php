@@ -241,7 +241,7 @@ class HP
     private function getParcel(): array
     {
         $parcel = [
-            'client_reference_number' => $this->client_id[$this->env],
+            'client_reference_number' => $this->order->id,
             'service'                 => '26',
             'payed_by'                => 1,
             'delivery_type'           => 3,
