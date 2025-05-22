@@ -97,6 +97,8 @@ class HP
                 'return_address_label' => true
             ];
 
+            Log::info(json_encode($post));
+
             $this->response = Http::withToken($token)->post($url, $post)->json();
 
         } catch (Exception $response) {
