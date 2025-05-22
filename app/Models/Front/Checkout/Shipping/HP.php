@@ -2,6 +2,7 @@
 
 namespace App\Models\Front\Checkout\Shipping;
 
+use App\Models\Back\Orders\Order;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -64,7 +65,7 @@ class HP
      *
      * @param $order
      */
-    public function __construct($order)
+    public function __construct(Order $order)
     {
         $this->order = $order;
         $this->env = config('app.env');
@@ -132,6 +133,17 @@ class HP
         }
 
         return $this;
+    }
+
+
+    /**
+     * @return bool
+     */
+    public function setOrderLabelAsPrinted(): bool
+    {
+        return $this->order->update([
+            'printed' => 1
+        ]);
     }
 
 

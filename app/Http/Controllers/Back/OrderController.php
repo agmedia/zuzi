@@ -245,6 +245,7 @@ class OrderController extends Controller
             $comment = 'HP Paketomat je uspješno poslan sa ID: ' . $hp->getPackageBarcode();
 
             try {
+                $hp->setOrderLabelAsPrinted();
                 $order->storeHistory($request_order->id, $comment);
                 Storage::disk('public')->put($request_order->id . '-hppak.pdf', $hp->getPdfLabel());
 
