@@ -16,6 +16,8 @@
     </div>
     <!-- END Hero -->
 
+
+
     <!-- Page Content -->
     <div class="content">
         @include('back.layouts.partials.session')
@@ -52,6 +54,7 @@
                 </div>
             </div>
         @endif
+        @if( auth()->user()->id != '1716')
 
         <!-- Quick Overview -->
         <div class="row row-deck">
@@ -115,7 +118,7 @@
             </div>
         </div>
 
-
+        @endif
         <!-- Top Products and Latest Orders -->
         <div class="row">
             <div class="col-xl-6">

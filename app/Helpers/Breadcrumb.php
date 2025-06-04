@@ -116,6 +116,7 @@ class Breadcrumb
                 'offers' => [
                     '@type' => 'Offer',
                     'priceCurrency' => 'EUR',
+                    'priceValidUntil' => now()->endOfYear()->format('Y-m-d'),
                     'price' => ($prod->special()) ? $prod->special() : number_format($prod->price, 2, '.', ''),
                     'sku' => $prod->sku,
                     'availability' => ($prod->quantity) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'

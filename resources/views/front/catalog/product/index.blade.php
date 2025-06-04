@@ -151,6 +151,12 @@
            <span class=" fs-sm text-muted me-1"> *Najniža cijena u zadnjih 30 dana.</span>
        </div>
 
+                @if($prod->kat)
+
+
+                    <div class="d-flex row justify-content-between"><div class="col-md-12"><div role="alert" class="alert alert-info d-flex  mb-1 "><div class="alert-icon"><i class="ci-truck"></i></div> <small>Dostava za Regionalne naslove je 20 dana.</small></div></div></div>
+                    @endif
+
    @endif
             @if ( $prod->quantity > 0)
    <add-to-cart-btn id="{{ $prod->id }}" available="{{ $prod->quantity }}"></add-to-cart-btn>
