@@ -70,7 +70,7 @@ class GeoZone
     public function findState(string $state): \stdClass
     {
         foreach ($this->geo_zones as $geo_zone) {
-            if (collect($geo_zone->state)->search($state)) {
+            if (isset($geo_zone->state) && collect($geo_zone->state)->search($state)) {
                 return $geo_zone;
             }
         }
