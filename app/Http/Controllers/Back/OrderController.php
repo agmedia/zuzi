@@ -30,7 +30,7 @@ class OrderController extends Controller
      */
     public function index(Request $request, Order $order)
     {
-        $orders   = $order->filter($request)->paginate(config('settings.pagination.back'));
+        $orders   = $order->filter($request)->paginate(config('settings.pagination.back'))->appends(request()->query());
         $statuses = Settings::get('order', 'statuses');
 
         return view('back.order.index', compact('orders', 'statuses'));
