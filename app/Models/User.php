@@ -197,7 +197,7 @@ class User extends Authenticatable
             $has_points = Loyalty::hasLoyaltyTotal($this->request->user_id);
 
             if ($this->request->loyalty_points > $has_points) {
-                Loyalty::addPoints(($this->request->loyalty_points - $has_points), 0, 'admin', $this->request->user_id);
+                Loyalty::addPoints(($this->request->loyalty_points - $has_points), 0, 'admin', '', $this->request->user_id);
             }
             if ($this->request->loyalty_points < $has_points) {
                 Loyalty::removePoints(($has_points - $this->request->loyalty_points), 0, 'admin', $this->request->user_id);
