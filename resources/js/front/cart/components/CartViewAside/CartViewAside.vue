@@ -77,6 +77,29 @@
             </div>
         </div>
 
+        <div class="rounded-3 p-4 mt-3" v-if="has_loyalty && route == 'kosarica' || has_loyalty && route == 'naplata'" style="border: 1px solid #dae1e7;background-color: #fff !important;">
+            <div class="py-2 px-xl-2" v-cloak>
+                <div class="form-group mb-3">
+
+                    <label class="form-label">Iskoristite Loyalty popust</label>
+
+
+                    <div class="form-check" v-if="$store.state.cart.has_loyalty >= 100">
+                        <input class="form-check-input" type="radio"    v-model="selected_loyalty" value="100" >
+                        <label class="form-check-label" for="ex-radio-2">100 = 5€ popust</label>
+                    </div>
+                    <div class="form-check" v-if="$store.state.cart.has_loyalty >= 200">
+                        <input class="form-check-input" type="radio"   v-model="selected_loyalty" value="200">
+                        <label class="form-check-label" for="ex-radio-3">200 = 12€ popust</label>
+                    </div>
+
+
+                </div>
+                <button type="button" v-on:click="selected_loyalty = null" class="btn btn-outline-primary btn-shadow">Odbaci</button>
+                <button type="button" v-on:click="setLoyalty" class="btn btn-outline-primary btn-shadow">Primjeni </button>
+            </div>
+        </div>
+
     </div>
 
 </template>
@@ -95,6 +118,8 @@ export default {
             mobile: false,
             show_delete_btn: true,
             coupon: '',
+            has_loyalty: false,
+            selected_loyalty: 0,
             tax: 0,
         }
     },
@@ -104,6 +129,7 @@ export default {
         }
 
         this.checkIfEmpty();
+        this.checkLoyalty();
         //this.setCoupon();
     },
 
@@ -149,6 +175,11 @@ export default {
                 this.coupon = cart.coupon;
             }
 
+            // Check loyalty
+            if (cart.loyalty != '' && cart.loyalty != 'null') {
+                this.selected_loyalty = cart.loyalty;
+            }
+
             if (cart && ! cart.count && window.location.pathname != '/kosarica') {
                 window.location.href = '/kosarica';
             }
@@ -165,11 +196,45 @@ export default {
             }
         },
 
+        setLoyalty() {
+            let cart = this.$store.state.storage.getCart();
+
+            cart.loyalty = this.selected_loyalty;
+            this.updateLoyalty();
+        },
+
+        /**
+         *
+         */
         /**
          *
          */
         checkCoupon() {
             this.$store.dispatch('checkCoupon', this.coupon);
+        },
+
+
+        /**
+         *
+         */
+        updateLoyalty() {
+            console.log('updateLoyalty')
+            console.log(this.selected_loyalty)
+            this.$store.dispatch('updateLoyalty', this.selected_loyalty);
+        },
+
+        /**
+         *
+         */
+        checkLoyalty() {
+            let cart = this.$store.state.storage.getCart();
+
+            console.log('cart LOYALTY')
+            console.log(cart.has_loyalty)
+
+            if (cart.has_loyalty > 100) {
+                this.has_loyalty = true;
+            }
         }
     }
 };

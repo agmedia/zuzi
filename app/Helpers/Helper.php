@@ -7,6 +7,7 @@ use App\Models\Back\Marketing\Action;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Widget\WidgetGroup;
 use App\Models\Front\Blog;
+use App\Models\Front\Loyalty;
 use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use phpDocumentor\Reflection\Types\False_;
+use Illuminate\Support\Facades\DB;
 
 class Helper
 {
@@ -79,54 +81,272 @@ class Helper
      *
      * @return array|false|Collection
      */
-    public static function search(string $target = '', bool $builder = false)
+    public static function search(string $target = '', bool $builder = false, bool $api = false)
     {
-        if ($target != '') {
-            $response = collect();
+        if ($target === '') return false;
 
-            $products = Product::active()->where('name', 'like', '%' . $target . '%')
-                ->orWhere('meta_description', 'like', '%' . $target . '%')
-                ->orWhere('sku', 'like', '%' . $target . '%')
-                ->pluck('id');
+        $response = collect();
+        $raw = trim($target);
 
-            if ( ! $products->count()) {
-                $products = collect();
+        // ---------- tokenizacija ----------
+        $tokens = collect(preg_split('/[\s\.,\-_\|]+/u', $raw, -1, PREG_SPLIT_NO_EMPTY))
+            ->map(fn($t) => \Illuminate\Support\Str::lower($t))
+            ->filter(fn($t) => \Illuminate\Support\Str::length($t) >= 2)
+            ->unique()
+            ->values();
+
+        $len = max(1, mb_strlen($raw, 'UTF-8'));
+
+        // accent-insensitive collation
+        $has0900     = collect(DB::select("SHOW COLLATION LIKE 'utf8mb4_0900_ai_ci'"))->isNotEmpty();
+        $aiCollation = $has0900 ? 'utf8mb4_0900_ai_ci' : 'utf8mb4_unicode_ci';
+
+        // kratki/dugi tokeni (kratke ignoriramo za name)
+        $shortTokens = $tokens->filter(fn($t) => mb_strlen($t,'UTF-8') <= 3)->values();
+        $longTokens  = $tokens->filter(fn($t) => mb_strlen($t,'UTF-8') >= 4)->values();
+
+        // ---------- AUTORI (strogi LIKE po tokenima) ----------
+        $authorsQ = \App\Models\Front\Catalog\Author::active();
+        if ($tokens->isNotEmpty()) {
+            foreach ($tokens as $t) {
+                $authorsQ->whereRaw("title COLLATE {$aiCollation} LIKE ?", ['%'.$t.'%']);
             }
+        } else {
+            $authorsQ->whereRaw("title COLLATE {$aiCollation} LIKE ?", ['%'.$raw.'%']);
+        }
+        $authorIds = $authorsQ->limit(200)->pluck('id')->all();
 
-            $preg = explode(' ', $target, 3);
+        // ---------- SCORE (samo name + sku) ----------
+        $scoreParts = [];
+        $bindings   = [];
 
-            if (isset ($preg[1]) && in_array($preg[1], $preg) && ! isset($preg[2])) {
-                $authors = Author::active()->where('title', 'like', '%' . $preg[0] . '%' . $preg[1] . '%')
-                                 ->orWhere('title', 'like', '%' . $preg[1] . '% ' . $preg[0] . '%')
-                                 ->with('products')->get();
-
-            } elseif (isset ($preg[2]) && in_array($preg[2], $preg)) {
-                $authors = Author::active()->where('title', 'like', $preg[0] . '%' . $preg[1] . '%' . $preg[2] . '%')
-                                 ->orWhere('title', 'like', $preg[2] . '%' . $preg[1] . '% ' . $preg[0] . '%')
-                                 ->orWhere('title', 'like', $preg[0] . '%' . $preg[2] . '% ' . $preg[1] . '%')
-                                 ->orWhere('title', 'like', $preg[1] . '%' . $preg[0] . '% ' . $preg[2] . '%')
-                                 ->orWhere('title', 'like', $preg[1] . '%' . $preg[2] . '% ' . $preg[0] . '%')
-                                 ->with('products')->get();
-
-            } else {
-                $authors = Author::active()->where('title', 'like', '%' . $preg[0] . '%')
-                                 ->with('products')->get();
-            }
-
-            foreach ($authors as $author) {
-                $products = $products->merge($author->products->pluck('id'));
-            }
-
-            $response->put('products', $products->unique()->flatten());
-
-            if ($builder) {
-                return $response;
-            }
-
-            return $response['products']->toJson();
+        if (!empty($authorIds)) {
+            $idsList = implode(',', array_map('intval', $authorIds));
+            $scoreParts[] = "CASE WHEN products.author_id IN ($idsList) THEN 1000 ELSE 0 END";
         }
 
+        // exact fraza u name
+        $scoreParts[] = "CASE WHEN products.name COLLATE {$aiCollation} LIKE ? THEN 90 ELSE 0 END";
+        $bindings[]   = '%'.$raw.'%';
+
+        // početak riječi + contains za DUGE tokene
+        foreach ($longTokens as $t) {
+            $scoreParts[] = "CASE WHEN products.name COLLATE {$aiCollation} LIKE ? OR products.name COLLATE {$aiCollation} LIKE ? THEN 28 ELSE 0 END";
+            $bindings[]   = $t.'%';
+            $bindings[]   = '% '.$t.'%';
+            $scoreParts[] = "CASE WHEN products.name COLLATE {$aiCollation} LIKE ? THEN 18 ELSE 0 END";
+            $bindings[]   = '%'.$t.'%';
+        }
+
+        // sku
+        $scoreParts[] = "CASE WHEN products.sku = ? THEN 60 ELSE 0 END";   $bindings[] = $raw;
+        $scoreParts[] = "CASE WHEN products.sku LIKE ? THEN 40 ELSE 0 END"; $bindings[] = '%'.$raw.'%';
+        foreach ($tokens as $t) {
+            $scoreParts[] = "CASE WHEN products.sku LIKE ? THEN 15 ELSE 0 END";
+            $bindings[]   = '%'.$t.'%';
+        }
+
+        // grupni bonus: svi dugi tokeni u name
+        if ($longTokens->isNotEmpty()) {
+            $allAnd = $longTokens->map(fn($t) => "products.name COLLATE {$aiCollation} LIKE ?")->implode(' AND ');
+            $scoreParts[] = "CASE WHEN ($allAnd) THEN 40 ELSE 0 END";
+            foreach ($longTokens as $t) { $bindings[] = '%'.$t.'%'; }
+        }
+
+        $scoreSql = '('.implode(' + ', $scoreParts).') AS score';
+
+        // ---------- WHERE (bar jedan relevantan match) ----------
+        $whereAny = function($q) use ($raw, $authorIds, $aiCollation, $longTokens) {
+            if (!empty($authorIds)) {
+                $q->orWhereIn('products.author_id', $authorIds);
+            }
+            $q->orWhereRaw("products.name COLLATE {$aiCollation} LIKE ?", ['%'.$raw.'%'])
+                ->orWhere('products.sku', 'like', '%'.$raw.'%');
+
+            if ($longTokens->isNotEmpty()) {
+                foreach ($longTokens as $t) {
+                    $q->orWhereRaw("products.name COLLATE {$aiCollation} LIKE ?", ['%'.$t.'%']);
+                }
+            }
+        };
+
+        // ---------- Glavni upit ----------
+        $base = \App\Models\Front\Catalog\Product::active()
+            ->select('products.id')
+            ->selectRaw($scoreSql, $bindings)
+            ->where(function($q) use ($whereAny) { $whereAny($q); })
+            ->orderByDesc('score')
+            ->orderByDesc('products.updated_at');
+
+        $totalAll = (clone $base)->count('products.id');
+        $limit    = $api ? 15 : 500;
+        $ids      = $base->limit($limit)->pluck('products.id');
+
+        // ---------- Did-You-Mean + FUZZY FALLBACK NA AUTORA ----------
+        $suggestion = null;
+
+        // helperi za normalizaciju
+        $norm = function (string $s) {
+            if (class_exists(\Transliterator::class)) {
+                $t = \Transliterator::create('NFD; [:Nonspacing Mark:] Remove; NFC');
+                if ($t) { $s = $t->transliterate($s); }
+            } else {
+                $s = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s) ?: $s;
+            }
+            return mb_strtolower($s, 'UTF-8');
+        };
+        $splitTokens = function (string $s) {
+            preg_match_all('/\p{L}+|\p{N}+/u', $s, $m);
+            return $m[0] ?? [];
+        };
+
+        $rawN     = $norm($raw);
+        $rawParts = $splitTokens($rawN);
+        $lenQ     = max(1, mb_strlen($rawN,'UTF-8'));
+        $sumMax   = max(2, (int)floor($lenQ/3) + (($lenQ >= 5 && $lenQ <= 7) ? 1 : 0));
+
+        // Fuzzy kandidat autora ako nemamo autora ni (ili) nemamo rezultata
+        $fuzzyAuthorId   = null;
+        $fuzzyAuthorName = null;
+
+        if (empty($authorIds) || $totalAll === 0) {
+            $candAuthors = \App\Models\Front\Catalog\Author::query()
+                ->select('id','title')
+                ->where('status', 1)
+                ->limit(3000)
+                ->get();
+
+            $bestScore = PHP_INT_MAX;
+            foreach ($candAuthors as $a) {
+                $candN   = $norm($a->title);
+                $candTok = $splitTokens($candN);
+                if (empty($candTok)) continue;
+
+                $whole = levenshtein($rawN, $candN);
+
+                $sum = 0;
+                foreach ($rawParts as $rt) {
+                    $bestLocal = PHP_INT_MAX;
+                    foreach ($candTok as $ct) {
+                        $d = levenshtein($rt, $ct);
+                        if ($d < $bestLocal) $bestLocal = $d;
+                    }
+                    $sum += $bestLocal;
+                }
+
+                $score = min($whole, $sum);
+                if ($score <= $sumMax && $score < $bestScore) {
+                    $bestScore      = $score;
+                    $fuzzyAuthorId  = $a->id;
+                    $fuzzyAuthorName= $a->title;
+                }
+            }
+        }
+
+        // Ako nema rezultata, a imamo fuzzy autora -> vrati njegove proizvode + DYM
+        if ($totalAll === 0 && $fuzzyAuthorId) {
+            $ids = \App\Models\Front\Catalog\Product::active()
+                ->where('author_id', $fuzzyAuthorId)
+                ->orderByDesc('updated_at')
+                ->limit($limit)
+                ->pluck('products.id');
+
+            $totalAll   = \App\Models\Front\Catalog\Product::active()->where('author_id',$fuzzyAuthorId)->count();
+            $suggestion = self::canonicalAuthorDisplay($fuzzyAuthorName);
+        }
+
+        // Ako ipak ima rezultata, ali nije bilo “strogo” autora, pošalji DYM kao hint
+        if ($totalAll > 0 && empty($authorIds) && $fuzzyAuthorName && !$suggestion) {
+            $suggestion = self::canonicalAuthorDisplay($fuzzyAuthorName);
+        }
+
+        $response->put('products', $ids);
+        $response->put('total', $totalAll);
+        if ($suggestion) {
+            $response->put('suggestion', $suggestion);
+        }
+
+        if ($builder) return $response;
+
+        return $response['products']->toJson();
+    }
+
+
+    /**
+     * Kanonski prikaz imena autora za UI (npr. "Krleža Miroslav").
+     */
+    public static function canonicalAuthorDisplay(string $raw): string
+    {
+        $s = trim(self::cleanNamePunctuation($raw));
+
+        // ne diraj očite organizacije
+        if (self::looksLikeOrganization($s)) {
+            return $s;
+        }
+
+        // ako je “Prezime, Ime” -> “Prezime Ime”
+        if (mb_strpos($s, ',') !== false) {
+            [$last, $given] = array_map('trim', explode(',', $s, 2));
+            $s = trim($last . ' ' . $given);
+        }
+
+        // ako je “Ime Prezime” ostavi tako; ako je “Prezime” samo vrati
+        $tokens = preg_split('/\s+/u', $s, -1, PREG_SPLIT_NO_EMPTY) ?: [$s];
+
+        // Ako je više od jedne riječi, kao fallback prikaži “Prezime Ime”
+        if (count($tokens) >= 2) {
+            $last  = array_pop($tokens);
+            $given = implode(' ', $tokens);
+            return trim($last . ' ' . $given);
+        }
+
+        return $s;
+    }
+
+    /**
+     * Kanonski ključ za grupiranje duplikata autora (lowercase, bez dijakritike/znakova).
+     */
+    public static function canonicalAuthorKey(string $raw): string
+    {
+        $disp  = self::canonicalAuthorDisplay($raw);
+        $disp  = preg_replace('/\s+/u', ' ', trim($disp));
+        $ascii = self::unaccent($disp);
+        $ascii = mb_strtolower($ascii, 'UTF-8');
+        $ascii = preg_replace('/[^a-z0-9\s]/', '', $ascii);
+        $ascii = preg_replace('/\s+/', '_', trim($ascii));
+        return $ascii ?: 'unknown';
+    }
+
+    /* ===== Interni helperi za gornje metode ===== */
+
+    private static function looksLikeOrganization(string $s): bool
+    {
+        $orgHints = [
+            'zavod','institut','akademija','leksikografski','društvo','drustvo','udruga',
+            'univerzitet','sveučilište','sveuciliste','university','press','publisher'
+        ];
+        $low = mb_strtolower($s, 'UTF-8');
+        foreach ($orgHints as $h) {
+            if (mb_strpos($low, $h) !== false) return true;
+        }
         return false;
+    }
+
+    private static function cleanNamePunctuation(string $s): string
+    {
+        $s = preg_replace('/\s+/u', ' ', $s);
+        return trim($s, " \t\n\r\0\x0B,;");
+    }
+
+    private static function unaccent(string $str): string
+    {
+        if (class_exists(\Transliterator::class)) {
+            $t = \Transliterator::create('NFD; [:Nonspacing Mark:] Remove; NFC');
+            if ($t) { $str = $t->transliterate($str); }
+        } else {
+            $str = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $str);
+        }
+        return $str ?: '';
     }
 
 
@@ -142,14 +362,14 @@ class Helper
 
         if (isset ($preg[1]) && in_array($preg[1], $preg) && ! isset($preg[2])) {
             $query->where('title', 'like', '%' . $preg[0] . '%' . $preg[1] . '%')
-                  ->orWhere('title', 'like', '%' . $preg[1] . '% ' . $preg[0] . '%');
+                ->orWhere('title', 'like', '%' . $preg[1] . '% ' . $preg[0] . '%');
 
         } elseif (isset ($preg[2]) && in_array($preg[2], $preg)) {
             $query->where('title', 'like', $preg[0] . '%' . $preg[1] . '%' . $preg[2] . '%')
-                  ->orWhere('title', 'like', $preg[2] . '%' . $preg[1] . '% ' . $preg[0] . '%')
-                  ->orWhere('title', 'like', $preg[0] . '%' . $preg[2] . '% ' . $preg[1] . '%')
-                  ->orWhere('title', 'like', $preg[1] . '%' . $preg[0] . '% ' . $preg[2] . '%')
-                  ->orWhere('title', 'like', $preg[1] . '%' . $preg[2] . '% ' . $preg[0] . '%');
+                ->orWhere('title', 'like', $preg[2] . '%' . $preg[1] . '% ' . $preg[0] . '%')
+                ->orWhere('title', 'like', $preg[0] . '%' . $preg[2] . '% ' . $preg[1] . '%')
+                ->orWhere('title', 'like', $preg[1] . '%' . $preg[0] . '% ' . $preg[2] . '%')
+                ->orWhere('title', 'like', $preg[1] . '%' . $preg[2] . '% ' . $preg[0] . '%');
 
         } else {
             $query->where('title', 'like', '%' . $preg[0] . '%');
@@ -611,6 +831,40 @@ class Helper
 
         return $condition;
     }
+
+
+    /**
+     * @param        $cart
+     * @param string $coupon
+     *
+     * @return CartCondition|false
+     * @throws \Darryldecode\Cart\Exceptions\InvalidConditionException
+     */
+    public static function hasLoyaltyCartConditions($cart, int $loyalty = 0)
+    {
+        $condition = false;
+        $has_loyalty   = Loyalty::hasLoyalty();
+
+        if ($has_loyalty) {
+            $discount = Loyalty::calculateLoyalty($loyalty);
+
+            if ($cart->getTotal() > $discount) {
+                $condition = new CartCondition(array(
+                    'name'       => 'Loyalty',
+                    'type'       => 'special',
+                    'target'     => 'total', // this condition will be applied to cart's subtotal when getSubTotal() is called.
+                    'value'      => '-' . $discount,
+                    'attributes' => [
+                        'type'        => 'loyalty',
+                        'description' => 'Loyalty Program'
+                    ]
+                ));
+            }
+        }
+
+        return $condition;
+    }
+
 
 
     /**

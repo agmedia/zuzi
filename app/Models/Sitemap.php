@@ -196,11 +196,15 @@ class Sitemap
     {
         $products = Product::query()->active()->hasStock()->select('url', 'updated_at')->get();
 
-        foreach ($products as $product) {
+        foreach ($products->take(40000) as $product) {
+
             $this->response[] = [
                 'url' => url($product->url),
                 'lastmod' => $product->updated_at->tz('UTC')->toAtomString()
             ];
+
+
+
         }
 
         return $this->response;

@@ -211,6 +211,7 @@ Route::middleware(['auth:sanctum', 'verified'])->prefix('moj-racun')->group(func
     Route::get('/', [CustomerController::class, 'index'])->name('moj-racun');
     Route::patch('/snimi/{user}', [CustomerController::class, 'save'])->name('moj-racun.snimi');
     Route::get('/narudzbe', [CustomerController::class, 'orders'])->name('moje-narudzbe');
+    Route::get('/loyalty', [CustomerController::class, 'loyalty'])->name('loyalty');
 });
 
 /**
@@ -218,6 +219,9 @@ Route::middleware(['auth:sanctum', 'verified'])->prefix('moj-racun')->group(func
  */
 Route::prefix('api/v2')->group(function () {
     // SEARCH
+
+    Route::get('pretrazi/autocomplete', [CatalogRouteController::class, 'search'])->name('api.front.autocomplete');
+
     Route::get('pretrazi', [CatalogRouteController::class, 'search'])->name('api.front.search');
     // CART
     Route::prefix('cart')->group(function () {
@@ -226,7 +230,8 @@ Route::prefix('api/v2')->group(function () {
         Route::post('/add', [CartController::class, 'add']);
         Route::post('/update/{id}', [CartController::class, 'update']);
         Route::get('/remove/{id}', [CartController::class, 'remove']);
-        Route::get('/coupon/{coupon}', [CartController::class, 'coupon']);;
+        Route::get('/coupon/{coupon}', [CartController::class, 'coupon']);
+        Route::get('/loyalty/{loyalty}', [CartController::class, 'loyalty']);
     });
 
     Route::get('/products/autocomplete', [\App\Http\Controllers\Api\v2\ProductController::class, 'autocomplete'])->name('products.autocomplete');
@@ -344,6 +349,10 @@ Route::get('cache/thumb', [HomeController::class, 'thumbCache']);
 Route::redirect('/sitemap.xml', '/sitemap');
 Route::get('sitemap/{sitemap?}', [HomeController::class, 'sitemapXML'])->name('sitemap');
 Route::get('image-sitemap', [HomeController::class, 'sitemapImageXML'])->name('sitemap');
+
+Route::redirect('/sitemap.xml', '/sitemap');
+Route::get('sitemap/{sitemap?}', [HomeController::class, 'sitemapXML'])->name('sitemap');
+Route::get('image-sitemap', [HomeController::class, 'sitemapImageXML'])->name('sitemap-image');
 //
 Route::get('njuskalo/xml', [HomeController::class, 'njuskaloXML'])->name('njuskalo');
 

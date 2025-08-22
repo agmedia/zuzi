@@ -87,6 +87,7 @@ class Checkout extends Component
 
     public $comment = '';
     public $view_comment = false;
+    public $view_commentt = false;
 
     public $hp_paketomat = '';
     public $view_hp_paketomat = false;
@@ -266,7 +267,9 @@ class Checkout extends Component
             $this->validate($this->comment_rules);
         }
 
-
+        if ($step == 'placanje' and $this->shipping == 'gls_paketomat') {
+            $this->validate($this->comment_rules);
+        }
 
         $this->step = $step;
 
@@ -421,6 +424,12 @@ class Checkout extends Component
             $this->view_comment = true;
         } else {
             $this->view_comment = false;
+        }
+
+        if ($shipping == 'gls_paketomat') {
+            $this->view_commentt = true;
+        } else {
+            $this->view_commentt = false;
         }
 
         if ($shipping == 'hp_paketomat') {

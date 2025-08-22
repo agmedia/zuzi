@@ -119,6 +119,24 @@ class AgService {
 
     /**
      *
+     * @param coupon
+     * @returns {*}
+     */
+    updateLoyalty(loyalty) {
+        if ( ! loyalty) {
+            loyalty = null;
+        }
+        return axios.get('cart/loyalty/' + loyalty)
+            .then(response => {
+                this.returnSuccess(messages.couponSuccess);
+                return response.data
+            })
+            .catch(error => { return this.returnError(messages.error) })
+    }
+
+
+    /**
+     *
      * @returns {*}
      */
     getSettings() {
@@ -395,6 +413,28 @@ let store = {
             state.storage.setCart(state.cart);
 
             state.service.checkCoupon(coupon).then(response => {
+                if (response) {
+                    state.service.returnSuccess(messages.couponSuccess);
+                } else {
+                    state.service.returnError(messages.couponError);
+                }
+
+                context.commit('setCart');
+            });
+        },
+
+        /**
+         *
+         * @param context
+         * @param coupon
+         */
+        updateLoyalty(context, loyalty) {
+            let state = context.state;
+
+            state.cart.loyalty = loyalty;
+            state.storage.setCart(state.cart);
+
+            state.service.updateLoyalty(loyalty).then(response => {
                 if (response) {
                     state.service.returnSuccess(messages.couponSuccess);
                 } else {

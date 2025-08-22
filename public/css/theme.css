@@ -101,7 +101,7 @@ h3.product-title{
     overflow: hidden;
 }
 
-
+.text-zuzi{color: #ef0067!important;}
 
 .spikes {
     position: relative;
@@ -208,6 +208,124 @@ h3.product-title{
 }
 
 
+/* pozicioniranje dropdowna ispod inputa */
+#search-form-first .dropdown { position: relative; }
+
+/* pretvori .live-search u Bootstrap dropdown-menu */
+#search_result.live-search {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;          /* w-100 efekt */
+    z-index: 1050;     /* iznad overlaya */
+    display: none;     /* kontroliramo kroz .show */
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: .25rem;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    max-height: 470px; /* scroll */
+    overflow-y: auto;
+    margin-top: .25rem;
+    padding: 0;
+}
+
+#st-1 .st-btn > img {
+    display: inline-block;
+    height: 20px;
+    width: 20px;
+    position: relative;
+    top: 10px;
+    vertical-align: top;
+    filter: grayscale()!important;
+}
+
+#search_result.live-search.show { display: block; }
+
+/* estetika tvoje tablice rezultata */
+#search_result .table.products { margin-bottom: 0; }
+#search_result .table.products td.image { width: 90px; }
+#search_result .result-text { padding: .75rem; text-align: center; }
+
+
+
+.thumb-height img{
+    object-fit: scale-down;
+    width: 270px;
+    height: 270px;
+}
+
+.live-search tr a{
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.live-search .table.products {
+    margin-bottom:0;
+}
+.live-search .table.products tr {
+    cursor:pointer;
+    font-size:15px
+}
+
+.live-search .table.products tr a {
+    color:#373f50;
+    font-size: 1.1em;
+}
+
+.live-search ul.cat li a {
+    color: #373f50 !important;
+}
+
+
+.live-search .table.products tr:hover {
+    background:#fcfcfc;
+}
+.live-search .table.products tr td.image{
+    padding:8px !important;
+    width:80px;
+    margin-right:20px;
+    padding-left: 15px !important;
+}
+.live-search .table.products tr td.price{
+    text-align: right;
+    padding: 8px 15px 5px 0 !important;
+    vertical-align: middle;
+    font-size:14px
+}
+.live-search .table.products tr td.main {
+    padding: 8px 5px 5px 0 !important;
+    vertical-align: middle;
+}
+
+/* Mobile: pretvori rezultat u fiksirani, skrolabilan panel */
+/* base (desktop unchanged) */
+@media (max-width: 991.98px){
+    #search-form .dropdown,
+    #search-form-first .dropdown { position: relative; }
+
+    #search_result_mb{
+        position: absolute;
+        left: 0; right: 0;
+        z-index: 1050;
+
+        max-height: 75dvh;
+        overflow-y: auto;
+
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+
+        background:#fff;
+        border:1px solid rgba(0,0,0,.1);
+        border-top: 0;
+        box-shadow: 0 6px 24px rgba(0,0,0,.14);
+    }
+
+    @supports not (height: 100dvh){
+        #search_result_mb{ max-height: 75vh; }
+    }
+}
 
 
 hr {
@@ -216,6 +334,31 @@ hr {
     border: 0;
     border-top: 1px solid;
     opacity: 1;
+    margin-bottom: 15px;
+}
+
+.fs-md table {
+    --cz-table-color: var(--cz-body-color);
+    --cz-table-bg: transparent;
+    --cz-table-border-color: var(--cz-border-color);
+    --cz-table-accent-bg: transparent;
+    --cz-table-striped-color: var(--cz-body-color);
+    --cz-table-striped-bg: rgba(0, 0, 0, 0.0375);
+    --cz-table-active-color: var(--cz-body-color);
+    --cz-table-active-bg: rgba(0, 0, 0, 0.05);
+    --cz-table-hover-color: var(--cz-body-color);
+    --cz-table-hover-bg: rgba(0, 0, 0, 0.05);
+    width: 100%;
+    margin-bottom: 1rem;
+    color: var(--cz-table-color);
+    vertical-align: top;
+    border-color: var(--cz-table-border-color);
+}
+
+.fs-md table td {
+    padding: 0.75rem 0.45rem !important;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
 }
 
 h6, .h6, h5, .h5, h4, .h4, h3, .h3, h2, .h2, h1, .h1 {
@@ -5127,7 +5270,7 @@ textarea.form-control-lg {
     --cz-breadcrumb-divider-color: #a6acb7;
     --cz-breadcrumb-item-padding-x: 0.5rem;
     --cz-breadcrumb-item-active-color: #363e4f;
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
     padding: var(--cz-breadcrumb-padding-y) var(--cz-breadcrumb-padding-x);
     margin-bottom: var(--cz-breadcrumb-margin-bottom);
@@ -14602,6 +14745,7 @@ dd {
     content: "\e9e1";
 }
 
+
 :not(pre) > code[class*=language-],
 pre[class*=language-],
 pre {
@@ -15269,7 +15413,7 @@ input[type=search]::-webkit-search-results-decoration {
     display: block;
     position: fixed;
     right: -4.125rem;
-    bottom: 1.25rem;
+    bottom: 4.25rem;
     width: 2.75rem;
     height: 2.75rem;
     transition: right 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.3s, background-color 0.25s ease-in-out;
@@ -15303,7 +15447,7 @@ input[type=search]::-webkit-search-results-decoration {
     opacity: 1;
 }
 .btn-scroll-top.show {
-    right: 1.25rem;
+    right: 1rem;
     opacity: 1;
 }
 .btn-scroll-top.right-15 {
@@ -15838,7 +15982,7 @@ h1 .dropdown-toggle::after, h2 .dropdown-toggle::after, h3 .dropdown-toggle::aft
     }
 }
 .input-group .position-absolute {
-    z-index: 5;
+    z-index: 15;
 }
 .input-group .position-absolute + .form-control, .input-group .position-absolute + .password-toggle .form-control {
     padding-left: 2.5rem;

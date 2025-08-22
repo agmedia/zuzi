@@ -62,6 +62,8 @@ class CatalogRouteController extends Controller
             $seo = Seo::getProductData($prod);
             $gdl = TagManager::getGoogleProductDataLayer($prod);
 
+            $prod->kat = CategoryProducts::where('product_id', $prod->id)->where('category_id', 109)->first();
+
             $bc = new Breadcrumb();
             $crumbs = $bc->product($group, $cat, $subcat, $prod)->resolve();
             $bookscheme = $bc->productBookSchema($prod);
@@ -69,6 +71,7 @@ class CatalogRouteController extends Controller
             $payment_methods = Settings::getList('payment', 'list.%', true);
 
             $prod->kat = CategoryProducts::where('product_id', $prod->id)->where('category_id', 109)->first();
+
 
             return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme','shipping_methods','payment_methods', 'gdl'));
         }
@@ -80,8 +83,6 @@ class CatalogRouteController extends Controller
             }
 
             $categories = Category::where('group', $group)->first('id');
-
-
 
             if ( ! $categories) {
                 abort(404);
@@ -167,12 +168,12 @@ class CatalogRouteController extends Controller
 
             $authors = Helper::resolveCache('authors')->remember($letter . '.' . $currentPage, config('cache.life'), function () use ($letter) {
                 return Author::query()->select('id', 'title', 'url')
-                                      ->where('status',  1)
-                                      ->where('letter', $letter)
-                                      ->orderBy('title')
-                                      ->withCount('products')
-                                      ->paginate(36)
-                                      ->appends(request()->query());
+                    ->where('status',  1)
+                    ->where('letter', $letter)
+                    ->orderBy('title')
+                    ->withCount('products')
+                    ->paginate(36)
+                    ->appends(request()->query());
             });
 
             $meta_tags = Seo::getMetaTags($request, 'ap_filter');
@@ -216,12 +217,12 @@ class CatalogRouteController extends Controller
 
             $publishers = Helper::resolveCache('publishers')->remember($letter . '.' . $currentPage, config('cache.life'), function () use ($letter) {
                 return Publisher::query()->select('id', 'title', 'url')
-                                         ->where('status',  1)
-                                         ->where('letter', $letter)
-                                         ->orderBy('title')
-                                         ->withCount('products')
-                                         ->paginate(36)
-                                         ->appends(request()->query());
+                    ->where('status',  1)
+                    ->where('letter', $letter)
+                    ->orderBy('title')
+                    ->withCount('products')
+                    ->paginate(36)
+                    ->appends(request()->query());
             });
 
             $meta_tags = Seo::getMetaTags($request, 'ap_filter');
@@ -251,8 +252,9 @@ class CatalogRouteController extends Controller
      */
     public function search(Request $request)
     {
+        // stranica s rezultatima (legacy – ne diramo)
         if ($request->has(config('settings.search_keyword'))) {
-            if ( ! $request->input(config('settings.search_keyword'))) {
+            if (!$request->input(config('settings.search_keyword'))) {
                 return redirect()->back()->with(['error' => 'Oops..! Zaboravili ste upisati pojam za pretraživanje..!']);
             }
 
@@ -267,12 +269,164 @@ class CatalogRouteController extends Controller
             return view('front.catalog.category.index', compact('group', 'cat', 'subcat', 'ids', 'crumbs'));
         }
 
+        // API autocomplete – products + categories + authors (dedupe) + did-you-mean
         if ($request->has(config('settings.search_keyword') . '_api')) {
-            $search = Helper::search(
-                $request->input(config('settings.search_keyword') . '_api')
-            );
 
-            return response()->json($search);
+            $q = (string) $request->input(config('settings.search_keyword') . '_api', '');
+
+            // group iz requesta (za URL-ove kategorija), default 'knjige'
+            $group = trim((string) $request->input('group', 'kategorija-proizvoda'), '/');
+
+            // --- PROIZVODI (ID-evi + total + sugestija) ---
+            // Helper::search($q, true, true) vraća Collection 'products', int 'total', opcionalno 'suggestion'
+            $search        = Helper::search($q, true, true);
+            $totalProducts = (int) ($search['total'] ?? 0);
+            $productIds    = $search['products'] ?? collect();
+            // >>> NOVO: meta s did-you-mean
+            $meta = [];
+            if (!empty($search['suggestion'])) {
+                $meta['did_you_mean'] = $search['suggestion'];
+            }
+
+            // Učitaj proizvode i povezanog autora
+            $items = Product::query()
+                ->with(['author'])
+                ->whereIn('id', $productIds)
+                ->get()
+                ->keyBy('id');
+
+            $productsPayload = [];
+            foreach ($productIds as $id) {
+                $p = $items->get($id);
+                if (!$p) continue;
+
+                $productsPayload[] = [
+                    'id'                => $p->id,
+                    'sku'               => $p->sku,
+                    'name'              => $p->name,
+                    'url'               => url($p->url),
+                    'main_price'        => $p->main_price,
+                    'main_price_text'   => $p->main_price_text,
+                    'main_special'      => $p->main_special,
+                    'main_special_text' => $p->main_special_text,
+                    'image'             => $p->thumb,
+                    // prikaz autora kanonski (npr. "Krleža Miroslav")
+                    'author_title'      => $p->author ? Helper::canonicalAuthorDisplay($p->author->title) : null,
+                ];
+            }
+
+            // --- KATEGORIJE ---
+            $catsBase = Category::query()
+                ->when(method_exists(Category::class, 'scopeActive'), fn ($q2) => $q2->active())
+                ->where(function ($w) use ($q) {
+                    $w->where('title', 'like', '%' . $q . '%');
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'description')) {
+                        $w->orWhere('description', 'like', '%' . $q . '%');
+                    } elseif (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'meta_description')) {
+                        $w->orWhere('meta_description', 'like', '%' . $q . '%');
+                    } elseif (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'content')) {
+                        $w->orWhere('content', 'like', '%' . $q . '%');
+                    }
+                });
+
+            $totalCategories = (clone $catsBase)->count();
+
+            $categories = $catsBase
+                ->orderBy('title')
+                ->limit(10)
+                ->get();
+
+            $categoriesPayload = $categories->map(function ($c) use ($group) {
+                $slug = $c->slug ?: $c->id;
+                $path = '/' . $group . '/' . $slug;
+                return [
+                    'id'   => $c->id,
+                    'name' => $c->title,
+                    'url'  => url($path),
+                ];
+            })->values()->all();
+
+            // --- AUTORI (dedupe po prezimenu + kanonski prikaz) ---
+            $rawQ = trim((string)$q);
+            $tokens = collect(preg_split('/[\s\.,\-_\|]+/u', $rawQ, -1, PREG_SPLIT_NO_EMPTY))
+                ->map(fn($t) => Str::lower($t))
+                ->unique()
+                ->take(5)
+                ->values();
+
+            $authorsBase = Author::query()
+                ->select('id', 'title', 'url')
+                ->where('status', 1)
+                ->whereHas('products', function ($q2) {
+                    $q2->where('status', 1)->where('quantity', '>', 0);
+                })
+                // SVAKA riječ mora biti prisutna (AND)
+                ->when($tokens->isNotEmpty(), function ($qA) use ($tokens) {
+                    foreach ($tokens as $t) {
+                        $qA->where('title', 'like', '%' . $t . '%');
+                    }
+                }, function ($qA) use ($rawQ) {
+                    if ($rawQ !== '') {
+                        $qA->where('title', 'like', '%' . $rawQ . '%');
+                    }
+                })
+                ->orderBy('title')
+                ->limit(200)
+                ->get();
+
+            // izbaci očite organizacije (zavod/akademija/…)
+            $orgHints = ['zavod','institut','akademija','leksikografski','društvo','drustvo','udruga','univerzitet','sveučilište','sveuciliste','university','press','publisher'];
+            $authorsPeople = $authorsBase->filter(function ($a) use ($orgHints) {
+                $low = mb_strtolower($a->title, 'UTF-8');
+                foreach ($orgHints as $h) {
+                    if (mb_strpos($low, $h) !== false) return false;
+                }
+                return true;
+            });
+
+            // grupiraj po prezimenu (iz kanonskog prikaza) i uzmi najboljeg predstavnika
+            $grouped = $authorsPeople->groupBy(function ($a) {
+                $disp = Helper::canonicalAuthorDisplay($a->title);
+                $key  = Helper::canonicalAuthorKey($disp);
+                return explode('_', $key)[0] ?? $key; // prezime
+            });
+
+            $authorsPayload = $grouped->map(function ($grp) {
+                $best = collect($grp)->sortByDesc(function ($a) {
+                    $disp  = Helper::canonicalAuthorDisplay($a->title);
+                    $parts = preg_split('/\s+/u', trim($disp)) ?: [];
+                    // preferiraj "Ime Prezime" (>=2 riječi), pa dulje ime
+                    return (count($parts) >= 2 ? 1000 : 0) + mb_strlen($disp, 'UTF-8');
+                })->first();
+
+                return [
+                    'id'   => $best->id,
+                    'name' => Helper::canonicalAuthorDisplay($best->title),
+                    'url'  => url($best->url),
+                ];
+            })->values()->take(10)->all();
+
+            $totalAuthors = $grouped->count();
+
+            // --- STRUCTURED PAYLOAD + X-Total-Count (+ did-you-mean u meta) ---
+            $payload = [
+                'counts'     => [
+                    'products'   => $totalProducts,
+                    'authors'    => $totalAuthors,
+                    'categories' => $totalCategories,
+                ],
+                'products'   => $productsPayload,
+                'categories' => $categoriesPayload,
+                'authors'    => $authorsPayload,
+                'meta'       => $meta,
+            ];
+
+            $totalAll = $payload['counts']['products']
+                + $payload['counts']['authors']
+                + $payload['counts']['categories'];
+
+            return response()->json($payload)
+                ->header('X-Total-Count', $totalAll);
         }
 
         return response()->json(['error' => 'Greška kod pretrage..! Molimo pokušajte ponovo ili nas kotaktirajte! HVALA...']);

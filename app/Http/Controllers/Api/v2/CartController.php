@@ -62,9 +62,9 @@ class CartController extends Controller
     public function get()
     {
         $response = $this->cart->get();
-        
+
         $this->cart->resolveDB($response);
-        
+
         return response()->json($response);
     }
 
@@ -108,9 +108,9 @@ class CartController extends Controller
     public function update(Request $request, $id)
     {
         $response = $this->cart->add($request, $id);
-    
+
         $this->cart->resolveDB($response);
-    
+
         return response()->json($response);
     }
 
@@ -123,9 +123,9 @@ class CartController extends Controller
     public function remove($id)
     {
         $response = $this->cart->remove($id);
-    
+
         $this->cart->resolveDB($response);
-    
+
         return response()->json($response);
     }
 
@@ -141,8 +141,22 @@ class CartController extends Controller
 
         return response()->json($this->cart->coupon($coupon));
     }
-    
-    
+
+
+    /**
+     * @param $loyalty
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function loyalty($loyalty)
+    {
+        session([$this->key . '_loyalty' => $loyalty]);
+
+        return response()->json($this->cart->hasLoyalty());
+    }
+
+
+
     /**
      * Resolve new cart session.
      * If user is logged, check the DB for cart session entries.
@@ -152,7 +166,7 @@ class CartController extends Controller
         $sl_cart_id = Str::random(8);
         $this->cart = new AgCart($sl_cart_id);
         session([$this->key => $sl_cart_id]);
-        
+
         Cart::checkLogged($this->cart, $sl_cart_id);
     }
 

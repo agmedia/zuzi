@@ -7,6 +7,7 @@ use App\Helpers\Session\CheckoutSession;
 use App\Http\Controllers\Controller;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
+use App\Models\Front\Loyalty;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -52,7 +53,23 @@ class CustomerController extends Controller
         return view('front.customer.moje-narudzbe', compact('user', 'orders'));
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
+    public function loyalty(Request $request)
+    {
+        $user = auth()->user();
 
+        $loyalty = Loyalty::where('user_id', $user->id)->get();
+
+        $points = Loyalty::hasLoyaltyTotal($user->id);
+
+
+
+        return view('front.customer.loyalty', compact('user', 'loyalty', 'points'));
+    }
     /**
      * @param Request $request
      * @param User    $user

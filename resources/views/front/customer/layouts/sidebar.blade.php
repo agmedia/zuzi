@@ -24,6 +24,12 @@
                     </a>
                 </li>
 
+                <li class="border-bottom mb-0">
+                    <a class="nav-link-style d-flex align-items-center px-4 py-3 {{ request()->routeIs('loyalty') ? 'active' : '' }}" href="{{ route('loyalty') }}">
+                        <i class="ci-coins opacity-60 me-2"></i>Loyalty
+                    </a>
+                </li>
+
                 <li class="mb-0">
                     <a class="nav-link-style d-flex align-items-center px-4 py-3" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                         <i class="ci-sign-out opacity-60 me-2"></i>Odjava

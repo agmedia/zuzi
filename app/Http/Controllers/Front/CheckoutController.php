@@ -12,6 +12,7 @@ use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
 use App\Models\Back\Orders\Order as AdminOrderModel;
 use App\Models\TagManager;
+use App\Models\Front\Loyalty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -145,6 +146,14 @@ class CheckoutController extends Controller
             $this->shoppingCart()
                  ->flush()
                  ->resolveDB();
+
+            $cart = $this->shoppingCart();
+
+
+
+
+                Loyalty::resolveOrder($cart->get(), $order->getOrder());
+
 
             $data['google_tag_manager'] = TagManager::getGoogleSuccessDataLayer($order->getOrder());
 

@@ -242,6 +242,8 @@
                 </tr>
                 </thead>
                 <tbody>
+
+
                 @foreach ($shippingMethods as $s_method)
                     <tr wire:click="selectShipping('{{ $s_method->code }}')" style="cursor: pointer;">
                         <td>
@@ -269,6 +271,8 @@
                             @endif
                         </td>
                     </tr>
+
+
 
                     @if ($s_method->code == 'hp_paketomat' && $view_hp_paketomat)
                         <tr>
@@ -305,6 +309,26 @@
                                 @error('comment') <small class="text-danger">Obavezan odabir BoxNow paketomata </small> @enderror
                             </td>
                         </tr>
+                    @endif
+
+
+                    @if ($s_method->code == 'gls_paketomat' && $view_commentt)
+                        <tr>
+                            <td colspan="4">
+                        <div style="height: 600px">
+                            <gls-dpm country="hr" id="test-map" filter-type="parcel-locker"></gls-dpm>
+                        </div>
+
+
+                        <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
+
+                        @error('comment')             <script>location.reload();</script>         @enderror
+                        @error('comment') <small class="text-danger">Obavezan odabir gls paketomata </small>
+
+                        @enderror
+                            </td>
+                        </tr>
+
                     @endif
 
 
@@ -362,7 +386,7 @@
 Listening to changes. The web component fires a CustomEvent
 every time the user selects a new location.
 -->
- <!--   <script>
+   <script>
         var el = document.getElementById('test-map');
         el.addEventListener('change', (e) => {
             console.log(e.detail);
@@ -371,12 +395,12 @@ every time the user selects a new location.
             document.getElementById('comment').value = e.detail.contact.address + ', ' + e.detail.contact.city + '_' + e.detail.id;
             document.getElementById("comment").dispatchEvent(new Event('input'));
         });
-    </script>-->
+    </script>
     <!--
     Javascript to initialize the custom element, it can be placed anywhere.
     -->
-  <!--  <script type="module"
-            src="https://map.gls-croatia.com/widget/gls-dpm.js"></script> -->
+ <script type="module"
+            src="https://map.gls-croatia.com/widget/gls-dpm.js"></script>
 
     <script type="text/javascript">
 
@@ -398,6 +422,10 @@ every time the user selects a new location.
         };
         (function (d) { var e = d.createElement("script"); e.src = "https://widget-cdn.boxnow.hr/map-widget/client/v5.js"; e.async = true; e.defer = true; d.getElementsByTagName("head")[0].appendChild(e); })(document);
     </script>
+
+
+
+
 
     <script>
         $( document ).ready(function() {
