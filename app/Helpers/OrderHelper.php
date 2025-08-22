@@ -6,6 +6,7 @@ use App\Helpers\Session\CheckoutSession;
 use App\Mail\OrderReceived;
 use App\Mail\OrderSent;
 use App\Models\Back\Orders\Order;
+use App\Models\Front\Loyalty;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -49,7 +50,7 @@ class OrderHelper
      */
     public function isValid(): bool
     {
-        if ($this->order) {
+        if ($this->getOrder()) {
             return true;
         }
 
@@ -73,7 +74,7 @@ class OrderHelper
      */
     public function getEmail(string $column = 'payment')
     {
-        if ($this->order) {
+        if ($this->getOrder()) {
             if (isset($this->order->{$column . '_email'})) {
                 return $this->order->{$column . '_email'};
             }
@@ -90,7 +91,7 @@ class OrderHelper
      */
     public function sendEmails()
     {
-        if ($this->order) {
+        if ($this->getOrder()) {
             $order_data = $this->order;
             $email = $this->getEmail();
 
@@ -111,7 +112,7 @@ class OrderHelper
      */
     public function decreaseCartItems(bool $disable_on_zero = true)
     {
-        if ($this->order) {
+        if ($this->getOrder()) {
             foreach ($this->order->products as $product) {
                 $real = $product->real;
 
@@ -134,6 +135,37 @@ class OrderHelper
 
 
     /**
+     * @return $this
+     */
+    public function addLoyaltyPoints()
+    {
+        if ($this->getOrder() && auth()->check()) {
+            $points = floor($this->order->total);
+
+            Loyalty::addPoints($points, $this->order_id, 'order', '', auth()->id());
+
+            $orders = Order::query()->where('user_id', auth()->id())->whereDate('created_at', '>=', now()->subMonth())->count();
+
+            foreach (config('settings.loyalty.rewards.orders_per_month') as $number_of_orders => $reward_points) {
+                if ($orders >= $number_of_orders) {
+                    Loyalty::addPoints($reward_points, $this->order_id, 'order', 'Multiple orders reward.', auth()->id());
+
+                    break;
+                }
+            }
+
+            $orders = Order::query()->where('user_id', auth()->id())->count();
+
+            if ( ! $orders) {
+                Loyalty::addPoints(config('settings.loyalty.first_order_points'), $this->order_id, 'order', 'First order reward.', auth()->id());
+            }
+        }
+
+        return $this;
+    }
+
+
+    /**
      * @param string      $email_column
      * @param string|null $audience_id
      *
@@ -141,7 +173,7 @@ class OrderHelper
      */
     public function addCustomerToMailchimp(string $email_column = 'payment', string $audience_id = null)
     {
-        if ($this->order) {
+        if ($this->getOrder()) {
            $mailchimp   = new Mailchimp();
             $audience_id = $audience_id ?: config('services.mailchimp.audience_id');
 

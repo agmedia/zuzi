@@ -7,11 +7,13 @@ use App\Helpers\Session\CheckoutSession;
 use App\Http\Controllers\Controller;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
+use App\Models\Front\Loyalty;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      *
@@ -19,18 +21,7 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        if (session()->has(config('session.cart'))) {
-            //dd($request->session()->previousUrl());
-            /*if ($request->session()->previousUrl() == config('app.url') . 'login') {
-                $cart = new AgCart(session(config('session.cart')));
-
-                if ($cart->get()['count'] > 0) {
-                    return redirect()->route('kosarica');
-                }
-            }*/
-        }
-
-        $user = auth()->user();
+        $user      = auth()->user();
         $countries = Country::list();
 
         CheckoutSession::forgetAddress();
@@ -46,10 +37,25 @@ class CustomerController extends Controller
      */
     public function orders(Request $request)
     {
-        $user = auth()->user();
+        $user   = auth()->user();
         $orders = Order::where('user_id', $user->id)->orWhere('payment_email', $user->email)->paginate(config('settings.pagination.front'));
 
         return view('front.customer.moje-narudzbe', compact('user', 'orders'));
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
+    public function loyalty(Request $request)
+    {
+        $user    = auth()->user();
+        $loyalty = Loyalty::where('user_id', $user->id)->get();
+        $points  = Loyalty::hasLoyaltyTotal($user->id);
+
+        return view('front.customer.loyalty', compact('user', 'loyalty', 'points'));
     }
 
 

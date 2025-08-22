@@ -211,6 +211,7 @@ Route::middleware(['auth:sanctum', 'verified'])->prefix('moj-racun')->group(func
     Route::get('/', [CustomerController::class, 'index'])->name('moj-racun');
     Route::patch('/snimi/{user}', [CustomerController::class, 'save'])->name('moj-racun.snimi');
     Route::get('/narudzbe', [CustomerController::class, 'orders'])->name('moje-narudzbe');
+    Route::get('/loyalty', [CustomerController::class, 'loyalty'])->name('loyalty');
 });
 
 /**

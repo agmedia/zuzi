@@ -136,6 +136,11 @@
                                 <label for="input-state">Država</label>
                                 <input type="text" class="form-control" id="input-state" name="state" value="{{ isset($user) ? $user->details->state : old('state') }}">
                             </div>
+
+                            <div class="form-group">
+                                <label for="input-loyalty">Loyalty</label>
+                                <input type="text" class="form-control" id="input-loyalty" name="loyalty_points" value="{{ isset($points) ? $points : old('loyalty_points') }}">
+                            </div>
                         </div>
                     </div>
 

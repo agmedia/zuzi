@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Back;
 
 use App\Http\Controllers\Controller;
+use App\Models\Front\Loyalty;
 use App\Models\Roles\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -65,8 +66,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = Role::selectList();
+        $points = Loyalty::hasLoyaltyTotal($user->id);
 
-        return view('back.user.edit', compact('user', 'roles'));
+        return view('back.user.edit', compact('user', 'roles', 'points'));
     }
     
     

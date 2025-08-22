@@ -23,8 +23,11 @@ class CreateUserDetailsTable extends Migration
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->string('phone')->nullable();
+            $table->string('oib')->nullable();
+            $table->string('company')->nullable();
             $table->string('avatar')->default('images/avatars/default_avatar.jpg');
             $table->longText('bio')->nullable();
+            $table->dateTime('birthday')->nullable();
             $table->string('social')->nullable();
             $table->string('role');
             $table->boolean('status')->default(1);

@@ -10,6 +10,7 @@ use App\Models\Front\Blog;
 use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
+use App\Models\Front\Loyalty;
 use Darryldecode\Cart\CartCondition;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -606,6 +607,39 @@ class Helper
                         'attributes' => $action->setConditionAttributes($coupon)
                     ));
                 }
+            }
+        }
+
+        return $condition;
+    }
+
+
+    /**
+     * @param        $cart
+     * @param string $coupon
+     *
+     * @return CartCondition|false
+     * @throws \Darryldecode\Cart\Exceptions\InvalidConditionException
+     */
+    public static function hasLoyaltyCartConditions($cart, int $loyalty = 0)
+    {
+        $condition = false;
+        $has_loyalty   = Loyalty::hasLoyalty();
+
+        if ($has_loyalty) {
+            $discount = Loyalty::calculateLoyalty($loyalty);
+
+            if ($cart->getTotal() > $discount) {
+                $condition = new CartCondition(array(
+                    'name'       => 'Loyalty',
+                    'type'       => 'special',
+                    'target'     => 'total', // this condition will be applied to cart's subtotal when getSubTotal() is called.
+                    'value'      => '-' . $discount,
+                    'attributes' => [
+                        'type'        => 'loyalty',
+                        'description' => 'Loyalty Program'
+                    ]
+                ));
             }
         }
 
