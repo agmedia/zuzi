@@ -140,6 +140,27 @@ return [
         4 => 'publishers'
     ],
 
+    //
+    'loyalty' => [
+        'first_order_points' => 50,
+        'birthday_points' => 100,
+        'affiliate_points' => 50,
+        'points_per_euro' => 1,
+        'rewards' => [
+            'orders_per_month' => [
+                2 => 20,
+                1 => 10
+            ],
+            'comment' => 1
+        ],
+        // 100 bodova za 5 EUR popusta
+        // npr. 100 => 5
+        'orders_discount' => [
+            200 => 12,
+            100 => 5
+        ]
+    ],
+    //
     'njuskalo' => [
         'user_id' => '968815',
         'sync' => [

@@ -27,16 +27,19 @@ class Loyalty extends Model
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
 
-    public function reference()
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne|mixed
+     */
+    public function getReferenceModel()
     {
-      /*  if ($this->target == 'product_review') {
+        if ($this->reference == 'product_review') {
             return $this->hasOne(Product::class, 'id', 'reference_id');
-        }*/
-        if ($this->target == 'order') {
+        }
+        if ($this->reference == 'order') {
             return $this->hasOne(Order::class, 'id', 'reference_id');
         }
 
-        return $this->hasOne(Product::class);
+        return $this->reference;
     }
 
 
@@ -93,16 +96,15 @@ class Loyalty extends Model
         if (auth()->user() && $points) {
             $user_id = auth()->user()->id;
 
-            $earned = Loyalty::query()->where('user_id', $user_id)->sum('earned');
-            $spent = Loyalty::query()->where('user_id', $user_id)->sum('spend');
+            $earned     = Loyalty::query()->where('user_id', $user_id)->sum('earned');
+            $spent      = Loyalty::query()->where('user_id', $user_id)->sum('spend');
             $has_points = intval($earned - $spent);
 
             if ($has_points && $has_points > $points) {
-                if ($points == 100) {
-                    return 5;
-                }
-                if ($points == 200) {
-                    return 12;
+                foreach (config('settings.loyalty.orders_discount') as $spent_points => $earned_euros) {
+                    if ($points == $spent_points) {
+                        return $earned_euros;
+                    }
                 }
             }
         }
@@ -125,12 +127,13 @@ class Loyalty extends Model
             $spent = $cart['loyalty'];
         }
 
-
         if (auth()->user()) {
             return Loyalty::query()->insert([
                 'user_id'      => auth()->user()->id,
                 'reference_id' => $order->id,
-                'target'       => 'order',
+                'reference'    => 'order',
+                'target'       => '',
+                'comment'      => '',
                 'earned'       => intval($order->total),
                 'spend'        => $spent,
                 'created_at'   => now(),
@@ -142,14 +145,8 @@ class Loyalty extends Model
     }
 
 
-    /**
-     * @param int    $points
-     * @param int    $reference_id
-     * @param string $target
-     *
-     * @return bool
-     */
-    public static function addPoints(int $points, int $reference_id, string $target, int $user_id = null): bool
+    public static function addPoints(int $points, int $reference_id, string $reference, string $comment, int $user_id = null): bool
+
     {
         if (auth()->user() && $points) {
             if ( ! $user_id) {
@@ -159,7 +156,9 @@ class Loyalty extends Model
             return Loyalty::query()->insert([
                 'user_id'      => $user_id,
                 'reference_id' => $reference_id,
-                'target'       => $target,
+                'reference'    => $reference,
+                'target'       => '',
+                'comment'      => '',
                 'earned'       => $points,
                 'spend'        => 0,
                 'created_at'   => now(),
@@ -178,7 +177,7 @@ class Loyalty extends Model
      *
      * @return bool
      */
-    public static function removePoints(int $points, int $reference_id, string $target, int $user_id = null): bool
+    public static function removePoints(int $points, int $reference_id, string $reference, int $user_id = null): bool
     {
         if (auth()->user() && $points) {
             if ( ! $user_id) {
@@ -188,12 +187,43 @@ class Loyalty extends Model
             return Loyalty::query()->insert([
                 'user_id'      => $user_id,
                 'reference_id' => $reference_id,
-                'target'       => $target,
+                'reference'    => $reference,
+                'target'       => '',
+                'comment'      => '',
                 'earned'       => 0,
                 'spend'        => $points,
                 'created_at'   => now(),
                 'updated_at'   => now()
             ]);
+        }
+
+        return false;
+    }
+
+
+    /**
+     * @param int $order_id
+     *
+     * @return bool
+     */
+    public static function cancelPoints(int $order_id): bool
+    {
+        if (auth()->user() && $order_id) {
+            $loyalty = Loyalty::query()->where('order_id', $order_id)->first();
+
+            if ($loyalty) {
+                return Loyalty::query()->insert([
+                    'user_id'      => $loyalty->user_id,
+                    'reference_id' => $loyalty->reference_id,
+                    'reference'    => $loyalty->reference,
+                    'target'       => $loyalty->target,
+                    'comment'      => $loyalty->comment,
+                    'earned'       => -$loyalty->earned,
+                    'spend'        => 0,
+                    'created_at'   => now(),
+                    'updated_at'   => now()
+                ]);
+            }
         }
 
         return false;

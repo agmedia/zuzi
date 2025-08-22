@@ -40,11 +40,11 @@ class AgCart extends Model
      */
     private $coupon;
 
-
     /**
      * @var int
      */
     private $loyalty;
+
 
 
     /**
@@ -320,6 +320,7 @@ class AgCart extends Model
         $special_condition = Helper::hasSpecialCartCondition($this->cart);
         $loyalty_conditions = Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
         $coupon_conditions = Helper::hasCouponCartConditions($this->cart, $this->coupon);
+        $loyalty_conditions = Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
 
         if ($payment_method) {
             $str = str_replace('+', '', $payment_method->getValue());

@@ -15,6 +15,7 @@ use App\Models\Back\Settings\Settings;
 use App\Models\Front\Checkout\Shipping\Gls;
 use App\Models\Front\Checkout\Shipping\Glsstari;
 use App\Models\Front\Checkout\Shipping\HP;
+use App\Models\Front\Loyalty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -153,6 +154,7 @@ class OrderController extends Controller
 
                 foreach ($orders as $order_id) {
                     ProductHelper::makeAvailable($order_id);
+                    Loyalty::cancelPoints($order_id);
                 }
             }
 
@@ -167,6 +169,7 @@ class OrderController extends Controller
 
                 if (OrderHelper::isCanceled((int) $request->input('status'))) {
                     ProductHelper::makeAvailable($request->input('order_id'));
+                    Loyalty::cancelPoints($request->input('order_id'));
                 }
 
                 if ($request->input('status') == config('settings.order.status.paid')) {

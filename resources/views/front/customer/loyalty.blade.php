@@ -9,7 +9,7 @@
 
     <div class="container pb-5 mb-2 mb-md-4">
         <div class="row">
-        @include('front.customer.layouts.sidebar')
+            @include('front.customer.layouts.sidebar')
 
             <!-- Content  -->
             <section class="col-lg-8">
@@ -35,39 +35,34 @@
                         </thead>
                         <tbody>
 
-                            @forelse ($loyalty as $row)
-                                <tr>
-                                    @if($row->target == 'order')
-                                         <td class="py-3">{{ __('front/cart.loyalty_ref_order') }} - {{$row->reference_id }}</td>
+                        @forelse ($loyalty as $row)
+                            <tr>
+                                @if($row->target == 'order')
+                                    <td class="py-3">{{ __('front/cart.loyalty_ref_order') }} - {{$row->reference_id }}</td>
 
-                                    @elseif($row->target == 'admin')
-                                            <td class="py-3">Admin </td>
-                                    @elseif ($row->target == 'product_review')
-                                        <td class="py-3">{{ __('front/cart.loyalty_ref_review') }}  - {{$row->reference()->first()->translation->name }} {{-- staviti naziv proizvoda preko product id --}}</td>
-                                    @else
-                                        <td class="py-3"></td>
-                                    @endif
-                                    <td class="py-3">{{ \Illuminate\Support\Carbon::make($row->created_at)->format('d.m.Y') }}</td>
-                                    <td class="py-3"> + {{ $row->earned }} </td>
-                                        <td class="py-3">   @if($row->spend == 100)   -  {{ __('front/cart.loyalty_100') }} @endif @if($row->spend == 200)  -  {{ __('front/cart.loyalty_200') }} @endif </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td class="text-center font-size-sm" colspan="4">
-                                        <label>{{ __('front/cart.loyalty_trenutno_nemate') }}</label>
-                                    </td>
-                                </tr>
-                            @endforelse
-
-
+                                @elseif($row->target == 'admin')
+                                    <td class="py-3">Admin </td>
+                                @elseif ($row->target == 'product_review')
+                                    <td class="py-3">{{ __('front/cart.loyalty_ref_review') }}  - {{$row->reference()->first()->translation->name }} {{-- staviti naziv proizvoda preko product id --}}</td>
+                                @else
+                                    <td class="py-3"></td>
+                                @endif
+                                <td class="py-3">{{ \Illuminate\Support\Carbon::make($row->created_at)->format('d.m.Y') }}</td>
+                                <td class="py-3"> + {{ $row->earned }} </td>
+                                <td class="py-3">   @if($row->spend == 100)   -  {{ __('front/cart.loyalty_100') }} @endif @if($row->spend == 200)  -  {{ __('front/cart.loyalty_200') }} @endif </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td class="text-center font-size-sm" colspan="4">
+                                    <label>{{ __('front/cart.loyalty_trenutno_nemate') }}</label>
+                                </td>
+                            </tr>
+                        @endforelse
 
 
                         </tbody>
                     </table>
                 </div>
-
-
-
             </section>
         </div>
     </div>
