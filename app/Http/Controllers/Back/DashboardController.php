@@ -535,4 +535,63 @@ class DashboardController extends Controller
         return redirect()->route('dashboard')->with(['success' => 'PDV je obnovljen na kategoriji svezalice..! ' . $ids->count() . ' proizvoda obnovljeno.']);
     }
 
+    /**
+     * Vrati promet i broj narudžbi po danima za određeni mjesec.
+     */
+    public function chartByMonth(Request $request)
+    {
+        $year  = $request->get('year', Carbon::now()->year);
+        $month = $request->get('month', Carbon::now()->month);
+
+        $data = Order::query()
+            ->selectRaw('DAY(created_at) as day, SUM(total) as total, COUNT(id) as orders')
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        return response()->json($data);
+    }
+
+    /**
+     * Vrati promet i broj narudžbi po satima za određeni dan.
+     */
+    public function chartByDay(Request $request)
+    {
+        $date = $request->get('date', Carbon::today()->toDateString());
+
+        $data = Order::query()
+            ->selectRaw('HOUR(created_at) as hour, SUM(total) as total, COUNT(id) as orders')
+            ->whereDate('created_at', $date)
+            ->groupBy('hour')
+            ->orderBy('hour')
+            ->get();
+
+        return response()->json($data);
+    }
+
+    /**
+     * Vrati promet i broj narudžbi po danima za raspon datuma.
+     */
+    public function chartByRange(Request $request)
+    {
+        $from = $request->get('from');
+        $to   = $request->get('to');
+
+        $data = Order::query()
+            ->selectRaw('DATE(created_at) as date, SUM(total) as total, COUNT(id) as orders')
+            ->whereBetween('created_at', [
+                Carbon::parse($from)->startOfDay(),
+                Carbon::parse($to)->endOfDay()
+            ])
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        return response()->json($data);
+    }
+
+
+
 }

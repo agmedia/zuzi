@@ -16,121 +16,111 @@
     </div>
     <!-- END Hero -->
 
-
-
     <!-- Page Content -->
     <div class="content">
         @include('back.layouts.partials.session')
-        <!-- Super-admin view -->
-        @if (auth()->user()->can('*'))
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="block block-rounded block-mode-hidden">
-                        <div class="block-header block-header-default">
-                            <h3 class="block-title">Superadmin dashboard</h3>
-                            <div class="block-options">
-                                <button type="button" class="btn-block-option" data-toggle="block-option" data-action="content_toggle"></button>
+
+        @if( auth()->user()->id != '1716')
+            <!-- Quick Overview -->
+            <div class="row row-deck">
+                <div class="col-6 col-lg-3">
+                    <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
+                        <div class="block-content py-5">
+                            <div class="font-size-h3 font-w600 text-warning mb-1">{{ $data['proccess'] }}</div>
+                            <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi u obradi</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
+                        <div class="block-content py-5">
+                            <div class="font-size-h3 font-w600 text-success mb-1">{{ $data['finished'] }}</div>
+                            <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Dovršenih narudžbi</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
+                        <div class="block-content py-5">
+                            <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['today'] }}</div>
+                            <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi danas</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
+                        <div class="block-content py-5">
+                            <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['this_month'] }}</div>
+                            <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi ovaj mjesec</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <!-- END Quick Overview -->
+
+            <!-- Sales Overview Block with Tabs -->
+            <div class="block block-rounded mt-4">
+                <div class="block-header block-header-default">
+                    <h3 class="block-title">Statistika prometa</h3>
+                </div>
+                <div class="block-content">
+                    <!-- Tabs nav -->
+                    <ul class="nav nav-tabs" id="salesTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="monthly-tab" data-toggle="tab" href="#tab-monthly" role="tab"
+                               aria-controls="tab-monthly" aria-selected="true">Mjesečni pregled</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="sales-tab" data-toggle="tab" href="#tab-sales" role="tab"
+                               aria-controls="tab-sales" aria-selected="false">Promet i narudžbe</a>
+                        </li>
+                    </ul>
+
+                    <!-- Tabs content -->
+                    <div class="tab-content mt-3" id="salesTabsContent">
+                        <!-- Tab 1: Mjesečni pregled -->
+                        <div class="tab-pane fade show active" id="tab-monthly" role="tabpanel" aria-labelledby="monthly-tab">
+                            <div class="chart-container large">
+                                <canvas class="js-chartjs-overview"></canvas>
                             </div>
                         </div>
-                        <div class="block-content">
-                            <a href="{{ route('roles.set') }}" class="btn btn-hero-sm btn-rounded btn-hero-secondary mb-3 mr-3">Set Roles</a>
-                            <a href="{{ route('ping.hp') }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Ping HP</a>
-                            <a href="{{ route('slugs.revision') }}" class="btn btn-hero-sm btn-rounded btn-hero-secondary mb-3 mr-3">Rewrite Empty Slugs</a>
-                            <br>
-                           <a href="{{ route('import.initial') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Import LAguna</a>
-                            <a href="{{ route('mailing.test') }}" class="btn btn-hero-sm btn-rounded btn-hero-info mb-3 mr-3">Mail Test</a>
-                            <br>
-                            <a href="{{ route('letters.import') }}" class="btn btn-hero-sm btn-rounded btn-hero-warning mb-3 mr-3">First Letters Import</a>
-                            <a href="{{ route('set.pdv.products') }}" class="btn btn-hero-sm btn-rounded btn-hero-warning mb-3 mr-3">Set PDV 25 Products</a>
-                            <br>
-                            <a href="{{ route('set.group') }}" class="btn btn-hero-sm btn-rounded btn-hero-danger mb-3 mr-3">Set New Category Group</a>
-                            <a href="{{ route('set.unlimited') }}" class="btn btn-hero-sm btn-rounded btn-hero-danger mb-3 mr-3">Set Unlimited Quantity</a>
-                            {{--<a href="{{ route('statuses.cron') }}" class="btn btn-hero-sm btn-rounded btn-hero-success mb-3 mr-3">Statuses</a>--}}
-                            {{--<a href="{{ route('slugs.revision') }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Slugs revision</a>--}}
-                            {{--<a href="{{ route('duplicate.revision', ['target' => 'images']) }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Duplicate Images revision</a>--}}
-                            {{--<a href="{{ route('duplicate.revision', ['target' => 'publishers']) }}" class="btn btn-hero-sm btn-rounded btn-hero-primary mb-3 mr-3">Duplicate Publishers revision</a>--}}
+
+                        <!-- Tab 2: Promet i narudžbe -->
+                        <div class="tab-pane fade" id="tab-sales" role="tabpanel" aria-labelledby="sales-tab">
+                            <div class="row mb-4 mt-3">
+                                <div class="col-md-2">
+                                    <label>Godina</label>
+                                    <select id="chart-year" class="form-control">
+                                        @for($y = now()->year; $y >= now()->year - 5; $y--)
+                                            <option value="{{ $y }}">{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Mjesec</label>
+                                    <select id="chart-month" class="form-control">
+                                        @foreach(range(1,12) as $m)
+                                            <option value="{{ $m }}">{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="chart-container medium">
+                                <canvas id="salesChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         @endif
-        @if( auth()->user()->id != '1716')
 
-        <!-- Quick Overview -->
-        <div class="row row-deck">
-            <div class="col-6 col-lg-3">
-                <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                    <div class="block-content py-5">
-                        <div class="font-size-h3 font-w600 text-warning mb-1">{{ $data['proccess'] }}</div>
-                        <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">
-                            Narudžbi u obradi
-                        </p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-6 col-lg-3">
-                <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                    <div class="block-content py-5">
-                        <div class="font-size-h3 font-w600 text-success mb-1">{{ $data['finished'] }}</div>
-                        <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">
-                            Dovršenih narudžbi
-                        </p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-6 col-lg-3">
-                <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                    <div class="block-content py-5">
-                        <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['today'] }}</div>
-                        <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">
-                            Narudžbi danas
-                        </p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-6 col-lg-3">
-                <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                    <div class="block-content py-5">
-                        <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['this_month'] }}</div>
-                        <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">
-                            Narudžbi ovaj mjesec
-                        </p>
-                    </div>
-                </a>
-            </div>
-        </div>
-        <!-- END Quick Overview -->
-
-        <!-- Orders Overview -->
-        <div class="block block-rounded">
-            <div class="block-header block-header-default">
-                <h3 class="block-title">Mjesečni pregled</h3>
-                <div class="block-options">
-                    <button type="button" class="btn-block-option" data-toggle="block-option" data-action="state_toggle" data-action-mode="demo">
-                        <i class="si si-refresh"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="block-content block-content-full">
-{{--                Chart.js is initialized in js/pages/be_pages_ecom_dashboard.min.js which was auto compiled from _js/pages/be_pages_ecom_dashboard.js)--}}
-{{--                For more info and examples you can check out http://www.chartjs.org/docs/--}}
-                <div style="height: 420px;"><canvas class="js-chartjs-overview"></canvas></div>
-            </div>
-        </div>
-
-        @endif
         <!-- Top Products and Latest Orders -->
-        <div class="row">
+        <div class="row mt-4">
             <div class="col-xl-6">
-                <!-- Top Products -->
                 <div class="block block-rounded">
                     <div class="block-header block-header-default">
                         <h3 class="block-title">Zadnje prodani artikli</h3>
-                        <div class="block-options">
-                            <button type="button" class="btn-block-option" data-toggle="block-option" data-action="state_toggle" data-action-mode="demo">
-                                <i class="si si-refresh"></i>
-                            </button>
-                        </div>
                     </div>
                     <div class="block-content">
                         <table class="table table-borderless table-striped table-vcenter font-size-sm">
@@ -150,18 +140,11 @@
                         </table>
                     </div>
                 </div>
-                <!-- END Top Products -->
             </div>
             <div class="col-xl-6">
-                <!-- Latest Orders -->
                 <div class="block block-rounded">
                     <div class="block-header block-header-default">
                         <h3 class="block-title">Zadnje narudžbe</h3>
-                        <div class="block-options">
-                            <button type="button" class="btn-block-option" data-toggle="block-option" data-action="state_toggle" data-action-mode="demo">
-                                <i class="si si-refresh"></i>
-                            </button>
-                        </div>
                     </div>
                     <div class="block-content">
                         <table class="table table-borderless table-striped table-vcenter font-size-sm">
@@ -184,57 +167,144 @@
                         </table>
                     </div>
                 </div>
-                <!-- END Latest Orders -->
             </div>
         </div>
-        <!-- END Top Products and Latest Orders -->
     </div>
-    <!-- END Page Content -->
 @endsection
 
-@push('js_after')
+@push('css_after')
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+        }
+        .chart-container.small { height: 200px; }
+        .chart-container.medium { height: 280px; }
+        .chart-container.large { height: 400px; }
+    </style>
+@endpush
 
-    <!-- Page JS Plugins -->
+@push('js_after')
     <script src="{{ asset('js/plugins/chart.js/Chart.bundle.min.js') }}"></script>
 
     <script>
+        // =====================
+        // PROMET I NARUDŽBE (po danima u mjesecu)
+        // =====================
+        let ctx = document.getElementById('salesChart').getContext('2d');
+        let salesChart;
+
+        function loadMonth(year, month) {
+            $.get('{{ route('dashboard.chart.month') }}', { year, month }, function(data) {
+                renderChart(data);
+            });
+        }
+
+        function renderChart(data) {
+            let labels = data.map(d => d.day + '.');
+            let values = data.map(d => d.total);
+            let counts = data.map(d => d.orders);
+
+            if (salesChart) salesChart.destroy();
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Promet (€)',
+                            data: values,
+                            borderColor: 'rgba(6, 101, 208, 1)',
+                            backgroundColor: 'rgba(6, 101, 208, .3)',
+                            fill: true,
+                            yAxisID: 'y-axis-1',
+                            tension: 0,
+                            lineTension: 0
+                        },
+                        {
+                            label: 'Broj narudžbi',
+                            data: counts,
+                            borderColor: 'rgba(0, 51, 153, 1)',
+                            backgroundColor: 'rgba(0, 51, 153, .2)',
+                            fill: false,
+                            yAxisID: 'y-axis-2',
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: 'rgba(0, 51, 153, 1)',
+                            pointBorderColor: '#fff',
+                            tension: 0,
+                            lineTension: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                let label = data.datasets[tooltipItem.datasetIndex].label || '';
+                                let value = tooltipItem.yLabel;
+                                if (label.includes('Promet')) {
+                                    return label + ': ' + value + '€';
+                                } else {
+                                    return label + ': ' + value;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        yAxes: [
+                            {
+                                id: 'y-axis-1',
+                                position: 'left',
+                                ticks: {
+                                    beginAtZero: true,
+                                    callback: value => value + '€'
+                                }
+                            },
+                            {
+                                id: 'y-axis-2',
+                                position: 'right',
+                                ticks: {
+                                    beginAtZero: true
+                                },
+                                gridLines: { drawOnChartArea: false }
+                            }
+                        ]
+                    }
+                }
+            });
+        }
+
+        // Automatski refresh na promjenu selecta
+        $('#chart-year, #chart-month').on('change', function() {
+            let year  = $('#chart-year').val();
+            let month = $('#chart-month').val();
+            loadMonth(year, month);
+        });
+
+        // Inicijalni prikaz trenutnog mjeseca
+        let now = new Date();
+        $('#chart-year').val(now.getFullYear());
+        $('#chart-month').val(now.getMonth() + 1);
+        loadMonth(now.getFullYear(), now.getMonth() + 1);
+
+
+        // =====================
+        // MJESEČNI PREGLED (ova vs prošla godina)
+        // =====================
         $(() => {
-            let this_year = sort('{{ $this_year }}');
-            let last_year = sort('{{ $last_year }}');
+            let this_year = sort('{!! $this_year !!}');
+            let last_year = sort('{!! $last_year !!}');
 
-            if (this_year.top > 20000) {
-                this_year.step = 5000;
-            }
-            if (this_year.top < 20000 && this_year.top > 4000) {
-                this_year.step = 1000;
-            }
-            if (this_year.top < 4000 && this_year.top > 1000) {
-                this_year.step = 500;
-            }
-
-            console.log(this_year.names, this_year.values, this_year.step, this_year.top)
-            console.log(last_year.names, last_year.values, last_year.step, last_year.top)
-
-            // Set Global Chart.js configuration
-            Chart.defaults.global.defaultFontColor              = '#495057';
-            Chart.defaults.scale.gridLines.color                = 'transparent';
-            Chart.defaults.scale.gridLines.zeroLineColor        = 'transparent';
-            Chart.defaults.scale.ticks.beginAtZero              = true;
-            Chart.defaults.global.elements.line.borderWidth     = 0;
-            Chart.defaults.global.elements.point.radius         = 0;
-            Chart.defaults.global.elements.point.hoverRadius    = 0;
-            Chart.defaults.global.tooltips.cornerRadius         = 3;
-            Chart.defaults.global.legend.labels.boxWidth        = 12;
-
-            // Get Chart Container
             let chartOverviewCon  = jQuery('.js-chartjs-overview');
 
-            // Set Chart Variables
-            let chartOverview, chartOverviewOptions, chartOverviewData;
-
-            // Overview Chart Options
-            chartOverviewOptions = {
+            let chartOverviewOptions = {
                 maintainAspectRatio: false,
+                responsive: true,
                 scales: {
                     yAxes: [{
                         ticks: {
@@ -252,38 +322,34 @@
                 }
             };
 
-            // Overview Chart Data
-            chartOverviewData = {
+            let chartOverviewData = {
                 labels: this_year.names,
                 datasets: [
                     {
                         label: 'Ova godina',
-                        fill: true,
-                        backgroundColor: 'rgba(6, 101, 208, .5)',
-                        borderColor: 'transparent',
-                        pointBackgroundColor: 'rgba(6, 101, 208, 1)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(6, 101, 208, 1)',
-                        data: this_year.values
+                        fill: false,
+                        borderColor: 'rgba(6, 101, 208, 1)',
+                        backgroundColor: 'rgba(6, 101, 208, .3)',
+                        data: this_year.values,
+                        tension: 0, lineTension: 0,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     },
                     {
-                        label: 'Zadnja godina',
-                        fill: true,
-                        backgroundColor: 'rgba(6, 101, 208, .2)',
-                        borderColor: 'transparent',
-                        pointBackgroundColor: 'rgba(6, 101, 208, .2)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(6, 101, 208, .2)',
-                        data: last_year.values
+                        label: 'Prošla godina',
+                        fill: false,
+                        borderColor: 'rgba(0, 51, 153, 1)',
+                        backgroundColor: 'rgba(0, 51, 153, .2)',
+                        data: last_year.values,
+                        tension: 0, lineTension: 0,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     }
                 ]
             };
 
-            // Init Overview Chart
             if (chartOverviewCon.length) {
-                chartOverview = new Chart(chartOverviewCon, {
+                new Chart(chartOverviewCon, {
                     type: 'line',
                     data: chartOverviewData,
                     options: chartOverviewOptions
@@ -291,7 +357,7 @@
             }
         });
 
-
+        // helper za dekodiranje podataka iz PHP
         function sort(data) {
             let data_data = JSON.parse(data.replace(/&quot;/g,'"'));
             let data_names = [];
@@ -318,6 +384,5 @@
             };
         }
     </script>
-
 @endpush
 

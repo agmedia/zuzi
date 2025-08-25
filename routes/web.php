@@ -54,6 +54,12 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')->group(function () {
     Route::match(['get', 'post'], '/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::prefix('dashboard')->name('dashboard.')->group(function () {
+        Route::get('/chart/month', [DashboardController::class, 'chartByMonth'])->name('chart.month');
+        Route::get('/chart/day', [DashboardController::class, 'chartByDay'])->name('chart.day');
+    });
+    Route::get('/dashboard/chart/range', [DashboardController::class, 'chartByRange'])->name('dashboard.chart.range');
+
     Route::get('setRoles', [DashboardController::class, 'setRoles'])->name('roles.set');
     Route::get('pingHP', [DashboardController::class, 'pingHP'])->name('ping.hp');
     Route::get('import', [DashboardController::class, 'import'])->name('import.initial');
