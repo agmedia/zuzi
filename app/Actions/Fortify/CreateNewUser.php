@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Helpers\Recaptcha;
+use App\Models\Front\Loyalty;
 use App\Models\User;
 use App\Models\UserDetail;
 use Carbon\Carbon;

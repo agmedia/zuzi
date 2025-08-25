@@ -41,4 +41,53 @@
             </ul>
         </div>
     </div>
+
+    @if (request()->routeIs(['loyalty']))
+        <div class="rounded-3 pt-1 my-4 mb-lg-0">
+            <div class="alert alert-info d-flex" role="alert">
+                <div class="alert-icon">
+                    <i class="ci-announcement"></i>
+                </div>
+                <div>
+                    <small>Preporuči Loyalty Klub prijatelju i oboje dobivate 50 bodova kada prijatelj napravi prvu kupnju.</small>
+                    <button class="btn btn-primary mb-2 mt-3" onclick="copyToClipboard('{{ route('index', [config('settings.loyalty.link_tag') => auth()->user()->getAffiliateLink()]) }}')">
+                        <i class="ci-star-filled pb-2"></i> Preporuči Loyalty Klub
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </aside>
+
+
+@push('js_after')
+    <script>
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+
+            } else {
+                // Use the 'out of viewport hidden text area' trick
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+
+                // Move textarea out of the viewport so it's not visible
+                textArea.style.position = "absolute";
+                textArea.style.left = "-999999px";
+
+                document.body.prepend(textArea);
+                textArea.select();
+
+                try {
+                    document.execCommand('copy');
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    textArea.remove();
+                }
+            }
+
+            alert("Pošaljite prijatelju ovaj link koji ste upravo kopirali: " + text);
+        }
+    </script>
+@endpush

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Front\Loyalty;
 use App\Models\Roles\Role;
+use App\Services\AffiliateService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -80,6 +81,27 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserDetail::class, 'user_id');
     }
+
+
+    public function referrals()
+    {
+        return $this->hasMany(UserAffiliate::class, 'user_id');
+    }
+
+
+    public function getAffiliateLink()
+    {
+        $affiliate = new AffiliateService();
+
+        return $affiliate->generateAffiliateCode($this);
+    }
+
+
+    public function addLoyaltyPoints()
+    {
+
+    }
+
 
 
     /**

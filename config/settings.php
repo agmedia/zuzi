@@ -142,9 +142,11 @@ return [
 
     //
     'loyalty' => [
+        'link_tag' => 'preporuka',
         'first_order_points' => 50,
         'birthday_points' => 100,
         'affiliate_points' => 50,
+        'affiliate_minutes_approval' => 43200,
         'points_per_euro' => 1,
         'rewards' => [
             'orders_per_month' => [

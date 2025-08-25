@@ -47,7 +47,7 @@
 
     @include('front.customer.layouts.header')
 
-    <div class="container pb-5 mb-2 mb-md-4">
+    <section class="pb-5 mb-2 mb-md-4">
         <div class="row">
         @include('front.customer.layouts.sidebar')
 
@@ -93,6 +93,6 @@
 
             </section>
         </div>
-    </div>
+    </section>
 
 @endsection

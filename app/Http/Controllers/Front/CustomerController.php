@@ -10,6 +10,7 @@ use App\Models\Front\Checkout\Order;
 use App\Models\Front\Loyalty;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 class CustomerController extends Controller
 {
@@ -43,23 +44,7 @@ class CustomerController extends Controller
         return view('front.customer.moje-narudzbe', compact('user', 'orders'));
     }
 
-    /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
-     */
-    public function loyalty(Request $request)
-    {
-        $user = auth()->user();
 
-        $loyalty = Loyalty::where('user_id', $user->id)->get();
-
-        $points = Loyalty::hasLoyaltyTotal($user->id);
-
-
-
-        return view('front.customer.loyalty', compact('user', 'loyalty', 'points'));
-    }
     /**
      * @param Request $request
      *
@@ -70,6 +55,9 @@ class CustomerController extends Controller
         $user    = auth()->user();
         $loyalty = Loyalty::where('user_id', $user->id)->get();
         $points  = Loyalty::hasLoyaltyTotal($user->id);
+
+        /*$crypt = encrypt($user->email . '-' . now());
+        dd($crypt, decrypt($crypt));*/
 
         return view('front.customer.loyalty', compact('user', 'loyalty', 'points'));
     }
