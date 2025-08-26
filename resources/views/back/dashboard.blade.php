@@ -68,24 +68,24 @@
                     <ul class="nav nav-tabs" id="salesTabs" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" id="monthly-tab" data-toggle="tab" href="#tab-monthly" role="tab"
-                               aria-controls="tab-monthly" aria-selected="true">Mjesečni pregled</a>
+                               aria-controls="tab-monthly" aria-selected="true">Godišnji pregled</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="sales-tab" data-toggle="tab" href="#tab-sales" role="tab"
-                               aria-controls="tab-sales" aria-selected="false">Promet i narudžbe</a>
+                               aria-controls="tab-sales" aria-selected="false">Mjesečni pregled</a>
                         </li>
                     </ul>
 
                     <!-- Tabs content -->
                     <div class="tab-content mt-3" id="salesTabsContent">
-                        <!-- Tab 1: Mjesečni pregled -->
+                        <!-- Tab 1: Godišnji pregled -->
                         <div class="tab-pane fade show active" id="tab-monthly" role="tabpanel" aria-labelledby="monthly-tab">
                             <div class="chart-container large">
                                 <canvas class="js-chartjs-overview"></canvas>
                             </div>
                         </div>
 
-                        <!-- Tab 2: Promet i narudžbe -->
+                        <!-- Tab 2: Mjesečni pregled (po danima) -->
                         <div class="tab-pane fade" id="tab-sales" role="tabpanel" aria-labelledby="sales-tab">
                             <div class="row mb-4 mt-3">
                                 <div class="col-md-2">
@@ -106,7 +106,7 @@
                                 </div>
                             </div>
 
-                            <div class="chart-container medium">
+                            <div class="chart-container large">
                                 <canvas id="salesChart"></canvas>
                             </div>
                         </div>
@@ -194,16 +194,46 @@
         let ctx = document.getElementById('salesChart').getContext('2d');
         let salesChart;
 
+        // Helper: složi pune serije za sve dane u mjesecu (prazno => 0)
+        function prepareMonthSeries(year, month, raw) {
+            // month je 1–12
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            // indeksiraj po danu radi lakšeg spajanja
+            const map = {};
+            (raw || []).forEach(d => {
+                const day = parseInt(d.day, 10);
+                map[day] = {
+                    total: Number(d.total) || 0,
+                    orders: Number(d.orders) || 0
+                };
+            });
+
+            const labels = [];
+            const values = [];
+            const counts = [];
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                labels.push(day + '.');
+                const row = map[day] || { total: 0, orders: 0 };
+                values.push(row.total);
+                counts.push(row.orders);
+            }
+
+            return { labels, values, counts };
+        }
+
         function loadMonth(year, month) {
             $.get('{{ route('dashboard.chart.month') }}', { year, month }, function(data) {
-                renderChart(data);
+                const series = prepareMonthSeries(Number(year), Number(month), data);
+                renderChart(series);
             });
         }
 
-        function renderChart(data) {
-            let labels = data.map(d => d.day + '.');
-            let values = data.map(d => d.total);
-            let counts = data.map(d => d.orders);
+        function renderChart(series) {
+            let labels = series.labels;
+            let values = series.values;
+            let counts = series.counts;
 
             if (salesChart) salesChart.destroy();
             salesChart = new Chart(ctx, {
@@ -385,4 +415,3 @@
         }
     </script>
 @endpush
-
