@@ -93,8 +93,25 @@
                                 <div class="col-md-2">
                                     <label>Mjesec</label>
                                     <select id="chart-month" class="form-control">
-                                        @foreach(range(1,12) as $m)
-                                            <option value="{{ $m }}">{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
+                                        @php
+                                            $hrMonths = [
+                                                1 => 'Siječanj',
+                                                2 => 'Veljača',
+                                                3 => 'Ožujak',
+                                                4 => 'Travanj',
+                                                5 => 'Svibanj',
+                                                6 => 'Lipanj',
+                                                7 => 'Srpanj',
+                                                8 => 'Kolovoz',
+                                                9 => 'Rujan',
+                                                10 => 'Listopad',
+                                                11 => 'Studeni',
+                                                12 => 'Prosinac',
+                                            ];
+                                        @endphp
+
+                                        @foreach($hrMonths as $m => $name)
+                                            <option value="{{ $m }}">{{ $name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
