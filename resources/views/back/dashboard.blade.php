@@ -143,7 +143,7 @@
                                         <div class="col-12 col-md-3 mb-3">
                                             <div class="block block-rounded text-center h-100">
                                                 <div class="block-content py-3">
-                                                    <div class="font-size-sm text-muted text-uppercase">Narudžbi danas</div>
+                                                    <div class="font-size-sm text-muted text-uppercase">Narudžbe danas</div>
                                                     <div class="font-size-h3 font-w600 mt-1">
                                                         {{ $data['today'] }}
                                                     </div>
