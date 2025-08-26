@@ -82,7 +82,9 @@
                         <!-- Tab 1: Mjesečni pregled (po danima) -->
                         <div class="tab-pane fade show active" id="tab-sales" role="tabpanel" aria-labelledby="sales-tab">
                             <div class="row mb-4 mt-3">
-                                <div class="col-md-2">
+                                <div class="col-md-3">
+                                    <div class="row">
+                                <div class="col-md-6">
                                     <label>Godina</label>
                                     <select id="chart-year" class="form-control">
                                         @foreach($yearsWithOrders as $y)
@@ -90,7 +92,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-6">
                                     <label>Mjesec</label>
                                     <select id="chart-month" class="form-control">
                                         @php
@@ -115,9 +117,10 @@
                                         @endforeach
                                     </select>
                                 </div>
-
+                                    </div>
+                                    </div>
                                 <!-- KPI boxevi -->
-                                <div class="col-md-8">
+                                <div class="col-md-9">
                                     <div class="row">
                                         <!-- Mjesečni promet -->
                                         <div class="col-12 col-md-3 mb-3">
