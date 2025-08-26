@@ -22,7 +22,7 @@
 
         @if( auth()->user()->id != '1716')
             <!-- Quick Overview -->
-            <div class="row row-deck">
+           {{-- <div class="row row-deck">
                 <div class="col-6 col-lg-3">
                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
                         <div class="block-content py-5">
@@ -55,7 +55,7 @@
                         </div>
                     </a>
                 </div>
-            </div>
+            </div> --}}
             <!-- END Quick Overview -->
 
             <!-- Sales Overview Block with Tabs -->
@@ -65,28 +65,22 @@
                 </div>
                 <div class="block-content">
                     <!-- Tabs nav -->
+                    <!-- Tabs nav -->
                     <ul class="nav nav-tabs" id="salesTabs" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" id="monthly-tab" data-toggle="tab" href="#tab-monthly" role="tab"
-                               aria-controls="tab-monthly" aria-selected="true">Godišnji pregled</a>
+                            <a class="nav-link active" id="sales-tab" data-toggle="tab" href="#tab-sales" role="tab"
+                               aria-controls="tab-sales" aria-selected="true">Mjesečni pregled</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="sales-tab" data-toggle="tab" href="#tab-sales" role="tab"
-                               aria-controls="tab-sales" aria-selected="false">Mjesečni pregled</a>
+                            <a class="nav-link" id="monthly-tab" data-toggle="tab" href="#tab-monthly" role="tab"
+                               aria-controls="tab-monthly" aria-selected="false">Godišnji pregled</a>
                         </li>
                     </ul>
 
                     <!-- Tabs content -->
                     <div class="tab-content mt-3" id="salesTabsContent">
-                        <!-- Tab 1: Godišnji pregled -->
-                        <div class="tab-pane fade show active" id="tab-monthly" role="tabpanel" aria-labelledby="monthly-tab">
-                            <div class="chart-container large">
-                                <canvas class="js-chartjs-overview"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Tab 2: Mjesečni pregled (po danima) -->
-                        <div class="tab-pane fade" id="tab-sales" role="tabpanel" aria-labelledby="sales-tab">
+                        <!-- Tab 1: Mjesečni pregled (po danima) -->
+                        <div class="tab-pane fade show active" id="tab-sales" role="tabpanel" aria-labelledby="sales-tab">
                             <div class="row mb-4 mt-3">
                                 <div class="col-md-2">
                                     <label>Godina</label>
@@ -105,9 +99,10 @@
                                     </select>
                                 </div>
 
-                                <!-- MJesečni KPI-ji: Promet, #Narudžbi, Prosječna narudžba -->
+                                <!-- KPI boxevi -->
                                 <div class="col-md-8">
                                     <div class="row">
+                                        <!-- Promet prvi -->
                                         <div class="col-12 col-md-4 mb-3">
                                             <div class="block block-rounded text-center h-100">
                                                 <div class="block-content py-3">
@@ -116,6 +111,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <!-- Broj narudžbi -->
                                         <div class="col-12 col-md-4 mb-3">
                                             <div class="block block-rounded text-center h-100">
                                                 <div class="block-content py-3">
@@ -124,6 +120,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <!-- Prosj. narudžba -->
                                         <div class="col-12 col-md-4 mb-3">
                                             <div class="block block-rounded text-center h-100">
                                                 <div class="block-content py-3">
@@ -134,14 +131,21 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- /KPI-ji -->
                             </div>
 
                             <div class="chart-container large">
                                 <canvas id="salesChart"></canvas>
                             </div>
                         </div>
+
+                        <!-- Tab 2: Godišnji pregled -->
+                        <div class="tab-pane fade" id="tab-monthly" role="tabpanel" aria-labelledby="monthly-tab">
+                            <div class="chart-container large">
+                                <canvas class="js-chartjs-overview"></canvas>
+                            </div>
+                        </div>
                     </div>
+
                 </div>
             </div>
         @endif
