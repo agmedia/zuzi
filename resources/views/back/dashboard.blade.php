@@ -22,7 +22,7 @@
 
         @if( auth()->user()->id != '1716')
             <!-- Quick Overview -->
-            <div class="row row-deck">
+           {{-- <div class="row row-deck">
                 <div class="col-6 col-lg-3">
                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
                         <div class="block-content py-5">
@@ -55,7 +55,7 @@
                         </div>
                     </a>
                 </div>
-            </div>
+            </div> --}}
             <!-- END Quick Overview -->
 
             <!-- Sales Overview Block with Tabs -->
@@ -119,8 +119,8 @@
                                 <!-- KPI boxevi -->
                                 <div class="col-md-8">
                                     <div class="row">
-                                        <!-- Promet prvi -->
-                                        <div class="col-12 col-md-4 mb-3">
+                                        <!-- Mjesečni promet -->
+                                        <div class="col-12 col-md-3 mb-3">
                                             <div class="block block-rounded text-center h-100">
                                                 <div class="block-content py-3">
                                                     <div class="font-size-sm text-muted text-uppercase">Mjesečni promet</div>
@@ -128,17 +128,31 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- Broj narudžbi -->
-                                        <div class="col-12 col-md-4 mb-3">
+
+                                        <!-- Broj narudžbi u mjesecu (računa se iz JS serije) -->
+                                        <div class="col-12 col-md-3 mb-3">
                                             <div class="block block-rounded text-center h-100">
                                                 <div class="block-content py-3">
-                                                    <div class="font-size-sm text-muted text-uppercase">Broj narudžbi</div>
+                                                    <div class="font-size-sm text-muted text-uppercase">Narudžbe mjesec</div>
                                                     <div id="kpi-month-orders" class="font-size-h3 font-w600 mt-1">—</div>
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- Narudžbi danas (iz backend varijable) -->
+                                        <div class="col-12 col-md-3 mb-3">
+                                            <div class="block block-rounded text-center h-100">
+                                                <div class="block-content py-3">
+                                                    <div class="font-size-sm text-muted text-uppercase">Narudžbi danas</div>
+                                                    <div class="font-size-h3 font-w600 mt-1">
+                                                        {{ $data['today'] }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <!-- Prosj. narudžba -->
-                                        <div class="col-12 col-md-4 mb-3">
+                                        <div class="col-12 col-md-3 mb-3">
                                             <div class="block block-rounded text-center h-100">
                                                 <div class="block-content py-3">
                                                     <div class="font-size-sm text-muted text-uppercase">Prosj. narudžba</div>
@@ -147,6 +161,8 @@
                                             </div>
                                         </div>
                                     </div>
+
+
                                 </div>
                             </div>
 
