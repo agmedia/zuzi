@@ -104,6 +104,37 @@
                                         @endforeach
                                     </select>
                                 </div>
+
+                                <!-- MJesečni KPI-ji: Promet, #Narudžbi, Prosječna narudžba -->
+                                <div class="col-md-8">
+                                    <div class="row">
+                                        <div class="col-12 col-md-4 mb-3">
+                                            <div class="block block-rounded text-center h-100">
+                                                <div class="block-content py-3">
+                                                    <div class="font-size-sm text-muted text-uppercase">Mjesečni promet</div>
+                                                    <div id="kpi-month-total" class="font-size-h3 font-w600 mt-1">—</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4 mb-3">
+                                            <div class="block block-rounded text-center h-100">
+                                                <div class="block-content py-3">
+                                                    <div class="font-size-sm text-muted text-uppercase">Broj narudžbi</div>
+                                                    <div id="kpi-month-orders" class="font-size-h3 font-w600 mt-1">—</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4 mb-3">
+                                            <div class="block block-rounded text-center h-100">
+                                                <div class="block-content py-3">
+                                                    <div class="font-size-sm text-muted text-uppercase">Prosj. narudžba</div>
+                                                    <div id="kpi-month-aov" class="font-size-h3 font-w600 mt-1">—</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- /KPI-ji -->
                             </div>
 
                             <div class="chart-container large">
@@ -174,10 +205,7 @@
 
 @push('css_after')
     <style>
-        .chart-container {
-            position: relative;
-            width: 100%;
-        }
+        .chart-container { position: relative; width: 100%; }
         .chart-container.small { height: 200px; }
         .chart-container.medium { height: 280px; }
         .chart-container.large { height: 400px; }
@@ -194,12 +222,13 @@
         let ctx = document.getElementById('salesChart').getContext('2d');
         let salesChart;
 
+        // Formatiranje valuta i brojeva (hr-HR, EUR)
+        const fmtCurrency = new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
+        const fmtInt = new Intl.NumberFormat('hr-HR', { maximumFractionDigits: 0 });
+
         // Helper: složi pune serije za sve dane u mjesecu (prazno => 0)
         function prepareMonthSeries(year, month, raw) {
-            // month je 1–12
-            const daysInMonth = new Date(year, month, 0).getDate();
-
-            // indeksiraj po danu radi lakšeg spajanja
+            const daysInMonth = new Date(year, month, 0).getDate(); // month: 1–12
             const map = {};
             (raw || []).forEach(d => {
                 const day = parseInt(d.day, 10);
@@ -219,21 +248,34 @@
                 values.push(row.total);
                 counts.push(row.orders);
             }
-
             return { labels, values, counts };
+        }
+
+        // Izračun KPI-ja i upis u DOM
+        function updateMonthStats(total, orders) {
+            const aov = orders > 0 ? (total / orders) : 0;
+            document.getElementById('kpi-month-total').textContent  = fmtCurrency.format(total);
+            document.getElementById('kpi-month-orders').textContent = fmtInt.format(orders);
+            document.getElementById('kpi-month-aov').textContent    = fmtCurrency.format(aov);
         }
 
         function loadMonth(year, month) {
             $.get('{{ route('dashboard.chart.month') }}', { year, month }, function(data) {
                 const series = prepareMonthSeries(Number(year), Number(month), data);
+
+                // KPI: sumiraj promet i narudžbe za mjesec
+                const monthTotal  = series.values.reduce((s, v) => s + Number(v || 0), 0);
+                const monthOrders = series.counts.reduce((s, v) => s + Number(v || 0), 0);
+                updateMonthStats(monthTotal, monthOrders);
+
                 renderChart(series);
             });
         }
 
         function renderChart(series) {
-            let labels = series.labels;
-            let values = series.values;
-            let counts = series.counts;
+            const labels = series.labels;
+            const values = series.values;
+            const counts = series.counts;
 
             if (salesChart) salesChart.destroy();
             salesChart = new Chart(ctx, {
@@ -275,8 +317,8 @@
                         intersect: false,
                         callbacks: {
                             label: function(tooltipItem, data) {
-                                let label = data.datasets[tooltipItem.datasetIndex].label || '';
-                                let value = tooltipItem.yLabel;
+                                const label = data.datasets[tooltipItem.datasetIndex].label || '';
+                                const value = tooltipItem.yLabel;
                                 if (label.includes('Promet')) {
                                     return label + ': ' + value + '€';
                                 } else {
@@ -298,9 +340,7 @@
                             {
                                 id: 'y-axis-2',
                                 position: 'right',
-                                ticks: {
-                                    beginAtZero: true
-                                },
+                                ticks: { beginAtZero: true },
                                 gridLines: { drawOnChartArea: false }
                             }
                         ]
@@ -311,13 +351,13 @@
 
         // Automatski refresh na promjenu selecta
         $('#chart-year, #chart-month').on('change', function() {
-            let year  = $('#chart-year').val();
-            let month = $('#chart-month').val();
+            const year  = $('#chart-year').val();
+            const month = $('#chart-month').val();
             loadMonth(year, month);
         });
 
         // Inicijalni prikaz trenutnog mjeseca
-        let now = new Date();
+        const now = new Date();
         $('#chart-year').val(now.getFullYear());
         $('#chart-month').val(now.getMonth() + 1);
         loadMonth(now.getFullYear(), now.getMonth() + 1);
@@ -337,9 +377,7 @@
                 responsive: true,
                 scales: {
                     yAxes: [{
-                        ticks: {
-                            suggestedMax: this_year.top
-                        }
+                        ticks: { suggestedMax: this_year.top }
                     }]
                 },
                 tooltips: {
@@ -399,19 +437,11 @@
                 data_names.push(data_data[i].title + '.');
                 data_values.push(data_data[i].value);
             }
-
             for (let i = 0; i < data_values.length; i++) {
-                if (data_values[i] > top) {
-                    top = data_values[i];
-                }
+                if (data_values[i] > top) top = data_values[i];
             }
 
-            return {
-                values: data_values,
-                names: data_names,
-                top: top,
-                step: step_size
-            };
+            return { values: data_values, names: data_names, top: top, step: step_size };
         }
     </script>
 @endpush
