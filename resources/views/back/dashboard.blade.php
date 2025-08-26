@@ -85,9 +85,9 @@
                                 <div class="col-md-2">
                                     <label>Godina</label>
                                     <select id="chart-year" class="form-control">
-                                        @for($y = now()->year; $y >= now()->year - 5; $y--)
+                                        @foreach($yearsWithOrders as $y)
                                             <option value="{{ $y }}">{{ $y }}</option>
-                                        @endfor
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-2">

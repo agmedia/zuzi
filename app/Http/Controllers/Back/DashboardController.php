@@ -32,7 +32,6 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class DashboardController extends Controller
 {
-
     /**
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
@@ -41,17 +40,16 @@ class DashboardController extends Controller
         $data['today']      = Order::whereDate('created_at', Carbon::today())->count();
         $data['proccess']   = Order::whereIn('order_status_id', [1, 2, 3])->count();
         $data['finished']   = Order::whereIn('order_status_id', [4, 5, 6, 7])->count();
-        $data['this_month'] = Order::whereMonth('created_at', '=', Carbon::now()->month)->count();
 
-        $data['this_month'] = Order::whereYear('created_at', '=', Carbon::now()->year)->whereMonth('created_at', '=', Carbon::now()->month)->count();
-
+        // broj narudžbi u TEKUĆEM mjesecu
+        $data['this_month'] = Order::whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->count();
 
         $orders   = Order::last()->with('products')->get();
         $products = $orders->map(function ($item) {
             return $item->products()->get();
         })->flatten();
-
-        //dd($products);
 
         $chart     = new Chart();
         $this_year = json_encode($chart->setDataByYear(
@@ -61,9 +59,23 @@ class DashboardController extends Controller
             Order::chartData($chart->setQueryParams(true))
         ));
 
-        return view('back.dashboard', compact('data', 'orders', 'products', 'this_year', 'last_year'));
-    }
+        // ---- NOVO: samo GODINE koje zaista imaju podatke (bar 1 narudžba) ----
+        $yearsWithOrders = Order::query()
+            ->selectRaw('YEAR(created_at) as year')
+            ->whereNotNull('created_at')
+            ->groupBy('year')
+            ->orderBy('year', 'desc')
+            ->pluck('year');
 
+        return view('back.dashboard', compact(
+            'data',
+            'orders',
+            'products',
+            'this_year',
+            'last_year',
+            'yearsWithOrders' // <— prosljeđeno u view
+        ));
+    }
 
     /**
      * Import initialy from Excel files.
@@ -86,20 +98,11 @@ class DashboardController extends Controller
                 $author = 3282;
                 $action = ((float) $item->RegularPrice == (float) $item->Price) ? null : $item->Price;
 
-
                 $data['title'] = $item->Naziv;
 
                 $priceeur = ($item->PreporucenaMPC * 0.0085) * 2;
 
                 $count++;
-
-             /*   foreach ($item->Kategorijeproizvoda as $category) {
-                    $categories[] = $category;
-                }
-
-              /  foreach ($item->Slika as $image) {
-                    $images[] = $image;
-                }*/
 
                 $images[] = (string) $item->Slika;
 
@@ -108,7 +111,7 @@ class DashboardController extends Controller
                     'publisher_id'     => $publisher ?: config('settings.unknown_publisher'),
                     'action_id'        => 0,
                     'name'             => $item->Naziv,
-                    'sku'             => $item->bar_kod,
+                    'sku'              => $item->bar_kod,
                     'ean'              => $item->bar_kod,
                     'description'      => '<p class="text-primary">Rok dostave 20 radnih dana!</p><p>' . str_replace('\n', '<br>', $item->Opis) . '</p>',
                     'slug'             => Helper::resolveSlug($data),
@@ -158,22 +161,10 @@ class DashboardController extends Controller
                         }
                     }
 
-                /*    $categories = $import->resolveCategories($categories);
-
-                    if ($categories) {
-                        foreach ($categories as $category) {
-                            ProductCategory::insert([
-                                'product_id'  => $product_id,
-                                'category_id' => $category
-                            ]);
-                        }
-                    }*/
-
                     ProductCategory::query()->insert([
                         'product_id'  => $product_id,
                         'category_id' => 25,
                     ]);
-
 
                     ProductCategory::insert([
                         'product_id'  => $product_id,
@@ -199,7 +190,6 @@ class DashboardController extends Controller
         return redirect()->route('dashboard')->with(['success' => 'Import je uspješno obavljen..! ' . $count . ' proizvoda importano.']);
     }
 
-
     public function pingHP(Request $request)
     {
         $order = Order::query()->latest('created_at')->first();
@@ -210,7 +200,6 @@ class DashboardController extends Controller
 
         return redirect()->route('dashboard')->with(['success' => 'HP je pingiran... provjeri LOG fajl.']);
     }
-
 
     /**
      * Set up roles. Should be done once only.
@@ -259,10 +248,6 @@ class DashboardController extends Controller
         return redirect()->route('dashboard');
     }
 
-
-    /**
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function letters()
     {
         $authors = Author::all();
@@ -275,7 +260,6 @@ class DashboardController extends Controller
             ]);
         }
 
-        //
         $publishers = Publisher::all();
 
         foreach ($publishers as $publisher) {
@@ -289,28 +273,8 @@ class DashboardController extends Controller
         return redirect()->route('dashboard');
     }
 
-
-    /**
-     *
-     */
     public function slugs()
     {
-        /*$slugs = Product::query()->groupBy('slug')->havingRaw('COUNT(id) > 1')->pluck('slug', 'id')->toArray();
-
-        foreach ($slugs as $slug) {
-            $products = Product::where('slug', $slug)->get();
-
-            if ($products) {
-                foreach ($products as $product) {
-                    $time = Str::random(9);
-                    $product->update([
-                        'slug' => $product->slug . '-' . $time,
-                        'url' => $product->url . '-' . $time,
-                    ]);
-                }
-            }
-        }*/
-
         $products = Product::query()->whereNull('slug')->orWhere('slug', '=', '')->get();
 
         foreach ($products as $product) {
@@ -330,19 +294,15 @@ class DashboardController extends Controller
         return redirect()->route('dashboard');
     }
 
-
-    /**
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function statuses()
     {
         // AUTHORS
         $products = Product::query()
-                           ->where('quantity', '>', 0)
-                           ->select('author_id', DB::raw('count(*) as total'))
-                           ->groupBy('author_id')
-                           ->pluck('author_id')
-                           ->unique();
+            ->where('quantity', '>', 0)
+            ->select('author_id', DB::raw('count(*) as total'))
+            ->groupBy('author_id')
+            ->pluck('author_id')
+            ->unique();
 
         $authors = Author::query()->pluck('id')->diff($products)->flatten();
 
@@ -358,11 +318,11 @@ class DashboardController extends Controller
 
         // PUBLISHERS
         $products = Product::query()
-                           ->where('quantity', '>', 0)
-                           ->select('publisher_id', DB::raw('count(*) as total'))
-                           ->groupBy('publisher_id')
-                           ->pluck('publisher_id')
-                           ->unique();
+            ->where('quantity', '>', 0)
+            ->select('publisher_id', DB::raw('count(*) as total'))
+            ->groupBy('publisher_id')
+            ->pluck('publisher_id')
+            ->unique();
 
         $publishers = Publisher::query()->pluck('id')->diff($products)->flatten();
 
@@ -415,12 +375,6 @@ class DashboardController extends Controller
         return redirect()->route('dashboard');
     }
 
-
-    /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function mailing(Request $request)
     {
         $order = Order::where('id', 3)->first();
@@ -431,108 +385,6 @@ class DashboardController extends Controller
         });
 
         return redirect()->route('dashboard');
-    }
-
-
-    /**
-     *
-     */
-    public function duplicate(string $target = null)
-    {
-        // Duplicate images
-        if ($target === 'images') {
-            $paths = ProductImage::query()->groupBy('image')->havingRaw('COUNT(id) > 1')->pluck('image', 'id')->toArray();
-
-            foreach ($paths as $path) {
-                $first = ProductImage::where('image', $path)->first();
-
-                ProductImage::where('image', $path)->where('id', '!=', $first->id)->delete();
-            }
-        }
-
-        // Duplicate publishers
-        if ($target === 'publishers') {
-            $paths = Publisher::query()->groupBy('title')->havingRaw('COUNT(id) > 1')->pluck('title', 'id')->toArray();
-
-            foreach ($paths as $id => $path) {
-                $group = Publisher::where('title', $path)->get();
-
-                foreach ($group as $item) {
-                    if ($item->id != $id) {
-                        foreach ($item->products()->get() as $product) {
-                            Product::where('id', $product->id)->update([
-                                'publisher_id' => $id
-                            ]);
-                        }
-
-                        Publisher::where('id', $item->id)->delete();
-                    }
-                }
-            }
-        }
-
-        return redirect()->route('dashboard');
-    }
-
-
-    /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function setCategoryGroup(Request $request)
-    {
-        Category::query()->update([
-            'group' => Helper::categoryGroupPath(true)
-        ]);
-
-        $products = Product::query()->where('push', 0)->get();
-
-        foreach ($products as $product) {
-            $product->update([
-                'url'             => ProductHelper::url($product),
-                'category_string' => ProductHelper::categoryString($product),
-                'push'            => 1
-            ]);
-        }
-
-        return redirect()->route('dashboard');
-    }
-
-
-    /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function setProductsUnlimitedQty(Request $request)
-    {
-        $products = ProductCategory::query()->where('category_id', 25)->pluck('product_id');
-
-        Product::query()->whereIn('id', $products)->update([
-            'quantity' => 100,
-            'decrease' => 0,
-            'status' => 1
-        ]);
-
-        return redirect()->route('dashboard')->with(['success' => 'Proizvodi su namješteni na neograničenu količinu..! ' . $products->count() . ' proizvoda obnovljeno.']);
-    }
-
-
-    /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function setPdvProducts(Request $request)
-    {
-        $ids = ProductCategory::query()->whereIn('category_id', [174, 175])->pluck('product_id');
-
-        Product::query()->whereIn('id', $ids)->update([
-            'tax_id' => 2
-        ]);
-
-        return redirect()->route('dashboard')->with(['success' => 'PDV je obnovljen na kategoriji svezalice..! ' . $ids->count() . ' proizvoda obnovljeno.']);
     }
 
     /**
@@ -591,7 +443,4 @@ class DashboardController extends Controller
 
         return response()->json($data);
     }
-
-
-
 }
