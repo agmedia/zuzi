@@ -22,40 +22,40 @@
 
         @if( auth()->user()->id != '1716')
             <!-- Quick Overview -->
-           {{-- <div class="row row-deck">
-                <div class="col-6 col-lg-3">
-                    <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                        <div class="block-content py-5">
-                            <div class="font-size-h3 font-w600 text-warning mb-1">{{ $data['proccess'] }}</div>
-                            <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi u obradi</p>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                        <div class="block-content py-5">
-                            <div class="font-size-h3 font-w600 text-success mb-1">{{ $data['finished'] }}</div>
-                            <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Dovršenih narudžbi</p>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                        <div class="block-content py-5">
-                            <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['today'] }}</div>
-                            <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi danas</p>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                        <div class="block-content py-5">
-                            <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['this_month'] }}</div>
-                            <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi ovaj mjesec</p>
-                        </div>
-                    </a>
-                </div>
-            </div> --}}
+            {{-- <div class="row row-deck">
+                 <div class="col-6 col-lg-3">
+                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
+                         <div class="block-content py-5">
+                             <div class="font-size-h3 font-w600 text-warning mb-1">{{ $data['proccess'] }}</div>
+                             <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi u obradi</p>
+                         </div>
+                     </a>
+                 </div>
+                 <div class="col-6 col-lg-3">
+                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
+                         <div class="block-content py-5">
+                             <div class="font-size-h3 font-w600 text-success mb-1">{{ $data['finished'] }}</div>
+                             <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Dovršenih narudžbi</p>
+                         </div>
+                     </a>
+                 </div>
+                 <div class="col-6 col-lg-3">
+                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
+                         <div class="block-content py-5">
+                             <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['today'] }}</div>
+                             <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi danas</p>
+                         </div>
+                     </a>
+                 </div>
+                 <div class="col-6 col-lg-3">
+                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
+                         <div class="block-content py-5">
+                             <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['this_month'] }}</div>
+                             <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi ovaj mjesec</p>
+                         </div>
+                     </a>
+                 </div>
+             </div> --}}
             <!-- END Quick Overview -->
 
             <!-- Sales Overview Block with Tabs -->
@@ -84,41 +84,41 @@
                             <div class="row mb-4 mt-3">
                                 <div class="col-md-3">
                                     <div class="row">
-                                <div class="col-md-6">
-                                    <label>Godina</label>
-                                    <select id="chart-year" class="form-control">
-                                        @foreach($yearsWithOrders as $y)
-                                            <option value="{{ $y }}">{{ $y }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label>Mjesec</label>
-                                    <select id="chart-month" class="form-control">
-                                        @php
-                                            $hrMonths = [
-                                                1 => 'Siječanj',
-                                                2 => 'Veljača',
-                                                3 => 'Ožujak',
-                                                4 => 'Travanj',
-                                                5 => 'Svibanj',
-                                                6 => 'Lipanj',
-                                                7 => 'Srpanj',
-                                                8 => 'Kolovoz',
-                                                9 => 'Rujan',
-                                                10 => 'Listopad',
-                                                11 => 'Studeni',
-                                                12 => 'Prosinac',
-                                            ];
-                                        @endphp
+                                        <div class="col-md-6">
+                                            <label>Godina</label>
+                                            <select id="chart-year" class="form-control">
+                                                @foreach($yearsWithOrders as $y)
+                                                    <option value="{{ $y }}">{{ $y }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label>Mjesec</label>
+                                            <select id="chart-month" class="form-control">
+                                                @php
+                                                    $hrMonths = [
+                                                        1 => 'Siječanj',
+                                                        2 => 'Veljača',
+                                                        3 => 'Ožujak',
+                                                        4 => 'Travanj',
+                                                        5 => 'Svibanj',
+                                                        6 => 'Lipanj',
+                                                        7 => 'Srpanj',
+                                                        8 => 'Kolovoz',
+                                                        9 => 'Rujan',
+                                                        10 => 'Listopad',
+                                                        11 => 'Studeni',
+                                                        12 => 'Prosinac',
+                                                    ];
+                                                @endphp
 
-                                        @foreach($hrMonths as $m => $name)
-                                            <option value="{{ $m }}">{{ $name }}</option>
-                                        @endforeach
-                                    </select>
+                                                @foreach($hrMonths as $m => $name)
+                                                    <option value="{{ $m }}">{{ $name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                                    </div>
-                                    </div>
                                 <!-- KPI boxevi -->
                                 <div class="col-md-9">
                                     <div class="row">

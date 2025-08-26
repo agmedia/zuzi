@@ -165,6 +165,7 @@ return [
     //
     'njuskalo' => [
         'user_id' => '968815',
+        'forbidden' => ['80265', '49502','49501', '47085'],
         'sync' => [
             'fantasy' => 15360, //*
             'djecje-knjige' => 15348,

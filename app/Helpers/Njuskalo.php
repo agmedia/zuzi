@@ -24,6 +24,7 @@ class Njuskalo
     public function getItems(): array
     {
         $products = Product::query()->where('status', 1)
+                                  ->whereNotIn('sku', config('settings.njuskalo.forbidden'))
                                     ->where('price', '!=', 0)
                                     ->where('quantity', '!=', 0)
                                     ->select('id', 'name', 'description', 'quantity', 'status', 'price', 'image', 'pages', 'dimensions', 'origin', 'url', 'letter', 'condition', 'binding', 'year')
