@@ -201,34 +201,43 @@ class User extends Authenticatable
      */
     public function edit()
     {
-        if (isset($this->request->username)) {
-            $this->update([
-                'name'     => $this->request->username,
-                'email'    => $this->request->email,
-                'updated_at'       => Carbon::now()
-            ]);
-        }
-
-        if (isset($this->request->password) && ! empty($this->request->password)) {
-            $this->update([
-                'password' => Hash::make($this->request->password),
-            ]);
-        }
-
-      
-
-        if (isset($this->request->loyalty_points) && ! empty($this->request->loyalty_points)) {
-            $has_points = Loyalty::hasLoyaltyTotal($this->request->user_id);
-
-            if ($this->request->loyalty_points > $has_points) {
-                Loyalty::addPoints(($this->request->loyalty_points - $has_points), 0, 'admin', $this->request->user_id);
-            }
-            if ($this->request->loyalty_points < $has_points) {
-                Loyalty::removePoints(($has_points - $this->request->loyalty_points), 0, 'admin', $this->request->user_id);
-            }
-        }
-
         if ($this->id) {
+            if (isset($this->request->username)) {
+                $this->update([
+                    'name'     => $this->request->username,
+                    'email'    => $this->request->email,
+                    'updated_at'       => Carbon::now()
+                ]);
+            }
+
+            if (isset($this->request->password) && ! empty($this->request->password)) {
+                $this->update([
+                    'password' => Hash::make($this->request->password),
+                ]);
+            }
+
+            $name = Str::slug(Str::random(12));
+
+            if (isset($this->request->affiliate_name)) {
+                $name = $this->request->affiliate_name;
+                $has_name = UserDetail::query()->where('user_id', '!=', $this->id)->where('affiliate_name', $name)->first();
+
+                if ($has_name) {
+                    $name = $name . '-' . Str::random(3);
+                }
+            }
+
+            if (isset($this->request->loyalty_points) && ! empty($this->request->loyalty_points)) {
+                $has_points = Loyalty::hasLoyaltyTotal($this->request->user_id);
+
+                if ($this->request->loyalty_points > $has_points) {
+                    Loyalty::addPoints(($this->request->loyalty_points - $has_points), 0, 'admin', $this->request->user_id);
+                }
+                if ($this->request->loyalty_points < $has_points) {
+                    Loyalty::removePoints(($has_points - $this->request->loyalty_points), 0, 'admin', $this->request->user_id);
+                }
+            }
+
             if (!isset($this->request->role)){
                 $this->request->role = 'customer';
             }
@@ -251,6 +260,7 @@ class User extends Authenticatable
                 'avatar'     => 'media/avatars/avatar1.jpg',
                 'bio'        => '',
                 'social'     => '',
+                'affiliate_name' => $name,
                 'role'       => $this->request->role,
                 'status'     => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
                 'updated_at' => Carbon::now()

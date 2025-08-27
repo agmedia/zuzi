@@ -9,6 +9,7 @@ use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
 use App\Models\Front\Loyalty;
 use App\Models\User;
+use App\Models\UserAffiliate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 
@@ -26,6 +27,7 @@ class CustomerController extends Controller
         $countries = Country::list();
 
         CheckoutSession::forgetAddress();
+        UserAffiliate::checkAffiliateName($user);
 
         return view('front.customer.index', compact('user', 'countries'));
     }

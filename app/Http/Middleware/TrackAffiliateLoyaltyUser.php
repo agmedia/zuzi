@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\UserDetail;
 use Closure;
 use Illuminate\Http\Request;
 use Bouncer;
@@ -21,12 +22,16 @@ class TrackAffiliateLoyaltyUser
         $tag = config('settings.loyalty.link_tag');
 
         if ($request->has($tag)) {
-            $response->withCookie(
-                cookie('affiliate',
-                    $request->get($tag),
-                    config('settings.loyalty.affiliate_minutes_approval')
-                )
-            );
+            $tag_exist = UserDetail::query()->where('affiliate_name', $tag)->first();
+
+            if ($tag_exist) {
+                $response->withCookie(
+                    cookie('affiliate',
+                        $request->get($tag),
+                        config('settings.loyalty.affiliate_minutes_approval')
+                    )
+                );
+            }
         }
 
         return $response;

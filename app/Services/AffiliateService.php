@@ -19,7 +19,7 @@ class AffiliateService
 
     public function generateAffiliateCode(User $user)
     {
-        return Str::slug(strtok($user->name, ' '));
+        return $user->details->affiliate_name;
     }
 
 
@@ -62,7 +62,7 @@ class AffiliateService
                 $order_id,
                 'order',
                 'Welcome referral points',
-                $affiliate->customer_id
+                $affiliate->customer->email
             );
 
             $affiliate->update([

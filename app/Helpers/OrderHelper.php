@@ -140,25 +140,34 @@ class OrderHelper
     public function addLoyaltyPoints()
     {
         if ($this->getOrder() && auth()->check()) {
-            $points = floor($this->order->total);
+            // ako je kupac regan
+            if (auth()->check()) {
+                $points = floor($this->order->total);
 
-            Loyalty::addPoints($points, $this->order_id, 'order', '', auth()->id());
+                // Dobiva bodove za narudžbu, default.
+                Loyalty::addPoints($points, $this->order_id, 'order', '', auth()->id());
 
-            $orders = Order::query()->where('user_id', auth()->id())->whereDate('created_at', '>=', now()->subMonth())->count();
+                // Provjerava ima li više narudžbi ovaj mjesec za dodatne bodove.
+                $orders = Order::query()->where('user_id', auth()->id())->whereDate('created_at', '>=', now()->subMonth())->count();
 
-            foreach (config('settings.loyalty.rewards.orders_per_month') as $number_of_orders => $reward_points) {
-                if ($orders >= $number_of_orders) {
-                    Loyalty::addPoints($reward_points, $this->order_id, 'order', 'Multiple orders reward.', auth()->id());
+                foreach (config('settings.loyalty.rewards.orders_per_month') as $number_of_orders => $reward_points) {
+                    if ($orders >= $number_of_orders) {
+                        Loyalty::addPoints($reward_points, $this->order_id, 'order', 'Multiple orders reward.', auth()->id());
 
-                    break;
+                        break;
+                    }
+                }
+
+                // Provjerava je li ovo prva narudžba
+                $orders = Order::query()->where('user_id', auth()->id())->count();
+
+                if ( ! $orders) {
+                    Loyalty::addPoints(config('settings.loyalty.first_order_points'), $this->order_id, 'order', 'First order reward.', auth()->id());
                 }
             }
 
-            $orders = Order::query()->where('user_id', auth()->id())->count();
+            // Provjerava je li možda affiliate korisnik.
 
-            if ( ! $orders) {
-                Loyalty::addPoints(config('settings.loyalty.first_order_points'), $this->order_id, 'order', 'First order reward.', auth()->id());
-            }
         }
 
         return $this;

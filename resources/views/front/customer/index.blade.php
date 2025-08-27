@@ -116,7 +116,19 @@
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row mt-2">
+                        <div class="col-sm-12">
+                            <h2 class="h6 pt-1 pb-3 mb-3 border-bottom">Affiliate naziv</h2>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="mb-3">
+                                <label class="form-label" for="affiliate_name">Affiliate naziv</label>
+                                <input class="form-control" type="text" name="affiliate_name" value="{{ $user->details->affiliate_name }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
                         <div class="col-sm-12">
                             <button type="submit" class="btn btn-primary d-block w-100">Snimi</button>
                         </div>

@@ -29,6 +29,7 @@ class CreateUserDetailsTable extends Migration
             $table->longText('bio')->nullable();
             $table->dateTime('birthday')->nullable();
             $table->string('social')->nullable();
+            $table->string('affiliate_name')->nullable();
             $table->string('role');
             $table->boolean('status')->default(1);
             $table->timestamps();
