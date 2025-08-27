@@ -7,6 +7,10 @@ use App\Mail\OrderReceived;
 use App\Mail\OrderSent;
 use App\Models\Back\Orders\Order;
 use App\Models\Front\Loyalty;
+use App\Models\UserAffiliate;
+use App\Models\UserDetail;
+use App\Services\AffiliateService;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -139,7 +143,7 @@ class OrderHelper
      */
     public function addLoyaltyPoints()
     {
-        if ($this->getOrder() && auth()->check()) {
+        if ($this->getOrder()) {
             // ako je kupac regan
             if (auth()->check()) {
                 $points = floor($this->order->total);
@@ -167,6 +171,39 @@ class OrderHelper
             }
 
             // Provjerava je li možda affiliate korisnik.
+            if (Cookie::has('affiliate')) {
+                $customer_email = $this->getOrder()->payment_email;
+
+                if (auth()->check()) {
+                    $customer_email = auth()->user()->email;
+                }
+
+                $has_first_purchase = UserAffiliate::query()->where('customer_email', $customer_email)->first();
+
+                if ( ! $has_first_purchase) {
+                    $user_details = UserDetail::query()->where('affiliate_nema', request()->cookie('affiliate'))->first();
+
+                    if ($user_details) {
+                        UserAffiliate::create([
+                            'user_id' => $user_details->user_id,
+                            'customer_email' => $customer_email,
+                            'affiliate_code' => $this->generateAffiliateCode($user),
+                            'active' => 1
+                        ]);
+
+                        $referal_points = config('settings.loyalty.affiliate_points');
+                        $order_id = $this->getOrder()->id;
+
+                        Loyalty::addPoints($referal_points, $order_id, 'affiliate_referral', 'Referral reward points', $user_details->user_id);
+
+                        // Award points to referred customer
+                        if (auth()->check()) {
+                            Loyalty::addPoints($referal_points, $order_id, 'order', 'Welcome referral points', auth()->user()->id);
+                        }
+                    }
+                }
+
+            }
 
         }
 

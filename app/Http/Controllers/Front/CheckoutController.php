@@ -92,10 +92,6 @@ class CheckoutController extends Controller
             $data['id'] = CheckoutSession::getOrder()['id'];
         }
 
-        if (Cookie::has('affiliate')) {
-
-        }
-
         $data['payment_form'] = $order->resolvePaymentForm();
 
         return view('front.checkout.view', compact('data'));

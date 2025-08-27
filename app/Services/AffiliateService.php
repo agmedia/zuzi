@@ -34,7 +34,7 @@ class AffiliateService
     }
 
 
-    public function handleRegistration(UserAffiliate $affiliate, $order_id)
+    public function handleRegistration(UserAffiliate $affiliate)
     {
         if ( ! $affiliate->registered_at) {
             $affiliate->update([
