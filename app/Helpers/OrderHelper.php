@@ -156,7 +156,7 @@ class OrderHelper
 
                 foreach (config('settings.loyalty.rewards.orders_per_month') as $number_of_orders => $reward_points) {
                     if ($orders >= $number_of_orders) {
-                        Loyalty::addPoints($reward_points, $this->order_id, 'order', 'Multiple orders reward.', auth()->id());
+                        Loyalty::addPoints($reward_points, $this->order_id, 'order', $number_of_orders . ' Multiple orders reward.', auth()->id());
 
                         break;
                     }
