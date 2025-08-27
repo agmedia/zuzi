@@ -22,7 +22,7 @@
 
         @if( auth()->user()->id != '1716')
             <!-- Quick Overview -->
-            {{-- <div class="row row-deck">
+        <div class="row row-deck">
                  <div class="col-6 col-lg-3">
                      <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
                          <div class="block-content py-5">
@@ -55,7 +55,7 @@
                          </div>
                      </a>
                  </div>
-             </div> --}}
+             </div>
             <!-- END Quick Overview -->
 
             <!-- Sales Overview Block with Tabs -->
