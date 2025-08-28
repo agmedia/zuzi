@@ -150,8 +150,8 @@ return [
         'points_per_euro' => 1,
         'rewards' => [
             'orders_per_month' => [
-                2 => 20,
-                1 => 10
+                3 => 20,
+                2 => 10
             ],
             'comment' => 1
         ],

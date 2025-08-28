@@ -37,12 +37,14 @@
 
                         @forelse ($loyalty as $row)
                             <tr>
-                                @if($row->target == 'order')
-                                    <td class="py-3">{{ __('front/cart.loyalty_ref_order') }} - {{$row->reference_id }}</td>
+                                @if($row->reference == 'order')
+                                    <td class="py-3">{{ __('front/cart.loyalty_ref_order') }} - {{$row->reference_id }}<br><small>{{ $row->comment }}</small></td>
 
-                                @elseif($row->target == 'admin')
+                                @elseif($row->reference == 'admin')
                                     <td class="py-3">Admin </td>
-                                @elseif ($row->target == 'product_review')
+                                @elseif($row->reference == 'affiliate_referral')
+                                    <td class="py-3">Affiliate kupac<br><small>{{ $row->comment }}</small></td>
+                                @elseif ($row->reference == 'product_review')
                                     <td class="py-3">{{ __('front/cart.loyalty_ref_review') }}  - {{$row->reference()->first()->translation->name }} {{-- staviti naziv proizvoda preko product id --}}</td>
                                 @else
                                     <td class="py-3"></td>
