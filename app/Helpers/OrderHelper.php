@@ -178,16 +178,19 @@ class OrderHelper
                     $customer_email = auth()->user()->email;
                 }
 
-                $has_first_purchase = UserAffiliate::query()->where('customer_email', $customer_email)->first();
+                $has_first_purchase = UserAffiliate::query()->where('customer_email', $customer_email)
+                                                            ->whereNotNull('first_purchase_at')
+                                                            ->first();
 
                 if ( ! $has_first_purchase) {
-                    $user_details = UserDetail::query()->where('affiliate_nema', request()->cookie('affiliate'))->first();
+                    $user_details = UserDetail::query()->where('affiliate_name', request()->cookie('affiliate'))->first();
 
                     if ($user_details) {
                         UserAffiliate::create([
                             'user_id' => $user_details->user_id,
                             'customer_email' => $customer_email,
-                            'affiliate_code' => $this->generateAffiliateCode($user),
+                            'affiliate_code' => $user_details->affiliate_name,
+                            'first_purchase_at' => now(),
                             'active' => 1
                         ]);
 

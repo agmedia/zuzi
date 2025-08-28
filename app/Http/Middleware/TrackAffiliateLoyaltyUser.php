@@ -22,7 +22,7 @@ class TrackAffiliateLoyaltyUser
         $tag = config('settings.loyalty.link_tag');
 
         if ($request->has($tag)) {
-            $tag_exist = UserDetail::query()->where('affiliate_name', $tag)->first();
+            $tag_exist = UserDetail::query()->where('affiliate_name', $request->get($tag))->first();
 
             if ($tag_exist) {
                 $response->withCookie(

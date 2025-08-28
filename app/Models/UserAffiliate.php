@@ -15,6 +15,11 @@ class UserAffiliate extends Model
      */
     protected $table = 'user_affiliates';
 
+    /**
+     * @var array
+     */
+    protected $guarded = ['id', 'created_at', 'updated_at'];
+
     protected $casts = [
         'active' => 'boolean',
         'registered_at' => 'datetime',
