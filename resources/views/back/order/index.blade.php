@@ -19,8 +19,8 @@
 
     <!-- Page Content -->
     <div class="content">
-    @include('back.layouts.partials.session')
-    <!-- All Orders -->
+        @include('back.layouts.partials.session')
+        <!-- All Orders -->
         <div class="block block-rounded">
             <div class="block-header block-header-default">
                 <h3 class="block-title">Lista narudžbi <small class="font-weight-light">{{ $orders->total() }}</small></h3>
@@ -183,12 +183,12 @@
                 }
 
                 axios.get('{{ route('api.order.status.change') }}' + '?selected=' + selected + '&orders=' + orders)
-                .then((r) => {
-                    location.reload();
-                })
-                .catch((e) => {
-                    return errorToast.fire();
-                })
+                    .then((r) => {
+                        location.reload();
+                    })
+                    .catch((e) => {
+                        return errorToast.fire();
+                    })
             });
         });
 
@@ -198,19 +198,19 @@
          */
         function sendGLS(order_id) {
             axios.post("{{ route('api.order.send.gls') }}", {order_id: order_id})
-            .then(response => {
-                if (response.data.message) {
-                    successToast.fire({
-                        timer: 1500,
-                        text: response.data.message,
-                    }).then(() => {
-                        location.reload();
-                    })
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({
+                            timer: 1500,
+                            text: response.data.message,
+                        }).then(() => {
+                            location.reload();
+                        })
 
-                } else {
-                    return errorToast.fire(response.data.error);
-                }
-            });
+                    } else {
+                        return errorToast.fire(response.data.error);
+                    }
+                });
         }
 
         /**
@@ -219,19 +219,19 @@
          */
         function sendHPPak(order_id) {
             axios.post("{{ route('api.order.send.hp_pak') }}", {order_id: order_id})
-            .then(response => {
-                if (response.data.message) {
-                    successToast.fire({
-                        timer: 1500,
-                        text: response.data.message,
-                    }).then(() => {
-                        location.reload();
-                    })
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({
+                            timer: 1500,
+                            text: response.data.message,
+                        }).then(() => {
+                            location.reload();
+                        })
 
-                } else {
-                    return errorToast.fire(response.data.error);
-                }
-            });
+                    } else {
+                        return errorToast.fire(response.data.error);
+                    }
+                });
         }
 
         /**

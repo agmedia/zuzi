@@ -62,6 +62,7 @@ class Gls
 
             // Prepare items array based on the number of vouchers
 
+
             $total = 0;
             $id = 0;
             $name = '';
@@ -89,73 +90,73 @@ class Gls
             $newNumber = preg_replace("/^0/", "+385", $this->order['payment_phone']);
 
             //These parameters are needed to be optimalise depending on the environment:
-         /*   ini_set('memory_limit', '1024M');
-            ini_set('max_execution_time', 600);
+            /*   ini_set('memory_limit', '1024M');
+               ini_set('max_execution_time', 600);
 
-            //Test ClientNumber:
-            $clientNumber = 380006507; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
-            //Test username:
-            $username = "info@zuzi.hr"; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
-            //Test password:
-            $pwd      = "Mimizizi0510"; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
-            $password = hash('sha512', $pwd, true);
+               //Test ClientNumber:
+               $clientNumber = 380006507; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
+               //Test username:
+               $username = "info@zuzi.hr"; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
+               //Test password:
+               $pwd      = "Mimizizi0510"; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
+               $password = hash('sha512', $pwd, true);
 
 
 
-            $parcels                 = [];
-            $parcel                  = new StdClass();
-            $parcel->ClientNumber    = $clientNumber;
-            $parcel->ClientReference = $brojracuna;
-            $parcel->CODAmount       = $this->getTotal();
-            $parcel->CODReference    = $brojracuna;
-            // $parcel->Content = "CONTENT";
-            $parcel->Count                    = 1;
-            $deliveryAddress                  = new StdClass();
-            $deliveryAddress->ContactEmail    = $this->order['payment_email'];
-            $deliveryAddress->ContactName     = $this->order['payment_fname'] . ' ' . $this->order['payment_lname'];
-            $deliveryAddress->ContactPhone    = $this->order['payment_phone'];
-            $deliveryAddress->Name            = $this->order['payment_fname'] . ' ' . $this->order['payment_lname'];
-            $deliveryAddress->Street          = $this->order['payment_address'];
-            $deliveryAddress->HouseNumber     = "";
-            $deliveryAddress->City            = $this->order['payment_city'];
-            $deliveryAddress->ZipCode         = $this->order['payment_zip'];
-            $deliveryAddress->CountryIsoCode  = "HR";
-            $deliveryAddress->HouseNumberInfo = "";
-            $parcel->DeliveryAddress          = $deliveryAddress;
-            $pickupAddress                    = new StdClass();
-            $pickupAddress->ContactName       = "Mirjana Vulić Šaldić";
-            $pickupAddress->ContactPhone      = "+385916047126";
-            $pickupAddress->ContactEmail      = "info@zuzi.hr";
-            $pickupAddress->Name              = "Zuzi Obrt";
-            $pickupAddress->Street            = "Antuna Šoljana";
-            $pickupAddress->HouseNumber       = "33";
-            $pickupAddress->City              = "Zagreb";
-            $pickupAddress->ZipCode           = "10000";
-            $pickupAddress->CountryIsoCode    = "HR";
-            $pickupAddress->HouseNumberInfo   = "";
-            $parcel->PickupAddress            = $pickupAddress;
-            $parcel->PickupDate               = date('Y-m-d');
-            if( $this->order['shipping_code']=='gls_eu'){
-            $service1 = new StdClass();
-             $service1->Code = "PSD";
-             $parameter1 = new StdClass();
-             $parameter1->StringValue = $idmjesta;
-             $service1->PSDParameter = $parameter1;
-             $services = [];
-             $services[] = $service1;
-             $parcel->ServiceList = $services;
-            }
-            $parcels[] = $parcel;
+               $parcels                 = [];
+               $parcel                  = new StdClass();
+               $parcel->ClientNumber    = $clientNumber;
+               $parcel->ClientReference = $brojracuna;
+               $parcel->CODAmount       = $this->getTotal();
+               $parcel->CODReference    = $brojracuna;
+               // $parcel->Content = "CONTENT";
+               $parcel->Count                    = 1;
+               $deliveryAddress                  = new StdClass();
+               $deliveryAddress->ContactEmail    = $this->order['payment_email'];
+               $deliveryAddress->ContactName     = $this->order['payment_fname'] . ' ' . $this->order['payment_lname'];
+               $deliveryAddress->ContactPhone    = $this->order['payment_phone'];
+               $deliveryAddress->Name            = $this->order['payment_fname'] . ' ' . $this->order['payment_lname'];
+               $deliveryAddress->Street          = $this->order['payment_address'];
+               $deliveryAddress->HouseNumber     = "";
+               $deliveryAddress->City            = $this->order['payment_city'];
+               $deliveryAddress->ZipCode         = $this->order['payment_zip'];
+               $deliveryAddress->CountryIsoCode  = "HR";
+               $deliveryAddress->HouseNumberInfo = "";
+               $parcel->DeliveryAddress          = $deliveryAddress;
+               $pickupAddress                    = new StdClass();
+               $pickupAddress->ContactName       = "Mirjana Vulić Šaldić";
+               $pickupAddress->ContactPhone      = "+385916047126";
+               $pickupAddress->ContactEmail      = "info@zuzi.hr";
+               $pickupAddress->Name              = "Zuzi Obrt";
+               $pickupAddress->Street            = "Antuna Šoljana";
+               $pickupAddress->HouseNumber       = "33";
+               $pickupAddress->City              = "Zagreb";
+               $pickupAddress->ZipCode           = "10000";
+               $pickupAddress->CountryIsoCode    = "HR";
+               $pickupAddress->HouseNumberInfo   = "";
+               $parcel->PickupAddress            = $pickupAddress;
+               $parcel->PickupDate               = date('Y-m-d');
+               if( $this->order['shipping_code']=='gls_eu'){
+               $service1 = new StdClass();
+                $service1->Code = "PSD";
+                $parameter1 = new StdClass();
+                $parameter1->StringValue = $idmjesta;
+                $service1->PSDParameter = $parameter1;
+                $services = [];
+                $services[] = $service1;
+                $parcel->ServiceList = $services;
+               }
+               $parcels[] = $parcel;
 
-            //The service URL:
-            $wsdl = "https://api.mygls.hr/SERVICE_NAME.svc?singleWsdl";
+               //The service URL:
+               $wsdl = "https://api.mygls.hr/SERVICE_NAME.svc?singleWsdl";
 
-            $soapOptions = array('soap_version' => SOAP_1_1, 'stream_context' => stream_context_create(array('ssl' => array('cafile' => 'cacert.pem'))));
+               $soapOptions = array('soap_version' => SOAP_1_1, 'stream_context' => stream_context_create(array('ssl' => array('cafile' => 'cacert.pem'))));
 
-            //Parcel service:
-            $serviceName = "ParcelService";
+               //Parcel service:
+               $serviceName = "ParcelService";
 
-            return $this->PrepareLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order); */
+               return $this->PrepareLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order); */
 
             $curl = curl_init();
 
@@ -248,7 +249,7 @@ class Gls
 
             }
 
-           return $response;
+            return $response;
 
 
 
@@ -293,8 +294,8 @@ class Gls
     {
         //Test request:
         $printLabelsRequest = array('Username'   => $username,
-                                    'Password'   => $password,
-                                    'ParcelList' => $parcels);
+            'Password'   => $password,
+            'ParcelList' => $parcels);
 
         $request = array("printLabelsRequest" => $printLabelsRequest);
 
@@ -328,8 +329,8 @@ class Gls
     {
         //Test request:
         $prepareLabelsRequest = array('Username'   => $username,
-                                      'Password'   => $password,
-                                      'ParcelList' => $parcels);
+            'Password'   => $password,
+            'ParcelList' => $parcels);
 
         $request = array("prepareLabelsRequest" => $prepareLabelsRequest);
 
@@ -348,10 +349,10 @@ class Gls
 
         //Test request:
         $getPrintedLabelsRequest = array('Username'        => $username,
-                                         'Password'        => $password,
-                                         'ParcelIdList'    => $parcelIdList,
-                                         'PrintPosition'   => 1,
-                                         'ShowPrintDialog' => 0);
+            'Password'        => $password,
+            'ParcelIdList'    => $parcelIdList,
+            'PrintPosition'   => 1,
+            'ShowPrintDialog' => 0);
 
         return $getPrintedLabelsRequest;
     }
@@ -397,11 +398,11 @@ class Gls
     {
         //Test request:
         $getParcelListRequest = array('Username'       => $username,
-                                      'Password'       => $password,
-                                      'PickupDateFrom' => '2020-04-16',
-                                      'PickupDateTo'   => '2020-04-16',
-                                      'PrintDateFrom'  => null,
-                                      'PrintDateTo'    => null);
+            'Password'       => $password,
+            'PickupDateFrom' => '2020-04-16',
+            'PickupDateTo'   => '2020-04-16',
+            'PrintDateFrom'  => null,
+            'PrintDateTo'    => null);
 
         $request = array("getParcelListRequest" => $getParcelListRequest);
 
@@ -430,10 +431,10 @@ class Gls
     {
         //Test request:
         $getParcelStatusesRequest = array('Username'        => $username,
-                                          'Password'        => $password,
-                                          'ParcelNumber'    => 0,
-                                          'ReturnPOD'       => true,
-                                          'LanguageIsoCode' => "HR");
+            'Password'        => $password,
+            'ParcelNumber'    => 0,
+            'ReturnPOD'       => true,
+            'LanguageIsoCode' => "HR");
 
         $request = array("getParcelStatusesRequest" => $getParcelStatusesRequest);
 

@@ -84,7 +84,7 @@ class Glsstari
             $pickupAddress->HouseNumberInfo   = "";
             $parcel->PickupAddress            = $pickupAddress;
             $parcel->PickupDate               = date('Y-m-d');
-            if( $this->order['shipping_code']=='gls_eu'){
+            if( $this->order['shipping_code']=='gls_paketomat'){
                 $service1 = new StdClass();
                 $service1->Code = "PSD";
                 $parameter1 = new StdClass();
