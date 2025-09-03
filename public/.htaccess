@@ -332,7 +332,7 @@ FileETag None
 
   RewriteRule ^.?proizvod/?$ /$1-$2 [R=301,L]
 
-    RewriteRule ^.?kategorija-proizvoda/?$ /$1-$2 [R=301,L]
+    #RewriteRule ^.?kategorija-proizvoda/?$ /$1-$2 [R=301,L]
 
     Redirect /o-nama /info/o-nama
     Redirect /uvjeti-kupnje /info/opci-uvjeti-kupnje
