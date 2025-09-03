@@ -11,7 +11,7 @@
                             <h2 class="h3 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h2>
 
                             <p class="text-dark d-none d-sm-block fs-md">{{ $widget['subtitle'] }}</p>
-                            <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2" href="{{ url($widget['url']) }}" role="button">Pogledajte ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a></div>
+                            <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2" href="{{ url($widget['url']) }}" role="button">Prolistaj ponudu <i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                         </div>
                         <div class="p-3"><img src="{{ $widget['image'] }}" alt="{{ $widget['title'] }}" width="350" height="350"></div>
                     </div>
