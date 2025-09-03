@@ -25,54 +25,58 @@
 
                 <div class="row pt-3 ">
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
-                        <div class="d-inline-flex align-items-center text-start"><i class="ci-truck text-primary" style="font-size: 3rem;"></i>
+                        <div class="d-inline-flex align-items-center text-start"><i class="ci-book-open text-zuzi" style="font-size: 3rem;"></i>
                             <div class="ps-3">
-                                <p class="text-dark fw-bold fs-base mb-1">Brza dostava</p>
-                                <p class="text-dark fs-ms opacity-70 mb-0">Unutar 5 radnih dana</p>
+                                <p class="text-dark fw-bold fs-base mb-1">Knjige lete brzo</p>
+                                <p class="text-dark fs-sm opacity-70 mb-0">Tvoja knjiga stiže za 1–5 radnih dana. Brzina iz snova!</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
-                        <div class="d-inline-flex align-items-center text-start"><i class="ci-security-check text-primary" style="font-size: 3rem;"></i>
+                        <div class="d-inline-flex align-items-center text-start"><i class="ci-shield text-zuzi" style="font-size: 3rem;"></i>
                             <div class="ps-3">
-                                <p class="text-dark fw-bold fs-base mb-1">Sigurna kupovina</p>
-                                <p class="text-dark fs-ms opacity-70 mb-0">SSL certifitikat i CorvusPay</p>
+                                <p class="text-dark fw-bold fs-base mb-1">Kupuj bez brige</p>
+                                <p class="text-dark fs-sm opacity-70 mb-0">Zaštićeni podaci, sigurni načini plaćanja, sve pod kontrolom.</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
-                        <div class="d-inline-flex align-items-center text-start"><i class="ci-bag text-primary" style="font-size: 3rem;"></i>
+                        <div class="d-inline-flex align-items-center text-start"><i class="ci-delivery-2 text-zuzi" style="font-size: 3rem;"></i>
                             <div class="ps-3">
-                                <p class="text-dark fw-bold fs-base mb-1">Besplatna dostava</p>
-                                <p class="text-dark fs-ms opacity-70 mb-0">Za narudžbe iznad 70€</p>
+                                <p class="text-dark fw-bold fs-base mb-1">Dostava? Zuzi časti!</p>
+                                <p class="text-dark fs-sm opacity-70 mb-0">Za narudžbe iznad 70 €, ne plaćaš poštarinu. Čista knjiška radost.</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
-                        <div class="d-inline-flex align-items-center text-start"><i class="ci-locked text-primary" style="font-size: 3rem;"></i>
+                        <div class="d-inline-flex align-items-center text-start"><i class="ci-star text-zuzi" style="font-size: 3rem;"></i>
                             <div class="ps-3">
-                                <p class="text-dark fw-bold fs-base mb-1">Zaštita kupca</p>
-                                <p class="text-dark fs-ms opacity-70 mb-0">Zaštita svih podataka</p>
+                                <p class="text-dark fw-bold fs-base mb-1">Zuzi nije obična trgovina</p>
+                                <p class="text-dark fs-sm opacity-70 mb-0">Mi volimo knjige – baš kao i ti. Tu smo zbog čitanja.</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <hr class="hr-dark mb-2">
-                <div class="row py-lg-4">
+                <div class="row py-4">
                     <div class="col-md-4  text-center text-md-start mb-4">
 
-                        <h3 class="widget-title fw-700 d-none d-md-block text-dark"><span>Knjižara</span></h3>
-                        <p class=" text-dark  fs-md pb-1 d-none d-sm-block">
+                        <h3 class="widget-title fw-700 d-block text-dark"><span>Knjižara</span></h3>
+                        <p class=" text-dark  fs-md pb-1 d-block">
 
                             <strong>Adresa</strong><br>Antuna Šoljana 33, 10000 Zagreb</p>
 
+                        <p class=" text-dark  fs-md pb-1 d-block">  <strong>Broj telefona</strong><br>
+                            <a href="tel:+38514831005">01 4831 005</a></p>
+                        <p class=" text-dark  fs-md pb-1 d-block">  <strong>Broj mobitela</strong><br>
+                            <a href="tel:+385916047126">091 604 7126</a></p>
 
-                        <p class=" text-dark  fs-md pb-1 d-none d-sm-block">  <strong>Broj telefona</strong><br>
-                            091 604 7126</p>
 
-                        <p class=" text-dark  fs-md pb-1 d-none d-sm-block">  <strong>Radno vrijeme</strong><br>
-                            Pon-Pet: 8-20<br>
-                            Sub: 9-15
+
+
+                        <p class=" text-dark  fs-md pb-1 d-block">  <strong>Radno vrijeme</strong><br>
+                            Pon-Pet: 9-20, Sub: 9-14
+
 
                         </p>
 
@@ -85,7 +89,7 @@
                     <!-- Mobile dropdown menu (visible on screens below md)-->
                     <div class="col-12 d-md-none text-center mb-sm-4 pb-2">
                         <div class="btn-group dropdown d-block mx-auto mb-3">
-                            <button class="btn btn-outline-light border-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Uvjeti kupnje</button>
+                            <button class="btn btn-outline-dark border-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">Uvjeti kupnje</button>
                             <ul class="dropdown-menu my-1">
                                 @foreach ($uvjeti_kupnje as $page)
                                     <li><a class="dropdown-item" href="{{ route('catalog.route.page', ['page' => $page]) }}">{{ $page->title }}</a></li>
@@ -120,14 +124,14 @@
                 </div>
 
                 <div class="d-md-flex justify-content-between pt-2">
-                    <div class="pb-4 fs-sm text-dark  text-center text-md-start">© 2023. Sva prava pridržana Zuzi . Web by <a class="text-dark" title="Izrada web shopa - B2C ili B2B web trgovina - AG media" href="https://www.agmedia.hr/usluge/izrada-web-shopa/" target="_blank" rel="noopener">AG media</a>
+                    <div class="pb-4 fs-sm text-dark  text-center text-md-start">© 2025. Sva prava pridržana Zuzi. Web by <a class="text-dark" title="Izrada web shopa - B2C ili B2B web trgovina - AG media" href="https://www.agmedia.hr/usluge/izrada-web-shopa/" target="_blank" rel="noopener">AG media</a>
                     </div>
                     <div class="widget widget-links widget-light pb-4 text-center text-md-end">
-                        <img class="d-inline-block" style="width: 55px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/visa.svg" width="55" height="35" alt="Visa"/>
-                        <img class="d-inline-block" style="width: 55px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/maestro.svg" width="55" height="35" alt="Maestro"/>
-                        <img class="d-inline-block" style="width: 55px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/mastercard.svg" width="55" height="35" alt="MasterCard"/>
-                        <img class="d-inline-block" style="width: 55px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/diners.svg" width="55" height="35" alt="Diners"/>
-                        <img src="https://www.zuzi.hr/media/cards/google_pay.svg" width="55" height="35" alt="Gogole pay" class="d-inline-block" style="width: 55px; margin-right: 3px;"><img src="https://www.zuzi.hr/media/cards/apple_pay.svg" width="55" height="35" alt="Apple Pay" class="d-inline-block" style="width: 55px; margin-right: 3px;">
+                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/visa.svg" width="55" height="35" alt="Visa"/>
+                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/maestro.svg" width="55" height="35" alt="Maestro"/>
+                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/mastercard.svg" width="55" height="35" alt="MasterCard"/>
+                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/diners.svg" width="55" height="35" alt="Diners"/>
+                        <img src="https://www.zuzi.hr/media/cards/google_pay.svg" width="55" height="35" alt="Gogole pay" class="d-inline-block" style="width: 50px; margin-right: 3px;"><img src="https://www.zuzi.hr/media/cards/apple_pay.svg" width="55" height="35" alt="Apple Pay" class="d-inline-block" style="width: 50px; margin-right: 3px;">
                     </div>
                 </div>
 
