@@ -401,6 +401,7 @@ class DashboardController extends Controller
             ->selectRaw('DAY(created_at) as day, SUM(total) as total, COUNT(id) as orders')
             ->whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
+            ->whereNotIn('order_status_id', [5, 7, 8]) // isključi statuse
             ->groupBy('day')
             ->orderBy('day')
             ->get();
@@ -408,9 +409,6 @@ class DashboardController extends Controller
         return response()->json($data);
     }
 
-    /**
-     * Vrati promet i broj narudžbi po satima za određeni dan.
-     */
     public function chartByDay(Request $request)
     {
         $date = $request->get('date', Carbon::today()->toDateString());
@@ -418,6 +416,7 @@ class DashboardController extends Controller
         $data = Order::query()
             ->selectRaw('HOUR(created_at) as hour, SUM(total) as total, COUNT(id) as orders')
             ->whereDate('created_at', $date)
+            ->whereNotIn('order_status_id', [5, 7, 8]) // isključi statuse
             ->groupBy('hour')
             ->orderBy('hour')
             ->get();
@@ -425,9 +424,6 @@ class DashboardController extends Controller
         return response()->json($data);
     }
 
-    /**
-     * Vrati promet i broj narudžbi po danima za raspon datuma.
-     */
     public function chartByRange(Request $request)
     {
         $from = $request->get('from');
@@ -439,10 +435,12 @@ class DashboardController extends Controller
                 Carbon::parse($from)->startOfDay(),
                 Carbon::parse($to)->endOfDay()
             ])
+            ->whereNotIn('order_status_id', [5, 7, 8]) // isključi statuse
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
         return response()->json($data);
     }
+
 }
