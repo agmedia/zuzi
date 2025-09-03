@@ -123,6 +123,7 @@ class Order extends Model
     {
         return $query
             ->whereBetween('created_at', [$params['from'], $params['to']])
+            ->whereNotIn('order_status_id', [5, 7, 8]) // isključi statuse
             ->orderBy('created_at')
             ->get()
             ->groupBy(function ($val) use ($params) {
