@@ -44,7 +44,8 @@
                       <div class="alert-icon">
                           <i class="ci-gift"></i>
                       </div>
-                      <small>Besplatna dostava za narudžbe > 70€</small>
+                      <small> Važno: <a href="https://www.zuzi.hr/info/uvjeti-dostave"><strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.  </small>
+
                   </div>
               </div>
           </div>

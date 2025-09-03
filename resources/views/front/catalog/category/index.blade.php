@@ -33,7 +33,20 @@
 
 @section('content')
 
+    <section >
+        <div class="d-flex row justify-content-between">
 
+            <div class="col-md-12">
+                <div class="alert alert-info d-flex  mb-1 " role="alert">
+                    <div class="alert-icon">
+                        <i class="ci-gift"></i>
+                    </div>
+                    <small>20% popusta na sve <a href="https://www.zuzi.hr/kategorija-proizvoda/alternativne-knjige"><strong>Alternativne knjige</strong> uz kod <strong>SAMOPOMOĆ20</strong></a>. Važno: <a href="https://www.zuzi.hr/info/uvjeti-dostave"><strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.  </small>
+
+                </div>
+            </div>
+        </div>
+    </section>
 
     @if (Route::currentRouteName() == 'pretrazi')
         <section class="d-md-flex justify-content-between align-items-center mb-2 pb-2">
