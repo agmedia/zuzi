@@ -1,34 +1,34 @@
 <!-- {"title": "Page Carousel", "description": "Category, Publisher, Reviews."} -->
 <section class=" py-0 " >
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1  pb-3 mb-2">
-        <h2 class="h3 mb-0 pt-0 font-title me-3"> {{ $data['title'] }}</h2>
+        <h2 class="h3 mb-0 pt-0 font-title me-3"> {{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h2>
         @if ($data['tablename'] == 'blog')
-        <a class="btn btn-primary btn-sm btn-shadow mt-0" href="/blog"><span class="d-none d-sm-inline-block">Pogledajte sve</span> <i class="ci-arrow-right "></i></a>
+            <a class="btn btn-primary btn-sm btn-shadow mt-0" href="/blog"><span class="d-none d-sm-inline-block">Pogledajte sve</span> <i class="ci-arrow-right "></i></a>
         @endif
     </div>
 
     @if ($data['tablename'] == 'category')
-            <div class="tns-carousel">
-                <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 10},"480":{"items":2, "gutter": 10},"800":{"items":3, "gutter": 15}, "1300":{"items":4, "gutter": 20}, "1400":{"items":5, "gutter": 20}}}'>
+        <div class="tns-carousel">
+            <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 10},"480":{"items":2, "gutter": 10},"800":{"items":3, "gutter": 15}, "1300":{"items":4, "gutter": 20}, "1400":{"items":5, "gutter": 20}}}'>
                 @foreach ($data['items'] as $item)
                     <!-- Product-->
-                        <div class="article mb-grid-gutter">
-                            <a class="card border-0 shadow" href="{{ $item['group'] }}/{{ $item['slug'] }}">
-                                <span class="blog-entry-meta-label fs-sm"><i class="ci-book text-primary me-0"></i></span>
-                                <img class="card-img-top" loading="lazy" width="400" height="300" src="{{ $item['image'] }}" alt="Kategorija {{ $item['title'] }}">
-                                <div class="card-body py-2 text-center px-0">
-                                    <h3 class="h6 mt-1 font-title text-primary">{{ $item['title'] }}</h3>
-                                </div>
-                            </a>
-                        </div>
-                    @endforeach
-                </div>
+                    <div class="article mb-grid-gutter">
+                        <a class="card border-0 shadow" href="{{ $item['group'] }}/{{ $item['slug'] }}">
+                            <span class="blog-entry-meta-label fs-sm"><i class="ci-book text-primary me-0"></i></span>
+                            <img class="card-img-top" loading="lazy" width="400" height="300" src="{{ $item['image'] }}" alt="Kategorija {{ $item['title'] }}">
+                            <div class="card-body py-2 text-center px-0">
+                                <h3 class="h6 mt-1 font-title text-primary">{{ $item['title'] }}</h3>
+                            </div>
+                        </a>
+                    </div>
+                @endforeach
             </div>
+        </div>
 
     @elseif ($data['tablename'] == 'publisher')
         <div class="row pb-2 pb-sm-0 pb-md-3">
             @foreach ($data['items'] as $item)
-            <div class="col-md-3 col-sm-4 col-6"><a class="d-block bg-white shadow-sm rounded-3 py-3 py-sm-4 mb-grid-gutter" href="{{ $item['url'] }}"><img loading="lazy" class="d-block mx-auto" src="{{ $item['image'] }}" style="width: 150px;" alt="{{ $item['title'] }}"></a></div>
+                <div class="col-md-3 col-sm-4 col-6"><a class="d-block bg-white shadow-sm rounded-3 py-3 py-sm-4 mb-grid-gutter" href="{{ $item['url'] }}"><img loading="lazy" class="d-block mx-auto" src="{{ $item['image'] }}" style="width: 150px;" alt="{{ $item['title'] }}"></a></div>
             @endforeach
         </div>
 
@@ -36,7 +36,7 @@
 
         <div class="tns-carousel">
             <div class="tns-carousel-inner" data-carousel-options='{"items": 1, "controls": false, "autoplay": true, "autoHeight": true, "responsive": {"0":{"items":1, "gutter": 20},"480":{"items":2, "gutter": 20},"800":{"items":3, "gutter": 20}, "1300":{"items":4, "gutter": 30}}}'>
-            @foreach ($data['items'] as $review)
+                @foreach ($data['items'] as $review)
 
                     <blockquote class="mb-2">
                         <div class="card card-body fs-md text-muted border-0 shadow-sm">
@@ -71,12 +71,12 @@
 
     @else
         <div class="tns-carousel pb-5">
-            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 15, &quot;controls&quot;: true, &quot;nav&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:1},&quot;500&quot;:{&quot;items&quot;:2},&quot;768&quot;:{&quot;items&quot;:2}, &quot;992&quot;:{&quot;items&quot;:3, &quot;gutter&quot;: 30}}}">
+            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 15, &quot;controls&quot;: false, &quot;nav&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:1},&quot;500&quot;:{&quot;items&quot;:2},&quot;768&quot;:{&quot;items&quot;:2}, &quot;992&quot;:{&quot;items&quot;:3, &quot;gutter&quot;: 30}}}">
                 @foreach ($data['items'] as $item)
 
                     <!-- Product-->
                     <div>
-                        <div class="card"><a class="blog-entry-thumb" href="{{ route('catalog.route.blog', ['blog' => $item]) }}"><img class="card-img-top" loading="lazy" src="{{ $item['image'] }}" width="400" height="230" alt="{{ $item['title'] }}" style="width:  400px;height: 260px;object-fit: cover;"></a>
+                        <div class="card"><a class="blog-entry-thumb" href="{{ route('catalog.route.blog', ['blog' => $item]) }}"><img class="card-img-top" loading="lazy" src="{{ $item['image'] }}" width="600" height="250" alt="{{ $item['title'] }}" style="width:  600px;height: 250px;object-fit: cover;"></a>
                             <div class="card-body">
                                 <h2 class="h6 blog-entry-title"><a href="{{ route('catalog.route.blog', ['blog' => $item]) }}">{{ $item['title'] }}</a></h2>
                                 <p class="fs-sm"> {!! Str::limit($item['short_description'], 180, ' ...') !!}</p>
