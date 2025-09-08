@@ -6307,7 +6307,7 @@ var render = function() {
         ? _c(
             "div",
             {
-              staticClass: "mt-3 alert alert-infoy d-flex fs-sm",
+              staticClass: "mt-3 alert alert-info d-flex fs-sm",
               attrs: { role: "alert" }
             },
             [
