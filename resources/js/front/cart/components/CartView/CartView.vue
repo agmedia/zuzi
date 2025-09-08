@@ -1,5 +1,10 @@
 <template>
     <div>
+
+        <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="$store.state.cart.total < freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Još  {{ $store.state.service.formatMainPrice(freeship - $store.state.cart.total) }} <span v-if="$store.state.cart.secondary_price">({{ $store.state.service.formatSecondaryPrice(freeship - $store.state.cart.total) }})</span> do besplatne dostave!</div></div>
+
+        <div role="alert" class="mt-3 alert alert-infoy d-flex fs-sm" v-if="$store.state.cart.total > freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Ostvarili ste pravo na besplatnu dostavu!</div></div>
+
         <div class="d-block pt-3 pb-2 mt-1 text-center text-sm-start">
             <h2 class="h6 text-primary  mb-0">Artikli</h2>
         </div>
