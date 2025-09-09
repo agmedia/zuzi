@@ -352,12 +352,16 @@
                        @if ($prod->pages)
                            <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Broj stranica:</span><span>{{ $prod->pages }}</span></li>
                       @endif
+                           @if ($prod->letter)
+                               <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Pismo:</span><span>{{ $prod->letter }}</span></li>
+                           @endif
                        @if ($prod->dimensions)
                            <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Dimenzije:</span><span>{{ $prod->dimensions.' cm'  }}</span></li>
                        @endif
                        @if ($prod->isbn)
                             <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">EAN:</span><span>{{ $prod->isbn }}</span></li>
                        @endif
+
                    </ul>
 
                </div>
