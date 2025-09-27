@@ -428,7 +428,7 @@ RewriteRule ^(.*?)index\.php(?:/(.*))?$ /$1$2? [L,R=302,NC,NE]
 
  <IfModule mod_rewrite.c>
    RewriteCond %{SERVER_PORT} !^443
-   RewriteRule ^ https://www.antikvarijat-biblos.hr%{REQUEST_URI} [R=301,L]
+   RewriteRule ^ https://www.zuzi.hr%{REQUEST_URI} [R=301,L]
 </IfModule>
 
 # ----------------------------------------------------------------------
