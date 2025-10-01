@@ -344,7 +344,7 @@
                            <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Uvez:</span><span>{{ $prod->binding  }}</span></li>
                         @endif
                        @if ($prod->origin)
-                           <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Jezik:</span><span>{{ $prod->origin  }}</span></li>
+                           <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Mjesto izdavanja:</span><span>{{ $prod->origin  }}</span></li>
                        @endif
                         @if ($prod->year)
                            <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Godina izdanja:</span><span>{{ $prod->year }}</span></li>
