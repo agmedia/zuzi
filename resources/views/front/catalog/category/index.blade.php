@@ -41,7 +41,7 @@
                     <div class="alert-icon">
                         <i class="ci-gift"></i>
                     </div>
-                    <small>20% popusta na sve <a href="https://www.zuzi.hr/kategorija-proizvoda/alternativne-knjige"><strong>Alternativne knjige</strong> uz kod <strong>SAMOPOMOĆ20</strong></a>. Važno: <a href="https://www.zuzi.hr/info/uvjeti-dostave"><strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.  </small>
+                    <small> Važno: <a href="https://www.zuzi.hr/info/uvjeti-dostave"><strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.  </small>
 
                 </div>
             </div>
