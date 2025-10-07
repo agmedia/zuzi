@@ -7,7 +7,6 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class WoltDriveService
 {
@@ -31,7 +30,7 @@ class WoltDriveService
     }
 
     /**
-     * 1) shipment-promise -> 2) delivery
+     * Glavni tijek: 1) shipment-promise -> 2) delivery
      */
     public function sendOrderToWolt(
         Order $order,
@@ -47,21 +46,27 @@ class WoltDriveService
         }
 
         // 1) priprema za promise
-        $dropoff = $this->buildDropoff($order);
-        $parcels = $this->buildParcels($order);
-        $cash    = $this->buildCashOption($order); // <-- COD ako je payment_code === 'cod'
+        $dropoff      = $this->buildDropoff($order);
+        $parcels      = $this->buildParcels($order);
+        $cashPromise  = $this->buildCashForPromise($order); // int (cents) ili null
+        $cashDelivery = $this->buildCashOption($order);     // objekt ili null
 
-        $promise = $this->createShipmentPromise($apiKey, $venueId, $dropoff, $parcels, 30, $cash);
+        $promise = $this->createShipmentPromise($apiKey, $venueId, $dropoff, $parcels, 30, $cashPromise);
         $shipmentPromiseId = Arr::get($promise, 'id');
-        $price             = Arr::get($promise, 'price');
-        $promiseCoords     = Arr::get($promise, 'dropoff.location.coordinates');
+        $price             = Arr::get($promise, 'price'); // ['amount'=>..,'currency'=>'EUR']
+        $promiseCoords     = Arr::get($promise, 'dropoff.location.coordinates'); // ['lat'=>..,'lon'=>..]
 
         if (!$shipmentPromiseId || !$price) {
             Log::warning('WoltDrive: neispravan shipment promise', ['order_id' => $order->id, 'promise' => $promise]);
             throw new \RuntimeException('Wolt shipment promise je vratio nepotpune podatke.');
         }
 
-        // 2) delivery — dropoff.location.coordinates iz promise-a (obavezno)
+        if (!$promiseCoords || !isset($promiseCoords['lat'], $promiseCoords['lon'])) {
+            Log::warning('WoltDrive: shipment promise bez koord.', ['order_id' => $order->id, 'promise' => $promise]);
+            throw new \RuntimeException('Wolt shipment promise nema valjane koordinate dropoff lokacije.');
+        }
+
+        // 2) delivery — dropoff.location.coordinates iz promise-a je OBAVEZAN
         $recipient = $this->buildRecipient($order);
 
         $delivery = $this->createDelivery(
@@ -78,7 +83,7 @@ class WoltDriveService
             ],
             'ORD-'.$order->id,
             (string) $order->id,
-            $cash // <-- COD i u delivery payloadu
+            $cashDelivery
         );
 
         $deliveryId   = Arr::get($delivery, 'id');
@@ -108,6 +113,7 @@ class WoltDriveService
 
     /**
      * Shipment Promise (venueful)
+     * - cash: integer u centima ili null
      */
     protected function createShipmentPromise(
         string $apiKey,
@@ -115,7 +121,7 @@ class WoltDriveService
         array $dropoff,
         array $parcels,
         int $minPrepMinutes = 30,
-        ?array $cash = null
+        ?int $cashCents = null
     ): array {
         $endpoint = "{$this->baseUrl}/v1/venues/{$venueId}/shipment-promises";
 
@@ -128,9 +134,9 @@ class WoltDriveService
             'lon'       => Arr::get($dropoff, 'lon'),
             'min_preparation_time_minutes' => max(0, min(60, $minPrepMinutes)),
             'parcels'   => $parcels ?: null,
-            'cash'      => $cash, // <-- COD u shipment-promise
+            'cash'      => $cashCents, // integer u centima
             // 'language' => 'hr',
-        ]);
+        ], fn($v) => !is_null($v)); // važno: ne odbaci 0
 
         try {
             $resp = Http::withHeaders($this->buildHeaders($apiKey))
@@ -153,6 +159,7 @@ class WoltDriveService
     /**
      * Delivery (venueful)
      * - dropoff.location.coordinates je obavezan i mora se poklapati s promise-om.
+     * - cash: objekt s amount_to_collect ili null
      */
     protected function createDelivery(
         string $apiKey,
@@ -182,8 +189,8 @@ class WoltDriveService
                 'options'  => array_filter([
                     'is_no_contact'  => Arr::get($dropoffOpts, 'is_no_contact', false),
                     'scheduled_time' => Arr::get($dropoffOpts, 'scheduled_time'), // ISO8601
-                ]),
-            ]),
+                ], fn($v) => !is_null($v)),
+            ], fn($v) => !is_null($v)),
             'price'      => $price,
             'recipient'  => $recipient,
             'parcels'    => $parcels,
@@ -191,7 +198,7 @@ class WoltDriveService
             'customer_support'            => $this->buildCustomerSupport(),
             'merchant_order_reference_id' => $orderRef,
             'order_number'                => $orderNumber,
-            'cash'                        => $cash, // <-- COD u delivery
+            'cash'                        => $cash, // objekt s amount_to_collect ili null
         ];
 
         try {
@@ -224,6 +231,9 @@ class WoltDriveService
         ];
     }
 
+    /**
+     * Dropoff adresa (iz narudžbe). Ako imaš koordinate, pošalji i njih.
+     */
     protected function buildDropoff(Order $order): array
     {
         $drop = [
@@ -240,12 +250,14 @@ class WoltDriveService
         return $drop;
     }
 
+    /**
+     * Primatelj – minimalno ime, telefon (+385...), email.
+     */
     protected function buildRecipient(Order $order): array
     {
-        // Wolt traži broj s prefiksom zemlje (npr. +385...)
-        $phone = $order->shipping_phone ?? $order->phone ?? '';
+        $phone = trim($order->shipping_phone ?? $order->phone ?? '');
+        $phone = preg_replace('/\s+/', '', $phone ?? '');
         if ($phone && str_starts_with($phone, '0')) {
-            // fallback: 0xxxxxxxx -> +385xxxxxxxx (prilagodi ako imaš već ispravan format u bazi)
             $phone = '+385'.ltrim($phone, '0');
         }
 
@@ -256,6 +268,9 @@ class WoltDriveService
         ];
     }
 
+    /**
+     * Parcels – 1 paket, težina (ako postoji) i ukupna vrijednost.
+     */
     protected function buildParcels(Order $order): array
     {
         $amountCents = (int) round(((float) $order->total) * 100);
@@ -274,24 +289,38 @@ class WoltDriveService
         ]];
     }
 
-    // ⬇️ zamijeni cijelu metodu buildCashOption ovime
+    /**
+     * COD – za shipment-promise: integer u centima ili null.
+     */
+    protected function buildCashForPromise(Order $order): ?int
+    {
+        $code = strtolower((string) ($order->payment_code ?? ''));
+        if ($code === 'cod') {
+            return (int) round(((float) $order->total) * 100);
+        }
+        return null;
+    }
+
+    /**
+     * COD – za delivery: objekt s amount_to_collect ili null.
+     */
     protected function buildCashOption(Order $order): ?array
     {
         $code = strtolower((string) ($order->payment_code ?? ''));
         if ($code === 'cod') {
             return [
                 'amount_to_collect' => [
-                    'amount'   => (int) round(((float) $order->total) * 100), // u centima
+                    'amount'   => (int) round(((float) $order->total) * 100),
                     'currency' => 'EUR',
                 ],
             ];
         }
         return null;
-        // Ako imaš više šifri za pouzeće:
-        // if (in_array($code, ['cod','pouzece','pouzeće','cash_on_delivery'], true)) { ... }
     }
 
-
+    /**
+     * Procjena ukupne težine u gramima (zbroj artikala); fallback 500g.
+     */
     protected function guessTotalWeightGrams(Order $order): ?int
     {
         try {
@@ -303,6 +332,7 @@ class WoltDriveService
                 if (!empty($p->weight_grams)) {
                     $wgr = (int) $p->weight_grams;
                 } elseif (!empty($p->weight)) {
+                    // pretpostavka: kg
                     $wgr = (int) round(((float) $p->weight) * 1000);
                 }
 
@@ -324,7 +354,7 @@ class WoltDriveService
             'url'          => $url ?: null,
             'email'        => $email ?: null,
             'phone_number' => $phone ?: null,
-        ]);
+        ], fn($v) => !is_null($v));
     }
 
     protected function domainFromAppUrl(): string
