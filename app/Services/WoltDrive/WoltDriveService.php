@@ -198,8 +198,15 @@ class WoltDriveService
             'customer_support'            => $this->buildCustomerSupport(),
             'merchant_order_reference_id' => $orderRef,
             'order_number'                => $orderNumber,
-            'cash'                        => $cash, // objekt s amount_to_collect ili null
+            // cash dodajemo samo ako je objekt (COD)
         ];
+
+        if ($cash !== null) {
+            if (!is_array($cash) || !isset($cash['amount_to_collect']) || !is_array($cash['amount_to_collect'])) {
+                throw new \RuntimeException('Neispravan cash format za delivery. Očekivano: ["amount_to_collect" => ["amount" => int, "currency" => "EUR"]].');
+            }
+            $payload['cash'] = $cash;
+        }
 
         try {
             $resp = Http::withHeaders($this->buildHeaders($apiKey))
