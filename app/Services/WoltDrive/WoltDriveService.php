@@ -48,7 +48,7 @@ class WoltDriveService
         // 1) priprema za promise
         $dropoff      = $this->buildDropoff($order);
         $parcels      = $this->buildParcels($order);
-        $cashPromise  = $this->buildCashForPromise($order); // int (cents) ili null
+        $cashPromise  = $this->buildCashForPromise($order); // objekt ili null
         $cashDelivery = $this->buildCashOption($order);     // objekt ili null
 
         $promise = $this->createShipmentPromise($apiKey, $venueId, $dropoff, $parcels, 30, $cashPromise);
@@ -113,7 +113,8 @@ class WoltDriveService
 
     /**
      * Shipment Promise (venueful)
-     * - cash: integer u centima ili null
+     * - cash: OBJEKT ili null
+     *   Očekivano: ["amount_to_collect" => ["amount" => int (centi), "currency" => "EUR"]]
      */
     protected function createShipmentPromise(
         string $apiKey,
@@ -121,9 +122,16 @@ class WoltDriveService
         array $dropoff,
         array $parcels,
         int $minPrepMinutes = 30,
-        ?int $cashCents = null
+        ?array $cash = null
     ): array {
         $endpoint = "{$this->baseUrl}/v1/venues/{$venueId}/shipment-promises";
+
+        if ($cash !== null) {
+            // brza validacija da izbjegnemo 422
+            if (!isset($cash['amount_to_collect']['amount'], $cash['amount_to_collect']['currency'])) {
+                throw new \RuntimeException('Neispravan cash format za shipment-promise. Očekivano: ["amount_to_collect" => ["amount" => int, "currency" => "EUR"]].');
+            }
+        }
 
         // Ako imaš koordinate — pošalji ih; inače street/city/zip.
         $payload = array_filter([
@@ -134,9 +142,9 @@ class WoltDriveService
             'lon'       => Arr::get($dropoff, 'lon'),
             'min_preparation_time_minutes' => max(0, min(60, $minPrepMinutes)),
             'parcels'   => $parcels ?: null,
-            'cash'      => $cashCents, // integer u centima
+            'cash'      => $cash, // OBJEKT (ne integer)
             // 'language' => 'hr',
-        ], fn($v) => !is_null($v)); // važno: ne odbaci 0
+        ], fn($v) => !is_null($v)); // važno: ne odbaci 0 i ne odbaci prazne objekte
 
         try {
             $resp = Http::withHeaders($this->buildHeaders($apiKey))
@@ -198,7 +206,6 @@ class WoltDriveService
             'customer_support'            => $this->buildCustomerSupport(),
             'merchant_order_reference_id' => $orderRef,
             'order_number'                => $orderNumber,
-            // cash dodajemo samo ako je objekt (COD)
         ];
 
         if ($cash !== null) {
@@ -297,13 +304,18 @@ class WoltDriveService
     }
 
     /**
-     * COD – za shipment-promise: integer u centima ili null.
+     * COD – za shipment-promise: OBJEKT ili null.
      */
-    protected function buildCashForPromise(Order $order): ?int
+    protected function buildCashForPromise(Order $order): ?array
     {
         $code = strtolower((string) ($order->payment_code ?? ''));
         if ($code === 'cod') {
-            return (int) round(((float) $order->total) * 100);
+            return [
+                'amount_to_collect' => [
+                    'amount'   => (int) round(((float) $order->total) * 100),
+                    'currency' => 'EUR',
+                ],
+            ];
         }
         return null;
     }
