@@ -47,6 +47,13 @@ return [
         'server_prefix' => env('MAILCHIMP_SERVER_PREFIX'),
     ],
 
+    'wolt' => [
+        'url' => env('WOLT_API_URL', 'https://merchant-api.wolt.com'),
+        'api_key' => env('WOLT_API_KEY'),
+        'merchant_id' => env('WOLT_MERCHANT_ID'),
+        'venue_id' => env('WOLT_VENUE_ID'),
+    ],
+
     /*******************************************************************************
      *                              END Copyright : AGmedia                         *
      *******************************************************************************/

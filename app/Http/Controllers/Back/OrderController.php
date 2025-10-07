@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use App\Services\WoltDrive\WoltDriveService;
 
 class OrderController extends Controller
 {
@@ -285,4 +286,69 @@ class OrderController extends Controller
 
         return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
     }
+
+    /**
+     * Wolt Drive – kreiranje dostave
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function api_send_wolt(Request $request)
+    {
+        $request->validate(['order_id' => 'required|integer']);
+
+        /** @var \App\Models\Back\Orders\Order $order */
+        $order = Order::query()->find($request->input('order_id'));
+
+        if (! $order) {
+            return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
+        }
+
+        try {
+            /** @var WoltDriveService $wolt */
+            $wolt = app(WoltDriveService::class);
+
+            // Ako koristiš ENV, dovoljno je:
+            $result = $wolt->sendOrderToWolt($order);
+
+            // Ako želiš proslijediti podatke iz fronta umjesto ENV-a:
+            // $result = $wolt->sendOrderToWolt(
+            //     $order,
+            //     $request->input('merchant_id'),
+            //     $request->input('venue_id'),
+            //     $request->input('merchant_key'),
+            // );
+
+            // (Opcionalno) spremi povijest / tracking, ako imaš te kolone:
+            $commentParts = [];
+            if (!empty($result['delivery_id'])) { $commentParts[] = 'Delivery ID: '.$result['delivery_id']; }
+            if (!empty($result['tracking']))    { $commentParts[] = 'Tracking: '.$result['tracking']; }
+            if (!empty($result['status']))      { $commentParts[] = 'Status: '.$result['status']; }
+
+            $comment = 'Wolt Drive je uspješno kreiran. '.implode(' | ', $commentParts);
+
+            // Ako tvoj Order model ima helper za spremanje povijesti:
+            try {
+                OrderHistory::store($order->id, new Request([
+                    'comment' => $comment,
+                    'notify'  => 0,
+                ]));
+            } catch (\Throwable $e) {
+                Log::warning('WoltDrive: ne mogu spremiti povijest narudžbe', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
+
+            return response()->json(['message' => $comment, 'result' => $result]);
+
+        } catch (\Throwable $e) {
+            Log::error('WoltDrive error', [
+                'order_id' => $order->id,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Greška..! Slanje na Wolt Drive nije uspjelo. '.$e->getMessage(),
+            ], 422);
+        }
+    }
+
 }

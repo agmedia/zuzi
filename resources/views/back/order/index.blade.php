@@ -128,6 +128,10 @@
                                             <button type="button" class="btn btn-light btn-sm" onclick="sendGLS({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
                                         @elseif ($order->shipping_code == 'hp_paketomat')
                                             <button type="button" class="btn btn-light btn-sm" onclick="sendHPPak({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
+                                        @elseif ($order->shipping_code == 'wolt_drive')
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="sendWolt({{ $order->id }})">
+                                                <i class="fa fa-motorcycle ml-1"></i> Wolt
+                                            </button>
                                         @else
                                             <button type="button" class="btn btn-light btn-sm" onclick="sendGLSstari({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
                                         @endif
@@ -233,6 +237,35 @@
                     }
                 });
         }
+
+        /**
+         *
+         * @param order_id
+         */
+        function sendWolt(order_id) {
+            setWoltBtnLoading(order_id, true);
+            axios.post("{{ route('api.order.send.wolt') }}", { order_id })
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({ timer: 1500, text: response.data.message })
+                            .then(() => location.reload());
+                    } else {
+                        errorToast.fire(response.data.error || 'Greška pri slanju na Wolt Drive.');
+                    }
+                })
+                .catch(() => errorToast.fire("Greška prilikom slanja na Wolt Drive."))
+                .finally(() => setWoltBtnLoading(order_id, false));
+        }
+
+        function setWoltBtnLoading(orderId, isLoading) {
+            const btn = document.querySelector(`[data-wolt-btn="${orderId}"]`);
+            if (!btn) return;
+            btn.disabled = isLoading;
+            btn.innerHTML = isLoading
+                ? '<i class="fa fa-spinner fa-spin"></i> Slanje...'
+                : '<i class="fa fa-motorcycle ml-1"></i> Wolt';
+        }
+
 
         /**
          *

@@ -20,3 +20,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/shipping/wolt-drive/check-zone', [\App\Http\Controllers\Api\WoltDriveController::class, 'checkZone'])
     ->name('api.wolt_drive.check_zone');
+
+Route::post('/order/send/wolt', [\App\Http\Controllers\Back\OrderController::class, 'api_send_wolt'])
+    ->name('api.order.send.wolt');
