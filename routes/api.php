@@ -17,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('/shipping/wolt-drive/check-zone', [\App\Http\Controllers\Api\WoltDriveController::class, 'checkZone'])
+    ->name('api.wolt_drive.check_zone');

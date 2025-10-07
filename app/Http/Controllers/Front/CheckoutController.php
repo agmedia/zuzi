@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Services\WoltDrive\WoltZoneService;
 
 class CheckoutController extends Controller
 {
@@ -71,6 +72,44 @@ class CheckoutController extends Controller
             return redirect()->route('naplata', ['step' => 'podaci']);
         }
 
+        /**
+         * ---------------------------------------------
+         * WOLT ZONA VALIDACIJA (server-side, UX-friendly)
+         * ---------------------------------------------
+         * Ako je korisnik izabrao wolt_drive, provjeri je li adresa u zoni.
+         */
+        if (isset($data['shipping']) && $this->isWoltDrive($data['shipping'])) {
+            $address = $data['address'] ?? [];
+
+            $lat = data_get($address, 'lat');
+            $lng = data_get($address, 'lng');
+
+            /** @var WoltZoneService $zone */
+            $zone = app(WoltZoneService::class);
+
+            $inZone = null;
+
+            // 1) Preferiraj koordinate ako postoje (čak i 0.0 treba biti dozvoljeno, stoga koristimo isset)
+            if (isset($lat, $lng)) {
+                $inZone = $zone->containsLatLng((float)$lat, (float)$lng);
+                Log::debug('[WOLT] view(): checked by lat/lng', ['lat' => $lat, 'lng' => $lng, 'in_zone' => $inZone]);
+            } else {
+                // 2) Fallback: složi punu adresu iz polja; ako nešto fali, dodaj “Zagreb, Hrvatska”
+                $fullAddress = $this->composeFullAddress($address);
+                $inZone = $fullAddress ? $zone->containsAddress($fullAddress) : false;
+                Log::debug('[WOLT] view(): checked by address', ['address' => $fullAddress, 'in_zone' => $inZone]);
+            }
+
+            if (!$inZone) {
+                return redirect()
+                    ->route('naplata', ['step' => 'podaci'])
+                    ->withErrors([
+                        'shipping' => 'Adresa nije unutar Wolt Drive dostavne zone (Grad Zagreb). Odaberite drugi način dostave ili promijenite adresu.'
+                    ])
+                    ->withInput();
+            }
+        }
+
         $data = $this->collectData($data, config('settings.order.status.unfinished'));
 
         $order = new Order();
@@ -79,7 +118,7 @@ class CheckoutController extends Controller
             $data['id'] = CheckoutSession::getOrder()['id'];
 
             $order->updateData($data)
-                  ->setData($data['id']);
+                ->setData($data['id']);
         } else {
             $order->createFrom($data);
         }
@@ -108,6 +147,42 @@ class CheckoutController extends Controller
         $order = new Order();
 
         ag_log($request->toArray(), title: 'Response ORDER ::::::::::::::::::::::::::::::::::::::');
+
+        /**
+         * -----------------------------------------------------------------
+         * WOLT ZONA VALIDACIJA (safety net prije završetka narudžbe)
+         * -----------------------------------------------------------------
+         */
+        $selectedShipping = CheckoutSession::getShipping();
+        if ($this->isWoltDrive($selectedShipping)) {
+            $address = CheckoutSession::getAddress() ?? [];
+
+            $lat = data_get($address, 'lat');
+            $lng = data_get($address, 'lng');
+
+            /** @var WoltZoneService $zone */
+            $zone = app(WoltZoneService::class);
+
+            $inZone = null;
+
+            if (isset($lat, $lng)) {
+                $inZone = $zone->containsLatLng((float)$lat, (float)$lng);
+                Log::debug('[WOLT] order(): checked by lat/lng', ['lat' => $lat, 'lng' => $lng, 'in_zone' => $inZone]);
+            } else {
+                $fullAddress = $this->composeFullAddress($address);
+                $inZone = $fullAddress ? $zone->containsAddress($fullAddress) : false;
+                Log::debug('[WOLT] order(): checked by address', ['address' => $fullAddress, 'in_zone' => $inZone]);
+            }
+
+            if (!$inZone) {
+                return redirect()
+                    ->route('naplata', ['step' => 'podaci'])
+                    ->withErrors([
+                        'shipping' => 'Adresa nije unutar Wolt Drive dostavne zone (Grad Zagreb). Odaberite drugi način dostave ili promijenite adresu.'
+                    ])
+                    ->withInput();
+            }
+        }
 
         if ($request->has('provjera')) {
             $order->setData($request->input('provjera'));
@@ -140,14 +215,14 @@ class CheckoutController extends Controller
 
         if ($order->isValid()) {
             $order->sendEmails()
-                  ->decreaseCartItems()
-                  ->addLoyaltyPoints()
-                 // ->addCustomerToMailchimp()
-                  ->forgetCheckoutCache();
+                ->decreaseCartItems()
+                ->addLoyaltyPoints()
+                // ->addCustomerToMailchimp()
+                ->forgetCheckoutCache();
 
             $this->shoppingCart()
-                 ->flush()
-                 ->resolveDB();
+                ->flush()
+                ->resolveDB();
 
             $data['google_tag_manager'] = TagManager::getGoogleSuccessDataLayer($order->getOrder());
 
@@ -210,7 +285,7 @@ class CheckoutController extends Controller
      */
     private function collectData(array $data, int $order_status_id): array
     {
-        $shipping = Settings::getList('shipping')->where('code', $data['shipping'])->first();
+        $shipping = Settings::getList('shipping')->where('code', $this->shippingCode($data['shipping']))->first();
         $payment  = Settings::getList('payment')->where('code', $data['payment'])->first();
 
         $response                    = [];
@@ -223,5 +298,72 @@ class CheckoutController extends Controller
 
         return $response;
     }
+
+
+    /**
+     * Helper: jesmo li na wolt_drive shippingu (string ili array)
+     */
+    private function isWoltDrive($shipping): bool
+    {
+        if (is_array($shipping)) {
+            $code = $shipping['code'] ?? null;
+            return $code === 'wolt_drive';
+        }
+
+        return (string)$shipping === 'wolt_drive';
+    }
+
+    /**
+     * Helper: vrati code iz shipping vrijednosti (string ili array)
+     */
+    private function shippingCode($shipping): string
+    {
+        if (is_array($shipping)) {
+            return (string) ($shipping['code'] ?? '');
+        }
+        return (string) $shipping;
+    }
+
+    /**
+     * Složi full address; ako nema grada/države, dodaj “Zagreb, Hrvatska”
+     */
+    /**
+     * Složi punu adresu iz Livewire forme:
+     * - address.address  (ulica + broj)
+     * - address.city     (grad)
+     * - address.zip      (poštanski broj)
+     * - address.state    (država)
+     * Ako nedostaje grad/država, dodaj default (Zagreb, Hrvatska) radi preciznijeg geokodiranja.
+     */
+    private function composeFullAddress(array $address): string
+    {
+        // Primarni ključevi iz tvoje forme
+        $street   = trim((string) ($address['address'] ?? ''));   // npr. "Zapoljska ulica 20"
+        $city     = trim((string) ($address['city'] ?? ''));
+        $zip      = trim((string) ($address['zip'] ?? ''));
+        $country  = trim((string) ($address['state'] ?? ''));     // u tvojoj formi je "state" = država
+
+        // Sastavi dijelove adrese redoslijedom: ulica, grad, zip, država
+        $parts = [];
+        if ($street !== '') { $parts[] = $street; }
+        if ($city   !== '') { $parts[] = $city; }
+        if ($zip    !== '') { $parts[] = $zip; }
+        if ($country!== '') { $parts[] = $country; }
+
+        // Ako fali grad/država, dodaj defaulte (pomaže geokoderu)
+        if ($city === '')    { $parts[] = 'Zagreb'; }
+        if ($country === '') { $parts[] = 'Croatia'; }
+
+        $full = implode(', ', array_filter($parts, fn($v) => $v !== ''));
+
+        // (opcionalno) log za debug
+        Log::debug('[WOLT] composeFullAddress LW', [
+            'raw'  => $address,
+            'full' => $full,
+        ]);
+
+        return $full;
+    }
+
 
 }

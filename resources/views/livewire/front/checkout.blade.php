@@ -71,6 +71,14 @@
         <div class="card p-3">
         <h2 class="h6 pt-1 pb-3 mb-3 border-bottom">Adresa dostave</h2>
 
+            {{-- OVO UBACI ODMAH NAKON NASLOVA --}}
+            @if ($errors->has('shipping'))
+                <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                    {{ $errors->first('shipping') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Zatvori"></button>
+                </div>
+            @endif
+
         @if (session()->has('login_success'))
             <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
                 {{ session('login_success') }}
