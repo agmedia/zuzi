@@ -49,8 +49,9 @@ class WoltDriveService
         // 1) priprema za promise
         $dropoff = $this->buildDropoff($order);
         $parcels = $this->buildParcels($order);
+        $cash    = $this->buildCashOption($order); // <-- COD ako je payment_code === 'cod'
 
-        $promise = $this->createShipmentPromise($apiKey, $venueId, $dropoff, $parcels, 30);
+        $promise = $this->createShipmentPromise($apiKey, $venueId, $dropoff, $parcels, 30, $cash);
         $shipmentPromiseId = Arr::get($promise, 'id');
         $price             = Arr::get($promise, 'price');
         $promiseCoords     = Arr::get($promise, 'dropoff.location.coordinates');
@@ -60,8 +61,9 @@ class WoltDriveService
             throw new \RuntimeException('Wolt shipment promise je vratio nepotpune podatke.');
         }
 
-        // 2) delivery — OVDJE JE BITNO: dropoff.location.coordinates IZ PROMISE-a
-        $recipient       = $this->buildRecipient($order);
+        // 2) delivery — dropoff.location.coordinates iz promise-a (obavezno)
+        $recipient = $this->buildRecipient($order);
+
         $delivery = $this->createDelivery(
             $apiKey,
             $venueId,
@@ -72,10 +74,11 @@ class WoltDriveService
             [
                 'min_prep' => 30,
                 'comment'  => 'Online narudžba #'.$order->id,
-                'coords'   => $promiseCoords, // <-- KLJUČNO: mora postojati i biti isti kao u promise-u
+                'coords'   => $promiseCoords,
             ],
             'ORD-'.$order->id,
-            (string) $order->id
+            (string) $order->id,
+            $cash // <-- COD i u delivery payloadu
         );
 
         $deliveryId   = Arr::get($delivery, 'id');
@@ -85,9 +88,9 @@ class WoltDriveService
 
         $order->update(array_filter([
             'carrier'           => 'wolt_drive',
-            'printed'           => true,              // ako želiš odmah sakriti gumb
+            'printed'           => true,              // makni ako želiš printati kasnije
             'tracking'          => $trackingId ?? $deliveryId,
-            // ispod koristi ako imaš te kolone; ako nemaš — slobodno izbriši
+            // ispod koristi ako imaš te kolone; ako nemaš — ukloni
             'wolt_delivery_id'  => $deliveryId ?? null,
             'wolt_status'       => $status ?? null,
             'wolt_tracking_url' => $trackingUrl ?? null,
@@ -106,8 +109,14 @@ class WoltDriveService
     /**
      * Shipment Promise (venueful)
      */
-    protected function createShipmentPromise(string $apiKey, string $venueId, array $dropoff, array $parcels, int $minPrepMinutes = 30): array
-    {
+    protected function createShipmentPromise(
+        string $apiKey,
+        string $venueId,
+        array $dropoff,
+        array $parcels,
+        int $minPrepMinutes = 30,
+        ?array $cash = null
+    ): array {
         $endpoint = "{$this->baseUrl}/v1/venues/{$venueId}/shipment-promises";
 
         // Ako imaš koordinate — pošalji ih; inače street/city/zip.
@@ -119,6 +128,7 @@ class WoltDriveService
             'lon'       => Arr::get($dropoff, 'lon'),
             'min_preparation_time_minutes' => max(0, min(60, $minPrepMinutes)),
             'parcels'   => $parcels ?: null,
+            'cash'      => $cash, // <-- COD u shipment-promise
             // 'language' => 'hr',
         ]);
 
@@ -142,7 +152,7 @@ class WoltDriveService
 
     /**
      * Delivery (venueful)
-     * - dropoff.location.coordinates je **obavezan** i mora se poklapati s promise-om.
+     * - dropoff.location.coordinates je obavezan i mora se poklapati s promise-om.
      */
     protected function createDelivery(
         string $apiKey,
@@ -153,11 +163,12 @@ class WoltDriveService
         array $parcels,
         array $dropoffOpts = [],
         ?string $orderRef = null,
-        ?string $orderNumber = null
+        ?string $orderNumber = null,
+        ?array $cash = null
     ): array {
         $endpoint = "{$this->baseUrl}/v1/venues/{$venueId}/deliveries";
 
-        $coords = Arr::get($dropoffOpts, 'coords'); // npr. ['lat'=>.., 'lon'=>..]
+        $coords = Arr::get($dropoffOpts, 'coords'); // ['lat'=>.., 'lon'=>..]
 
         $payload = [
             'pickup'  => [
@@ -180,6 +191,7 @@ class WoltDriveService
             'customer_support'            => $this->buildCustomerSupport(),
             'merchant_order_reference_id' => $orderRef,
             'order_number'                => $orderNumber,
+            'cash'                        => $cash, // <-- COD u delivery
         ];
 
         try {
@@ -233,7 +245,7 @@ class WoltDriveService
         // Wolt traži broj s prefiksom zemlje (npr. +385...)
         $phone = $order->shipping_phone ?? $order->phone ?? '';
         if ($phone && str_starts_with($phone, '0')) {
-            // grubi fallback: pretvori 0xxxxxxxx u +385xxxxxxxx (ako nemaš već u bazi s +)
+            // fallback: 0xxxxxxxx -> +385xxxxxxxx (prilagodi ako imaš već ispravan format u bazi)
             $phone = '+385'.ltrim($phone, '0');
         }
 
@@ -260,6 +272,22 @@ class WoltDriveService
             'description' => 'Narudžba #'.$order->id,
             'identifier'  => (string) $order->id,
         ]];
+    }
+
+    /**
+     * COD helper — vraća cash blok samo ako je payment_code === 'cod'
+     */
+    protected function buildCashOption(Order $order): ?array
+    {
+        $code = strtolower((string) ($order->payment_code ?? ''));
+        if ($code === 'cod') {
+            return [
+                'amount'   => (int) round(((float) $order->total) * 100), // u centima
+                'currency' => 'EUR',
+            ];
+        }
+        return null;
+        // Ako imaš više naziva: in_array($code, ['cod','pouzece','pouzeće'], true)
     }
 
     protected function guessTotalWeightGrams(Order $order): ?int
