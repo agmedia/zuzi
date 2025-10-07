@@ -274,21 +274,23 @@ class WoltDriveService
         ]];
     }
 
-    /**
-     * COD helper — vraća cash blok samo ako je payment_code === 'cod'
-     */
+    // ⬇️ zamijeni cijelu metodu buildCashOption ovime
     protected function buildCashOption(Order $order): ?array
     {
         $code = strtolower((string) ($order->payment_code ?? ''));
         if ($code === 'cod') {
             return [
-                'amount'   => (int) round(((float) $order->total) * 100), // u centima
-                'currency' => 'EUR',
+                'amount_to_collect' => [
+                    'amount'   => (int) round(((float) $order->total) * 100), // u centima
+                    'currency' => 'EUR',
+                ],
             ];
         }
         return null;
-        // Ako imaš više naziva: in_array($code, ['cod','pouzece','pouzeće'], true)
+        // Ako imaš više šifri za pouzeće:
+        // if (in_array($code, ['cod','pouzece','pouzeće','cash_on_delivery'], true)) { ... }
     }
+
 
     protected function guessTotalWeightGrams(Order $order): ?int
     {
