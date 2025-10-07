@@ -116,24 +116,22 @@ class WoltDriveService
      * - cash: OBJEKT ili null
      *   Očekivano: ["amount_to_collect" => ["amount" => int (centi), "currency" => "EUR"]]
      */
+// 1) Promise: potpis i payload
     protected function createShipmentPromise(
         string $apiKey,
         string $venueId,
         array $dropoff,
         array $parcels,
         int $minPrepMinutes = 30,
-        ?array $cash = null
+        ?int $cashCents = null   // <-- natrag na INT
     ): array {
         $endpoint = "{$this->baseUrl}/v1/venues/{$venueId}/shipment-promises";
 
-        if ($cash !== null) {
-            // brza validacija da izbjegnemo 422
-            if (!isset($cash['amount_to_collect']['amount'], $cash['amount_to_collect']['currency'])) {
-                throw new \RuntimeException('Neispravan cash format za shipment-promise. Očekivano: ["amount_to_collect" => ["amount" => int, "currency" => "EUR"]].');
-            }
+        // ako je netko greškom poslao objekt, pokušaj izvući centi
+        if ($cashCents === null && isset($cash['amount_to_collect']['amount'])) {
+            $cashCents = (int) $cash['amount_to_collect']['amount'];
         }
 
-        // Ako imaš koordinate — pošalji ih; inače street/city/zip.
         $payload = array_filter([
             'street'    => Arr::get($dropoff, 'street'),
             'city'      => Arr::get($dropoff, 'city'),
@@ -142,33 +140,31 @@ class WoltDriveService
             'lon'       => Arr::get($dropoff, 'lon'),
             'min_preparation_time_minutes' => max(0, min(60, $minPrepMinutes)),
             'parcels'   => $parcels ?: null,
-            'cash'      => $cash, // OBJEKT (ne integer)
-            // 'language' => 'hr',
-        ], fn($v) => !is_null($v)); // važno: ne odbaci 0 i ne odbaci prazne objekte
+            'cash'      => $cashCents, // <-- INT (centi), ili null
+        ], fn($v) => !is_null($v));
 
         try {
             $resp = Http::withHeaders($this->buildHeaders($apiKey))
-                ->timeout(20)
-                ->acceptJson()
-                ->asJson()
+                ->timeout(20)->acceptJson()->asJson()
                 ->post($endpoint, $payload);
 
             if (!$resp->successful()) {
-                Log::warning('WoltDrive shipment-promise error', ['status' => $resp->status(), 'body' => $resp->json() ?? $resp->body()]);
+                Log::warning('WoltDrive shipment-promise error', ['status'=>$resp->status(),'body'=>$resp->json()??$resp->body()]);
                 $resp->throw();
             }
-
             return $resp->json();
         } catch (RequestException $e) {
             throw new \RuntimeException($this->formatHttpError($e), previous: $e);
         }
     }
 
+
     /**
      * Delivery (venueful)
      * - dropoff.location.coordinates je obavezan i mora se poklapati s promise-om.
      * - cash: objekt s amount_to_collect ili null
      */
+    // 2) Delivery: ostaje objekt (sa guardom ako netko pošalje int)
     protected function createDelivery(
         string $apiKey,
         string $venueId,
@@ -183,22 +179,23 @@ class WoltDriveService
     ): array {
         $endpoint = "{$this->baseUrl}/v1/venues/{$venueId}/deliveries";
 
-        $coords = Arr::get($dropoffOpts, 'coords'); // ['lat'=>.., 'lon'=>..]
+        // ako je greškom poslan int, wrapaj ga u očekivani objekt
+        if ($cash !== null && !is_array($cash)) {
+            $cash = ['amount_to_collect' => ['amount' => (int) $cash, 'currency' => 'EUR']];
+        }
+
+        $coords = Arr::get($dropoffOpts, 'coords');
 
         $payload = [
-            'pickup'  => [
-                'options' => [
-                    'min_preparation_time_minutes' => Arr::get($dropoffOpts, 'min_prep', 30),
-                ],
-            ],
+            'pickup'  => ['options' => ['min_preparation_time_minutes' => Arr::get($dropoffOpts, 'min_prep', 30)]],
             'dropoff' => array_filter([
-                'location' => $coords ? ['coordinates' => ['lat' => $coords['lat'], 'lon' => $coords['lon']]] : null,
+                'location' => $coords ? ['coordinates' => ['lat'=>$coords['lat'], 'lon'=>$coords['lon']]] : null,
                 'comment'  => Arr::get($dropoffOpts, 'comment'),
                 'options'  => array_filter([
                     'is_no_contact'  => Arr::get($dropoffOpts, 'is_no_contact', false),
-                    'scheduled_time' => Arr::get($dropoffOpts, 'scheduled_time'), // ISO8601
-                ], fn($v) => !is_null($v)),
-            ], fn($v) => !is_null($v)),
+                    'scheduled_time' => Arr::get($dropoffOpts, 'scheduled_time'),
+                ], fn($v)=>!is_null($v)),
+            ], fn($v)=>!is_null($v)),
             'price'      => $price,
             'recipient'  => $recipient,
             'parcels'    => $parcels,
@@ -209,7 +206,7 @@ class WoltDriveService
         ];
 
         if ($cash !== null) {
-            if (!is_array($cash) || !isset($cash['amount_to_collect']) || !is_array($cash['amount_to_collect'])) {
+            if (!isset($cash['amount_to_collect']['amount'], $cash['amount_to_collect']['currency'])) {
                 throw new \RuntimeException('Neispravan cash format za delivery. Očekivano: ["amount_to_collect" => ["amount" => int, "currency" => "EUR"]].');
             }
             $payload['cash'] = $cash;
@@ -217,21 +214,19 @@ class WoltDriveService
 
         try {
             $resp = Http::withHeaders($this->buildHeaders($apiKey))
-                ->timeout(20)
-                ->acceptJson()
-                ->asJson()
+                ->timeout(20)->acceptJson()->asJson()
                 ->post($endpoint, $payload);
 
             if (!$resp->successful()) {
-                Log::warning('WoltDrive delivery error', ['status' => $resp->status(), 'body' => $resp->json() ?? $resp->body()]);
+                Log::warning('WoltDrive delivery error', ['status'=>$resp->status(),'body'=>$resp->json()??$resp->body()]);
                 $resp->throw();
             }
-
             return $resp->json();
         } catch (RequestException $e) {
             throw new \RuntimeException($this->formatHttpError($e), previous: $e);
         }
     }
+
 
     /**
      * Headeri za DaaS (nema X-Merchant-Id / X-Venue-Id).
@@ -306,19 +301,16 @@ class WoltDriveService
     /**
      * COD – za shipment-promise: OBJEKT ili null.
      */
-    protected function buildCashForPromise(Order $order): ?array
+    // 3) COD za promise: VRATI INT (centi) ili null
+    protected function buildCashForPromise(Order $order): ?int
     {
         $code = strtolower((string) ($order->payment_code ?? ''));
         if ($code === 'cod') {
-            return [
-                'amount_to_collect' => [
-                    'amount'   => (int) round(((float) $order->total) * 100),
-                    'currency' => 'EUR',
-                ],
-            ];
+            return (int) round(((float) $order->total) * 100);
         }
         return null;
     }
+
 
     /**
      * COD – za delivery: objekt s amount_to_collect ili null.
