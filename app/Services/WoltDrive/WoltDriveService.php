@@ -23,18 +23,19 @@ class WoltDriveService
         ?string $venueId = null,
     ) {
         $cfg = config('services.wolt');
-        $this->baseUrl    = rtrim($baseUrl ?? Arr::get($cfg, 'url', ''), '/');
-        $this->apiKey     = $apiKey ?? Arr::get($cfg, 'api_key');
-        $this->merchantId = $merchantId ?? Arr::get($cfg, 'merchant_id'); // nije nužno
-        $this->venueId    = $venueId ?? Arr::get($cfg, 'venue_id');
+
+        $this->baseUrl    = rtrim($baseUrl ?? Arr::get($cfg, 'url', ''), '/');            // npr. https://daas-public-api.wolt.com
+        $this->apiKey     = $apiKey ?? Arr::get($cfg, 'api_key');                          // WOLT_API_KEY (merchant key)
+        $this->merchantId = $merchantId ?? Arr::get($cfg, 'merchant_id');                  // ne treba za venueful flow, ali ostavljeno
+        $this->venueId    = $venueId ?? Arr::get($cfg, 'venue_id');                        // WOLT_VENUE_ID
     }
 
     /**
-     * Glavni poziv: 1) shipment promise, 2) delivery.
+     * 1) shipment-promise -> 2) delivery
      */
     public function sendOrderToWolt(
         Order $order,
-        ?string $merchantId = null, // ne koristi se u venueful, ali ostavljeno radi API kompatibilnosti
+        ?string $merchantId = null, // ne koristi se u venueful
         ?string $venueId = null,
         ?string $apiKey = null
     ): array {
@@ -45,36 +46,22 @@ class WoltDriveService
             throw new \RuntimeException('Wolt konfiguracija nije potpuna (venue_id/api_key).');
         }
 
-        // (Opcionalno) idempotentna zaštita — ako već imaš kolonu wolt_delivery_id
-        if (isset($order->wolt_delivery_id) && $order->wolt_delivery_id) {
-            return [
-                'ok'          => true,
-                'id'          => $order->wolt_delivery_id,
-                'status'      => $order->wolt_status ?? null,
-                'tracking'    => $order->wolt_tracking_url ?? null,
-                'already'     => true,
-            ];
-        }
-
-        // 1) Shipment Promise: pripremi dropoff podatke iz narudžbe
+        // 1) priprema za promise
         $dropoff = $this->buildDropoff($order);
-
-        // (po želji) dimenzije/masa/price po paketu — minimalni primjer
         $parcels = $this->buildParcels($order);
 
-        $promise = $this->createShipmentPromise($apiKey, $venueId, $dropoff, $parcels, 30 /* min prep time */);
+        $promise = $this->createShipmentPromise($apiKey, $venueId, $dropoff, $parcels, 30);
         $shipmentPromiseId = Arr::get($promise, 'id');
-        $price             = Arr::get($promise, 'price'); // ['amount'=>..., 'currency'=>...]
+        $price             = Arr::get($promise, 'price');
+        $promiseCoords     = Arr::get($promise, 'dropoff.location.coordinates');
 
         if (!$shipmentPromiseId || !$price) {
-            Log::warning('WoltDrive: shipment promise bez potrebnih polja', ['order_id' => $order->id, 'promise' => $promise]);
+            Log::warning('WoltDrive: neispravan shipment promise', ['order_id' => $order->id, 'promise' => $promise]);
             throw new \RuntimeException('Wolt shipment promise je vratio nepotpune podatke.');
         }
 
-        // 2) Delivery
+        // 2) delivery — OVDJE JE BITNO: dropoff.location.coordinates IZ PROMISE-a
         $recipient       = $this->buildRecipient($order);
-        $customerSupport = $this->buildCustomerSupport();
-
         $delivery = $this->createDelivery(
             $apiKey,
             $venueId,
@@ -85,28 +72,26 @@ class WoltDriveService
             [
                 'min_prep' => 30,
                 'comment'  => 'Online narudžba #'.$order->id,
+                'coords'   => $promiseCoords, // <-- KLJUČNO: mora postojati i biti isti kao u promise-u
             ],
             'ORD-'.$order->id,
-            (string) $order->id,
+            (string) $order->id
         );
 
-        // Izvuci ključne podatke
         $deliveryId   = Arr::get($delivery, 'id');
         $status       = Arr::get($delivery, 'status');
         $trackingId   = Arr::get($delivery, 'tracking.id');
         $trackingUrl  = Arr::get($delivery, 'tracking.url');
 
-        // Spremi u narudžbu (prilagodi svojim kolonama)
-        $update = [
+        $order->update(array_filter([
             'carrier'           => 'wolt_drive',
-            'printed'           => true, // makni ako želiš "printed" tek kad preuzmeš etiketu
+            'printed'           => true,              // ako želiš odmah sakriti gumb
             'tracking'          => $trackingId ?? $deliveryId,
-            'wolt_delivery_id'  => $deliveryId ?? null,     // ako imaš kolonu
-            'wolt_status'       => $status ?? null,          // ako imaš kolonu
-            'wolt_tracking_url' => $trackingUrl ?? null,     // ako imaš kolonu
-        ];
-        // Filtriraj null ključeve da ne ruši save ako kolona ne postoji
-        $order->update(array_filter($update, fn($v) => !is_null($v)));
+            // ispod koristi ako imaš te kolone; ako nemaš — slobodno izbriši
+            'wolt_delivery_id'  => $deliveryId ?? null,
+            'wolt_status'       => $status ?? null,
+            'wolt_tracking_url' => $trackingUrl ?? null,
+        ], fn($v) => !is_null($v)));
 
         return [
             'ok'        => true,
@@ -119,14 +104,14 @@ class WoltDriveService
     }
 
     /**
-     * 1) Shipment Promise (venueful)
+     * Shipment Promise (venueful)
      */
     protected function createShipmentPromise(string $apiKey, string $venueId, array $dropoff, array $parcels, int $minPrepMinutes = 30): array
     {
         $endpoint = "{$this->baseUrl}/v1/venues/{$venueId}/shipment-promises";
 
+        // Ako imaš koordinate — pošalji ih; inače street/city/zip.
         $payload = array_filter([
-            // Lokacija dostave — preporučeno street/city/post_code i/ili lat/lon
             'street'    => Arr::get($dropoff, 'street'),
             'city'      => Arr::get($dropoff, 'city'),
             'post_code' => Arr::get($dropoff, 'post_code'),
@@ -134,8 +119,7 @@ class WoltDriveService
             'lon'       => Arr::get($dropoff, 'lon'),
             'min_preparation_time_minutes' => max(0, min(60, $minPrepMinutes)),
             'parcels'   => $parcels ?: null,
-            // 'language' => 'hr', // po potrebi
-            // 'cash'     => [...], // ako imate ugovorenu opciju pouzeća
+            // 'language' => 'hr',
         ]);
 
         try {
@@ -157,7 +141,8 @@ class WoltDriveService
     }
 
     /**
-     * 2) Delivery (venueful)
+     * Delivery (venueful)
+     * - dropoff.location.coordinates je **obavezan** i mora se poklapati s promise-om.
      */
     protected function createDelivery(
         string $apiKey,
@@ -172,6 +157,8 @@ class WoltDriveService
     ): array {
         $endpoint = "{$this->baseUrl}/v1/venues/{$venueId}/deliveries";
 
+        $coords = Arr::get($dropoffOpts, 'coords'); // npr. ['lat'=>.., 'lon'=>..]
+
         $payload = [
             'pickup'  => [
                 'options' => [
@@ -179,20 +166,20 @@ class WoltDriveService
                 ],
             ],
             'dropoff' => array_filter([
-                'comment' => Arr::get($dropoffOpts, 'comment'),
-                'options' => array_filter([
+                'location' => $coords ? ['coordinates' => ['lat' => $coords['lat'], 'lon' => $coords['lon']]] : null,
+                'comment'  => Arr::get($dropoffOpts, 'comment'),
+                'options'  => array_filter([
                     'is_no_contact'  => Arr::get($dropoffOpts, 'is_no_contact', false),
                     'scheduled_time' => Arr::get($dropoffOpts, 'scheduled_time'), // ISO8601
                 ]),
             ]),
-            'price'      => $price,       // npr. ['amount'=> 590, 'currency'=>'EUR']
-            'recipient'  => $recipient,   // ['name','phone_number','email']
-            'parcels'    => $parcels,     // lista ParcelV1
+            'price'      => $price,
+            'recipient'  => $recipient,
+            'parcels'    => $parcels,
             'shipment_promise_id'         => $shipmentPromiseId,
             'customer_support'            => $this->buildCustomerSupport(),
             'merchant_order_reference_id' => $orderRef,
             'order_number'                => $orderNumber,
-            // po potrebi: 'sms_notifications' / 'tips' / 'cash' / 'handshake_delivery' ...
         ];
 
         try {
@@ -214,7 +201,7 @@ class WoltDriveService
     }
 
     /**
-     * Headeri za DaaS (nema X-Merchant-Id / X-Venue-Id)
+     * Headeri za DaaS (nema X-Merchant-Id / X-Venue-Id).
      */
     protected function buildHeaders(string $apiKey): array
     {
@@ -225,9 +212,6 @@ class WoltDriveService
         ];
     }
 
-    /**
-     * Dropoff adresa (iz narudžbe) — doda lat/lon ako imaš kolone.
-     */
     protected function buildDropoff(Order $order): array
     {
         $drop = [
@@ -236,7 +220,6 @@ class WoltDriveService
             'post_code' => $order->shipping_zip ?? '',
         ];
 
-        // Ako u bazi imaš koordinate (npr. shipping_lat/shipping_lon)
         if (!empty($order->shipping_lat) && !empty($order->shipping_lon)) {
             $drop['lat'] = (float) $order->shipping_lat;
             $drop['lon'] = (float) $order->shipping_lon;
@@ -245,21 +228,22 @@ class WoltDriveService
         return $drop;
     }
 
-    /**
-     * Primatelj (recipient) iz narudžbe.
-     */
     protected function buildRecipient(Order $order): array
     {
+        // Wolt traži broj s prefiksom zemlje (npr. +385...)
+        $phone = $order->shipping_phone ?? $order->phone ?? '';
+        if ($phone && str_starts_with($phone, '0')) {
+            // grubi fallback: pretvori 0xxxxxxxx u +385xxxxxxxx (ako nemaš već u bazi s +)
+            $phone = '+385'.ltrim($phone, '0');
+        }
+
         return [
             'name'         => trim(($order->shipping_fname ?? '').' '.($order->shipping_lname ?? '')),
-            'phone_number' => $order->shipping_phone ?? $order->phone ?? '',
+            'phone_number' => $phone,
             'email'        => $order->email ?? '',
         ];
     }
 
-    /**
-     * Parcels — minimalistički: 1 paket s težinom i ukupnom vrijednošću narudžbe.
-     */
     protected function buildParcels(Order $order): array
     {
         $amountCents = (int) round(((float) $order->total) * 100);
@@ -267,7 +251,7 @@ class WoltDriveService
         return [[
             'count'      => 1,
             'dimensions' => [
-                'weight_gram' => $this->guessTotalWeightGrams($order), // ili vrati null ako nemaš težine
+                'weight_gram' => $this->guessTotalWeightGrams($order),
             ],
             'price'      => [
                 'amount'   => $amountCents,
@@ -278,42 +262,28 @@ class WoltDriveService
         ]];
     }
 
-    /**
-     * Ako imaš težine po artiklu — zbroji; u suprotnom vrati razumnu default vrijednost.
-     */
     protected function guessTotalWeightGrams(Order $order): ?int
     {
         try {
             $grams = 0;
             foreach ($order->products ?? [] as $p) {
-                $qty   = (int) ($p->pivot->qty ?? $p->quantity ?? 1);
-                $wgr   = null;
+                $qty = (int) ($p->pivot->qty ?? $p->quantity ?? 1);
+                $wgr = null;
 
-                // prilagodi naziv kolone za težinu (npr. $p->weight_grams ili $p->weight_kg)
                 if (!empty($p->weight_grams)) {
                     $wgr = (int) $p->weight_grams;
                 } elseif (!empty($p->weight)) {
-                    // ako je u kg
                     $wgr = (int) round(((float) $p->weight) * 1000);
                 }
 
                 $grams += max(0, (int) $wgr) * max(1, $qty);
             }
+            if ($grams > 0) return $grams;
+        } catch (\Throwable $e) {}
 
-            if ($grams > 0) {
-                return $grams;
-            }
-        } catch (\Throwable $e) {
-            // ignore
-        }
-
-        // fallback — npr. 500g ako nemaš podatke
-        return 500;
+        return 500; // fallback
     }
 
-    /**
-     * Customer support blok (prikazuje se korisniku u DaaS UI/obavijestima).
-     */
     protected function buildCustomerSupport(): array
     {
         $url   = rtrim(config('app.url') ?: env('APP_PUBLIC_URL', ''), '/');
