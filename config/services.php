@@ -48,10 +48,10 @@ return [
     ],
 
     'wolt' => [
-        'url' => env('WOLT_API_URL', 'https://merchant-api.wolt.com'),
-        'api_key' => env('WOLT_API_KEY'),
-        'merchant_id' => env('WOLT_MERCHANT_ID'),
-        'venue_id' => env('WOLT_VENUE_ID'),
+        'url'         => env('WOLT_API_URL', 'https://daas-public-api.wolt.com'),
+        'api_key'     => env('WOLT_API_KEY'),
+        'merchant_id' => env('WOLT_MERCHANT_ID'), // nije potreban u venueful flowu, ali može ostati
+        'venue_id'    => env('WOLT_VENUE_ID'),
     ],
 
     /*******************************************************************************
