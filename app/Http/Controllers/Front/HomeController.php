@@ -188,7 +188,7 @@ class HomeController extends Controller
         $njuskalo = new Njuskalo();
 
         return response()->view('front.layouts.partials.njuskalo', [
-            'items' => $njuskalo->getItems()
+            'items' => $njuskalo->items()
         ])->header('Content-Type', 'text/xml');
     }
 
