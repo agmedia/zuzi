@@ -2,91 +2,101 @@
 
 namespace App\Helpers;
 
-use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Product\Product;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 /**
- *
+ * Generira stavke za Njuškalo feed uz minimalan memory footprint.
+ * Koristi lazyById() pa se proizvodi učitavaju i obrađuju streamano.
  */
 class Njuskalo
 {
-
     /**
-     * @var array
+     * Vraća Generator sa transformiranim stavkama.
+     * Primjer upotrebe u kontroleru:
+     *   return response()->view('front.layouts.partials.njuskalo', [
+     *       'items' => (new Njuskalo())->items()
+     *   ])->header('Content-Type', 'text/xml; charset=UTF-8');
+     *
+     * @param int $chunkSize Primarni ključ batch veličina za lazyById
+     * @return \Generator<array<string,mixed>>
      */
-    private $response = [];
-
-
-    /**
-     * @return array
-     */
-    public function getItems(): array
+    public function items(int $chunkSize = 500): \Generator
     {
-        $products = Product::query()->where('status', 1)
-                                  ->whereNotIn('sku', config('settings.njuskalo.forbidden'))
-                                    ->where('price', '!=', 0)
-                                    ->where('quantity', '!=', 0)
-                                    ->select('id', 'name', 'description', 'quantity', 'status', 'price', 'image', 'pages', 'dimensions', 'origin', 'url', 'letter', 'condition', 'binding', 'year')
-                                    ->with(['categories' => function ($query) {
-                                        return $query->select('id', 'slug');
-                                    }])
-                                    ->get();
-
-        foreach ($products as $product) {
-            $category = (isset($this->categories[0]['slug'])) ? $this->categories[0]['slug'] : 'ostala-literatura';
-
-            $this->response[] = [
-                'id' => $product->id,
-                'name' => $product->name,
-                'description' => $this->getDescription($product),
-                'group' => config('settings.njuskalo.sync.' . $category),
-                'price' => $product->price,
-                'slug' => $product->url,
-                'image' => asset($product->image),
-            ];
+        foreach ($this->baseQuery()->lazyById($chunkSize) as $product) {
+            yield $this->transform($product);
         }
-
-        return $this->response;
     }
 
+    /**
+     * Osnovni upit – ovdje držimo sve filtre i eager load.
+     */
+    private function baseQuery(): Builder
+    {
+        return Product::query()
+            ->where('status', 1)
+            ->where('price', '!=', 0)
+            ->where('quantity', '!=', 0)
+            ->select([
+                'id', 'name', 'description', 'quantity', 'status', 'price',
+                'image', 'pages', 'dimensions', 'origin', 'url', 'letter',
+                'condition', 'binding', 'year',
+            ])
+            ->with(['categories:id,slug']);
+    }
 
     /**
-     * @param Product $product
+     * Transformira Eloquent model u polje prikladno za XML Blade view.
      *
-     * @return string
+     * @param \App\Models\Back\Catalog\Product\Product $product
+     * @return array<string,mixed>
+     */
+    public function transform(Product $product): array
+    {
+        $categorySlug = optional($product->categories->first())->slug ?? 'ostala-literatura';
+
+        return [
+            'id'          => $product->id,
+            'name'        => $product->name,
+            'description' => $this->getDescription($product), // spremno za CDATA u Bladeu
+            'group'       => config('settings.njuskalo.sync.' . $categorySlug),
+            'price'       => $product->price,
+            'slug'        => $product->url,
+            'image'       => asset($product->image),
+        ];
+    }
+
+    /**
+     * Sastavlja opis; čisti kontrolne znakove i po želji limitira duljinu.
      */
     private function getDescription(Product $product): string
     {
-        $str = '';
+        $parts = [];
 
-        if ($product->description != '') {
-            $str .=  preg_replace('/[[:cntrl:]]/', '', $product->description) . '<br><br>';
-
-
-        }
-        if ($product->pages) {
-            $str .= 'Stranica: ' . $product->pages . '<br>';
-        }
-        if ($product->dimensions) {
-            $str .= 'Dimenzije: ' . $product->dimensions . '<br>';
-        }
-        if ($product->origin) {
-            $str .= 'Jezik: ' . $product->origin . '<br>';
-        }
-        if ($product->letter) {
-            $str .= 'Pismo: ' . $product->letter . '<br>';
-        }
-        if ($product->condition) {
-            $str .= 'Stanje: ' . $product->condition . '<br>';
-        }
-        if ($product->binding) {
-            $str .= 'Uvez: ' . $product->binding . '<br>';
-        }
-        if ($product->year) {
-            $str .= 'Godina: ' . $product->year . '<br>';
+        if (!empty($product->description)) {
+            $desc = preg_replace('/[[:cntrl:]]/', '', (string) $product->description);
+            // Po potrebi odkomentiraj limit:
+            // $desc = Str::limit($desc, 2000, '…');
+            $parts[] = $desc . '<br><br>';
         }
 
-        return $str;
+        $kv = [
+            'Stranica'  => $product->pages,
+            'Dimenzije' => $product->dimensions,
+            'Jezik'     => $product->origin,
+            'Pismo'     => $product->letter,
+            'Stanje'    => $product->condition,
+            'Uvez'      => $product->binding,
+            'Godina'    => $product->year,
+        ];
+
+        foreach ($kv as $label => $value) {
+            if (!empty($value)) {
+                $parts[] = "{$label}: {$value}<br>";
+            }
+        }
+
+        return implode('', $parts);
     }
 }
