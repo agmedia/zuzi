@@ -10,7 +10,7 @@
             </a>
             <a class="navbar-brand pt-0 pb-0 d-md-none me-0" href="{{ route('index') }}">
                 <div class="logo-bg" style="background-color:#fff;margin-left:-30px; padding: 0 0 0 30px; ">
-                    <img src="{{ asset('media/img/zuzi-logo.webp') }}" width="55" alt="Žuži Shop">
+                    <img src="{{ asset('media/img/zuzi-logo.webp') }}" width="55" alt="Zuzi Shop">
                     <span class="arrow-mb"></span>
                 </div>
             </a>
