@@ -67,6 +67,12 @@ class Njuskalo
         ];
     }
 
+    public function getItems(): \Generator
+    {
+        // alias na novu metodu
+        return $this->items();
+    }
+
     /**
      * Sastavlja opis; čisti kontrolne znakove i po želji limitira duljinu.
      */
