@@ -4,104 +4,56 @@ namespace App\Models\Back\Marketing;
 
 use App\Helpers\Currency;
 use App\Helpers\Helper;
-use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductCategory;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class Action extends Model
 {
-
-    /**
-     * @var string
-     */
     protected $table = 'product_actions';
-
-    /**
-     * @var array
-     */
     protected $guarded = ['id', 'created_at', 'updated_at'];
-
-    /**
-     * @var string[]
-     */
     protected $appends = ['discount_text'];
 
-    /**
-     * @var Request
-     */
+    /** @var Request */
     protected $request;
 
-
-    /**
-     * @param $value
-     *
-     * @return mixed
-     */
     public function getDataAttribute($value)
     {
         return json_decode($value, true);
     }
 
-
-    /**
-     * @param $value
-     *
-     * @return bool|\Illuminate\Support\Collection|mixed|string
-     */
     public function getDiscountTextAttribute($value)
     {
-        if ($this->type == 'F') {
+        if ($this->type === 'F') {
             return Currency::main($this->discount, true);
         }
-
-        if ($this->type == 'P') {
+        if ($this->type === 'P') {
             return number_format($this->discount) . ' %';
         }
-
         return $this->discount;
     }
 
-
-    /**
-     * Validate new action Request.
-     *
-     * @param Request $request
-     *
-     * @return $this
-     */
     public function validateRequest(Request $request)
     {
         $request->validate([
             'title'    => 'required',
-            'type'     => 'required',
-            'group'    => 'required',
+            'type'     => 'required',   // 'F' = fixed amount, 'P' = percent
+            'group'    => 'required',   // product|category|author|publisher|all|total
             'discount' => 'required'
         ]);
 
         $this->request = $request;
 
         if ($this->listRequired()) {
-            $request->validate([
-                'action_list' => 'required'
-            ]);
+            $request->validate(['action_list' => 'required']);
         }
 
         return $this;
     }
 
-
-    /**
-     * Store new category.
-     *
-     * @return false
-     */
     public function create()
     {
         $data = $this->getRequestData();
@@ -111,19 +63,12 @@ class Action extends Model
             if ($this->shouldUpdateProducts($data)) {
                 $this->updateProducts($this->resolveTarget($data['links']), $id, $data);
             }
-
             return $this->find($id);
         }
 
         return false;
     }
 
-
-    /**
-     * @param Category $category
-     *
-     * @return false
-     */
     public function edit()
     {
         $data    = $this->getRequestData();
@@ -133,21 +78,15 @@ class Action extends Model
             if ($this->shouldUpdateProducts($data)) {
                 $this->updateProducts($this->resolveTarget($data['links']), $this->id, $data);
             }
-
             if ($this->shouldRemoveActions($data)) {
                 $this->deleteProductActions();
             }
-
             return $this;
         }
 
         return false;
     }
 
-
-    /**
-     * @return bool
-     */
     public function isValid(string $coupon = ''): bool
     {
         $is_valid = false;
@@ -155,10 +94,10 @@ class Action extends Model
         $from = now()->subDay();
         $to   = now()->addDay();
 
-        if ($this->date_start && $this->date_start != '0000-00-00 00:00:00') {
+        if ($this->date_start && $this->date_start !== '0000-00-00 00:00:00') {
             $from = Carbon::make($this->date_start);
         }
-        if ($this->date_end && $this->date_end != '0000-00-00 00:00:00') {
+        if ($this->date_end && $this->date_end !== '0000-00-00 00:00:00') {
             $to = Carbon::make($this->date_end);
         }
 
@@ -169,11 +108,11 @@ class Action extends Model
         if ($is_valid) {
             $is_valid = false;
 
-            if ($this->coupon && $coupon != '' && $coupon == $this->coupon) {
+            if ($this->coupon && $coupon !== '' && $coupon === $this->coupon) {
                 $is_valid = true;
             }
 
-            if ( ! $this->coupon) {
+            if (!$this->coupon) {
                 $is_valid = true;
             }
         }
@@ -181,65 +120,44 @@ class Action extends Model
         return $is_valid;
     }
 
-
-    /**
-     * @param string $coupon
-     *
-     * @return string[]
-     */
     public function setConditionAttributes(string $coupon = ''): array
     {
-        $response = [
-            'type'        => '',
-            'description' => ''
-        ];
+        $response = ['type' => '', 'description' => ''];
 
-        if ($coupon != '') {
-            $response = [
-                'type'        => 'coupon',
-                'description' => $coupon
-            ];
+        if ($coupon !== '') {
+            $response = ['type' => 'coupon', 'description' => $coupon];
         }
 
         return $response;
     }
 
-
-    /**
-     * @param int $action_id
-     *
-     * @return int
-     */
     public function deleteProductActions(int $action_id = 0): int
     {
-        if ( ! $action_id) {
+        if (!$action_id) {
             $action_id = $this->id;
         }
 
-        return Product::query()->where('action_id', $action_id)->update([
-            'action_id'    => 0,
-            'special'      => null,
-            'special_from' => null,
-            'special_to'   => null,
-            'special_lock' => 0,
-        ]);
+        return Product::query()
+            ->where('action_id', $action_id)
+            ->update([
+                'action_id'    => 0,
+                'special'      => null,
+                'special_from' => null,
+                'special_to'   => null,
+                'special_lock' => 0,
+            ]);
     }
 
     /*******************************************************************************
-    *                                Copyright : AGmedia                           *
-    *                              email: filip@agmedia.hr                         *
-    *******************************************************************************/
+     *                                Copyright : AG media                           *
+     *                              email: filip@agmedia.hr                         *
+     *******************************************************************************/
 
-    /**
-     * @param bool $insert
-     *
-     * @return array
-     */
     private function getModelArray(bool $insert = true): array
     {
         $data = $this->getRequestData();
 
-        $response = [
+        $resp = [
             'title'      => $this->request->title,
             'type'       => $this->request->type,
             'discount'   => $this->request->discount,
@@ -252,24 +170,19 @@ class Action extends Model
             'quantity'   => $data['coupon_quantity'],
             'lock'       => $data['lock'],
             'status'     => $data['status'],
-            'updated_at' => Carbon::now()
+            'updated_at' => Carbon::now(),
         ];
 
         if ($insert) {
-            $response['created_at'] = Carbon::now();
+            $resp['created_at'] = Carbon::now();
         }
 
-        return $response;
+        return $resp;
     }
 
-
-    /**
-     * @return array
-     */
     private function getRequestData(): array
     {
         $links = collect([$this->request->group]);
-
         if ($this->request->action_list) {
             $links = collect($this->request->action_list);
         }
@@ -278,135 +191,82 @@ class Action extends Model
 
         return [
             'links'           => $links,
-            'status'          => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
+            'status'          => (isset($this->request->status) && $this->request->status === 'on') ? 1 : 0,
             'start'           => $this->request->date_start ? Carbon::make($this->request->date_start) : null,
             'end'             => $this->request->date_end ? Carbon::make($this->request->date_end) : null,
-            'coupon_quantity' => (isset($this->request->coupon_quantity) and $this->request->coupon_quantity == 'on') ? 1 : 0,
-            'lock'            => (isset($this->request->lock) and $this->request->lock == 'on') ? 1 : 0,
-            'data'            => ! empty($data) ? collect($data)->toJson() : null
+            'coupon_quantity' => (isset($this->request->coupon_quantity) && $this->request->coupon_quantity === 'on') ? 1 : 0,
+            'lock'            => (isset($this->request->lock) && $this->request->lock === 'on') ? 1 : 0,
+            'data'            => !empty($data) ? collect($data)->toJson() : null,
         ];
     }
 
-
-    /**
-     * @return array
-     */
     private function setActionData(): array
     {
-        $response = [];
-
-        if ($this->request->min) {
-            $response['min'] = $this->request->min;
-        }
-        if ($this->request->max) {
-            $response['max'] = $this->request->max;
-        }
-
-        return $response;
+        $resp = [];
+        if ($this->request->min) { $resp['min'] = $this->request->min; }
+        if ($this->request->max) { $resp['max'] = $this->request->max; }
+        return $resp;
     }
 
-
-    /**
-     * @param array $data
-     *
-     * @return bool
-     */
     private function shouldUpdateProducts(array $data): bool
     {
-        if ($this->request->group == 'total') {
+        if ($this->request->group === 'total') {
             return false;
         }
-
-        if ($data['status']) {
-            return true;
-        }
-
-        return false;
+        return (bool)$data['status'];
     }
 
-
-    /**
-     * @param array $data
-     *
-     * @return bool
-     */
     private function shouldRemoveActions(array $data): bool
     {
-        if ( ! $data['status']) {
-            return true;
-        }
-
-        return false;
+        return !$data['status'];
     }
 
-
-    /**
-     * @return bool
-     */
     private function listRequired(): bool
     {
-        if (in_array($this->request->group, ['all', 'total'])) {
-            return false;
-        }
-
-        return true;
+        return !in_array($this->request->group, ['all', 'total']);
     }
 
-
     /**
-     * @param $links
-     *
-     * @return mixed
+     * UVIJEK vrati listu ID-eva (jedan stupac) – nema više cardinality greške.
      */
     private function resolveTarget($links)
     {
         if (in_array($this->request->group, ['product', 'category', 'author', 'publisher', 'all'])) {
-            $products = Product::query();
+            $products = Product::query()
+                ->where('special_lock', 0);
 
-            if ($this->request->group == 'product') {
+            if ($this->request->group === 'product') {
                 $products->whereIn('id', $links);
-            }
-
-            if ($this->request->group == 'category') {
-                $ids = ProductCategory::whereIn('category_id', $links)->pluck('product_id')->unique();
-
+            } elseif ($this->request->group === 'category') {
+                $ids = ProductCategory::whereIn('category_id', $links)->pluck('product_id');
                 $products->whereIn('id', $ids);
+            } elseif ($this->request->group === 'author') {
+                $products->whereIn('author_id', $links);
+            } elseif ($this->request->group === 'publisher') {
+                $products->whereIn('publisher_id', $links);
+            } elseif ($this->request->group === 'all' && $links->first() !== 'all') {
+                $products->whereNotIn('publisher_id', $links);
             }
 
-            if ($this->request->group == 'author') {
-                return $products->whereIn('author_id', $links);
-            }
-
-            if ($this->request->group == 'publisher') {
-                return $products->whereIn('publisher_id', $links);
-            }
-
-            if ($this->request->group == 'all' && $links->first() != 'all') {
-                return $products->whereNotIn('publisher_id', $links);
-            }
-
-            return $products->where('special_lock', 0)
-                            ->pluck('id')
-                            ->unique();
+            return $products->pluck('id')->unique();
         }
 
-        return $this->request->group;
+        return collect(); // fallback
     }
 
-
     /**
-     * @param       $target
-     * @param int   $id
-     * @param array $data
-     *
-     * @return void
+     * Primijeni pravilo:
+     * - Ako nema popusta -> postavi novi
+     * - Ako ima popust -> mijenjaj samo ako je NOVI popust VEĆI (nova special cijena < stara special)
      */
     private function updateProducts($target, int $id, array $data): void
     {
-        $query    = [];
-        $products = Product::query();
+        $rows = [];
 
-        if ($target != 'all') {
+        $products = Product::query()
+            ->where('special_lock', 0);
+
+        if ($target->isNotEmpty()) {
             $products->whereIn('id', $target);
         }
 
@@ -417,43 +277,87 @@ class Action extends Model
             $products->where('price', '<', $this->request->max);
         }
 
-        $products = $products->pluck('price', 'id');
+        // trebaju nam i datumi da procijenimo aktivnost starog popusta
+        $products = $products->get(['id', 'price', 'special', 'special_from', 'special_to']);
 
-        foreach ($products->all() as $k_id => $price) {
-            $query[] = [
-                'product_id' => $k_id,
-                'special'    => Helper::calculateDiscountPrice($price, $this->request->discount, $this->request->type)
-            ];
+        $now = Carbon::now();
+
+        foreach ($products as $p) {
+            $price       = (float)$p->price;
+            $oldSpecial  = $p->special !== null ? (float)$p->special : null;
+
+            // izračunaj novu special cijenu po traženom popustu
+            $newSpecial = (float) Helper::calculateDiscountPrice($price, $this->request->discount, $this->request->type);
+
+            // je li stari popust AKTIVAN sada?
+            $from = $p->special_from ? Carbon::make($p->special_from) : null;
+            $to   = $p->special_to   ? Carbon::make($p->special_to)   : null;
+
+            $oldActiveNow =
+                ($oldSpecial !== null && $oldSpecial > 0) &&
+                (is_null($from) || $from->lte($now)) &&
+                (is_null($to)   || $now->lte($to));
+
+            $shouldApply = false;
+
+            if (is_null($oldSpecial) || $oldSpecial <= 0) {
+                // nema starog popusta -> postavi novi
+                $shouldApply = true;
+            } else {
+                if ($oldActiveNow) {
+                    // stari je AKTIVAN -> mijenjaj samo ako je novi JAČI (niža special cijena)
+                    $shouldApply = $newSpecial < $oldSpecial;
+                } else {
+                    // stari NIJE aktivan (istekao ili još nije počeo) -> tretiraj kao “nema popusta”
+                    $shouldApply = true;
+                }
+            }
+
+            if ($shouldApply) {
+                $rows[] = [
+                    'product_id' => $p->id,
+                    'special'    => $newSpecial,
+                ];
+            }
+        }
+
+        if (empty($rows)) {
+            return; // ništa za ažurirati
         }
 
         DB::table('temp_table')->truncate();
 
-        foreach (array_chunk($query, 500) as $chunk) {
+        foreach (array_chunk($rows, 500) as $chunk) {
             DB::table('temp_table')->insert($chunk);
         }
 
-        DB::select(DB::raw("UPDATE products p INNER JOIN temp_table tt ON p.id = tt.product_id SET p.special = tt.special, p.action_id = " . $id . ", p.special_from = '" . $data['start'] . "', p.special_to = '" . $data['end'] . "', p.special_lock = " . $data['lock'] . ";"));
+        $start = $data['start'] ? Carbon::make($data['start'])->toDateTimeString() : null;
+        $end   = $data['end'] ? Carbon::make($data['end'])->toDateTimeString() : null;
+
+        DB::update(
+            'UPDATE products p
+         INNER JOIN temp_table tt ON p.id = tt.product_id
+         SET p.special = tt.special,
+             p.action_id = ?,
+             p.special_from = ?,
+             p.special_to = ?,
+             p.special_lock = ?',
+            [$id, $start, $end, $data['lock']]
+        );
 
         DB::table('temp_table')->truncate();
     }
 
-    /*******************************************************************************
-    *                                Copyright : AGmedia                           *
-    *                              email: filip@agmedia.hr                         *
-    *******************************************************************************/
 
-    /**
-     * @param int     $product_id
-     * @param Request $request
-     * @param int     $action_id
-     *
-     * @return int
-     */
+    /*******************************************************************************
+     *                                Copyright : AG media                           *
+     *                              email: filip@agmedia.hr                         *
+     *******************************************************************************/
+
     public static function createFromProduct(int $product_id, Request $request, int $action_id = 0): int
     {
         if ($action_id) {
             $has = self::query()->where('id', $action_id)->first();
-
             if ($has) {
                 return $has->id;
             }
@@ -479,8 +383,7 @@ class Action extends Model
             'lock'       => 1,
             'status'     => 1,
             'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
+            'updated_at' => Carbon::now(),
         ]);
     }
-
 }
