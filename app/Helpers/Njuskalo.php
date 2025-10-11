@@ -36,6 +36,7 @@ class Njuskalo
     {
         return Product::query()
             ->where('status', 1)
+            ->whereNotIn('sku', config('settings.njuskalo.forbidden'))
             ->where('price', '!=', 0)
             ->where('quantity', '!=', 0)
             ->select([
