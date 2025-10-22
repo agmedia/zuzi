@@ -4,10 +4,10 @@
         @section ( 'title',  \Illuminate\Support\Str::ucfirst($group). ' - ZuZi Shop' )
     @endif
     @if ($cat && ! $subcat)
-        @section ( 'title',  $cat->title . ' - ZuZi Shop' )
+        @section ( 'title',  $cat->meta_title . ' - ZuZi Shop' )
         @section ( 'description', $cat->meta_description )
     @elseif ($cat && $subcat)
-        @section ( 'title', $subcat->title . ' - ZuZi Shop' )
+        @section ( 'title', $subcat->meta_title . ' - ZuZi Shop' )
         @section ( 'description', $cat->meta_description )
     @endif
 @endif
