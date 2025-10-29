@@ -16,7 +16,7 @@
 
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="stylesheet" media="screen" href="{{ asset('vendor/simplebar/dist/simplebar.min.css') }}"/>
-    <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=599.899') }}">
+    <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.001') }}">
     <script src="{{ asset('js/jquery/jquery-2.1.1.min.js') }}"></script>
     <!-- Favicon and Touch Icons-->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">

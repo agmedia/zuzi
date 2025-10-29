@@ -18023,7 +18023,9 @@ a.nav-link:hover .media-tab-media {
 }
 .gallery-item > img {
     display: block;
-    width: 100%;
+    width: auto;
+    max-height: 800px;
+    margin: 0 auto;
 }
 .gallery-item::before {
     display: block;
