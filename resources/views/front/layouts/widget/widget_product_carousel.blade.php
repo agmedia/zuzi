@@ -2,7 +2,7 @@
 <section class="pt-2 pb-3">
 
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1   pb-2 mb-2">
-        <h2 class="h3 mb-0 pt-3 font-title me-3">{{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h2>
+        <h4 class="h3 mb-0 pt-3 font-title me-3">{{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h4>
 
         @if($data['url'] !='/')
             <a class="btn btn-primary btn-sm btn-shadow mt-3" href="{{ url($data['url']) }}"><span class="d-none d-sm-inline-block">Pogledajte ponudu</span> <i class="ci-arrow-right "></i></a>

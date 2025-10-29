@@ -61,7 +61,7 @@
                 <div class="row py-4">
                     <div class="col-md-4  text-center text-md-start mb-4">
 
-                        <h3 class="widget-title fw-700 d-block text-dark"><span>Knjižara</span></h3>
+                        <p class="widget-title fw-700 d-block text-dark h3"><span>Knjižara</span></p>
                         <p class=" text-dark  fs-md pb-1 d-block">
 
                             <strong>Adresa</strong><br>Antuna Šoljana 33, 10000 Zagreb</p>
@@ -100,7 +100,7 @@
                     <!-- Desktop menu (visible on screens above md)-->
                     <div class="col-md-4 d-none d-md-block text-center text-md-start mb-4">
                         <div class="widget widget-links widget-dark pb-2">
-                            <h3 class="widget-title fw-700 text-dark"><span>Uvjeti kupnje</span></h3>
+                            <p class="widget-title h3  fw-700 text-dark"><span>Uvjeti kupnje</span></p>
                             <ul class="widget-list">
                                 @foreach ($uvjeti_kupnje as $page)
                                     <li class="widget-list-item"><a class="widget-list-link" href="{{ route('catalog.route.page', ['page' => $page]) }}">{{ $page->title }}</a></li>
@@ -110,7 +110,7 @@
                     </div>
                     <div class="col-md-4 d-none d-md-block text-center text-md-start mb-4">
                         <div class="widget widget-links widget-dark pb-2">
-                            <h3 class="widget-title fw-700 text-dark"><span>Načini plaćanja</span></h3>
+                            <p class="widget-title h3 fw-700 text-dark"><span>Načini plaćanja</span></p>
                             <ul class="widget-list  ">
                                 <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" > kreditnom karticom jednokratno ili na rate</a></li>
                                 <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" > virmanom / općom uplatnicom / internet bankarstvom</a></li>

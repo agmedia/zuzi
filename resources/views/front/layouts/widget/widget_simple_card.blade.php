@@ -1,7 +1,7 @@
 <!-- {"title": "Banneri", "description": "Widget za bannere"} -->
 <section class=" py-3 " >
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1  pb-3 mb-3">
-        <h2 class="h3 mb-0 pt-3 font-title me-3"> MJESEČNA AKCIJA </h2>
+        <h4 class="h3 mb-0 pt-3 font-title me-3"> MJESEČNA AKCIJA </h4>
     </div>
 
     <div class="row  mt-2 mt-lg-3 ">
