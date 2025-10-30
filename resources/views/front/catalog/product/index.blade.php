@@ -206,7 +206,7 @@
                                <li><strong>Dostupnost:</strong> Rasprodano</li>
                            @endif
 
-                           <li><strong>Stanje:</strong> Nova knjiga</li>
+                           <li><strong>Stanje:</strong> {{ $prod->condition}}</li>
                    </ul>
 
                </div>
