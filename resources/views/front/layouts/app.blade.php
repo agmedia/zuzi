@@ -214,7 +214,7 @@
 <script src="{{ asset('vendor/lightgallery/lightgallery.min.js') }}"></script>
 <script src="{{ asset('vendor/lightgallery/plugins/fullscreen/lg-fullscreen.min.js') }}"></script>
 <script src="{{ asset('vendor/lightgallery/plugins/zoom/lg-zoom.min.js') }}"></script>
-<script async src="{{ asset('js/jsbat.js') }}"></script>
+
 
 <!-- Font icons -->
 <link rel="preload" href="{{ asset('icons/cartzilla-icons.woff2') }}" as="font" type="font/woff2" crossorigin>
