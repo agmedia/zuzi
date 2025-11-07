@@ -179,7 +179,7 @@
             const shortEditor = CKEDITOR.replace('short-description-input', {
                 height: 200,
                 // Minimalni toolbar (prilagodi po želji)
-                removeButtons: 'Image,Table,HorizontalRule,SpecialChar,Anchor,Maximize,Source,Styles,Format,About',
+
                 toolbarCanCollapse: true
             });
 
