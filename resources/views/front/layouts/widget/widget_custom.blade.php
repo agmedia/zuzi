@@ -12,7 +12,7 @@
                             <h4 class="h3 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h4>
 
                             <p class="text-dark d-none d-sm-block fs-md">{{ $widget['subtitle'] }}</p>
-                            <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2" href="{{ url($widget['url']) }}" role="button">
+                            <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2 slider-focus-btn" href="{{ url($widget['url']) }}" role="button">
 
                                          Opširnije
 
@@ -50,3 +50,15 @@
 
 <!-- How it works-->
 
+
+@push('js_after')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Nađi prvi gumb sa klasom .slider-focus-btn i fokusiraj ga
+            const firstBtn = document.querySelector('.slider-focus-btn');
+            if (firstBtn) {
+                firstBtn.focus();
+            }
+        });
+    </script>
+@endpush
