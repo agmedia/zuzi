@@ -34,10 +34,18 @@ class HomeController extends Controller
             return Page::where('slug', 'homepage')->first();
         });
 
-        $page->description = Helper::setDescription(isset($page->description) ? $page->description : '');
+        // ✅ Proslijedi short_description kao kontekst u Helper
+        $page->description = \App\Helpers\Helper::setDescription(
+            $page->description ?? '',
+            ['short_description' => $page->short_description ?? '']
+        );
+
+
+
 
         return view('front.page', compact('page'));
     }
+
 
 
     /**

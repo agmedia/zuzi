@@ -411,7 +411,7 @@ class Helper
      *
      * @return false|string
      */
-    public static function setDescription(string $description)
+    public static function setDescription(string $description, array $context = [])
     {
         if ($description == '') {
             return '';
@@ -438,10 +438,11 @@ class Helper
         });
 
         foreach ($ids as $id) {
-            $description = Cache::remember('wg.' . $id, config('cache.life'), function () use ($wgs, $description, $id) {
-                return static::resolveDescription($wgs, $description, $id);
+            $description = Cache::remember('wg.' . $id, config('cache.life'), function () use ($wgs, $description, $id, $context) {
+                return static::resolveDescription($wgs, $description, $id, $context);
             });
         }
+
 
         return $description;
     }
@@ -454,7 +455,7 @@ class Helper
      *
      * @return string
      */
-    private static function resolveDescription(Collection $wgs, string $description, string $id): string
+    private static function resolveDescription(Collection $wgs, string $description, string $id, array $context = []): string
     {
         $wg = $wgs->where('id', $id)->first();
 
@@ -518,6 +519,7 @@ class Helper
                     'image'    => $widget->thumb,
                     'width'    => $widget->width,
                     'right'    => (isset($data['right']) && $data['right'] == 'on') ? 1 : null,
+                    'short_description' => $context['short_description'] ?? null,
                 ];
             }
         }
@@ -526,7 +528,10 @@ class Helper
 
         return str_replace(
             '++' . $id . '++',
-            view('front.layouts.widget.widget_' . $wg->template, ['data' => $widgets]),
+            view(
+                'front.layouts.widget.widget_' . $wg->template,
+                array_merge(['data' => $widgets], $context) // ⬅ short_description dolazi kao $short_description
+            )->render(),
             $description
         );
     }

@@ -51,6 +51,13 @@
                                 <input type="text" class="form-control" id="title-input" name="title" placeholder="Upišite naslov..." value="{{ isset($page) ? $page->title : old('title') }}" onkeyup="SetSEOPreview()">
                             </div>
 
+
+                            <div class="form-group">
+                                <label for="short-description-input">Sažetak</label>
+                                <textarea class="form-control" id="short-description-input" name="short_description" rows="3" placeholder="Enter an excerpt..">{{ isset($page) ? $page->short_description : old('title') }}</textarea>
+                                <div class="form-text text-muted font-size-sm font-italic">Vidljivo na početnoj stranici</div>
+                            </div>
+
                             <div class="form-group">
                                 <label for="group-select">Grupa</label>
                                 <select class="js-select2 form-control" id="group-select" name="group" style="width: 100%;">
@@ -162,22 +169,39 @@
                 tags: true
             });
 
-            editor = CKEDITOR.replace('js-ckeditor'); // bind editor
-
-            editor.addCommand("mySimpleCommand", { // create named command
-                exec: function(edt) {
-                    alert(edt.getData());
-                }
+            // === CKEditor 4 inicijalizacija ===
+            // Glavni "Opis"
+            const editor = CKEDITOR.replace('js-ckeditor', {
+                height: 360
             });
 
-            editor.ui.addButton('SuperButton', { // add new button and bind our command
-                label: "Click me",
-                command: 'mySimpleCommand',
-                //toolbar: 'insert',
-                icon: 'https://avatars1.githubusercontent.com/u/5500999?v=2&s=16'
+            // "Sažetak" (short_description) – laganiji toolbar
+            const shortEditor = CKEDITOR.replace('short-description-input', {
+                height: 200,
+                // Minimalni toolbar (prilagodi po želji)
+                removeButtons: 'Image,Table,HorizontalRule,SpecialChar,Anchor,Maximize,Source,Styles,Format,About',
+                toolbarCanCollapse: true
             });
-        })
+
+            // (Opcionalno) Dodaj isti custom gumb i u oba editora
+            const addSuperButton = (edt) => {
+                edt.addCommand('mySimpleCommand', {
+                    exec: function (ed) {
+                        alert(ed.getData());
+                    }
+                });
+                edt.ui.addButton('SuperButton', {
+                    label: 'Click me',
+                    command: 'mySimpleCommand',
+                    icon: 'https://avatars1.githubusercontent.com/u/5500999?v=2&s=16'
+                });
+            };
+
+            addSuperButton(editor);
+            addSuperButton(shortEditor);
+        });
     </script>
+
 
     <script>
         function SetSEOPreview() {
