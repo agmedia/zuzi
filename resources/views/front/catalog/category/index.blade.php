@@ -41,7 +41,7 @@
                     <div class="alert-icon">
                         <i class="ci-gift"></i>
                     </div>
-                    <small> <strong>AKCIJA: 20% popusta</strong> na sve uz kod: <strong>INTERLIBER20</strong> - Važno: <a href="https://www.zuzi.hr/info/uvjeti-dostave"><strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.  </small>
+                    <small><strong>AKCIJA: 20% popusta</strong> na sve uz kod: <strong>INTERLIBER20</strong> -  Važno: <a href="https://www.zuzi.hr/info/uvjeti-dostave"><!--<strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.--> Zbog velikog interesa isporuka može malo kasniti. Radimo brzo — vi samo uživajte. ❤️ </small>
 
                 </div>
             </div>
