@@ -50,7 +50,7 @@
               </div>
           </div>
       </section>
-      <h1 style="visibility: hidden;height:1px "> ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop </h1>
+
 
         {!! $page->description !!}
 
@@ -92,7 +92,6 @@ fullscreen; gyroscope; picture-in-picture" src="https://virtualtours.virtualno36
 
         <section class="d-md-flex justify-content-between align-items-center mb-4 pb-2">
             <h1 class="h2 mb-3 mb-md-0 me-3">{{ $page->title }}</h1>
-
         </section>
 
 
