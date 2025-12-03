@@ -35,6 +35,8 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" aria-label="Open the menu" data-bs-target="#sideNav"><span class="navbar-toggler-icon" aria-hidden="true"></span></button><a class="navbar-tool d-flex d-lg-none" href="#searchBox" data-bs-toggle="collapse" aria-label="Search" role="button" aria-expanded="false" aria-controls="searchBox"><span class="navbar-tool-tooltip">Pretraži</span>
                     <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-search"></i></div></a>
 
+                <a href="{{ route('kontakt') }}" class="btn  btn-primary ms-1 ms-lg-0 me-n1 me-lg-2 d-none d-md-block">Kontaktirajte nas</a>
+
                 @if(auth()->user())
                     <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2" aria-label="My account" href="{{ route('login') }}" >
                         <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-user"></i></div>

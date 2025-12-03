@@ -33,39 +33,39 @@
             <div class="block block-rounded block-shadow">
                 <div class="block-content">
                     <div class="row items-push">
-                        <div class="col-lg-7">
+                        <div class="col-lg-8">
                             <h5 class="text-black mb-0 mt-3">Generalne Informacije</h5>
                             <hr class="mb-3">
 
-                            <div class="block {{ isset($widget) && isset($widget->image) ? '' : 'block-mode-hidden' }} mb-3">
+                          {{--   <div class="block {{ isset($widget) && isset($widget->image) ? '' : 'block-mode-hidden' }} mb-3">
                                 <div class="block-header block-header-default" style="border: 1px solid #e9e9e9;">
                                     <h3 class="block-title">Fotografija</h3>
                                     <div class="block-options">
                                         <button type="button" class="btn-block-option" data-toggle="block-option" data-action="content_toggle"><i class="si si-arrow-up"></i></button>
                                     </div>
                                 </div>
-                                <div class="block-content" style="padding: 10px 0 20px 0;">
-                                    <div class="row">
-                                        <div class="col-md-10 offset-md-1" id="size-half">
-                                            <div class="slim"
-                                                 data-max-file-size="2">
-                                                <img src="{{ isset($widget) && isset($widget->image) ? asset($widget->image) : '' }}" alt=""/>
-                                                <input type="file" name="image"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-10 offset-md-1 ag-hide" id="size-all">
-                                            <div class="slim"
-                                                 data-ratio="16:9"
-                                                 data-force-size="1024,320"
-                                                 data-max-file-size="2">
-                                                <img src="{{ isset($widget) && isset($widget->image) ? asset($widget->image) : '' }}" alt=""/>
-                                                <input type="file" name="image_long"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                               <div class="block-content" style="padding: 10px 0 20px 0;">
+                                     <div class="row">
+                                          <div class="col-md-10 offset-md-1" id="size-half">
+                                             <div class="slim"
+                                                  data-max-file-size="2">
+                                                 <img src="{{ isset($widget) && isset($widget->image) ? asset($widget->image) : '' }}" alt=""/>
+                                                 <input type="file" name="image"/>
+                                             </div>
+                                         </div>
+                                         <div class="col-md-10 offset-md-1 ag-hide" id="size-all">
+                                             <div class="slim"
+                                                  data-ratio="16:9"
+                                                  data-force-size="1024,320"
+                                                  data-max-file-size="2">
+                                                 <img src="{{ isset($widget) && isset($widget->image) ? asset($widget->image) : '' }}" alt=""/>
+                                                 <input type="file" name="image_long"/>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
                             </div>
-
+--}}
                             <div class="form-group mb-3">
                                 <label for="title-input">Naslov @include('back.layouts.partials.required-star')</label>
                                 <input type="text" class="form-control" name="title" id="title-input" value="{{ isset($widget->title) ? $widget->title : '' }}" placeholder="">
@@ -78,7 +78,7 @@
                                 </div>
                             </div>
 
-                            <div class="block">
+                           {{-- <div class="block">
                                 <div class="block-content" style="background-color: #f8f9f9; border: 1px solid #e9e9e9; padding: 30px;">
 <!--                                    <div class="form-group row mb-3">
                                         <div class="col-4">
@@ -102,10 +102,10 @@
                                     </div>
                                 </div>
                             </div>
-
+--}}
                         </div>
 
-                        <div class="col-lg-5">
+                        <div class="col-lg-4">
                             <h5 class="text-black mb-0 mt-2">Grupa Widgeta</h5>
                             <hr class="mb-3">
 
@@ -133,21 +133,21 @@
 
                             <div class="block">
                                 <div class="block-content" style="background-color: #f8f9f9; border: 1px solid #e9e9e9; padding: 30px;">
-                                    <div class="form-group mb-5">
+                                    <div class="form-group mb-5 d-none">
                                         <div class="custom-control custom-switch custom-control-info">
                                             <input type="checkbox" class="custom-control-input" id="right-switch" name="right" @if (isset($widget->data['right']) and $widget->data['right']) checked @endif>
                                             <label class="custom-control-label" for="right-switch">Desno poravnanje fotografije</label>
                                         </div>
                                     </div>
 
-                                    <div class="form-group mb-5">
+                                    <div class="form-group mb-0">
                                         <div class="custom-control custom-switch custom-control-success">
                                             <input type="checkbox" class="custom-control-input" id="status-switch" name="status" @if (isset($widget->status) and $widget->status) checked @endif>
                                             <label class="custom-control-label" for="status-switch">Status widgeta u grupi</label>
                                         </div>
                                     </div>
 
-                                    <div class="form-group mb-2">
+                                    <div class="form-group mb-2 d-none">
                                         <label for="sort_order">Badge Traka @include('back.layouts.partials.popover', ['title' => 'Badge traka', 'content' => 'Ako polje ostane prazno badge traka se neće prikazivati. Ako se upiše prikazivat će se badge traka sa upisanim tekstom.'])</label>
                                         <input type="text" class="form-control" name="badge" value="{{ isset($widget) ? $widget->badge : '' }}">
                                     </div>
@@ -176,6 +176,22 @@
     <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>
     <script src="{{ asset('js/plugins/dropzone/min/dropzone.min.js') }}"></script>
     <script src="{{ asset('js/plugins/slim/slim.kickstart.js') }}"></script>
+    <script src="{{ asset('js/plugins/ckeditor5-classic/build/ckeditor.js') }}"></script>
+
+    <script>
+        $(() => {
+            ClassicEditor
+                .create(document.querySelector('#subtitle-input'))
+                .then(editor => {
+                    console.log(editor);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+
+
+        })
+    </script>
 
     <script>
         $(() => {
