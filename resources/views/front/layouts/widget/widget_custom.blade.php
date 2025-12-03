@@ -1,6 +1,6 @@
 <!-- {"title": "Slider Index", "description": "Index main slider."} -->
 
-<section class="tns-carousel mb-3 rounded-3 bg-light shadow ">
+<section class="tns-carousel mb-3 rounded-3 bg-light shadow d-none ">
     <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 1, &quot;mode&quot;: &quot;gallery&quot;, &quot;nav&quot;: true, &quot;responsive&quot;: {&quot;0&quot;: {&quot;nav&quot;: true, &quot;controls&quot;: false}, &quot;576&quot;: {&quot;nav&quot;: false, &quot;controls&quot;: true}}}">
         @foreach($data as  $widget)
 
