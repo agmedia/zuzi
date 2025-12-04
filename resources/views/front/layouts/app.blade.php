@@ -18,6 +18,59 @@
     <link rel="stylesheet" media="screen" href="{{ asset('vendor/simplebar/dist/simplebar.min.css') }}"/>
     <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.001') }}">
     <script src="{{ asset('js/jquery/jquery-2.1.1.min.js') }}"></script>
+
+    <!-- Mailchimp embed CSS -->
+
+
+    <style>
+        /* Mailchimp container unutar modala */
+        #mc_embed_signup{
+            background:#fff;
+
+            width:100%;
+        }
+
+        /* Floating Newsletter button */
+        .newsletter-fab {
+            position: fixed;
+            right: 1.5rem;
+            bottom: 20px; /* da ne sjedi preko "Scroll to top" gumba */
+            z-index: 1050;
+            border-radius: 999px;
+            padding: 0.75rem 1.4rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+        }
+
+        #newsletterModal .modal-content{
+            border-radius: 1rem;
+        }
+
+        #newsletterModal #mc_embed_signup input[type=email]{
+            width: 100%;
+            border-radius: .375rem;
+            border: 1px solid #ced4da;
+            padding: .5rem .75rem;
+        }
+
+        #newsletterModal #mc_embed_signup input[type=email]:focus{
+            border-color:#e50077;
+            box-shadow:0 0 0 .15rem rgba(229,0,119,.15);
+        }
+
+        #mc_embed_signup .button{
+            background:#e50077;
+            border:0;
+            border-radius:999px;
+            padding:.6rem 2rem;
+            font-weight:600;
+            color:#fff;
+        }
+        #mc_embed_signup .button:hover{
+            background:#c70064;
+        }
+
+    </style>
+
     <!-- Favicon and Touch Icons-->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
@@ -194,10 +247,135 @@
 
 
 <!-- Back To Top Button-->
-<a class="btn-scroll-top" aria-label="Scroll To Top" href="#top" data-scroll data-fixed-element><span class="btn-scroll-top-tooltip text-muted fs-sm me-2">Top</span><i class="btn-scroll-top-icon ci-arrow-up">   </i></a>
+<a class="btn-scroll-top d-none d-md-block" aria-label="Scroll To Top" href="#top" data-scroll data-fixed-element><span class="btn-scroll-top-tooltip text-muted fs-sm me-2">Top</span><i class="btn-scroll-top-icon ci-arrow-up">   </i></a>
 
 <!-- Sign in / sign up modal-->
 @include('front.layouts.modals.login')
+
+<!-- Newsletter Floating Button -->
+<!-- Newsletter Floating Button -->
+<button
+    type="button"
+    class="btn btn-primary newsletter-fab"
+    data-bs-toggle="modal"
+    data-bs-target="#newsletterModal">
+    <i class="ci-mail"></i> Newsletter
+</button>
+
+<!-- Newsletter Modal -->
+<div class="modal fade" id="newsletterModal" tabindex="-1" aria-labelledby="newsletterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="newsletterModalLabel">Newsletter prijava</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="mc_embed_signup">
+                    <form
+                        action="https://zuzi.us19.list-manage.com/subscribe/post?u=7fab5e15d1806ca44435921d5&amp;id=f17217dc77&amp;v_id=5011&amp;f_id=00595be7f0"
+                        method="post"
+                        id="mc-embedded-subscribe-form"
+                        name="mc-embedded-subscribe-form"
+                        class="validate"
+                        target="_blank">
+
+                        <div id="mc_embed_signup_scroll">
+
+
+
+                            <div class="indicates-required mb-3">
+                                <span class="asterisk">*</span> označava obavezno polje
+                            </div>
+
+                            <!-- EMAIL -->
+                            <div class="mc-field-group mb-3">
+                                <label for="mce-EMAIL">Email adresa <span class="asterisk">*</span></label>
+                                <input type="email" name="EMAIL" class="required email" id="mce-EMAIL" required>
+                            </div>
+
+                            <!-- GDPR BLOK -->
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group mb-3">
+
+                                <div class="content__gdpr mb-3">
+                                    <label class="fw-bold">Dozvola za marketing</label>
+                                    <p class="small">
+                                        Molimo odaberite sve načine na koje biste željeli primati obavijesti
+                                        od ZUZI, obrt za uslužne djelatnosti:
+                                    </p>
+
+                                    <fieldset class="mc_fieldset gdprRequired mc-field-group" name="interestgroup_field">
+                                        <!-- EMAIL – defaultno označen -->
+                                        <label class="checkbox subfield d-flex align-items-center gap-2 mb-2" for="gdpr_58118">
+                                            <input type="checkbox"
+                                                   id="gdpr_58118"
+                                                   name="gdpr[58118]"
+                                                   class="gdpr"
+                                                   value="Y"
+                                                   checked>
+                                            <span>Email</span>
+                                        </label>
+
+                                        <!-- SMS – sakriven -->
+                                        <label class="checkbox subfield d-none" for="gdpr_58122">
+                                            <input type="checkbox"
+                                                   id="gdpr_58122"
+                                                   name="gdpr[58122]"
+                                                   class="gdpr"
+                                                   value="Y">
+                                            <span>SMS</span>
+                                        </label>
+                                    </fieldset>
+
+                                    <p class="small mt-2">
+                                        Možete se odjaviti u bilo kojem trenutku klikom na poveznicu u podnožju naših e-poruka.
+                                        Za informacije o našim praksama zaštite privatnosti, molimo posjetite našu web stranicu.
+                                    </p>
+                                </div>
+
+                                <div class="content__gdprLegal small text-muted">
+                                    <p>
+                                        Mailchimp koristimo kao našu marketinšku platformu. Klikom na gumb u nastavku za prijavu
+                                        potvrđujete da će vaši podaci biti proslijeđeni Mailchimpu na obradu.
+                                        <a href="https://mailchimp.com/legal/terms" target="_blank" rel="noopener">Saznajte više</a>.
+                                    </p>
+                                </div>
+
+                            </div>
+
+
+                            <!-- RESPONSE MESSAGES -->
+                            <div id="mce-responses" class="clear mb-3">
+                                <div class="response" id="mce-error-response" style="display:none;"></div>
+                                <div class="response" id="mce-success-response" style="display:none;"></div>
+                            </div>
+
+                            <!-- HONEYPOT -->
+                            <div style="position:absolute; left:-5000px;" aria-hidden="true">
+                                <input type="text" name="b_7fab5e15d1806ca44435921d5_f17217dc77" tabindex="-1" value="">
+                            </div>
+
+                            <!-- SUBMIT -->
+                            <div class="optionalParent">
+                                <div class="clear foot">
+                                    <input type="submit" name="subscribe" id="mc-embedded-subscribe" class="button" value="Prijava">
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
 
 <!-- Vendor Styles including: Font Icons, Plugins, etc.-->
 <link rel="stylesheet" media="screen" href="{{ asset(config('settings.images_domain') . 'css/tiny-slider.css?v=1.2') }}"/>
@@ -268,6 +446,20 @@
             });
         }, 270);
     })
+</script>
+
+<script type="text/javascript" src="//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js"></script>
+<script type="text/javascript">
+    (function($) {
+        window.fnames = new Array();
+        window.ftypes = new Array();
+        fnames[0] = 'EMAIL'; ftypes[0] = 'email';
+        fnames[1] = 'FNAME'; ftypes[1] = 'text';
+        fnames[2] = 'LNAME'; ftypes[2] = 'text';
+        fnames[4] = 'PHONE'; ftypes[4] = 'phone';
+        fnames[5] = 'BIRTHDAY'; ftypes[5] = 'birthday';
+    }(jQuery));
+    var $mcj = jQuery.noConflict(true);
 </script>
 
 @stack('js_after')
