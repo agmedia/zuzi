@@ -35,8 +35,7 @@
 
     @if (request()->routeIs(['index']))
 
-      {{--@include('front.layouts.partials.hometemp') --}}
-      <section >
+      <section>
           <div class="d-flex row justify-content-between">
 
               <div class="col-md-12">
@@ -44,13 +43,29 @@
                       <div class="alert-icon">
                           <i class="ci-gift"></i>
                       </div>
-                      <small><strong>Važno:</strong> <a href="https://www.zuzi.hr/info/uvjeti-dostave"><!--<strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.--> Zbog velikog interesa isporuka može malo kasniti. Radimo brzo — vi samo uživajte. ❤️ </small>
+                      <small><strong>Važno:</strong>  Zbog velikog interesa isporuka može malo kasniti. Radimo brzo — vi samo uživajte. ❤️ </small>
 
                   </div>
               </div>
+
           </div>
       </section>
+      <div class="col-md-12 d-flex justify-content-between d-md-none mt-3">
 
+          <button
+              type="button"
+              class="btn btn-dark flex-fill mx-1"
+              data-bs-toggle="modal"
+              data-bs-target="#newsletterModal">
+              <i class="ci-mail"></i> Newsletter
+          </button>
+
+          <a href="{{ route('kontakt') }}"
+             class="btn btn-primary flex-fill mx-1">
+              Kontaktirajte nas
+          </a>
+
+      </div>
 
         {!! $page->description !!}
 
