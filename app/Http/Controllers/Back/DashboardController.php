@@ -40,7 +40,7 @@ class DashboardController extends Controller
         $data['today'] = Order::whereDate('created_at', Carbon::today())
             ->whereNotIn('order_status_id', [7, 5, 8])
             ->count();
-        $data['proccess']   = Order::whereIn('order_status_id', [1, 2, 3])->count();
+        $data['proccess']   = Order::whereIn('order_status_id', [1, 2, 3, 11])->count();
         $data['finished']   = Order::whereIn('order_status_id', [4, 5, 6, 7])->count();
 
         // broj narudžbi u TEKUĆEM mjesecu

@@ -254,13 +254,13 @@
 
 <!-- Newsletter Floating Button -->
 <!-- Newsletter Floating Button -->
-<button
+<!--<button
     type="button"
     class="btn btn-primary newsletter-fab"
     data-bs-toggle="modal"
     data-bs-target="#newsletterModal">
     <i class="ci-mail"></i> Newsletter
-</button>
+</button>-->
 
 <!-- Newsletter Modal -->
 <div class="modal fade" id="newsletterModal" tabindex="-1" aria-labelledby="newsletterModalLabel" aria-hidden="true">
