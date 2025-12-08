@@ -54,7 +54,7 @@
                  <div class="alert-icon">
                      <i class="ci-gift"></i>
                  </div>
-                     <small>  <strong>Važno:</strong> <a href="https://www.zuzi.hr/info/uvjeti-dostave"><!--<strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.--> Zbog velikog interesa isporuka može malo kasniti. Radimo brzo — vi samo uživajte. ❤️ </small>
+                     <small>  <strong>Važno:</strong> <!--<strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.--> Zbog velikog interesa isporuka može malo kasniti. Radimo brzo — vi samo uživajte. ❤️ </small>
 
              </div>
             </div>
@@ -263,9 +263,20 @@
            </div>
        </div>
    </div>
+
    <!-- Sharing-->
    <!-- ShareThis BEGIN --><div class="sharethis-inline-share-buttons"></div><!-- ShareThis END -->
-</div>
+
+
+            <button
+                type="button"
+                class="btn btn-dark flex-fill mx-0 mt-3"
+                data-bs-toggle="modal"
+                data-bs-target="#newsletterModal">
+                <i class="ci-mail"></i>  Prijava na newsletter
+            </button>
+
+            </div>
 </div>
 </section>
 <!-- Related products-->
