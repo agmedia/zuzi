@@ -24,7 +24,7 @@
         <div class="block block-rounded">
             <div class="block-header block-header-default">
                 <h3 class="block-title">Lista narudžbi <small class="font-weight-light">{{ $orders->total() }}</small></h3>
-                <div class="block-options d-none d-xl-block">
+              {{--   <div class="block-options d-none d-xl-block">
                     <div class="form-group mb-0 mr-2">
                         <select class="js-select2 form-control" id="status-select" name="status" style="width: 100%;" data-placeholder="Promjeni status narudžbe">
                             <option></option><!-- Required for data-placeholder attribute to work with Select2 plugin -->
@@ -33,7 +33,7 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
+                </div>--}}
                 <div class="block-options">
                     <div class="dropdown">
                         <button type="button" class="btn btn-light" id="dropdown-ecom-filters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
