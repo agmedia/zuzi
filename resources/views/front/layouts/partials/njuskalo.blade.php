@@ -26,6 +26,10 @@
                 <item>boxNow</item>
             </availableParcelShops>
             <deliveryPackageWeight>1</deliveryPackageWeight>
+            <biddingOptions>
+                <item>buyNow</item>
+                <item>bidding</item>
+            </biddingOptions>
             <videoCallOption>0</videoCallOption>
             <webshopLink>{{ url($item['slug']) }}</webshopLink>
             <image_list>
