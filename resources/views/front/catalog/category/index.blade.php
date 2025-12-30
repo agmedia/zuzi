@@ -41,7 +41,7 @@
                     <div class="alert-icon">
                         <i class="ci-gift"></i>
                     </div>
-                    <small> <strong>Važno:</strong> <!--<strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana.--> Zbog velikog interesa isporuka može malo kasniti. Radimo brzo — vi samo uživajte. ❤️ </small>
+                    <small> <strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana. </small>
 
                 </div>
             </div>
