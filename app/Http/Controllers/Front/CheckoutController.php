@@ -215,7 +215,7 @@ class CheckoutController extends Controller
 
         if ($order->isValid()) {
             $order->sendEmails()
-                ->decreaseCartItems()
+                ->decreaseCartItems(false)
                 ->addLoyaltyPoints()
                 // ->addCustomerToMailchimp()
                 ->forgetCheckoutCache();

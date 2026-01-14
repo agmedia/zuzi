@@ -124,12 +124,10 @@ class OrderHelper
                     $real->decrement('quantity', $product->quantity);
                 }
 
-                if ($disable_on_zero) {
-                    if ( ! $real->quantity) {
-                        $real->update([
-                            'status' => 0
-                        ]);
-                    }
+                if ($disable_on_zero && ! $real->quantity) {
+                    $real->update([
+                        'status' => 0
+                    ]);
                 }
             }
         }
