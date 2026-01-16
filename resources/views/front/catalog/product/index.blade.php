@@ -178,6 +178,10 @@
 
             @if ( $prod->quantity > 0)
    <add-to-cart-btn id="{{ $prod->id }}" available="{{ $prod->quantity }}"></add-to-cart-btn>
+                @else
+                <div class="cart mb-3 mt-3 d-flex align-items-center" >
+                    <a class="btn btn-primary btn-shadow d-block w-100" href="#wishlist-modal" data-bs-toggle="modal"><i class="ci-bell"></i> Obavijesti me o dostupnosti</a>
+                </div>
             @endif
    <!-- Product panels-->
    <div class="accordion mb-4" id="productPanels">
@@ -420,4 +424,6 @@ $('.nav-tabs a[href="#reviews"]').tab('show');
 //  document.getElementById("tabs_widget").scrollIntoView();
 });
 </script>
+@include('front.layouts.modals.wishlist-email')
+@include('front.layouts.partials.recaptcha-js')
 @endpush

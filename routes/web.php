@@ -31,6 +31,7 @@ use App\Http\Controllers\Front\CheckoutController;
 use App\Http\Controllers\Front\CustomerController;
 use App\Http\Controllers\Front\HomeController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Back\Marketing\WishlistController;
 
 
 /*Route::domain('https://images.antikvarijatbibl.lin73.host25.com/')->group(function () {
@@ -140,6 +141,11 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::post('user', [UserController::class, 'store'])->name('users.store');
     Route::get('user/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::patch('user/{user}', [UserController::class, 'update'])->name('users.update');
+
+
+    Route::prefix('admin')->middleware(['auth'])->group(function () {
+        Route::get('/wishlists', [WishlistController::class, 'index'])->name('wishlists');
+    });
 
     // WIDGETS
     Route::prefix('widgets')->group(function () {
@@ -334,6 +340,9 @@ Route::get('/', [HomeController::class, 'index'])->middleware('affiliate.track')
 Route::get('/kontakt', [HomeController::class, 'contact'])->name('kontakt');
 Route::post('/kontakt/posalji', [HomeController::class, 'sendContactMessage'])->name('poruka');
 Route::get('/faq', [CatalogRouteController::class, 'faq'])->name('faq');
+
+
+Route::post('/dodaj-u-listu-zelja', [HomeController::class, 'wishlist'])->name('wishlist');
 //
 Route::get('/kosarica', [CheckoutController::class, 'cart'])->name('kosarica');
 Route::get('/naplata', [CheckoutController::class, 'checkout'])->name('naplata');

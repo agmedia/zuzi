@@ -9,6 +9,7 @@ use App\Helpers\Recaptcha;
 use App\Http\Controllers\Controller;
 use App\Imports\ProductImport;
 use App\Mail\ContactFormMessage;
+use App\Models\Back\Marketing\Wishlist;
 use App\Models\Front\Loyalty;
 use App\Models\Front\Page;
 use App\Models\Sitemap;
@@ -56,6 +57,31 @@ class HomeController extends Controller
     public function page(Page $page)
     {
         return view('front.page', compact('page'));
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function wishlist(Request $request)
+    {
+        $wish = new Wishlist();
+        $wish->validateRequest($request);
+
+        // recaptcha verifikacija – moraš imati site & secret key postavljen
+        $recaptcha = (new Recaptcha())->check($request->toArray());
+        if (! $recaptcha->ok()) {
+            return back()->withErrors(['error' => 'ReCaptcha Error! Kontaktirajte administratora!'])
+                ->withInput();
+        }
+
+        if ($wish->create()) {
+            return back()->with(['success' => 'Vaš Email je upisan u listu želja za ovaj artikl..!']);
+        }
+
+        return back()->with(['error' => 'Wishlist Greška! Molimo vas kontaktirajte administratora!']);
     }
 
 
