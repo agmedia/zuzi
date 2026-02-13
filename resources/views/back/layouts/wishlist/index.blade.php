@@ -84,7 +84,9 @@
                                             <th>Naziv</th>
                                             <th>Šifra</th>
                                             <th>E-mail (korisnik)</th>
+                                            <th>Status</th>
                                             <th>Dodano</th>
+                                            <th>Poslano</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -98,11 +100,19 @@
                                                 <td>{{ $w->product->name ?? '---' }}</td>
                                                 <td>{{ $w->product->sku ?? '---' }}</td>
                                                 <td>{{ $w->email }}</td>
-                                                <td>{{ $w->created_at->format('d.m.Y') }}</td>
+                                                <td>
+                                                    @if((int) $w->sent === 1)
+                                                        <span class="badge badge-success">Poslano</span>
+                                                    @else
+                                                        <span class="badge badge-warning">Na čekanju</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ optional($w->created_at)->format('d.m.Y H:i') ?? '---' }}</td>
+                                                <td>{{ optional($w->sent_at)->format('d.m.Y H:i') ?? '---' }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="5">Nema zapisa u listi želja.</td>
+                                                <td colspan="7">Nema zapisa u listi želja.</td>
                                             </tr>
                                         @endforelse
                                         </tbody>

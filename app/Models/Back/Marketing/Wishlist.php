@@ -26,6 +26,13 @@ class Wishlist extends Model
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
     /**
+     * @var array
+     */
+    protected $casts = [
+        'sent_at' => 'datetime',
+    ];
+
+    /**
      * @var Request
      */
     protected $request;
@@ -123,6 +130,7 @@ class Wishlist extends Model
         // Provjeri postoji li već zapis za ovaj email i product_id
         $exists = static::where('email', $this->request->email)
             ->where('product_id', $this->request->product_id)
+            ->where('sent', 0)
             ->exists();
 
         if ($exists) {
@@ -135,6 +143,7 @@ class Wishlist extends Model
             'email'      => $this->request->email,
             'product_id' => $this->request->product_id,
             'sent'       => 0,
+            'sent_at'    => null,
             'status'     => 1,
             'created_at' => now(),
             'updated_at' => now(),
@@ -163,7 +172,24 @@ class Wishlist extends Model
                     Mail::to($email)->send(new WishlistArrived($product));
                 });
 
-                Wishlist::query()->where('product_id', $product->id)->where('email', $email)->delete();
+                $wishlistEntry = Wishlist::query()->where('product_id', $product->id)->where('email', $email)->where('sent', 0)->first();
+
+                if ($wishlistEntry) {
+                    $sentAt = now();
+
+                    $wishlistEntry->update([
+                        'sent' => 1,
+                        'status' => 0,
+                        'sent_at' => $sentAt,
+                    ]);
+
+                    Log::info('__Wishlist Notification Sent', [
+                        'wishlist_id' => $wishlistEntry->id,
+                        'product_id' => $product->id,
+                        'email' => $email,
+                        'sent_at' => $sentAt->toDateTimeString(),
+                    ]);
+                }
             }
         }
 
