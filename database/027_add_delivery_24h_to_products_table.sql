@@ -1,0 +1,2 @@
+ALTER TABLE `products`
+    ADD COLUMN `delivery_24h` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 AFTER `quantity`;

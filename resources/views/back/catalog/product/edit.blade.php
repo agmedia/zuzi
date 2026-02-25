@@ -40,15 +40,26 @@
                         <i class="fa fa-arrow-left mr-1"></i> Povratak
                     </a>
                     <div class="block-options">
+                        <button type="submit" class="btn btn-hero-success my-2">
+                            <i class="fas fa-save mr-1"></i> Snimi
+                        </button>
+                        <button type="submit" name="save_and_stay" value="1" class="btn btn-hero-primary my-2 ml-2">
+                            <i class="fas fa-save mr-1"></i> Snimi i ostani
+                        </button>
                         <div class="dropdown">
                             <div class="custom-control custom-switch custom-control-info block-options-item ml-4">
-                                <input type="checkbox" class="custom-control-input" id="product-decrease-switch" name="decrease"{{ (isset($product->decrease) and $product->decrease) ? '' : 'checked' }}>
+                                <input type="checkbox" class="custom-control-input" id="product-decrease-switch" name="decrease"{{ (isset($product) && isset($product->decrease) && ! $product->decrease) ? 'checked' : '' }}>
                                 <label class="custom-control-label pt-1" for="product-decrease-switch">Neograničena Količina</label>
                             </div>
 
                             <div class="custom-control custom-switch custom-control-success block-options-item ml-4">
                                 <input type="checkbox" class="custom-control-input" id="product-switch" name="status"{{ (isset($product->status) and $product->status) ? 'checked' : '' }}>
                                 <label class="custom-control-label pt-1" for="product-switch">Aktiviraj</label>
+                            </div>
+
+                            <div class="custom-control custom-switch custom-control-danger block-options-item ml-4">
+                                <input type="checkbox" class="custom-control-input" id="product-delivery-24h-switch" name="delivery_24h" {{ old('delivery_24h', isset($product) ? $product->delivery_24h : 0) ? 'checked' : '' }}>
+                                <label class="custom-control-label pt-1" for="product-delivery-24h-switch">Dobavljivo 24 sata</label>
                             </div>
                         </div>
                     </div>
@@ -215,7 +226,7 @@
                                 <div class="col-md-4">
                                     <label for="letter-select">Pismo</label>
                                     <select class="js-select2 form-control" id="letter-select" name="letter" style="width: 100%;" data-placeholder="Odaberite ili upišite pismo">
-                                        <option></option>
+                                        <option value="" {{ ! isset($product) ? 'selected' : '' }}></option>
                                         @if ($data['letters'])
                                             @foreach ($data['letters'] as $letter)
                                                 <option value="{{ $letter }}" {{ ((isset($product)) and ($letter == $product->letter)) ? 'selected' : '' }}>{{ $letter }}</option>
@@ -323,6 +334,9 @@
                         <div class="col-md-5">
                             <button type="submit" class="btn btn-hero-success my-2">
                                 <i class="fas fa-save mr-1"></i> Snimi
+                            </button>
+                            <button type="submit" name="save_and_stay" value="1" class="btn btn-hero-primary my-2 ml-2">
+                                <i class="fas fa-save mr-1"></i> Snimi i ostani
                             </button>
                         </div>
                         <div class="col-md-5 text-right">

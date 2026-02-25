@@ -102,11 +102,28 @@
                     <div class="product-gallery-preview  gallery order-sm-2">
                             @if ( ! empty($prod->image))
                                 <div class="product-gallery-preview-item active" id="first">
-                                    <a class="gallery-item" data-sub-html='{{ $prod->name }}' href="{{ asset($prod->image) }}"><img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}" height="800"></a></div>
+                                    <a class="gallery-item position-relative" data-sub-html='{{ $prod->name }}' href="{{ asset($prod->image) }}">
+                                        @if (!empty($prod->delivery_24h))
+                                            <span class="badge rounded-pill badge-shadow d-inline-flex align-items-center" style="position:absolute; top:10px; right:10px; z-index:5; background:#e50077; color:#fff; padding:.35rem .6rem;">
+                                                <i class="ci-delivery me-1"></i>24 sata
+                                            </span>
+                                        @endif
+                                        <img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}" height="800">
+                                    </a>
+                                </div>
                             @endif
                             @if ($prod->images->count())
                                 @foreach ($prod->images as $key => $image)
-                                        <div class="product-gallery-preview-item" id="key{{ $key + 1 }}"><a class="gallery-item rounded-3" href="{{ asset($image->image) }}"><img  src="{{ asset($image->image) }}" alt="{{ $image->alt }}"  height="800"></a></div>
+                                        <div class="product-gallery-preview-item" id="key{{ $key + 1 }}">
+                                            <a class="gallery-item rounded-3 position-relative" href="{{ asset($image->image) }}">
+                                                @if (!empty($prod->delivery_24h))
+                                                    <span class="badge rounded-pill badge-shadow d-inline-flex align-items-center" style="position:absolute; top:10px; right:10px; z-index:5; background:#e50077; color:#fff; padding:.35rem .6rem;">
+                                                        <i class="ci-delivery me-1"></i>24 sata
+                                                    </span>
+                                                @endif
+                                                <img  src="{{ asset($image->image) }}" alt="{{ $image->alt }}"  height="800">
+                                            </a>
+                                        </div>
                                 @endforeach
                             @endif
                     </div>

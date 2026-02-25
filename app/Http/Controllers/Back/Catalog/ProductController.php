@@ -97,8 +97,16 @@ class ProductController extends Controller
         if ($stored) {
             $product->checkSettings()
                     ->storeImages($stored);
+            $stored->update([
+                'author_id'    => $this->normalizeRelationId($request, 'author_id', 'unknown_author'),
+                'publisher_id' => $this->normalizeRelationId($request, 'publisher_id', 'unknown_publisher')
+            ]);
 
-            return redirect()->route('products.edit', ['product' => $stored])->with(['success' => 'Artikl je uspješno snimljen!']);
+            if ($request->boolean('save_and_stay')) {
+                return redirect()->route('products.edit', ['product' => $stored])->with(['success' => 'Artikl je uspješno snimljen!']);
+            }
+
+            return redirect()->route('products')->with(['success' => 'Artikl je uspješno snimljen!']);
         }
 
         return redirect()->back()->with(['error' => 'Ops..! Greška prilikom snimanja.']);
@@ -135,10 +143,18 @@ class ProductController extends Controller
         if ($updated) {
             $product->checkSettings()
                     ->storeImages($updated);
+            $updated->update([
+                'author_id'    => $this->normalizeRelationId($request, 'author_id', 'unknown_author'),
+                'publisher_id' => $this->normalizeRelationId($request, 'publisher_id', 'unknown_publisher')
+            ]);
 
             $product->addHistoryData('change');
 
-            return redirect()->route('products.edit', ['product' => $updated])->with(['success' => 'Artikl je uspješno snimljen!']);
+            if ($request->boolean('save_and_stay')) {
+                return redirect()->route('products.edit', ['product' => $updated])->with(['success' => 'Artikl je uspješno snimljen!']);
+            }
+
+            return redirect()->route('products')->with(['success' => 'Artikl je uspješno snimljen!']);
         }
 
         return redirect()->back()->with(['error' => 'Ops..! Greška prilikom snimanja.']);
@@ -211,5 +227,27 @@ class ProductController extends Controller
         $items = $items instanceof Collection ? $items : Collection::make($items);
 
         return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+    }
+
+
+    /**
+     * Pretvara prazan/unknown relation id u 0.
+     *
+     * @param Request $request
+     * @param string  $field
+     * @param string  $unknown_config_key
+     *
+     * @return int
+     */
+    private function normalizeRelationId(Request $request, string $field, string $unknown_config_key): int
+    {
+        $id = (int) $request->input($field, 0);
+        $unknown_id = (int) config('settings.' . $unknown_config_key);
+
+        if ($id <= 0 || ($unknown_id > 0 && $id === $unknown_id)) {
+            return 0;
+        }
+
+        return $id;
     }
 }

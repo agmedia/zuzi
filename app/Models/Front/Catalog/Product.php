@@ -444,7 +444,7 @@ class Product extends Model
      */
     public function scopeBasicData(Builder $query): Builder
     {
-        return $query->select('id', 'name', 'url', 'image', 'price', 'special', 'author_id');
+        return $query->select('id', 'name', 'url', 'image', 'price', 'special', 'author_id', 'delivery_24h');
     }
 
     /*******************************************************************************

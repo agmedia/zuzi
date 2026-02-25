@@ -39,8 +39,11 @@
         @livewireStyles
     </head>
     <body>
+        @php
+            $sidebar_open = request()->cookie('zuzi_backend_sidebar_open', '1') === '1';
+        @endphp
 
-        <div id="page-container" class="sidebar-o enable-page-overlay sidebar-dark side-scroll page-header-fixed main-content-narrow">
+        <div id="page-container" class="{{ $sidebar_open ? 'sidebar-o' : '' }} enable-page-overlay sidebar-dark side-scroll page-header-fixed main-content-narrow">
 
             @include('back.layouts.partials.aside')
 
@@ -77,6 +80,61 @@
         <!-- END Page Container -->
         <script src="{{ asset('js/dashmix.app.js') }}"></script>
         <script src="{{ asset('/js/laravel.app.js') }}"></script>
+        <script>
+            (function () {
+                const SIDEBAR_STATE_KEY = 'zuzi_backend_sidebar_open';
+                const SIDEBAR_COOKIE_KEY = 'zuzi_backend_sidebar_open';
+                const pageContainer = document.getElementById('page-container');
+
+                if (!pageContainer) {
+                    return;
+                }
+
+                const getCookie = (name) => {
+                    const cookie = document.cookie
+                        .split('; ')
+                        .find(row => row.startsWith(name + '='));
+
+                    return cookie ? cookie.split('=')[1] : null;
+                };
+
+                const setCookie = (name, value) => {
+                    document.cookie = `${name}=${value}; path=/; max-age=31536000; samesite=lax`;
+                };
+
+                const applySidebarState = () => {
+                    const savedState = getCookie(SIDEBAR_COOKIE_KEY) ?? localStorage.getItem(SIDEBAR_STATE_KEY);
+                    const desktop = window.innerWidth > 991;
+                    pageContainer.classList.remove('sidebar-o', 'sidebar-o-xs');
+
+                    if (savedState === '1') {
+                        pageContainer.classList.add(desktop ? 'sidebar-o' : 'sidebar-o-xs');
+                    } else if (savedState === '0') {
+                        pageContainer.classList.remove('sidebar-o', 'sidebar-o-xs');
+                    }
+                };
+
+                applySidebarState();
+
+                document.addEventListener('click', function (event) {
+                    const toggleButton = event.target.closest('[data-toggle="layout"][data-action="sidebar_toggle"]');
+
+                    if (!toggleButton) {
+                        return;
+                    }
+
+                    // Dashmix toggla klase na klik; stanje čitamo odmah nakon tog ciklusa.
+                    setTimeout(function () {
+                        const isOpen = pageContainer.classList.contains('sidebar-o') || pageContainer.classList.contains('sidebar-o-xs');
+                        const value = isOpen ? '1' : '0';
+                        localStorage.setItem(SIDEBAR_STATE_KEY, value);
+                        setCookie(SIDEBAR_COOKIE_KEY, value);
+                    }, 0);
+                });
+
+                window.addEventListener('resize', applySidebarState);
+            })();
+        </script>
 
         <script>
             const confirmPopUp = Swal.mixin({

@@ -1,9 +1,18 @@
 <div class="article px-0 mb-2 px-1" >
 
-    <div class="card product-card shadow pb-2 ">
-        @if ($product->main_price > $product->main_special)
-            <span class="badge bg-primary badge-shadow">-{{ number_format(floatval(\App\Helpers\Helper::calculateDiscount($product->price, $product->special())), 0) }}%</span>
-        @endif
+    <div class="card product-card shadow pb-2 position-relative">
+        <div style="position:absolute; top:.75rem; left:.75rem; right:.75rem; z-index:5; display:flex; justify-content:space-between; align-items:flex-start;">
+            @if ($product->main_price > $product->main_special)
+                <span class="badge bg-primary badge-shadow" style="position:static;">-{{ number_format(floatval(\App\Helpers\Helper::calculateDiscount($product->price, $product->special())), 0) }}%</span>
+            @else
+                <span></span>
+            @endif
+            @if (!empty($product->delivery_24h))
+                <span class="badge rounded-pill badge-shadow" style="position:static; background:#e50077; color:#fff;">
+                    <i class="ci-delivery me-1"></i>24 sata
+                </span>
+            @endif
+        </div>
         <a class="card-img-top d-block overflow-hidden text-center" href="{{ url($product->url) }}">
             <img loading="lazy" src="{{ str_replace('.webp','-thumb.webp', $product->image) }}" width="250" height="300" alt="{{ $product->name }}">
         </a>
@@ -11,7 +20,11 @@
 
             <div class="d-flex flex-wrap justify-content-between align-items-start pb-1">
                 <div class="text-muted fs-xs me-1">
-                    <a class="product-meta fw-medium" href="{{ $product->author->url }}">{{ $product->author->title }}</a>
+                    @if($product->author)
+                        <a class="product-meta fw-medium" href="{{ $product->author->url }}">{{ $product->author->title }}</a>
+                    @else
+                        <span class="product-meta fw-medium">Nepoznat autor</span>
+                    @endif
                 </div>
 
             </div>
@@ -30,4 +43,3 @@
         </div>
     </div>
 </div>
-

@@ -113,62 +113,64 @@
             </div>
             <div class="block-content">
                 <div class="table-responsive">
-                    <table class="table table-borderless table-striped table-vcenter">
+                    <table class="table table-sm table-borderless table-striped table-vcenter align-middle">
                         <thead>
                         <tr>
-                            <th class="text-center" style="width: 100px;">Slika</th>
-                            <th>Naziv</th>
-                            <th>Šifra</th>
-                            <th class="text-right">Cijena</th>
-                            <th class="text-center">God.</th>
-                            <th class="text-center">Polica</th>
-                            <th class="text-center">Dimenzija</th>
-                            <th class="text-center">Kol.</th>
-                            <th>Dodano</th>
-                            <th>Zadnja izmjena</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-right" style="width: 12%;">Uredi</th>
+                            <th class="text-center text-nowrap" style="width: 90px;">Slika</th>
+                            <th style="min-width: 280px;">Naziv</th>
+                            <th class="text-nowrap" style="width: 120px;">Šifra</th>
+                            <th class="text-right text-nowrap" style="width: 130px;">Cijena</th>
+                            <th class="text-center text-nowrap" style="width: 95px;">Polica</th>
+                            <th class="text-center text-nowrap" style="width: 75px;">24h</th>
+                            <th class="text-center text-nowrap" style="width: 70px;">Kol.</th>
+                            <th class="text-nowrap" style="width: 95px;">Dodano</th>
+                            <th class="text-nowrap" style="width: 95px;">Izmjena</th>
+                            <th class="text-center text-nowrap" style="width: 75px;">Status</th>
+                            <th class="text-right text-nowrap" style="width: 130px;">Akcije</th>
                         </tr>
                         </thead>
                         <tbody id="ag-table-with-input-fields" class="js-gallery" >
                         @forelse ($products as $product)
                             <tr>
-                                <td class="text-center font-size-sm">
+                                <td class="text-center font-size-sm text-nowrap">
                                     <a class="img-link img-link-zoom-in img-lightbox" href="{{ $product->image ? asset($product->image) : asset('media/avatars/avatar0.jpg') }}">
                                         <img src="{{ $product->image ? asset($product->image) : asset('media/avatars/avatar0.jpg') }}" height="80px"/>
                                     </a>
                                 </td>
-                                <td class="font-size-sm">
+                                <td class="font-size-sm" style="min-width: 280px;">
                                     <a class="font-w600" href="{{ route('products.edit', ['product' => $product]) }}">{{ $product->name }}</a><br>
                                     @if ($product->categories)
                                         @foreach ($product->categories as $cat)
-                                            <span class="badge badge-secondary">{{ $cat->title }}</span>
+                                            <span class="badge badge-secondary mr-1 mb-1">{{ $cat->title }}</span>
                                         @endforeach
                                     @endif
                                     @if ($product->subcategory())
-                                        <span class="badge badge-secondary">{{ $product->subcategory()->title }}</span>
+                                        <span class="badge badge-secondary mr-1 mb-1">{{ $product->subcategory()->title }}</span>
                                     @endif
                                 </td>
-                                <td class="font-size-sm">{{ $product->sku }}</td>
-                                <td class="font-size-sm text-right">
+                                <td class="font-size-sm text-nowrap">{{ $product->sku }}</td>
+                                <td class="font-size-sm text-right text-nowrap">
                                     <ag-input-field item="{{ $product }}" target="price"></ag-input-field>
                                 </td>
-                                <td class="font-size-sm text-center">
-                                    <ag-input-field item="{{ $product }}" target="year"></ag-input-field>
+                                <td class="font-size-sm text-center text-nowrap"><ag-input-field item="{{ $product }}" target="polica"></ag-input-field></td>
+                                <td class="font-size-sm text-center text-nowrap">
+                                    @if($product->delivery_24h)
+                                        <span class="badge badge-success">Da</span>
+                                    @else
+                                        <span class="badge badge-secondary">Ne</span>
+                                    @endif
                                 </td>
-                                <td class="font-size-sm text-center">  <ag-input-field item="{{ $product }}" target="polica"></ag-input-field></td>
-                                <td class="font-size-sm text-center">  <ag-input-field item="{{ $product }}" target="dimensions"></ag-input-field></td>
-                                <td class="font-size-sm text-center">{{ $product->quantity }}</td>
-                                <td class="font-size-sm">{{ \Illuminate\Support\Carbon::make($product->created_at)->format('d.m.Y') }}</td>
-                                <td class="font-size-sm">{{ \Illuminate\Support\Carbon::make($product->updated_at)->format('d.m.Y') }}</td>
-                                <td class="text-center font-size-sm">
+                                <td class="font-size-sm text-center text-nowrap">{{ $product->quantity }}</td>
+                                <td class="font-size-sm text-nowrap">{{ \Illuminate\Support\Carbon::make($product->created_at)->format('d.m.y') }}</td>
+                                <td class="font-size-sm text-nowrap">{{ \Illuminate\Support\Carbon::make($product->updated_at)->format('d.m.y') }}</td>
+                                <td class="text-center font-size-sm text-nowrap">
                                     {{--@include('back.layouts.partials.status', ['status' => $product->status])--}}
                                     <div class="custom-control custom-switch custom-control-success mb-1">
                                         <input type="checkbox" class="custom-control-input" id="status-{{ $product->id }}" onclick="setStatus({{ $product->id }})" name="status" @if ($product->status) checked="" @endif>
                                         <label class="custom-control-label" for="status-{{ $product->id }}"></label>
                                     </div>
                                 </td>
-                                <td class="text-right font-size-sm">
+                                <td class="text-right font-size-sm text-nowrap">
                                     <a class="btn btn-sm btn-alt-secondary" target="_blank" href=" {{ url($product->url) }}">
                                         <i class="fa fa-fw fa-eye"></i>
                                     </a>
@@ -180,7 +182,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td class="text-center font-size-sm" colspan="12">
+                                <td class="text-center font-size-sm" colspan="11">
                                     <label>Nema proizvoda...</label>
                                 </td>
                             </tr>

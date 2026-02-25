@@ -59,3 +59,29 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## PelionPro API lokalno testiranje
+
+Skripta za testiranje je u:
+
+`/Users/tomek/Herd/zuzi/scripts/pelion-api-test.sh`
+
+1. Postavi API kljuc:
+
+```bash
+export PELION_API_KEY="tvoj-api-kljuc"
+```
+
+2. Pokreni test:
+
+```bash
+./scripts/pelion-api-test.sh item-list
+./scripts/pelion-api-test.sh item-list-attrs
+./scripts/pelion-api-test.sh item-by-id 1
+./scripts/pelion-api-test.sh group-items 23
+./scripts/pelion-api-test.sh group-active 23
+./scripts/pelion-api-test.sh item-type T
+./scripts/pelion-api-test.sh item-groups
+./scripts/pelion-api-test.sh stock-list
+./scripts/pelion-api-test.sh stock-by-item 1
+```

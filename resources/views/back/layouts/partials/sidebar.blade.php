@@ -159,6 +159,11 @@
                             </a>
                         </li>
                         <li class="nav-main-item">
+                            <a class="nav-main-link{{ request()->routeIs(['pelion.index']) ? ' active' : '' }}" href="{{ route('pelion.index') }}">
+                                <span class="nav-main-link-name">Pelion</span>
+                            </a>
+                        </li>
+                        <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs(['pages', 'pages.*']) ? ' active' : '' }}" href="{{ route('pages') }}">
                                 <span class="nav-main-link-name">Info Stranice</span>
                             </a>

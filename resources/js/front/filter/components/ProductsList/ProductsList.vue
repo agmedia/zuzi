@@ -28,8 +28,16 @@
         <!-- Products grid-->
         <div class=" row row-cols-2 row-cols-sm-3 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 row-cols-xxxl-6 mb-3 px-2" v-if="products.total">
             <div class="col px-2 mb-4 d-flex align-items-stretch " v-for="product in products.data">
-                <div class="card product-card shadow pb-2">
-                    <span class="badge rounded-pill bg-primary mt-1 ms-1 badge-shadow" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
+                <div class="card product-card shadow pb-2 position-relative">
+                    <div style="position:absolute; top:.75rem; left:.75rem; right:.75rem; z-index:5; display:flex; justify-content:space-between; align-items:flex-start;">
+                        <span class="badge rounded-pill bg-primary badge-shadow" style="position:static;" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
+                        <span v-else></span>
+                        <span
+                            class="badge rounded-pill badge-shadow"
+                            v-if="product.delivery_24h"
+                            style="position:static; background:#e50077; color:#fff;"
+                        ><i class="ci-delivery me-1"></i>24 sata</span>
+                    </div>
                        <a class="card-img-top d-block overflow-hidden text-center" :href="origin + product.url">
                            <img loading="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
                     </a>

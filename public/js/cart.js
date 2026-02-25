@@ -3557,6 +3557,14 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -7920,112 +7928,162 @@ var render = function() {
                 "div",
                 { staticClass: "col px-2 mb-4 d-flex align-items-stretch " },
                 [
-                  _c("div", { staticClass: "card product-card shadow pb-2" }, [
-                    product.special
-                      ? _c(
-                          "span",
-                          {
-                            staticClass:
-                              "badge rounded-pill bg-primary mt-1 ms-1 badge-shadow"
-                          },
-                          [
-                            _vm._v(
-                              "-" +
-                                _vm._s(
-                                  _vm.$store.state.service.getDiscountAmount(
-                                    product.price,
-                                    product.special
-                                  )
-                                ) +
-                                "%"
-                            )
-                          ]
-                        )
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _c(
-                      "a",
-                      {
-                        staticClass:
-                          "card-img-top d-block overflow-hidden text-center",
-                        attrs: { href: _vm.origin + product.url }
-                      },
-                      [
-                        _c("img", {
-                          attrs: {
-                            loading: "lazy",
-                            src: product.image.replace(".webp", "-thumb.webp"),
-                            width: "250",
-                            height: "300",
-                            alt: product.name
-                          }
-                        })
-                      ]
-                    ),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "card-body py-2" }, [
+                  _c(
+                    "div",
+                    {
+                      staticClass:
+                        "card product-card shadow pb-2 position-relative"
+                    },
+                    [
                       _c(
-                        "h3",
-                        { staticClass: "product-title fs-sm mt-2 mb-1" },
-                        [
-                          _c(
-                            "a",
-                            { attrs: { href: _vm.origin + product.url } },
-                            [_vm._v(_vm._s(product.name))]
-                          )
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "product-price" }, [
-                        product.special
-                          ? _c("span", { staticClass: "text-muted p-0" }, [
-                              _c("small", [
-                                _vm._v(
-                                  "NC 30 dana: " +
-                                    _vm._s(product.main_price_text) +
-                                    " "
-                                )
-                              ])
-                            ])
-                          : _vm._e()
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "product-price" }, [
-                        product.special
-                          ? _c("span", { staticClass: "text-primary" }, [
-                              _vm._v(_vm._s(product.main_special_text))
-                            ])
-                          : _vm._e()
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "product-price" }, [
-                        !product.special
-                          ? _c("span", { staticClass: "text-primary" }, [
-                              _vm._v(_vm._s(product.main_price_text))
-                            ])
-                          : _vm._e()
-                      ])
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "product-floating-btn" }, [
-                      _c(
-                        "button",
+                        "div",
                         {
-                          staticClass: "btn btn-primary btn-shadow btn-sm",
-                          attrs: { disabled: product.disabled, type: "button" },
-                          on: {
-                            click: function($event) {
-                              return _vm.add(product.id, product.quantity)
-                            }
+                          staticStyle: {
+                            position: "absolute",
+                            top: ".75rem",
+                            left: ".75rem",
+                            right: ".75rem",
+                            "z-index": "5",
+                            display: "flex",
+                            "justify-content": "space-between",
+                            "align-items": "flex-start"
                           }
                         },
                         [
-                          _vm._v("+"),
-                          _c("i", { staticClass: "ci-cart fs-base ms-1" })
+                          product.special
+                            ? _c(
+                                "span",
+                                {
+                                  staticClass:
+                                    "badge rounded-pill bg-primary badge-shadow",
+                                  staticStyle: { position: "static" }
+                                },
+                                [
+                                  _vm._v(
+                                    "-" +
+                                      _vm._s(
+                                        _vm.$store.state.service.getDiscountAmount(
+                                          product.price,
+                                          product.special
+                                        )
+                                      ) +
+                                      "%"
+                                  )
+                                ]
+                              )
+                            : _c("span"),
+                          _vm._v(" "),
+                          product.delivery_24h
+                            ? _c(
+                                "span",
+                                {
+                                  staticClass:
+                                    "badge rounded-pill badge-shadow",
+                                  staticStyle: {
+                                    position: "static",
+                                    background: "#e50077",
+                                    color: "#fff"
+                                  }
+                                },
+                                [
+                                  _c("i", { staticClass: "ci-delivery me-1" }),
+                                  _vm._v("24 sata")
+                                ]
+                              )
+                            : _vm._e()
                         ]
-                      )
-                    ])
-                  ])
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "a",
+                        {
+                          staticClass:
+                            "card-img-top d-block overflow-hidden text-center",
+                          attrs: { href: _vm.origin + product.url }
+                        },
+                        [
+                          _c("img", {
+                            attrs: {
+                              loading: "lazy",
+                              src: product.image.replace(
+                                ".webp",
+                                "-thumb.webp"
+                              ),
+                              width: "250",
+                              height: "300",
+                              alt: product.name
+                            }
+                          })
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "card-body py-2" }, [
+                        _c(
+                          "h3",
+                          { staticClass: "product-title fs-sm mt-2 mb-1" },
+                          [
+                            _c(
+                              "a",
+                              { attrs: { href: _vm.origin + product.url } },
+                              [_vm._v(_vm._s(product.name))]
+                            )
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "product-price" }, [
+                          product.special
+                            ? _c("span", { staticClass: "text-muted p-0" }, [
+                                _c("small", [
+                                  _vm._v(
+                                    "NC 30 dana: " +
+                                      _vm._s(product.main_price_text) +
+                                      " "
+                                  )
+                                ])
+                              ])
+                            : _vm._e()
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "product-price" }, [
+                          product.special
+                            ? _c("span", { staticClass: "text-primary" }, [
+                                _vm._v(_vm._s(product.main_special_text))
+                              ])
+                            : _vm._e()
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "product-price" }, [
+                          !product.special
+                            ? _c("span", { staticClass: "text-primary" }, [
+                                _vm._v(_vm._s(product.main_price_text))
+                              ])
+                            : _vm._e()
+                        ])
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "product-floating-btn" }, [
+                        _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-primary btn-shadow btn-sm",
+                            attrs: {
+                              disabled: product.disabled,
+                              type: "button"
+                            },
+                            on: {
+                              click: function($event) {
+                                return _vm.add(product.id, product.quantity)
+                              }
+                            }
+                          },
+                          [
+                            _vm._v("+"),
+                            _c("i", { staticClass: "ci-cart fs-base ms-1" })
+                          ]
+                        )
+                      ])
+                    ]
+                  )
                 ]
               )
             }),

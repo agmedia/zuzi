@@ -218,12 +218,18 @@ class Product extends Model
     {
         $id = $this->insertGetId($this->getModelArray());
 
-        if ($id) {
+        if ($id !== false && $id !== null) {
             $this->resolveCategories($id);
 
             $product = $this->find($id);
 
+            if ( ! $product) {
+                return false;
+            }
+
             $product->update([
+                'author_id'        => $this->resolveRelationId($this->request->author_id, config('settings.unknown_author')),
+                'publisher_id'     => $this->resolveRelationId($this->request->publisher_id, config('settings.unknown_publisher')),
                 'url'             => ProductHelper::url($product),
                 'category_string' => ProductHelper::categoryString($product),
                 'special_lock'    => $this->resolveActionLock($id)
@@ -276,8 +282,8 @@ class Product extends Model
         }
 
         $response = [
-            'author_id'        => $this->request->author_id ?: 6,
-            'publisher_id'     => $this->request->publisher_id ?: 2,
+            'author_id'        => $this->resolveRelationId($this->request->author_id, config('settings.unknown_author')),
+            'publisher_id'     => $this->resolveRelationId($this->request->publisher_id, config('settings.unknown_publisher')),
             'action_id'        => $this->request->action ?: 0,
             'name'             => $this->request->name,
             'sku'              => $this->request->sku,
@@ -286,6 +292,7 @@ class Product extends Model
             'slug'             => $slug,
             'price'            => isset($this->request->price) ? $this->request->price : 0,
             'quantity'         => $this->request->quantity ?: 0,
+            'delivery_24h'     => $this->request->has('delivery_24h') ? 1 : 0,
             'decrease'         => (isset($this->request->decrease) and $this->request->decrease == 'on') ? 0 : 1,
             'tax_id'           => $this->request->tax_id ?: 1,
             'special'          => $this->request->special,
@@ -313,6 +320,27 @@ class Product extends Model
         }
 
         return $response;
+    }
+
+
+    /**
+     * Osigurava da se "unknown/default" relation ID ne sprema kao autor/izdavač.
+     *
+     * @param mixed $value
+     * @param mixed $unknown
+     *
+     * @return int
+     */
+    private function resolveRelationId($value, $unknown): int
+    {
+        $id = (int) $value;
+        $unknown_id = (int) $unknown;
+
+        if ($id <= 0 || ($unknown_id > 0 && $id === $unknown_id)) {
+            return 0;
+        }
+
+        return $id;
     }
 
 

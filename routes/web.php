@@ -168,6 +168,7 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
 
         // API
         Route::get('api', [ApiController::class, 'index'])->name('api.index');
+        Route::get('pelion', [ApiController::class, 'pelion'])->name('pelion.index');
 
 
         // INFO PAGES
@@ -280,6 +281,9 @@ Route::prefix('api/v2')->group(function () {
         Route::prefix('api')->group(function () {
             Route::post('import', [ApiController::class, 'import'])->name('api.api.import');
             Route::post('upload/excel', [ApiController::class, 'upload'])->name('api.api.upload');
+            Route::post('pelion/test', [ApiController::class, 'pelionTest'])
+                 ->middleware(['auth:sanctum', 'verified', 'no.customers'])
+                 ->name('api.api.pelion.test');
         });
         // APPLICATION SETTINGS
         Route::prefix('app')->group(function () {
