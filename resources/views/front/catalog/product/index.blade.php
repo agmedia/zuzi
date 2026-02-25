@@ -104,7 +104,7 @@
                                 <div class="product-gallery-preview-item active" id="first">
                                     <a class="gallery-item position-relative" data-sub-html='{{ $prod->name }}' href="{{ asset($prod->image) }}">
                                         @if (!empty($prod->delivery_24h))
-                                            <span class="badge rounded-pill badge-shadow d-inline-flex align-items-center" style="position:absolute; top:10px; right:10px; z-index:5; background:#e50077; color:#fff; padding:.35rem .6rem;">
+                                            <span class="badge badgerounded-pill badge-shadow d-inline-flex align-items-center" style="position: absolute; top: 10px; right: 10px; z-index: 5; background: rgb(229, 0, 119); color: rgb(255, 255, 255); padding: 0.55rem 0.8rem;font-size: 16px;font-weight: 600;">
                                                 <i class="ci-delivery me-1"></i>24 sata
                                             </span>
                                         @endif
