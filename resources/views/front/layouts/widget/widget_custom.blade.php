@@ -1,6 +1,6 @@
 <!-- {"title": "Slider Index", "description": "Index main slider."} -->
 
-<section class="tns-carousel mb-3 rounded-3 bg-light shadow d-none ">
+<section class="tns-carousel mb-3 rounded-3 bg-light shadow ">
     <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 1, &quot;mode&quot;: &quot;gallery&quot;, &quot;nav&quot;: true, &quot;responsive&quot;: {&quot;0&quot;: {&quot;nav&quot;: true, &quot;controls&quot;: false}, &quot;576&quot;: {&quot;nav&quot;: false, &quot;controls&quot;: true}}}">
         @foreach($data as  $widget)
 
@@ -27,26 +27,7 @@
 </section>
 
 
-<!-- How it works-->
-@if (!empty($short_description))
 
-    <section class=" py-3 " >
-
-
-        <div class="row  mt-2 mt-lg-3 ">
-
-                <div class="col-lg-12 col-xl-12 mb-grid-gutter">
-                    <div class="d-block d-sm-flex justify-content-between align-items-center bg-light shadow   rounded-3">
-                        <div class="pt-5 py-sm-4 px-4 ps-md-4 pe-md-0 text-center text-sm-start">
-                      {!! $short_description !!}
-                        </div>
-                    </div>
-                </div>
-
-        </div>
-    </section>
-
-@endif
 
 <!-- How it works-->
 
