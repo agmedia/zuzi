@@ -44,6 +44,11 @@
                             </div>
 
                             <div class="form-group mb-4">
+                                <label for="gls_world-free-shipping-from">Besplatna dostava od <span class="small text-gray">(U EUR. Zadano 100.)</span></label>
+                                <input type="text" class="form-control" id="gls_world-free-shipping-from" name="data['free_shipping_from']" value="100">
+                            </div>
+
+                            <div class="form-group mb-4">
                                 <label for="gls_world-short-description">Kratki opis <span class="small text-gray">(Prikazuje se prilikom odabira dostave.)</span></label>
                                 <textarea class="js-maxlength form-control" id="gls_world-short-description" name="data['short_description']" rows="2" maxlength="160" data-always-show="true" data-placement="top"></textarea>
                                 <small class="form-text text-muted">
@@ -108,6 +113,7 @@
                 data: {
                     price: $('#gls_world-price').val(),
                     time: $('#gls_world-time').val(),
+                    free_shipping_from: $('#gls_world-free-shipping-from').val(),
                     short_description: $('#gls_world-short-description').val(),
                     description: $('#gls_world-description').val(),
                 },
@@ -135,6 +141,7 @@
             $('#gls_world-title').val(item.title);
             $('#gls_world-price').val(item.data.price);
             $('#gls_world-time').val(item.data.time);
+            $('#gls_world-free-shipping-from').val(item.data.free_shipping_from ?? 100);
             $('#gls_world-short-description').val(item.data.short_description);
             $('#gls_world-description').val(item.data.description);
             $('#gls_world-sort-order').val(item.sort_order);

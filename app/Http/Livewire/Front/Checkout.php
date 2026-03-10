@@ -346,7 +346,8 @@ class Checkout extends Component
         return view('livewire.front.checkout', [
             'shippingMethods' => (new ShippingMethod())->findGeo($geo->id),
             'paymentMethods' => (new PaymentMethod())->findGeo($geo->id)->checkShipping($this->shipping)->resolve(),
-            'countries' => Country::list()
+            'countries' => Country::list(),
+            'cartSubtotal' => $this->cart ? (float) $this->cart->get()['subtotal'] : 0.0
         ]);
     }
 

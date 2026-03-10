@@ -12,6 +12,10 @@ use Illuminate\Support\Collection;
  */
 class ShippingMethod
 {
+    /**
+     * Default free shipping threshold for GLS World.
+     */
+    private const GLS_WORLD_FREE_SHIPPING_FROM = 100.0;
 
     /**
      * @var array|false|Collection
@@ -95,11 +99,7 @@ class ShippingMethod
         }
 
         if ($shipping) {
-            $value = $shipping->data->price;
-
-            if ($cart->getTotal() > config('settings.free_shipping') and $shipping->geo_zone == 1) {
-                $value = 0;
-            }
+            $value = self::priceForTotal($shipping, $cart ? (float) $cart->getTotal() : 0.0);
 
             $condition = new \Darryldecode\Cart\CartCondition(array(
                 'name' => $shipping->title,
@@ -114,5 +114,70 @@ class ShippingMethod
         }
 
         return $condition;
+    }
+
+    /**
+     * Resolve the shipping price for the current cart total.
+     */
+    public static function priceForTotal($shipping, float $cart_total): float
+    {
+        if (self::hasFreeShipping($shipping, $cart_total)) {
+            return 0.0;
+        }
+
+        return (float) data_get($shipping, 'data.price', 0);
+    }
+
+
+    /**
+     * Check if the selected shipping method qualifies for free shipping.
+     */
+    public static function hasFreeShipping($shipping, float $cart_total): bool
+    {
+        $threshold = self::freeShippingThreshold($shipping);
+
+        if ($threshold === null) {
+            return false;
+        }
+
+        if (self::hasCustomFreeShippingThreshold($shipping) || data_get($shipping, 'code') === 'gls_world') {
+            return $cart_total >= $threshold;
+        }
+
+        return $cart_total > $threshold;
+    }
+
+
+    /**
+     * Resolve the shipping method free shipping threshold.
+     */
+    public static function freeShippingThreshold($shipping): ?float
+    {
+        $custom_threshold = data_get($shipping, 'data.free_shipping_from');
+
+        if ($custom_threshold !== null && $custom_threshold !== '') {
+            return (float) $custom_threshold;
+        }
+
+        if (data_get($shipping, 'code') === 'gls_world') {
+            return self::GLS_WORLD_FREE_SHIPPING_FROM;
+        }
+
+        if ((int) data_get($shipping, 'geo_zone') === 1) {
+            return (float) config('settings.free_shipping');
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Determine if the shipping method has an explicit custom threshold.
+     */
+    private static function hasCustomFreeShippingThreshold($shipping): bool
+    {
+        $custom_threshold = data_get($shipping, 'data.free_shipping_from');
+
+        return $custom_threshold !== null && $custom_threshold !== '';
     }
 }

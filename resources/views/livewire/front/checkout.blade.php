@@ -253,6 +253,7 @@
 
 
                 @foreach ($shippingMethods as $s_method)
+                    @php($shipping_price = \App\Models\Front\Checkout\ShippingMethod::priceForTotal($s_method, (float) $cartSubtotal))
                     <tr wire:click="selectShipping('{{ $s_method->code }}')" style="cursor: pointer;">
                         <td>
                             <div class="form-check mb-4">
@@ -266,15 +267,15 @@
                         </td>
                         <td class="align-middle">{{ $s_method->data->time }}</td>
                         <td class="align-middle">
-                            @if ($is_free_shipping and $s_method->geo_zone == 1)
+                            @if ($shipping_price <= 0)
                                 € 0
                                 @if ($secondary_price)
                                     <br>0 kn
                                 @endif
                             @else
-                                € {{ $s_method->data->price }}
+                                € {{ $shipping_price }}
                                     @if ($secondary_price)
-                                        <br>{{ $s_method->data->price ? number_format($s_method->data->price * $secondary_price, 2) : '0' }} kn
+                                        <br>{{ $shipping_price ? number_format($shipping_price * $secondary_price, 2) : '0' }} kn
                                     @endif
                             @endif
                         </td>
