@@ -111,6 +111,8 @@
                 const isDesktopViewport = () => window.innerWidth > 991;
                 let lastViewport = isDesktopViewport() ? 'desktop' : 'mobile';
 
+                pageContainer.classList.remove('side-trans-enabled');
+
                 const applySidebarState = (force = false) => {
                     const savedState = getCookie(SIDEBAR_COOKIE_KEY) ?? localStorage.getItem(SIDEBAR_STATE_KEY) ?? '1';
                     const desktop = isDesktopViewport();
@@ -135,6 +137,7 @@
 
                 requestAnimationFrame(function () {
                     requestAnimationFrame(function () {
+                        pageContainer.classList.add('side-trans-enabled');
                         pageContainer.classList.remove('sidebar-state-init');
                     });
                 });
