@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
@@ -97,41 +98,56 @@ class Category extends Model
      */
     public function getList(bool $full = true): Collection
     {
-        $categories = collect();
+        return Cache::remember($this->getListCacheKey($full), now()->addMinutes(30), function () use ($full) {
+            $topCategories = $this->newQuery()
+                                  ->where('parent_id', 0)
+                                  ->orderBy('group')
+                                  ->orderBy('title')
+                                  ->with(['subcategories' => function ($query) {
+                                      $query->select(['id', 'parent_id', 'title'])
+                                            ->orderBy('title');
+                                  }]);
 
-        $groups = $this->groups()->pluck('group');
-
-        foreach ($groups as $group) {
             if ($full) {
-                $cats = $this->where('group', $group)->where('parent_id', 0)->orderBy('title')->with('subcategories')->withCount('products')->get();
-            } else {
-                $cats = [];
-                $fill = $this->where('group', $group)
-                             ->where('parent_id', 0)
-                             ->orderBy('title')
-                             ->with(['subcategories' => function ($query) {
-                                 $query->select(['id', 'parent_id', 'title'])->orderBy('title');
-                             }])
-                             ->get(['id', 'title']);
-
-                foreach ($fill as $cat) {
-                    $cats[$cat->id] = ['title' => $cat->title];
-                    $subcats = [];
-
-                    if ($cat->subcategories) {
-                        foreach ($cat->subcategories as $subcategory) {
-                            $subcats[$subcategory->id] = ['title' => $subcategory->title];
-                        }
-                    }
-
-                    $cats[$cat->id]['subs'] = $subcats;
-                }
+                return $topCategories->withCount('products')
+                                     ->get(['id', 'group', 'title'])
+                                     ->groupBy('group');
             }
 
-            $categories->put($group, $cats);
-        }
+            return $topCategories->get(['id', 'group', 'title'])
+                                 ->groupBy('group')
+                                 ->map(function (Collection $categories) {
+                                     return $categories->mapWithKeys(function (Category $category) {
+                                         return [
+                                             $category->id => [
+                                                 'title' => $category->title,
+                                                 'subs'  => $category->subcategories
+                                                     ->mapWithKeys(fn (Category $subcategory) => [$subcategory->id => ['title' => $subcategory->title]])
+                                                     ->all(),
+                                             ]
+                                         ];
+                                     });
+                                 });
+        });
+    }
 
-        return $categories;
+
+    /**
+     * Briše admin cache liste kategorija nakon promjena.
+     */
+    public static function forgetAdminListCache(): void
+    {
+        Cache::forget(static::getListCacheKey(true));
+        Cache::forget(static::getListCacheKey(false));
+    }
+
+
+    /**
+     * Cache key za admin dohvat kategorija.
+     */
+    protected static function getListCacheKey(bool $full): string
+    {
+        return 'admin_categories_list.' . ($full ? 'full' : 'compact');
     }
 
 

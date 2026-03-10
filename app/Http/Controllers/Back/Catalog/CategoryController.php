@@ -51,6 +51,7 @@ class CategoryController extends Controller
         $stored = $category->validateRequest($request)->create();
 
         if ($stored) {
+            Category::forgetAdminListCache();
             $category->resolveImage($stored);
 
             return redirect()->route('category.edit', ['category' => $stored])->with(['success' => 'Kategorija je snimljena!']);
@@ -89,6 +90,7 @@ class CategoryController extends Controller
         $updated = $category->validateRequest($request)->edit();
 
         if ($updated) {
+            Category::forgetAdminListCache();
             $category->resolveImage($updated);
 
             return redirect()->route('category.edit', ['category' => $updated])->with(['success' => 'Kategorija je snimljena!']);
@@ -110,6 +112,7 @@ class CategoryController extends Controller
         $destroyed = Category::destroy($category->id);
 
         if ($destroyed) {
+            Category::forgetAdminListCache();
             return redirect()->route('categories')->with(['success' => 'Kategorija je uspješno izbrisana!']);
         }
 

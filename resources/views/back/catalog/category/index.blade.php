@@ -39,10 +39,10 @@
                                         </div>
                                     </div>
                                 </div>
-                                @if ($category->subcategories)
+                                @if ($category->subcategories->isNotEmpty())
                                     <div id="accordion_q{{ $category->id }}" class="collapse @if($loop->first) show @endif" role="tabpanel" aria-labelledby="accordion_h{{ $category->id }}" data-parent="#accordion">
                                         <div class="block-content pb-4">
-                                            @foreach($category->subcategories()->get() as $subcategory)
+                                            @foreach($category->subcategories as $subcategory)
                                                 <a href="{{ route('category.edit', ['category' => $subcategory]) }}" class="btn btn-sm btn-secondary js-tooltip-enabled" data-toggle="tooltip" title="" data-original-title="Uredi">
                                                     {{ $subcategory->title }}
                                                 </a>

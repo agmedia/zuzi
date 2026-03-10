@@ -12,6 +12,7 @@ class EncryptCookies extends Middleware
      * @var array
      */
     protected $except = [
-        //
+        'zuzi_backend_sidebar_open',
+        'zuzi_admin_products_filters_open',
     ];
 }
