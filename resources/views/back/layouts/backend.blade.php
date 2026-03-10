@@ -32,6 +32,12 @@
         <!-- You can include a specific file from public/css/themes/ folder to alter the default color theme of the template. eg: -->
         <!-- <link rel="stylesheet" id="css-theme" href="{{ asset('css/themes/xwork.css') }}"> -->
         @stack('css_after')
+        <style>
+            #page-container.sidebar-state-init #sidebar,
+            #page-container.sidebar-state-init #side-overlay {
+                transition: none !important;
+            }
+        </style>
 
         <!-- Scripts -->
         <script>window.Laravel = {!! json_encode(['csrfToken' => csrf_token(),]) !!};</script>
@@ -43,7 +49,7 @@
             $sidebar_open = request()->cookie('zuzi_backend_sidebar_open', '1') === '1';
         @endphp
 
-        <div id="page-container" class="{{ $sidebar_open ? 'sidebar-o' : '' }} enable-page-overlay sidebar-dark side-scroll page-header-fixed main-content-narrow">
+        <div id="page-container" class="{{ $sidebar_open ? 'sidebar-o' : '' }} sidebar-state-init enable-page-overlay sidebar-dark side-scroll page-header-fixed main-content-narrow">
 
             @include('back.layouts.partials.aside')
 
@@ -82,6 +88,7 @@
         <script src="{{ asset('/js/laravel.app.js') }}"></script>
         <script>
             (function () {
+                const SIDEBAR_STATE_KEY = 'zuzi_backend_sidebar_open';
                 const SIDEBAR_COOKIE_KEY = 'zuzi_backend_sidebar_open';
                 const pageContainer = document.getElementById('page-container');
 
@@ -104,8 +111,8 @@
                 const isDesktopViewport = () => window.innerWidth > 991;
                 let lastViewport = isDesktopViewport() ? 'desktop' : 'mobile';
 
-                const applySidebarState = () => {
-                    const savedState = getCookie(SIDEBAR_COOKIE_KEY) ?? '1';
+                const applySidebarState = (force = false) => {
+                    const savedState = getCookie(SIDEBAR_COOKIE_KEY) ?? localStorage.getItem(SIDEBAR_STATE_KEY) ?? '1';
                     const desktop = isDesktopViewport();
 
                     if (desktop) {
@@ -116,13 +123,21 @@
                         } else {
                             pageContainer.classList.remove('sidebar-o');
                         }
-                    } else if (lastViewport !== 'mobile') {
+                    } else if (force || lastViewport !== 'mobile') {
                         // Na mobitelu sidebar ostaje zatvoren dok ga korisnik ručno ne otvori.
                         pageContainer.classList.remove('sidebar-o', 'sidebar-o-xs');
                     }
 
                     lastViewport = desktop ? 'desktop' : 'mobile';
                 };
+
+                applySidebarState(true);
+
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        pageContainer.classList.remove('sidebar-state-init');
+                    });
+                });
 
                 document.addEventListener('click', function (event) {
                     const toggleButton = event.target.closest('[data-toggle="layout"][data-action]');
@@ -145,6 +160,7 @@
 
                         const isOpen = pageContainer.classList.contains('sidebar-o');
                         const value = isOpen ? '1' : '0';
+                        localStorage.setItem(SIDEBAR_STATE_KEY, value);
                         setCookie(SIDEBAR_COOKIE_KEY, value);
                     }, 0);
                 });
