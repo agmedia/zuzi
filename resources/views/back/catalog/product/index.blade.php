@@ -8,6 +8,9 @@
 @endpush
 
 @section('content')
+    @php
+        $filtersOpen = request()->cookie('zuzi_admin_products_filters_open', '1') === '1';
+    @endphp
 
     <div class="bg-body-light">
         <div class="content content-full">
@@ -29,14 +32,14 @@
                 <h3 class="block-title">Svi artikli {{ $products->total() }}</h3>
                 <div class="block-options">
                     <div class="dropdown">
-                        <button class="btn btn-outline-primary mr-3" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                        <button class="btn btn-outline-primary mr-3 {{ $filtersOpen ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="{{ $filtersOpen ? 'true' : 'false' }}" aria-controls="collapseExample">
                             <i class="fa fa-filter"></i> Filter
                         </button>
                         <a class="btn btn-primary btn-inline-block" href="{{route('products')}}"><i class=" ci-trash"></i> Očisti filtere</a>
                     </div>
                 </div>
             </div>
-            <div class="collapse show" id="collapseExample">
+            <div class="collapse {{ $filtersOpen ? 'show' : '' }}" id="collapseExample">
                 <div class="block-content bg-body-dark">
                     <form action="{{ route('products') }}" method="get">
 
@@ -131,28 +134,39 @@
                         </thead>
                         <tbody id="ag-table-with-input-fields" class="js-gallery" >
                         @forelse ($products as $product)
+                            @php
+                                $subcategory = $product->subcategories->first();
+                                $editableProduct = [
+                                    'id'           => $product->id,
+                                    'price'        => $product->price,
+                                    'special'      => $product->special,
+                                    'special_from' => $product->special_from,
+                                    'special_to'   => $product->special_to,
+                                    'polica'       => $product->polica,
+                                ];
+                            @endphp
                             <tr>
                                 <td class="text-center font-size-sm text-nowrap">
                                     <a class="img-link img-link-zoom-in img-lightbox" href="{{ $product->image ? asset($product->image) : asset('media/avatars/avatar0.jpg') }}">
-                                        <img src="{{ $product->image ? asset($product->image) : asset('media/avatars/avatar0.jpg') }}" height="80px"/>
+                                        <img src="{{ $product->image ? asset($product->image) : asset('media/avatars/avatar0.jpg') }}" height="80px" loading="lazy"/>
                                     </a>
                                 </td>
                                 <td class="font-size-sm" style="min-width: 280px;">
                                     <a class="font-w600" href="{{ route('products.edit', ['product' => $product]) }}">{{ $product->name }}</a><br>
-                                    @if ($product->categories)
+                                    @if ($product->categories->isNotEmpty())
                                         @foreach ($product->categories as $cat)
                                             <span class="badge badge-secondary mr-1 mb-1">{{ $cat->title }}</span>
                                         @endforeach
                                     @endif
-                                    @if ($product->subcategory())
-                                        <span class="badge badge-secondary mr-1 mb-1">{{ $product->subcategory()->title }}</span>
+                                    @if ($subcategory)
+                                        <span class="badge badge-secondary mr-1 mb-1">{{ $subcategory->title }}</span>
                                     @endif
                                 </td>
                                 <td class="font-size-sm text-nowrap">{{ $product->sku }}</td>
                                 <td class="font-size-sm text-right text-nowrap">
-                                    <ag-input-field item="{{ $product }}" target="price"></ag-input-field>
+                                    <ag-input-field item='@json($editableProduct)' target="price"></ag-input-field>
                                 </td>
-                                <td class="font-size-sm text-center text-nowrap"><ag-input-field item="{{ $product }}" target="polica"></ag-input-field></td>
+                                <td class="font-size-sm text-center text-nowrap"><ag-input-field item='@json($editableProduct)' target="polica"></ag-input-field></td>
                                 <td class="font-size-sm text-center text-nowrap">
                                     @if($product->delivery_24h)
                                         <span class="badge badge-success">Da</span>
@@ -209,6 +223,19 @@
     <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>
     <script>
         $(() => {
+            const FILTER_STATE_COOKIE = 'zuzi_admin_products_filters_open';
+            const setFilterCookie = (value) => {
+                document.cookie = `${FILTER_STATE_COOKIE}=${value}; path=/; max-age=31536000; samesite=lax`;
+            };
+
+            $('#collapseExample').on('shown.bs.collapse', () => {
+                setFilterCookie('1');
+            });
+
+            $('#collapseExample').on('hidden.bs.collapse', () => {
+                setFilterCookie('0');
+            });
+
             $('#category-select').select2({
                 placeholder: 'Odaberite kategoriju',
                 allowClear: true
@@ -224,13 +251,13 @@
 
             //
             $('#category-select').on('change', (e) => {
-                setPageURL('category', e.currentTarget.selectedOptions[0]);
+                setPageURL('category', e.currentTarget.value);
             });
             $('#status-select').on('change', (e) => {
-                setPageURL('status', e.currentTarget.selectedOptions[0]);
+                setPageURL('status', e.currentTarget.value);
             });
             $('#sort-select').on('change', (e) => {
-                setPageURL('sort', e.currentTarget.selectedOptions[0]);
+                setPageURL('sort', e.currentTarget.value);
             });
 
             //

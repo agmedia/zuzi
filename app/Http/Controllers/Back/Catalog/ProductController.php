@@ -3,18 +3,12 @@
 namespace App\Http\Controllers\Back\Catalog;
 
 use App\Http\Controllers\Controller;
-use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductAction;
 use App\Models\Back\Catalog\Product\ProductCategory;
 use App\Models\Back\Catalog\Product\ProductImage;
-use App\Models\Back\Catalog\Publisher;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -27,34 +21,9 @@ class ProductController extends Controller
      */
     public function index(Request $request, Product $product)
     {
-        $query = $product->filter($request);
+        $query = $product->filter($request)->forAdminList();
 
-        $products = $query->paginate(20)->appends(request()->query());
-
-        if ($request->has('status')) {
-            if ($request->input('status') == 'with_action' || $request->input('status') == 'without_action') {
-                $products = collect();
-                $temps    = Product::all();
-
-                if ($request->input('status') == 'with_action') {
-                    foreach ($temps as $product) {
-                        if ($product->special()) {
-                            $products->push($product);
-                        }
-                    }
-                }
-
-                if ($request->input('status') == 'without_action') {
-                    foreach ($temps as $product) {
-                        if ( ! $product->special()) {
-                            $products->push($product);
-                        }
-                    }
-                }
-
-                $products = $this->paginateColl($products);
-            }
-        }
+        $products = $query->paginate(20)->appends($request->query());
 
         $categories = (new Category())->getList(false);
         /*$authors    = Author::all()->pluck('title', 'id');
@@ -211,25 +180,6 @@ class ProductController extends Controller
 
         return response()->json(['error' => 300]);
     }
-
-
-    /**
-     * @param       $items
-     * @param int   $perPage
-     * @param null  $page
-     * @param array $options
-     *
-     * @return LengthAwarePaginator
-     */
-    public function paginateColl($items, $perPage = 20, $page = null, $options = []): LengthAwarePaginator
-    {
-        $page  = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
-    }
-
-
     /**
      * Pretvara prazan/unknown relation id u 0.
      *

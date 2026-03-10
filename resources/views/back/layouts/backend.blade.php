@@ -102,37 +102,60 @@
                     document.cookie = `${name}=${value}; path=/; max-age=31536000; samesite=lax`;
                 };
 
-                const applySidebarState = () => {
-                    const savedState = getCookie(SIDEBAR_COOKIE_KEY) ?? localStorage.getItem(SIDEBAR_STATE_KEY);
-                    const desktop = window.innerWidth > 991;
-                    pageContainer.classList.remove('sidebar-o', 'sidebar-o-xs');
+                const isDesktopViewport = () => window.innerWidth > 991;
+                let lastViewport = isDesktopViewport() ? 'desktop' : 'mobile';
 
-                    if (savedState === '1') {
-                        pageContainer.classList.add(desktop ? 'sidebar-o' : 'sidebar-o-xs');
-                    } else if (savedState === '0') {
+                const applySidebarState = (force = false) => {
+                    const savedState = getCookie(SIDEBAR_COOKIE_KEY) ?? localStorage.getItem(SIDEBAR_STATE_KEY) ?? '1';
+                    const desktop = isDesktopViewport();
+
+                    if (desktop) {
+                        pageContainer.classList.remove('sidebar-o-xs');
+
+                        if (savedState === '1') {
+                            pageContainer.classList.add('sidebar-o');
+                        } else {
+                            pageContainer.classList.remove('sidebar-o');
+                        }
+                    } else if (force || lastViewport !== 'mobile') {
+                        // Na mobitelu sidebar ostaje zatvoren dok ga korisnik ručno ne otvori.
                         pageContainer.classList.remove('sidebar-o', 'sidebar-o-xs');
                     }
+
+                    lastViewport = desktop ? 'desktop' : 'mobile';
                 };
 
-                applySidebarState();
+                applySidebarState(true);
 
                 document.addEventListener('click', function (event) {
-                    const toggleButton = event.target.closest('[data-toggle="layout"][data-action="sidebar_toggle"]');
+                    const toggleButton = event.target.closest('[data-toggle="layout"][data-action]');
 
                     if (!toggleButton) {
                         return;
                     }
 
+                    const action = toggleButton.dataset.action;
+
+                    if (! ['sidebar_toggle', 'sidebar_open', 'sidebar_close'].includes(action)) {
+                        return;
+                    }
+
                     // Dashmix toggla klase na klik; stanje čitamo odmah nakon tog ciklusa.
                     setTimeout(function () {
-                        const isOpen = pageContainer.classList.contains('sidebar-o') || pageContainer.classList.contains('sidebar-o-xs');
+                        if (! isDesktopViewport()) {
+                            return;
+                        }
+
+                        const isOpen = pageContainer.classList.contains('sidebar-o');
                         const value = isOpen ? '1' : '0';
                         localStorage.setItem(SIDEBAR_STATE_KEY, value);
                         setCookie(SIDEBAR_COOKIE_KEY, value);
                     }, 0);
                 });
 
-                window.addEventListener('resize', applySidebarState);
+                window.addEventListener('resize', function () {
+                    applySidebarState();
+                });
             })();
         </script>
 
@@ -223,6 +246,14 @@
              * @param isValue
              */
             function setPageURL(type, search, isValue = false) {
+                if (search && typeof search === 'object' && 'value' in search) {
+                    search = search.value;
+                }
+
+                if (typeof search === 'string') {
+                    search = search.trim();
+                }
+
                 let url = new URL(location.href);
                 let params = new URLSearchParams(url.search);
                 let keys = [];
@@ -234,16 +265,12 @@
                 }
 
                 keys.forEach((value) => {
-                    if (params.has(value) || search == 0) {
+                    if (params.has(value)) {
                         params.delete(value);
                     }
                 })
 
-                if (search) {
-                    params.append(type, search);
-                }
-
-                if (isValue && search) {
+                if (search !== '' && search !== null && search !== undefined) {
                     params.append(type, search);
                 }
 

@@ -409,18 +409,20 @@ class Product extends Model
         $query = (new Product())->newQuery();
 
         if ($request->has('search') && ! empty($request->input('search'))) {
-            $query->where('name', 'like', '%' . $request->input('search') . '%')
-                  ->orWhere('sku', 'like', '%' . $request->input('search') . '%')
-                  ->orWhere('polica', 'like', '%' . $request->input('search') . '%')
-                  ->orWhere('year', 'like', '' . $request->input('search') . '');
+            $search = trim($request->input('search'));
+
+            $query->where(function (Builder $query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('sku', 'like', '%' . $search . '%')
+                      ->orWhere('polica', 'like', '%' . $search . '%')
+                      ->orWhere('year', 'like', $search);
+            });
         }
 
         if ($request->has('category') && ! empty($request->input('category'))) {
-            $query->whereHas('categories', function ($query) use ($request) {
-                $query->where('id', $request->input('category'));
-            })->orWhereHas('subcategories', function ($query) use ($request) {
-                $query->where('id', $request->input('category'));
-            });
+            $query->whereIn('id', ProductCategory::query()
+                                                 ->select('product_id')
+                                                 ->where('category_id', (int) $request->input('category')));
         }
 
         if ($request->has('author') && ! empty($request->input('author'))) {
@@ -437,6 +439,12 @@ class Product extends Model
             }
             if ($request->input('status') == 'inactive') {
                 $query->where('status', 0);
+            }
+            if ($request->input('status') == 'with_action') {
+                $query->withActiveSpecial();
+            }
+            if ($request->input('status') == 'without_action') {
+                $query->withoutActiveSpecial();
             }
         }
 
@@ -471,6 +479,76 @@ class Product extends Model
         }
 
         return $query;
+    }
+
+
+    /**
+     * Minimalni payload za admin listu artikala.
+     */
+    public function scopeForAdminList(Builder $query): Builder
+    {
+        return $query->select([
+            'id',
+            'name',
+            'sku',
+            'url',
+            'image',
+            'price',
+            'special',
+            'special_from',
+            'special_to',
+            'polica',
+            'quantity',
+            'delivery_24h',
+            'status',
+            'created_at',
+            'updated_at'
+        ])->with([
+            'categories' => function ($query) {
+                $query->orderBy('title');
+            },
+            'subcategories' => function ($query) {
+                $query->orderBy('title');
+            }
+        ]);
+    }
+
+
+    /**
+     * Artikli koji trenutno imaju aktivnu akcijsku cijenu.
+     */
+    public function scopeWithActiveSpecial(Builder $query): Builder
+    {
+        return $query->whereNotNull('special')
+                     ->where('special', '>', 0)
+                     ->where(function (Builder $query) {
+                         $query->where('special_from', '<=', now())
+                               ->orWhereNull('special_from');
+                     })
+                     ->where(function (Builder $query) {
+                         $query->where('special_to', '>=', now())
+                               ->orWhereNull('special_to');
+                     });
+    }
+
+
+    /**
+     * Artikli bez trenutno aktivne akcijske cijene.
+     */
+    public function scopeWithoutActiveSpecial(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->whereNull('special')
+                  ->orWhere('special', '<=', 0)
+                  ->orWhere(function (Builder $query) {
+                      $query->whereNotNull('special_from')
+                            ->where('special_from', '>', now());
+                  })
+                  ->orWhere(function (Builder $query) {
+                      $query->whereNotNull('special_to')
+                            ->where('special_to', '<', now());
+                  });
+        });
     }
 
     /*******************************************************************************
