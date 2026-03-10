@@ -82,7 +82,6 @@
         <script src="{{ asset('/js/laravel.app.js') }}"></script>
         <script>
             (function () {
-                const SIDEBAR_STATE_KEY = 'zuzi_backend_sidebar_open';
                 const SIDEBAR_COOKIE_KEY = 'zuzi_backend_sidebar_open';
                 const pageContainer = document.getElementById('page-container');
 
@@ -105,8 +104,8 @@
                 const isDesktopViewport = () => window.innerWidth > 991;
                 let lastViewport = isDesktopViewport() ? 'desktop' : 'mobile';
 
-                const applySidebarState = (force = false) => {
-                    const savedState = getCookie(SIDEBAR_COOKIE_KEY) ?? localStorage.getItem(SIDEBAR_STATE_KEY) ?? '1';
+                const applySidebarState = () => {
+                    const savedState = getCookie(SIDEBAR_COOKIE_KEY) ?? '1';
                     const desktop = isDesktopViewport();
 
                     if (desktop) {
@@ -117,15 +116,13 @@
                         } else {
                             pageContainer.classList.remove('sidebar-o');
                         }
-                    } else if (force || lastViewport !== 'mobile') {
+                    } else if (lastViewport !== 'mobile') {
                         // Na mobitelu sidebar ostaje zatvoren dok ga korisnik ručno ne otvori.
                         pageContainer.classList.remove('sidebar-o', 'sidebar-o-xs');
                     }
 
                     lastViewport = desktop ? 'desktop' : 'mobile';
                 };
-
-                applySidebarState(true);
 
                 document.addEventListener('click', function (event) {
                     const toggleButton = event.target.closest('[data-toggle="layout"][data-action]');
@@ -148,7 +145,6 @@
 
                         const isOpen = pageContainer.classList.contains('sidebar-o');
                         const value = isOpen ? '1' : '0';
-                        localStorage.setItem(SIDEBAR_STATE_KEY, value);
                         setCookie(SIDEBAR_COOKIE_KEY, value);
                     }, 0);
                 });
