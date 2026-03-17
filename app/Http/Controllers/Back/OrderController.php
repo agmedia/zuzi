@@ -144,19 +144,30 @@ class OrderController extends Controller
     public function api_status_change(Request $request)
     {
         if ($request->has('orders')) {
+            $selectedStatus = (int) $request->input('selected');
             $orders = explode(',', substr($request->input('orders'), 1, -1));
+            $existingOrders = Order::query()
+                ->whereIn('id', $orders)
+                ->get(['id', 'order_status_id'])
+                ->keyBy('id');
 
             Order::whereIn('id', $orders)->update([
-                'order_status_id' => $request->input('selected')
+                'order_status_id' => $selectedStatus
             ]);
 
-            if (OrderHelper::isCanceled((int) $request->input('selected'))) {
-                $orders = Order::query()->whereIn('id', $orders)->pluck('id');
+            foreach ($existingOrders as $existingOrder) {
+                $order_id = (int) $existingOrder->id;
 
-                foreach ($orders as $order_id) {
+                if (OrderHelper::shouldReturnStockOnStatusChange((int) $existingOrder->order_status_id, $selectedStatus, $order_id)) {
+                    $order_id = (int) $existingOrder->id;
                     ProductHelper::makeAvailable($order_id);
                     Loyalty::cancelPoints($order_id);
                 }
+
+                OrderHistory::store($order_id, new Request([
+                    'status' => $selectedStatus,
+                    'comment' => '',
+                ]));
             }
 
             return response()->json(['message' => 'Statusi su uspješno promijenjeni..!']);
@@ -164,34 +175,37 @@ class OrderController extends Controller
 
         if ($request->has('order_id')) {
             if ($request->has('status') && $request->input('status')) {
-                Order::where('id', $request->input('order_id'))->update([
-                    'order_status_id' => $request->input('status')
+                $selectedStatus = (int) $request->input('status');
+                $order = Order::query()->find($request->input('order_id'));
+
+                if (! $order) {
+                    return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
+                }
+
+                $previousStatus = (int) $order->order_status_id;
+
+                $order->update([
+                    'order_status_id' => $selectedStatus
                 ]);
 
-                if (OrderHelper::isCanceled((int) $request->input('status'))) {
+                if (OrderHelper::shouldReturnStockOnStatusChange($previousStatus, $selectedStatus, (int) $order->id)) {
                     ProductHelper::makeAvailable($request->input('order_id'));
                     Loyalty::cancelPoints($request->input('order_id'));
                 }
 
-                if ($request->input('status') == config('settings.order.status.paid')) {
-                    $order = Order::find($request->input('order_id'));
-
+                if ($selectedStatus == config('settings.order.status.paid')) {
                     dispatch(function () use ($order) {
                         Mail::to($order->payment_email)->send(new StatusPaid($order));
                     });
                 }
 
-                if ($request->input('status') == config('settings.order.status.canceled')) {
-                    $order = Order::find($request->input('order_id'));
-
+                if ($selectedStatus == config('settings.order.status.canceled')) {
                     dispatch(function () use ($order) {
                         Mail::to($order->payment_email)->send(new StatusCanceled($order));
                     });
                 }
 
-                if ($request->input('status') == config('settings.order.status.ready')) {
-                    $order = Order::find($request->input('order_id'));
-
+                if ($selectedStatus == config('settings.order.status.ready')) {
                     dispatch(function () use ($order) {
                         Mail::to($order->payment_email)->send(new StatusReady($order));
                     });

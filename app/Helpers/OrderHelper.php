@@ -6,6 +6,7 @@ use App\Helpers\Session\CheckoutSession;
 use App\Mail\OrderReceived;
 use App\Mail\OrderSent;
 use App\Models\Back\Orders\Order;
+use App\Models\Back\Orders\OrderHistory;
 use App\Models\Front\Loyalty;
 use App\Models\UserAffiliate;
 use App\Models\UserDetail;
@@ -286,6 +287,64 @@ class OrderHelper
         }
 
         return false;
+    }
+
+
+    /**
+     * Statuses that never deducted inventory from stock.
+     *
+     * @return array<int>
+     */
+    public static function stockUntouchedStatuses(): array
+    {
+        $statuses = [config('settings.order.status.unfinished')];
+        $canceled = config('settings.order.canceled_status');
+
+        if (is_array($canceled)) {
+            $statuses = array_merge($statuses, $canceled);
+        } else {
+            $statuses[] = $canceled;
+        }
+
+        return array_values(array_unique(array_map('intval', array_filter($statuses))));
+    }
+
+
+    /**
+     * Check if the order has already entered any canceled state in the past.
+     */
+    public static function hasCanceledHistory(int $orderId): bool
+    {
+        if (! $orderId) {
+            return false;
+        }
+
+        return OrderHistory::query()
+            ->where('order_id', $orderId)
+            ->whereIn('status', array_map('intval', (array) config('settings.order.canceled_status')))
+            ->exists();
+    }
+
+
+    /**
+     * Only restore stock when the order is entering a canceled state
+     * from a status that had already reserved/deducted inventory.
+     */
+    public static function shouldReturnStockOnStatusChange(int $fromStatus, int $toStatus, int $orderId = 0): bool
+    {
+        if (! $fromStatus || $fromStatus === $toStatus) {
+            return false;
+        }
+
+        if (! static::isCanceled($toStatus)) {
+            return false;
+        }
+
+        if ($orderId && static::hasCanceledHistory($orderId)) {
+            return false;
+        }
+
+        return ! in_array($fromStatus, static::stockUntouchedStatuses(), true);
     }
 
 
