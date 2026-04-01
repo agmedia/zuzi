@@ -10,6 +10,28 @@
     $relatedHeading = $subcat ? 'Slične knjige iz kategorije ' . $subcat->title : ($cat ? 'Slične knjige iz kategorije ' . $cat->title : 'Možda vas zanima');
     $hasKnownPublisher = $prod->publisher
         && \Illuminate\Support\Str::lower(trim((string) $prod->publisher->title)) !== 'nepoznati izdavač';
+    $productShelfCarouselOptions = [
+        'items' => 2,
+        'gutter' => 16,
+        'controls' => true,
+        'nav' => false,
+        'autoHeight' => false,
+        'mouseDrag' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['items' => 2, 'controls' => false],
+            480 => ['items' => 2, 'controls' => true],
+            720 => ['items' => 3],
+            991 => ['items' => 2],
+            1140 => ['items' => 3],
+            1300 => ['items' => 4],
+            1500 => ['items' => 5],
+            1600 => ['items' => 6],
+        ],
+    ];
 @endphp
 
 @push('meta_tags')
@@ -21,6 +43,13 @@
 
 @push('css_after')
     <link rel="stylesheet" media="screen" href="{{ asset('vendor/lightgallery/css/lightgallery-bundle.min.css')}}"/>
+    <style>
+        .product-page-carousel .tns-ovh,
+        .product-page-carousel .tns-item,
+        .product-page-carousel .tns-carousel-inner {
+            touch-action: pan-y pinch-zoom;
+        }
+    </style>
 @endpush
 
 @if (isset($gdl))
@@ -412,8 +441,8 @@
         <div class="flex-wrap justify-content-between align-items-center text-center">
             <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Još knjiga autora {{ $prod->author->title }}</h2>
         </div>
-        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2">
-            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 16, &quot;controls&quot;: true, &quot;autoHeight&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:2}, &quot;480&quot;:{&quot;items&quot;:2}, &quot;720&quot;:{&quot;items&quot;:3}, &quot;991&quot;:{&quot;items&quot;:2}, &quot;1140&quot;:{&quot;items&quot;:3}, &quot;1300&quot;:{&quot;items&quot;:4}, &quot;1500&quot;:{&quot;items&quot;:5}, &quot;1600&quot;:{&quot;items&quot;:6}}}">
+        <div class="tns-carousel tns-controls-static tns-controls-outside pt-2 product-page-carousel">
+            <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
                 @foreach ($authorProducts as $authorProduct)
                     <div>
                         @include('front.catalog.category.product', ['product' => $authorProduct])
@@ -429,8 +458,8 @@
         <div class="flex-wrap justify-content-between align-items-center text-center">
             <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Više knjiga nakladnika {{ $prod->publisher->title }}</h2>
         </div>
-        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2">
-            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 16, &quot;controls&quot;: true, &quot;autoHeight&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:2}, &quot;480&quot;:{&quot;items&quot;:2}, &quot;720&quot;:{&quot;items&quot;:3}, &quot;991&quot;:{&quot;items&quot;:2}, &quot;1140&quot;:{&quot;items&quot;:3}, &quot;1300&quot;:{&quot;items&quot;:4}, &quot;1500&quot;:{&quot;items&quot;:5}, &quot;1600&quot;:{&quot;items&quot;:6}}}">
+        <div class="tns-carousel tns-controls-static tns-controls-outside pt-2 product-page-carousel">
+            <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
                 @foreach ($publisherProducts as $publisherProduct)
                     <div>
                         @include('front.catalog.category.product', ['product' => $publisherProduct])
@@ -446,8 +475,8 @@
         <div class="flex-wrap justify-content-between align-items-center text-center">
             <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">{{ $relatedHeading }}</h2>
         </div>
-        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2">
-            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 16, &quot;controls&quot;: true, &quot;autoHeight&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:2}, &quot;480&quot;:{&quot;items&quot;:2}, &quot;720&quot;:{&quot;items&quot;:3}, &quot;991&quot;:{&quot;items&quot;:2}, &quot;1140&quot;:{&quot;items&quot;:3}, &quot;1300&quot;:{&quot;items&quot;:4}, &quot;1500&quot;:{&quot;items&quot;:5}, &quot;1600&quot;:{&quot;items&quot;:6}}}">
+        <div class="tns-carousel tns-controls-static tns-controls-outside pt-2 product-page-carousel">
+            <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
                 @foreach ($relatedProducts as $relatedProduct)
                     <div>
                         @include('front.catalog.category.product', ['product' => $relatedProduct])

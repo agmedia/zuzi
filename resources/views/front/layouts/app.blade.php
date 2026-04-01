@@ -393,6 +393,13 @@
 
 <!-- Vendor Styles including: Font Icons, Plugins, etc.-->
 <link rel="stylesheet" media="screen" href="{{ asset('css/tiny-slider.css') }}?v=1.2"/>
+<style>
+    .tns-carousel,
+    .tns-carousel .tns-ovh,
+    .tns-carousel .tns-carousel-inner {
+        touch-action: pan-y pinch-zoom;
+    }
+</style>
 <!-- Vendor scrits: js libraries and plugins-->
 
 

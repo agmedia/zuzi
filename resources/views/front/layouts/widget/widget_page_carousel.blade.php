@@ -1,4 +1,57 @@
 <!-- {"title": "Page Carousel", "description": "Category, Publisher, Reviews."} -->
+@php
+    $categoryWidgetCarouselOptions = [
+        'items' => 2,
+        'controls' => true,
+        'autoHeight' => false,
+        'mouseDrag' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['items' => 2, 'gutter' => 10, 'controls' => false],
+            480 => ['items' => 2, 'gutter' => 10, 'controls' => true],
+            800 => ['items' => 3, 'gutter' => 15],
+            1300 => ['items' => 4, 'gutter' => 20],
+            1400 => ['items' => 5, 'gutter' => 20],
+        ],
+    ];
+    $reviewWidgetCarouselOptions = [
+        'items' => 1,
+        'controls' => false,
+        'autoplay' => true,
+        'autoHeight' => true,
+        'mouseDrag' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['items' => 1, 'gutter' => 20],
+            480 => ['items' => 2, 'gutter' => 20],
+            800 => ['items' => 3, 'gutter' => 20],
+            1300 => ['items' => 4, 'gutter' => 30],
+        ],
+    ];
+    $blogWidgetCarouselOptions = [
+        'items' => 2,
+        'gutter' => 15,
+        'controls' => false,
+        'nav' => true,
+        'mouseDrag' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['items' => 1],
+            500 => ['items' => 2],
+            768 => ['items' => 2],
+            992 => ['items' => 3, 'gutter' => 30],
+        ],
+    ];
+@endphp
 <section class=" py-0 " >
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1  pb-3 mb-2">
         <h2 class="h3 mb-0 pt-0 font-title me-3"> {{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h2>
@@ -8,8 +61,8 @@
     </div>
 
     @if ($data['tablename'] == 'category')
-        <div class="tns-carousel">
-            <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 10},"480":{"items":2, "gutter": 10},"800":{"items":3, "gutter": 15}, "1300":{"items":4, "gutter": 20}, "1400":{"items":5, "gutter": 20}}}'>
+        <div class="tns-carousel widget-touch-carousel">
+            <div class="tns-carousel-inner" data-carousel-options='@json($categoryWidgetCarouselOptions)'>
                 @foreach ($data['items'] as $item)
                     <!-- Product-->
                     <div class="article mb-grid-gutter">
@@ -34,8 +87,8 @@
 
     @elseif ($data['tablename'] == 'reviews')
 
-        <div class="tns-carousel">
-            <div class="tns-carousel-inner" data-carousel-options='{"items": 1, "controls": false, "autoplay": true, "autoHeight": true, "responsive": {"0":{"items":1, "gutter": 20},"480":{"items":2, "gutter": 20},"800":{"items":3, "gutter": 20}, "1300":{"items":4, "gutter": 30}}}'>
+        <div class="tns-carousel widget-touch-carousel">
+            <div class="tns-carousel-inner" data-carousel-options='@json($reviewWidgetCarouselOptions)'>
                 @foreach ($data['items'] as $review)
 
                     <blockquote class="mb-2">
@@ -70,8 +123,8 @@
         </div>
 
     @else
-        <div class="tns-carousel pb-5">
-            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 15, &quot;controls&quot;: false, &quot;nav&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:1},&quot;500&quot;:{&quot;items&quot;:2},&quot;768&quot;:{&quot;items&quot;:2}, &quot;992&quot;:{&quot;items&quot;:3, &quot;gutter&quot;: 30}}}">
+        <div class="tns-carousel pb-5 widget-touch-carousel">
+            <div class="tns-carousel-inner" data-carousel-options='@json($blogWidgetCarouselOptions)'>
                 @foreach ($data['items'] as $item)
 
                     <!-- Product-->

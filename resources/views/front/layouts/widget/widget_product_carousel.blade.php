@@ -1,4 +1,25 @@
 <!-- {"title": "Carousel", "description": "Widget za product carousel"} -->
+@php
+    $productWidgetCarouselOptions = [
+        'items' => 2,
+        'controls' => true,
+        'nav' => true,
+        'autoHeight' => false,
+        'mouseDrag' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['items' => 2, 'gutter' => 10, 'controls' => false],
+            500 => ['items' => 2, 'gutter' => 10, 'controls' => true],
+            768 => ['items' => 3, 'gutter' => 10],
+            1100 => ['items' => 4, 'gutter' => 10],
+            1500 => ['items' => 5, 'gutter' => 10],
+            1600 => ['items' => 6, 'gutter' => 10],
+        ],
+    ];
+@endphp
 <section class="pt-2 pb-3">
 
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1   pb-2 mb-2">
@@ -9,8 +30,8 @@
         @endif
 
     </div>
-    <div class="tns-carousel">
-        <div class="tns-carousel-inner" data-carousel-options='{"items": 2, "controls": true, "nav": true, "autoHeight": false, "responsive": {"0":{"items":2, "gutter": 10},"500":{"items":2, "gutter": 10},"768":{"items":3, "gutter": 10}, "1100":{"items":4, "gutter": 10}, "1500":{"items":5, "gutter": 10}, "1600":{"items":6, "gutter": 10}}}'>
+    <div class="tns-carousel widget-touch-carousel">
+        <div class="tns-carousel-inner" data-carousel-options='@json($productWidgetCarouselOptions)'>
             @foreach ($data['items'] as $product)
                 <!-- Product-->
                 <div>
@@ -22,4 +43,3 @@
 
 
 </section>
-

@@ -1,7 +1,22 @@
 <!-- {"title": "Slider Index", "description": "Index main slider."} -->
+@php
+    $homeHeroCarouselOptions = [
+        'items' => 1,
+        'mode' => 'gallery',
+        'nav' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['nav' => true, 'controls' => false],
+            576 => ['nav' => false, 'controls' => true],
+        ],
+    ];
+@endphp
 
-<section class="tns-carousel mb-3 rounded-3 bg-light shadow ">
-    <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 1, &quot;mode&quot;: &quot;gallery&quot;, &quot;nav&quot;: true, &quot;responsive&quot;: {&quot;0&quot;: {&quot;nav&quot;: true, &quot;controls&quot;: false}, &quot;576&quot;: {&quot;nav&quot;: false, &quot;controls&quot;: true}}}">
+<section class="tns-carousel mb-3 rounded-3 bg-light shadow widget-touch-carousel">
+    <div class="tns-carousel-inner" data-carousel-options='@json($homeHeroCarouselOptions)'>
         @foreach($data as  $widget)
 
             <div>

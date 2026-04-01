@@ -108,7 +108,7 @@ class CatalogRouteController extends Controller
                 ->reject(fn ($item) => $item->id == $prod->id)
                 ->pluck('id')
                 ->unique()
-                ->take(10)
+                ->take(8)
                 ->values();
 
             if ($relatedIds->count()) {
