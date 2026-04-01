@@ -13,7 +13,7 @@
                             <!-- Header -->
                             <div class="mb-2 text-center">
                                 <a class="link-fx font-w700 font-size-h2" href="{{ route('index') }}">
-                                    <span class="text-dark">Antikvarijat</span> <span class="text-primary">Biblos</span>
+                                    <span class="text-dark">ZUZI</span> <span class="text-primary">Shop</span>
                                 </a>
                                 <p class="text-uppercase font-w700 font-size-sm text-muted">Potvrda lozinke</p>
                             </div>
@@ -45,13 +45,13 @@
                         <div class="block-content block-content-full px-lg-5 py-md-5 py-lg-6">
                             <div class="media">
                                 <a class="img-link mr-3" href="{{ route('index') }}">
-                                    <img class="img-avatar img-avatar-thumb" src="{{ asset('media/img/faviconbiblos.png') }}" alt="Antikvarijat Biblos">
+                                    <img class="img-avatar img-avatar-thumb" src="{{ asset('media/img/zuzi-logo.webp') }}" alt="ZUZI Shop">
                                 </a>
                                 <div class="media-body">
                                     <p class="text-white font-w600 mb-1">
                                         Knjige, vedute & zemljovidi
                                     </p>
-                                    <a class="text-white-75 font-w600" href="{{ route('index') }}">Antikvarijat Biblos</a>
+                                    <a class="text-white-75 font-w600" href="{{ route('index') }}">ZUZI Shop</a>
                                 </div>
                             </div>
                         </div>

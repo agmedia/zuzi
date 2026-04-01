@@ -1,5 +1,7 @@
 
 @extends('front.layouts.app')
+@section('title', \App\Models\Seo::appendBrand('Pregled narudzbe'))
+@section('description', \App\Models\Seo::description(null, 'Zavrsni pregled i potvrda narudzbe na ' . \App\Models\Seo::brand() . '.'))
 
 @push('css_after')
     @livewireStyles

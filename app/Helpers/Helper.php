@@ -387,7 +387,7 @@ class Helper
      */
     public static function getRelated($cat = null, $subcat = null)
     {
-        $related = [];
+        $related = collect();
 
         if ($subcat) {
             $related = $subcat->products()->inRandomOrder()->take(10)->get();
@@ -399,7 +399,9 @@ class Helper
         }
 
         if ($related->count() < 9) {
-            $related->merge(Product::query()->inRandomOrder()->take(10 - $related->count())->get());
+            $related = $related->concat(
+                Product::query()->inRandomOrder()->take(10 - $related->count())->get()
+            );
         }
 
         return $related;

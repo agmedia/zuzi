@@ -1,37 +1,16 @@
 @extends('front.layouts.app')
 @if(isset($blogs))
-    @section ( 'title', 'Blog - Zuzi Shop' )
-    @section ( 'description', 'Medijske objave, članci i obavijesti -  Zuzi Shop' )
+    @section('title', \App\Models\Seo::appendBrand('Blog'))
+    @section('description', \App\Models\Seo::description(null, 'Medijske objave, clanci i obavijesti iz ' . \App\Models\Seo::brand() . '.'))
 @else
-    @section ( 'title', $blog->title. ' - Zuzi Shop' )
-@section ( 'description', $blog->meta_description )
-
-    @push('meta_tags')
-
-
-
-
-        <link rel="canonical" href="{{ route('catalog.route.blog', ['blog' => $blog]) }}" />
-        <meta property="og:locale" content="hr_HR" />
-        <meta property="og:type" content="product" />
-        <meta property="og:title" content="{{ $blog->title }}" />
-        <meta property="og:description" content="{{ $blog->meta_description  }}" />
-        <meta property="og:url" content="{{ route('catalog.route.blog', ['blog' => $blog]) }}"  />
-        <meta property="og:site_name" content="ZUZI SHOP" />
-        <meta property="og:updated_time" content="{{ $blog->updated_at  }}" />
-        <meta property="og:image" content="{{ asset($blog->image) }}" />
-        <meta property="og:image:secure_url" content="{{ asset($blog->image) }}" />
-        <meta property="og:image:width" content="640" />
-        <meta property="og:image:height" content="480" />
-        <meta property="og:image:type" content="image/jpeg" />
-        <meta property="og:image:alt" content="{{ asset($blog->image) }}" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="{{ $blog->title }}" />
-        <meta name="twitter:description" content="{{ $blog->meta_description }}" />
-        <meta name="twitter:image" content="{{ asset($blog->image) }}" />
-
-    @endpush
-
+    @php($blogSeo = \App\Models\Seo::getBlogData($blog))
+    @section('title', $blogSeo['title'])
+    @section('description', $blogSeo['description'])
+    @section('seo_image', $blog->image)
+    @section('seo_image_alt', $blog->title)
+    @section('og_type', 'article')
+    @section('seo_published_time', optional($blog->publish_date ?: $blog->created_at)->toAtomString())
+    @section('seo_updated_time', optional($blog->updated_at ?: $blog->created_at)->toAtomString())
 @endif
 
 @section('content')
@@ -68,7 +47,7 @@
 
                 <article class="masonry-grid-item">
                     <div class="card">
-                        <a class="blog-entry-thumb" href="{{ route('catalog.route.blog', ['blog' => $blog]) }}"><img class="card-img-top" src="{{ $blog->image }}" alt="Post"></a>
+                        <a class="blog-entry-thumb" href="{{ route('catalog.route.blog', ['blog' => $blog]) }}"><img class="card-img-top" src="{{ $blog->image }}" alt="{{ $blog->title }}" loading="lazy" decoding="async"></a>
                         <div class="card-body">
                             <h2 class="h6 blog-entry-title"><a href="{{ route('catalog.route.blog', ['blog' => $blog]) }}">{{ $blog->title }}</a></h2>
                             <p class="fs-sm">{{ $blog->short_description }}</p>
@@ -91,7 +70,7 @@
                     <!-- Post meta-->
                     <!-- Gallery-->
                     <div class="gallery row pb-2">
-                        <div class="col-sm-12 mb-2"><img src="{{ asset($blog->image) }}" alt="Gallery image"></div>
+                        <div class="col-sm-12 mb-2"><img src="{{ $blog->image }}" alt="{{ $blog->title }}" loading="eager" fetchpriority="high" decoding="async"></div>
 
                     </div>
                     <!-- Post content-->
@@ -104,3 +83,37 @@
     @endif
 
 @endsection
+
+@if(!isset($blogs))
+    @push('js_after')
+        <script type="application/ld+json">
+            {!! collect(\App\Helpers\Metatags::articleSchema($blog))->toJson() !!}
+        </script>
+    @endpush
+@else
+    @push('js_after')
+        @php
+            $blogSchemas = [
+                \App\Helpers\Metatags::pageSchema(
+                    'CollectionPage',
+                    'Blog o knjigama',
+                    \App\Models\Seo::description(null, 'Medijske objave, clanci i preporuke o knjigama iz ' . \App\Models\Seo::brand() . '.'),
+                    \App\Models\Seo::canonical(request())
+                ),
+                \App\Helpers\Metatags::itemListSchema(
+                    $blogs->map(function ($item) {
+                        return [
+                            'name' => $item->title,
+                            'url' => route('catalog.route.blog', ['blog' => $item]),
+                        ];
+                    }),
+                    \App\Models\Seo::canonical(request()),
+                    'Objave o knjigama'
+                ),
+            ];
+        @endphp
+        <script type="application/ld+json">
+            {!! collect($blogSchemas)->toJson() !!}
+        </script>
+    @endpush
+@endif

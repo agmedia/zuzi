@@ -133,11 +133,12 @@ return [
     ],
 
     'sitemap' => [
-        0 => 'pages',
-        1 => 'categories',
-        2 => 'products',
-        3 => 'authors',
-        4 => 'publishers'
+        0 => 'pages.xml',
+        1 => 'categories.xml',
+        2 => 'products.xml',
+        3 => 'authors.xml',
+        4 => 'publishers.xml',
+        5 => 'images.xml',
     ],
 
     //

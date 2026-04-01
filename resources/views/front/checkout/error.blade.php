@@ -1,5 +1,7 @@
 
 @extends('front.layouts.app')
+@section('title', \App\Models\Seo::appendBrand('Greska pri narudzbi'))
+@section('description', \App\Models\Seo::description(null, 'Doslo je do pogreske pri obradi narudzbe na ' . \App\Models\Seo::brand() . '.'))
 
 @section('content')
 

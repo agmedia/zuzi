@@ -2,8 +2,11 @@
 
 namespace App\Helpers;
 
+use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Category;
 use App\Models\Front\Catalog\Product;
+use App\Models\Front\Catalog\Publisher;
+use App\Models\Seo;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -37,27 +40,17 @@ class Breadcrumb
      *
      * @return $this
      */
-    public function category($group, Category $cat = null, $subcat = null)
+    public function category($group, ?Category $cat = null, $subcat = null)
     {
         if (isset($group) && $group) {
             $this->addGroup($group);
 
             if ($cat) {
-                array_push($this->breadcrumbs, [
-                    '@type' => 'ListItem',
-                    'position' => 3,
-                    'name' => $cat->title,
-                    'item' => route('catalog.route', ['group' => $group, 'cat' => $cat])
-                ]);
+                $this->pushBreadcrumb($cat->title, route('catalog.route', ['group' => $group, 'cat' => $cat]));
             }
 
             if ($subcat) {
-                array_push($this->breadcrumbs, [
-                    '@type' => 'ListItem',
-                    'position' => 4,
-                    'name' => $subcat->title,
-                    'item' => route('catalog.route', ['group' => $group, 'cat' => $cat, 'subcat' => $subcat])
-                ]);
+                $this->pushBreadcrumb($subcat->title, route('catalog.route', ['group' => $group, 'cat' => $cat, 'subcat' => $subcat]));
             }
         }
 
@@ -73,19 +66,46 @@ class Breadcrumb
      *
      * @return $this
      */
-    public function product($group, Category $cat = null, $subcat = null, Product $prod = null)
+    public function product($group, ?Category $cat = null, $subcat = null, ?Product $prod = null)
     {
         $this->category($group, $cat, $subcat);
 
         if ($prod) {
-            $count = count($this->breadcrumbs) + 1;
+            $this->pushBreadcrumb($prod->name, url($prod->url));
+        }
 
-            array_push($this->breadcrumbs, [
-                '@type' => 'ListItem',
-                'position' => $count,
-                'name' => $prod->name,
-                'item' => url($prod->url)
-            ]);
+        return $this;
+    }
+
+
+    public function author(Author $author, ?Category $cat = null, $subcat = null)
+    {
+        $this->pushBreadcrumb('Autori', route('catalog.route.author'));
+        $this->pushBreadcrumb($author->title, route('catalog.route.author', ['author' => $author]));
+
+        if ($cat) {
+            $this->pushBreadcrumb($cat->title, route('catalog.route.author', ['author' => $author, 'cat' => $cat]));
+        }
+
+        if ($subcat) {
+            $this->pushBreadcrumb($subcat->title, route('catalog.route.author', ['author' => $author, 'cat' => $cat, 'subcat' => $subcat]));
+        }
+
+        return $this;
+    }
+
+
+    public function publisher(Publisher $publisher, ?Category $cat = null, $subcat = null)
+    {
+        $this->pushBreadcrumb('Nakladnici', route('catalog.route.publisher'));
+        $this->pushBreadcrumb($publisher->title, route('catalog.route.publisher', ['publisher' => $publisher]));
+
+        if ($cat) {
+            $this->pushBreadcrumb($cat->title, route('catalog.route.publisher', ['publisher' => $publisher, 'cat' => $cat]));
+        }
+
+        if ($subcat) {
+            $this->pushBreadcrumb($subcat->title, route('catalog.route.publisher', ['publisher' => $publisher, 'cat' => $cat, 'subcat' => $subcat]));
         }
 
         return $this;
@@ -97,31 +117,120 @@ class Breadcrumb
      *
      * @return array
      */
-    public function productBookSchema(Product $prod = null)
+    public function productBookSchema(?Product $prod = null, ?Category $cat = null, ?Category $subcat = null)
     {
         if ($prod) {
-            return [
+            $schema = [
                 '@context' => 'https://schema.org/',
                 '@type' => 'Book',
-                'datePublished' => $prod->year ?: '...',
-                'description' => $prod->name . ' knjiga autora ' . (($prod->author) ? $prod->author->title : 'Autor') . ' godine izdanja ' . ($prod->year ?: '...') . '. izdavača ' . (($prod->publisher) ? $prod->publisher->title : 'Izdavačka kuća'),
-                'image' => asset($prod->image),
+                '@id' => url($prod->url) . '#book',
+                'description' => Seo::descriptionFromContent(
+                    [$prod->description],
+                    'Knjiga ' . $prod->name . ' autora ' . (($prod->author) ? $prod->author->title : 'Nepoznati autor') . ' u ponudi ' . Seo::brand() . '.'
+                ),
+                'image' => [$prod->image],
                 'name' => $prod->name,
                 'url' => url($prod->url),
-                'publisher' => [
-                    '@type' => 'Organization',
-                    'name' => ($prod->publisher) ? $prod->publisher->title : 'Izdavačka kuća',
-                ],
-                'author' => ($prod->author) ? $prod->author->title : 'Autor',
+                'mainEntityOfPage' => url($prod->url),
+                'sku' => $prod->sku,
                 'offers' => [
                     '@type' => 'Offer',
+                    'url' => url($prod->url),
                     'priceCurrency' => 'EUR',
                     'priceValidUntil' => now()->endOfYear()->format('Y-m-d'),
                     'price' => ($prod->special()) ? $prod->special() : number_format($prod->price, 2, '.', ''),
                     'sku' => $prod->sku,
-                    'availability' => ($prod->quantity) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+                    'availability' => ($prod->quantity) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                    'seller' => [
+                        '@type' => 'Organization',
+                        'name' => Seo::brand(),
+                    ],
                 ],
             ];
+
+            if ($prod->publisher) {
+                $schema['publisher'] = [
+                    '@type' => 'Organization',
+                    'name' => $prod->publisher->title,
+                ];
+            }
+
+            if ($prod->author) {
+                $schema['author'] = [
+                    '@type' => 'Person',
+                    'name' => $prod->author->title,
+                ];
+            }
+
+            if ($prod->year) {
+                $schema['datePublished'] = (string) $prod->year;
+            }
+
+            if ($prod->pages) {
+                $schema['numberOfPages'] = (int) $prod->pages;
+            }
+
+            if ($prod->isbn) {
+                $schema['isbn'] = $prod->isbn;
+            }
+
+            if ($subcat) {
+                $schema['genre'] = $subcat->title;
+            } elseif ($cat) {
+                $schema['genre'] = $cat->title;
+            }
+
+            if ($prod->binding) {
+                $schema['bookFormat'] = $prod->binding;
+            }
+
+            $additionalProperties = [];
+
+            if ($prod->condition) {
+                $additionalProperties[] = [
+                    '@type' => 'PropertyValue',
+                    'name' => 'Stanje',
+                    'value' => $prod->condition,
+                ];
+
+                $condition = Str::lower($prod->condition);
+
+                if (Str::contains($condition, ['novo', 'nova'])) {
+                    $schema['offers']['itemCondition'] = 'https://schema.org/NewCondition';
+                } elseif (Str::contains($condition, ['rablj', 'koristen', 'korišten', 'polovno'])) {
+                    $schema['offers']['itemCondition'] = 'https://schema.org/UsedCondition';
+                }
+            }
+
+            if ($prod->origin) {
+                $additionalProperties[] = [
+                    '@type' => 'PropertyValue',
+                    'name' => 'Mjesto izdavanja',
+                    'value' => $prod->origin,
+                ];
+            }
+
+            if ($prod->letter) {
+                $additionalProperties[] = [
+                    '@type' => 'PropertyValue',
+                    'name' => 'Pismo',
+                    'value' => $prod->letter,
+                ];
+            }
+
+            if ($prod->dimensions) {
+                $additionalProperties[] = [
+                    '@type' => 'PropertyValue',
+                    'name' => 'Dimenzije',
+                    'value' => $prod->dimensions . ' cm',
+                ];
+            }
+
+            if (count($additionalProperties)) {
+                $schema['additionalProperty'] = $additionalProperties;
+            }
+
+            return $schema;
         }
     }
 
@@ -161,11 +270,17 @@ class Breadcrumb
      */
     public function addGroup($group)
     {
+        $this->pushBreadcrumb(Str::ucfirst($group), route('catalog.route', ['group' => $group]));
+    }
+
+
+    private function pushBreadcrumb(string $name, string $item): void
+    {
         array_push($this->breadcrumbs, [
             '@type' => 'ListItem',
-            'position' => 2,
-            'name' => Str::ucfirst($group),
-            'item' => route('catalog.route', ['group' => $group])
+            'position' => count($this->breadcrumbs) + 1,
+            'name' => $name,
+            'item' => $item,
         ]);
     }
 }

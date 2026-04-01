@@ -7,7 +7,7 @@
                 <div class="row mb-3 mb-sm-3">
                     <div class="col-lg-7 col-md-9  text-start">
                         <h1 class="text-white lh-base">Knjige, vedute & zemljovidi</h1>
-                        <h2 class="h5 text-white fw-light">Dobrodošli na stranice Antikvarijata Biblos.</h2>
+                        <h2 class="h5 text-white fw-light">Dobrodošli u ZUZI Shop.</h2>
                     </div>
                 </div>
                 <div class="row pb-lg-5 mb-4 mb-sm-5">
@@ -22,8 +22,8 @@
                     </div>
                 </div>
                 <div class="widget mt-4 text-md-nowrap text-center text-md-start">
-                    <a class="btn-social bs-light bs-instagram me-2 mb-2" href="https://www.instagram.com/antikvarijat_biblos/"><i class="ci-instagram"></i></a>
-                    <a class="btn-social bs-light bs-facebook me-2 mb-2" href="https://www.facebook.com/AntikvarijatBiblos/"><i class="ci-facebook"></i></a>
+                    <a class="btn-social bs-light bs-instagram me-2 mb-2" href="https://www.instagram.com/zuziobrt/"><i class="ci-instagram"></i></a>
+                    <a class="btn-social bs-light bs-facebook me-2 mb-2" href="https://www.facebook.com/zuziobrt/"><i class="ci-facebook"></i></a>
                 </div>
             </div>
         </div>
@@ -497,7 +497,7 @@
                         <div class="card"><a class="blog-entry-thumb" href="#"><img class="card-img-top" src="media/img/novosti2.jpg" alt="Post"></a>
                             <div class="card-body">
                                 <h2 class="h6 blog-entry-title"><a href="#">Dvostruki je užitak spasiti vrijednu staru knjigu i još zaraditi na tome</a></h2>
-                                <p class="fs-sm">Zagrebački antikvarijat Biblos uspješno posluje već sedamnaest godina, što je za vrijeme u kojem su knjige sve manje na cijeni impresivan broj.</p>
+                                <p class="fs-sm">ZUZI Shop uspješno posluje već dugi niz godina i okuplja ljubitelje knjiga, veduta i zemljovida na jednom mjestu.</p>
                                 <div class="fs-xs text-nowrap"><a class="blog-entry-meta-link text-nowrap" href="#">23. Lip 2021</a><span class="blog-entry-meta-divider mx-2"></span> Lider Media</div>
                             </div>
                         </div>
@@ -520,10 +520,10 @@
         <div class="container">
             <div class="row">
                 <div class="col-xl-3 col-sm-6 mb-grid-gutter">
-                    <a class="card h-100" href="https://www.google.com/maps/place/Biblos/@45.810942,15.9794894,17.53z/data=!4m5!3m4!1s0x4765d7aac4f8b023:0xb60bceb791b31ede!8m2!3d45.8106161!4d15.9816921?hl=hr" target="_blank">
+                    <a class="card h-100" href="https://www.google.com/maps/search/?api=1&query=Zuzi+Shop+Antuna+Soljana+33+Zagreb" target="_blank">
                         <div class="card-body text-center"><i class="ci-location h3 mt-2 mb-4 text-primary"></i>
                             <h3 class="h6 mb-2">Adresa</h3>
-                            <p class="fs-sm text-muted">Palmotićeva 28, Zagreb</p>
+                            <p class="fs-sm text-muted">Antuna Šoljana 33, Zagreb</p>
                             <div class="fs-sm text-primary">Kliknite za mapu<i class="ci-arrow-right align-middle ms-1"></i></div>
                         </div>
                     </a>
@@ -544,8 +544,8 @@
                         <div class="card-body text-center"><i class="ci-phone h3 mt-2 mb-4 text-primary"></i>
                             <h3 class="h6 mb-3">Telefoni</h3>
                             <ul class="list-unstyled fs-sm mb-0">
-                                <li><a class="nav-link-style text-primary" href="tel:+38514816574"> +385 1 48 16 574</a></li>
-                                <li><a class="nav-link-style text-primary" href="tel:++385981629674"> +385 98 16 29 674</a></li>
+                                <li><a class="nav-link-style text-primary" href="tel:+38514831005"> +385 1 48 31 005</a></li>
+                                <li><a class="nav-link-style text-primary" href="tel:+385916047126"> +385 91 604 7126</a></li>
                             </ul>
                         </div>
                     </div>
@@ -555,7 +555,7 @@
                         <div class="card-body text-center"><i class="ci-mail h3 mt-2 mb-4 text-primary"></i>
                             <h3 class="h6 mb-3">Email adresa</h3>
                             <ul class="list-unstyled fs-sm mb-0">
-                                <li><a class="nav-link-style text-primary" href="mailto:info@antikvarijat-biblos.hr">info@antikvarijat-biblos.hr</a></li>
+                                <li><a class="nav-link-style text-primary" href="mailto:info@zuzi.hr">info@zuzi.hr</a></li>
                             </ul>
                         </div>
                     </div>

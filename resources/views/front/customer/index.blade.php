@@ -1,4 +1,6 @@
 @extends('front.layouts.app')
+@section('title', \App\Models\Seo::appendBrand('Moj korisnicki racun'))
+@section('description', \App\Models\Seo::description(null, 'Uredite podatke svojeg korisnickog racuna na ' . \App\Models\Seo::brand() . '.'))
 
 @section('content')
 

@@ -1,6 +1,6 @@
 @extends('front.layouts.app')
-@section ( 'title', __('front/cart.moj_korisnicki_racun') )
-@section ( 'description', 'Rice Kakis Azijski Webshop - autentični Bubble Tea u četiri okusa, japanski Mochi , Nudle, Korejske grickalice i slatkiši, te veliki izbor umaka i začina.' )
+@section('title', \App\Models\Seo::appendBrand(__('front/cart.moj_korisnicki_racun')))
+@section('description', \App\Models\Seo::description(null, 'Pregled loyalty bodova i povijesti korisnickog racuna u ' . \App\Models\Seo::brand() . '.'))
 @section('content')
 
 

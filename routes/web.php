@@ -365,13 +365,11 @@ Route::get('cache/thumb', [HomeController::class, 'thumbCache']);
 /**
  * Sitemap routes
  */
-Route::redirect('/sitemap.xml', '/sitemap');
-Route::get('sitemap/{sitemap?}', [HomeController::class, 'sitemapXML'])->name('sitemap');
-Route::get('image-sitemap', [HomeController::class, 'sitemapImageXML'])->name('sitemap');
-
-Route::redirect('/sitemap.xml', '/sitemap');
-Route::get('sitemap/{sitemap?}', [HomeController::class, 'sitemapXML'])->name('sitemap');
-Route::get('image-sitemap', [HomeController::class, 'sitemapImageXML'])->name('sitemap-image');
+Route::permanentRedirect('/sitemap', '/sitemap.xml');
+Route::get('/sitemap.xml', [HomeController::class, 'sitemapXML'])->name('sitemap.index');
+Route::get('sitemap/{sitemap}', [HomeController::class, 'sitemapXML'])->name('sitemap');
+Route::permanentRedirect('/image-sitemap', '/sitemap/images.xml');
+Route::permanentRedirect('/image-sitemap.xml', '/sitemap/images.xml');
 //
 Route::get('njuskalo/xml', [HomeController::class, 'njuskaloXML'])->name('njuskalo');
 
@@ -385,7 +383,7 @@ Route::get('reset-password/{token}', [ForgotPasswordController::class, 'showRese
 Route::post('reset-password', [ForgotPasswordController::class, 'submitResetPasswordForm'])->name('reset.password.post');
 /*
  * Groups, Categories and Products routes resolver.
- * https://www.antikvarijat-biblos.hr/kategorija-proizvoda/knjige/
+ * Legacy product/category URL compatibility redirects.
  */
 Route::get('proizvod/{prod?}/', [CatalogRouteController::class, 'resolveOldUrl']);
 //Route::get('kategorija-proizvoda/{group?}/{cat?}/{subcat?}', [CatalogRouteController::class, 'resolveOldCategoryUrl']);

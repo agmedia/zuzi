@@ -1,33 +1,24 @@
 @extends('front.layouts.app')
 @section ('title', $seo['title'])
 @section ('description', $seo['description'])
+@section('seo_image', $prod->image)
+@section('seo_image_alt', $prod->image_alt ?: 'Naslovnica knjige ' . $prod->name)
+@section('og_type', 'product')
+@section('seo_updated_time', optional($prod->updated_at)->toAtomString())
+@php
+    $productCoverAlt = $prod->image_alt ?: 'Naslovnica knjige ' . $prod->name;
+    $relatedHeading = $subcat ? 'Slične knjige iz kategorije ' . $subcat->title : ($cat ? 'Slične knjige iz kategorije ' . $cat->title : 'Možda vas zanima');
+@endphp
+
 @push('meta_tags')
-
-    <link rel="canonical" href="{{ url($prod->url) }}" />
-    <meta property="og:locale" content="hr_HR" />
-    <meta property="og:type" content="product" />
-    <meta property="og:title" content="{{ $seo['title'] }}" />
-    <meta property="og:description" content="{{ $seo['description']  }}" />
-    <meta property="og:url" content="{{ url($prod->url) }}"  />
-    <meta property="og:site_name" content="ZUZI SHOP" />
-    <meta property="og:updated_time" content="{{ $prod->updated_at  }}" />
-    <meta property="og:image" content="{{ asset($prod->image) }}" />
-    <meta property="og:image:secure_url" content="{{ asset($prod->image) }}" />
-    <meta property="og:image:width" content="640" />
-    <meta property="og:image:height" content="480" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:alt" content="{{ $prod->image_alt }}" />
-    <meta property="product:price:amount" content="{{ number_format($prod->price, 2) }}" />
+    <meta property="product:price:amount" content="{{ number_format($prod->special(), 2, '.', '') }}" />
     <meta property="product:price:currency" content="EUR" />
-    <meta property="product:availability" content="instock" />
+    <meta property="product:availability" content="{{ $prod->quantity ? 'instock' : 'out of stock' }}" />
     <meta property="product:retailer_item_id" content="{{ $prod->sku }}" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{{ $seo['title'] }}" />
-    <meta name="twitter:description" content="{{ $seo['description'] }}" />
-    <meta name="twitter:image" content="{{ asset($prod->image) }}" />
+@endpush
 
+@push('css_after')
     <link rel="stylesheet" media="screen" href="{{ asset('vendor/lightgallery/css/lightgallery-bundle.min.css')}}"/>
-
 @endpush
 
 @if (isset($gdl))
@@ -108,7 +99,7 @@
                                                 <i class="ci-delivery me-1"></i>24 sata
                                             </span>
                                         @endif
-                                        <img  src="{{ asset($prod->image) }}"  alt="{{ $prod->name }}" height="800">
+                                        <img src="{{ $prod->image }}" alt="{{ $productCoverAlt }}" height="800" loading="eager" fetchpriority="high" decoding="async">
                                     </a>
                                 </div>
                             @endif
@@ -121,7 +112,7 @@
                                                         <i class="ci-delivery me-1"></i>24 sata
                                                     </span>
                                                 @endif
-                                                <img  src="{{ asset($image->image) }}" alt="{{ $image->alt }}"  height="800">
+                                                <img src="{{ asset($image->image) }}" alt="{{ $image->alt ?: 'Detalj knjige ' . $prod->name }}" height="800" loading="lazy" decoding="async">
                                             </a>
                                         </div>
                                 @endforeach
@@ -130,10 +121,10 @@
                     <div class="product-gallery-thumblist order-sm-1">
                         @if ($prod->images->count())
                             @if ( ! empty($prod->thumb))
-                                <a class="product-gallery-thumblist-item active" href="#first"><img src="{{ asset($prod->thumb) }}" alt="{{ $prod->name }}"></a>
+                                <a class="product-gallery-thumblist-item active" href="#first"><img src="{{ $prod->thumb }}" alt="{{ $productCoverAlt }}" loading="lazy" decoding="async"></a>
                             @endif
                             @foreach ($prod->images as $key => $image)
-                                <a class="product-gallery-thumblist-item" href="#key{{ $key + 1 }}"><img src="{{ url('cache/thumb?size=100x100&src=' . $image->thumb) }}" width="100" height="100" alt="{{ $image->alt }}"></a>
+                                <a class="product-gallery-thumblist-item" href="#key{{ $key + 1 }}"><img src="{{ url('cache/thumb?size=100x100&src=' . $image->thumb) }}" width="100" height="100" alt="{{ $image->alt ?: 'Detalj knjige ' . $prod->name }}"></a>
                             @endforeach
                         @endif
                     </div>
@@ -285,6 +276,26 @@
        </div>
    </div>
 
+   @if ($prod->author || $prod->publisher || $cat || $subcat)
+       <div class="border-top pt-3 mt-2">
+           <h2 class="h6 mb-3">Istražite još</h2>
+           <div class="d-flex flex-wrap gap-2">
+               @if ($prod->author)
+                   <a class="btn btn-outline-primary btn-sm" href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">Još knjiga autora {{ \Illuminate\Support\Str::limit($prod->author->title, 28) }}</a>
+               @endif
+               @if ($prod->publisher)
+                   <a class="btn btn-outline-primary btn-sm" href="{{ route('catalog.route.publisher', ['publisher' => $prod->publisher]) }}">Više od nakladnika {{ \Illuminate\Support\Str::limit($prod->publisher->title, 24) }}</a>
+               @endif
+               @if ($cat)
+                   <a class="btn btn-outline-secondary btn-sm" href="{{ route('catalog.route', ['group' => $group, 'cat' => $cat]) }}">Kategorija {{ \Illuminate\Support\Str::limit($cat->title, 28) }}</a>
+               @endif
+               @if ($cat && $subcat)
+                   <a class="btn btn-outline-secondary btn-sm" href="{{ route('catalog.route', ['group' => $group, 'cat' => $cat, 'subcat' => $subcat]) }}">Potkategorija {{ \Illuminate\Support\Str::limit($subcat->title, 24) }}</a>
+               @endif
+           </div>
+       </div>
+   @endif
+
    <!-- Sharing-->
    <!-- ShareThis BEGIN --><div class="sharethis-inline-share-buttons"></div><!-- ShareThis END -->
 
@@ -405,30 +416,66 @@
 </div>
 </div>
 </section>
-<!-- Product description-->
-<section class="pb-5 mb-2 mb-xl-4">
-<div class=" flex-wrap justify-content-between align-items-center  text-center">
-<h2 class="h3 mb-4 pt-1 font-title me-3 text-center"> Možda vas zanima</h2>
 
-</div>
-<div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2">
-<div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 16, &quot;controls&quot;: true, &quot;autoHeight&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:2}, &quot;480&quot;:{&quot;items&quot;:2}, &quot;720&quot;:{&quot;items&quot;:3}, &quot;991&quot;:{&quot;items&quot;:2}, &quot;1140&quot;:{&quot;items&quot;:3}, &quot;1300&quot;:{&quot;items&quot;:4}, &quot;1500&quot;:{&quot;items&quot;:5}}}">
-    @foreach ($cat->products()->get()->unique()->take(10) as $cat_product)
-        @if ($cat_product->id  != $prod->id)
-            <div>
-                @include('front.catalog.category.product', ['product' => $cat_product])
+@if ($prod->author && $authorProducts->count())
+    <section class="pb-5 mb-2 mb-xl-4">
+        <div class="flex-wrap justify-content-between align-items-center text-center">
+            <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Još knjiga autora {{ $prod->author->title }}</h2>
+        </div>
+        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2">
+            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 16, &quot;controls&quot;: true, &quot;autoHeight&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:2}, &quot;480&quot;:{&quot;items&quot;:2}, &quot;720&quot;:{&quot;items&quot;:3}, &quot;991&quot;:{&quot;items&quot;:2}, &quot;1140&quot;:{&quot;items&quot;:3}, &quot;1300&quot;:{&quot;items&quot;:4}, &quot;1500&quot;:{&quot;items&quot;:5}, &quot;1600&quot;:{&quot;items&quot;:6}}}">
+                @foreach ($authorProducts as $authorProduct)
+                    <div>
+                        @include('front.catalog.category.product', ['product' => $authorProduct])
+                    </div>
+                @endforeach
             </div>
-        @endif
-    @endforeach
-</div>
-</div>
-</section>
+        </div>
+    </section>
+@endif
+
+@if ($prod->publisher && $publisherProducts->count())
+    <section class="pb-5 mb-2 mb-xl-4">
+        <div class="flex-wrap justify-content-between align-items-center text-center">
+            <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Više knjiga nakladnika {{ $prod->publisher->title }}</h2>
+        </div>
+        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2">
+            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 16, &quot;controls&quot;: true, &quot;autoHeight&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:2}, &quot;480&quot;:{&quot;items&quot;:2}, &quot;720&quot;:{&quot;items&quot;:3}, &quot;991&quot;:{&quot;items&quot;:2}, &quot;1140&quot;:{&quot;items&quot;:3}, &quot;1300&quot;:{&quot;items&quot;:4}, &quot;1500&quot;:{&quot;items&quot;:5}, &quot;1600&quot;:{&quot;items&quot;:6}}}">
+                @foreach ($publisherProducts as $publisherProduct)
+                    <div>
+                        @include('front.catalog.category.product', ['product' => $publisherProduct])
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+@endif
+
+@if ($relatedProducts->count())
+    <section class="pb-5 mb-2 mb-xl-4">
+        <div class="flex-wrap justify-content-between align-items-center text-center">
+            <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">{{ $relatedHeading }}</h2>
+        </div>
+        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2">
+            <div class="tns-carousel-inner" data-carousel-options="{&quot;items&quot;: 2, &quot;gutter&quot;: 16, &quot;controls&quot;: true, &quot;autoHeight&quot;: true, &quot;responsive&quot;: {&quot;0&quot;:{&quot;items&quot;:2}, &quot;480&quot;:{&quot;items&quot;:2}, &quot;720&quot;:{&quot;items&quot;:3}, &quot;991&quot;:{&quot;items&quot;:2}, &quot;1140&quot;:{&quot;items&quot;:3}, &quot;1300&quot;:{&quot;items&quot;:4}, &quot;1500&quot;:{&quot;items&quot;:5}, &quot;1600&quot;:{&quot;items&quot;:6}}}">
+                @foreach ($relatedProducts as $relatedProduct)
+                    <div>
+                        @include('front.catalog.category.product', ['product' => $relatedProduct])
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+@endif
 
 @endsection
 
 @push('js_after')
 <script type="application/ld+json">
 {!! collect($crumbs)->toJson() !!}
+</script>
+<script type="application/ld+json">
+{!! collect(\App\Helpers\Metatags::productSchema($prod))->toJson() !!}
 </script>
 <script type="application/ld+json">
 {!! collect($bookscheme)->toJson() !!}

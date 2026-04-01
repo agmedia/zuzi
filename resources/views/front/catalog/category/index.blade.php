@@ -1,34 +1,86 @@
 @extends('front.layouts.app')
-@if (isset($group) && $group)
-    @if ($group && ! $cat && ! $subcat)
-        @section ( 'title',  \Illuminate\Support\Str::ucfirst($group). ' - ZuZi Shop' )
-    @endif
-    @if ($cat && ! $subcat)
-        @section ( 'title',  $cat->meta_title . ' - ZuZi Shop' )
-        @section ( 'description', $cat->meta_description )
-    @elseif ($cat && $subcat)
-        @section ( 'title', $subcat->meta_title . ' - ZuZi Shop' )
-        @section ( 'description', $cat->meta_description )
-    @endif
-@endif
+@php
+    if (Route::currentRouteName() === 'pretrazi') {
+        $listingSeo = \App\Models\Seo::getSearchData(request()->input('pojam'));
+    } elseif (isset($author) && $author) {
+        $listingSeo = $seo;
+    } elseif (isset($publisher) && $publisher) {
+        $listingSeo = $seo;
+    } else {
+        $listingSeo = \App\Models\Seo::getCategoryData($group ?? null, $cat ?? null, $subcat ?? null);
+    }
 
-@if (isset($author) && $author)
-    @section ('title',  $seo['title'])
-    @section ('description', $seo['description'])
-@endif
+    $listingImage = null;
 
-@if (isset($publisher) && $publisher)
-    @section ('title',  $seo['title'])
-    @section ('description', $seo['description'])
-@endif
+    if (isset($subcat) && ! empty($subcat->image)) {
+        $listingImage = $subcat->image;
+    } elseif (isset($cat) && ! empty($cat->image)) {
+        $listingImage = $cat->image;
+    } elseif (isset($author) && $author && ! empty($author->image)) {
+        $listingImage = $author->image;
+    } elseif (isset($publisher) && $publisher && ! empty($publisher->image)) {
+        $listingImage = $publisher->image;
+    }
 
-@if (isset($meta_tags))
-    @push('meta_tags')
-        @foreach ($meta_tags as $tag)
-            <meta name={{ $tag['name'] }} content={{ $tag['content'] }}>
-        @endforeach
-    @endpush
+    $listingUpdatedAt = isset($subcat) && $subcat ? $subcat->updated_at : null;
+    $listingUpdatedAt = $listingUpdatedAt ?: (isset($cat) && $cat ? $cat->updated_at : null);
+    $listingUpdatedAt = $listingUpdatedAt ?: (isset($author) && $author ? $author->updated_at : null);
+    $listingUpdatedAt = $listingUpdatedAt ?: (isset($publisher) && $publisher ? $publisher->updated_at : null);
+    $groupHeading = 'Knjige';
+
+    if (($group ?? null) === 'snizenja') {
+        $groupHeading = 'Snižene knjige';
+    } elseif (($group ?? null) === 'zemljovidi-i-vedute') {
+        $groupHeading = 'Zemljovidi i vedute';
+    } elseif (isset($group) && $group) {
+        $groupHeading = \Illuminate\Support\Str::headline(str_replace('-', ' ', (string) $group));
+    }
+
+    $listingSchemaType = Route::currentRouteName() === 'pretrazi' ? 'SearchResultsPage' : 'CollectionPage';
+    $listingSchemaName = $groupHeading;
+
+    if (Route::currentRouteName() === 'pretrazi') {
+        $listingSchemaName = 'Rezultati pretrage knjiga';
+    } elseif (isset($author) && $author) {
+        $listingSchemaName = 'Knjige autora ' . $author->title;
+    } elseif (isset($publisher) && $publisher) {
+        $listingSchemaName = 'Knjige nakladnika ' . $publisher->title;
+    } elseif (isset($subcat) && $subcat) {
+        $listingSchemaName = 'Knjige: ' . $subcat->title;
+    } elseif (isset($cat) && $cat) {
+        $listingSchemaName = 'Knjige: ' . $cat->title;
+    } elseif (($group ?? null) === 'snizenja') {
+        $listingSchemaName = 'Snižene knjige';
+    }
+
+    $listingSchemaUrl = \App\Models\Seo::canonical(request());
+    $listingIntro = null;
+
+    if (Route::currentRouteName() === 'pretrazi') {
+        $searchQuery = trim((string) request()->input('pojam'));
+        $listingIntro = $searchQuery ? 'Pregledajte dostupne knjige, autore i srodne naslove za pojam "' . $searchQuery . '".' : null;
+    } elseif (isset($author) && $author) {
+        $listingIntro = 'Pregledajte izbor knjiga autora ' . $author->title . ', dostupna izdanja i srodne naslove u ' . \App\Models\Seo::brand() . '.';
+    } elseif (isset($publisher) && $publisher) {
+        $listingIntro = 'Istražite knjige nakladnika ' . $publisher->title . ', dostupna izdanja i povezane naslove u ' . \App\Models\Seo::brand() . '.';
+    } elseif (isset($subcat) && $subcat) {
+        $listingIntro = 'Pregledajte knjige iz kategorije ' . $subcat->title . ' i pronađite izdanja koja odgovaraju vašem interesu.';
+    } elseif (isset($cat) && $cat) {
+        $listingIntro = 'Pregledajte knjige iz kategorije ' . $cat->title . ' i izdvojite naslove koji vas zanimaju.';
+    } elseif (($group ?? null) === 'snizenja') {
+        $listingIntro = 'Pregledajte aktualno snižene knjige i izdvojena izdanja po povoljnijim cijenama.';
+    } elseif (isset($group) && $group) {
+        $listingIntro = 'Pregledajte aktualnu ponudu knjiga i izdvojena izdanja u ovoj grupi.';
+    }
+@endphp
+
+@section('title', $listingSeo['title'])
+@section('description', $listingSeo['description'])
+@if($listingImage)
+    @section('seo_image', \App\Models\Seo::image($listingImage))
 @endif
+@section('seo_image_alt', isset($subcat) && $subcat ? $subcat->title : (isset($cat) && $cat ? $cat->title : (isset($author) && $author ? $author->title : (isset($publisher) && $publisher ? $publisher->title : $listingSeo['title']))))
+@section('seo_updated_time', optional($listingUpdatedAt)->toAtomString())
 
 
 @section('content')
@@ -128,7 +180,7 @@
                 <section class="d-md-flex justify-content-between align-items-center text-center text-lg-start mb-1 pb-1">
 
                     @if ($group && ! $cat && ! $subcat)
-                        <h1 class="h2 mb-2 mb-md-0 me-3">Zuzi Web Shop</h1>
+                        <h1 class="h2 mb-2 mb-md-0 me-3">{{ $groupHeading }}</h1>
 
                     @endif
                     @if ($cat && ! $subcat)
@@ -164,10 +216,11 @@
 
             @endif
 
-
-
-
-
+            @if ($listingIntro)
+                <section class="mb-3">
+                    <p class="fs-md text-muted mb-0">{{ $listingIntro }}</p>
+                </section>
+            @endif
 
             <products-view ids="{{ isset($ids) ? $ids : null }}"
                            group="{{ isset($group) ? $group : null }}"
@@ -200,13 +253,24 @@
 
 @endsection
 
-@push('js_after')
-    <script type="application/ld+json">
-        {!! collect($crumbs)->toJson() !!}
-    </script>
-@endpush
+@if(!empty($crumbs))
+    @push('js_after')
+        <script type="application/ld+json">
+            {!! collect($crumbs)->toJson() !!}
+        </script>
+    @endpush
+@endif
 
 @push('js_after')
+    <script type="application/ld+json">
+        {!! collect(\App\Helpers\Metatags::pageSchema(
+            $listingSchemaType,
+            $listingSchemaName,
+            $listingSeo['description'],
+            $listingSchemaUrl,
+            $listingImage ? \App\Models\Seo::image($listingImage) : null
+        ))->toJson() !!}
+    </script>
     <style>
         @media only screen and (max-width: 1040px) {
             .scrolling-wrapper {

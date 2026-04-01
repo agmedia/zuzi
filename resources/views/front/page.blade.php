@@ -1,34 +1,19 @@
 @extends('front.layouts.app')
+@php($pageSeo = \App\Models\Seo::getPageData($page))
 @if (request()->routeIs(['index']))
-    @section ( 'title', 'ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop' )
-    @section ( 'description', 'Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja i naručivanja željenih naslova putem web stranice zuzi.hr iz udobnosti naslonjača.' )
-
-
-    @push('meta_tags')
-
-        <link rel="canonical" href="{{ env('APP_URL')}}" />
-        <meta property="og:locale" content="hr_HR" />
-        <meta property="og:type" content="product" />
-        <meta property="og:title" content="ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop" />
-        <meta property="og:description" content="Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja i naručivanja željenih naslova putem web stranice zuzi.hr iz udobnosti naslonjača." />
-        <meta property="og:url" content="{{ env('APP_URL')}}"  />
-        <meta property="og:site_name" content="ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop" />
-        <meta property="og:image" content="{{ asset('media/img/cover-zuzi.jpg') }}" />
-        <meta property="og:image:secure_url" content="{{ asset('media/img/cover-zuzi.jpg') }}" />
-        <meta property="og:image:width" content="1920" />
-        <meta property="og:image:height" content="720" />
-        <meta property="og:image:type" content="image/jpeg" />
-        <meta property="og:image:alt" content="ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop" />
-        <meta name="twitter:description" content="Zuzi shop - Nudimo Vam praktičnu mogućnost pretraživanja i naručivanja željenih naslova putem web stranice zuzi.hr iz udobnosti naslonjača." />
-        <meta name="twitter:image" content="{{ asset('media/img/cover-zuzi.jpg') }}" />
-
-    @endpush
-
+    @section('title', \App\Models\Seo::defaultTitle())
+    @section('description', \App\Models\Seo::defaultDescription())
+    @section('seo_image', \App\Models\Seo::defaultImage())
+    @section('seo_image_alt', \App\Models\Seo::defaultTitle())
+    @section('seo_updated_time', optional($page->updated_at)->toAtomString())
 @else
-    @section ( 'title', $page->title. ' - ZUZI Shop' )
-    @section ( 'description', $page->meta_description )
+    @section('title', $pageSeo['title'])
+    @section('description', $pageSeo['description'])
+    @if (! empty($page->image))
+        @section('seo_image', \App\Models\Seo::image($page->image))
+    @endif
+    @section('seo_image_alt', $page->title)
+    @section('seo_updated_time', optional($page->updated_at)->toAtomString())
 @endif
 
 @section('content')
@@ -79,6 +64,12 @@
 fullscreen; gyroscope; picture-in-picture" src="https://virtualtours.virtualno360.hr/F1tEg2Htxw/p&amp;0h&amp;85.17t/"></iframe>
       </section>
       @push('js_after')
+          <script type="application/ld+json">
+              {!! collect(\App\Helpers\Metatags::organizationSchema())->toJson() !!}
+          </script>
+          <script type="application/ld+json">
+              {!! collect(\App\Helpers\Metatags::websiteSchema())->toJson() !!}
+          </script>
           <style>
               @media only screen and (max-width: 1040px) {
                   .scrolling-wrapper {

@@ -5,10 +5,47 @@
     <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/f36cda12a26aeec8707a076b/script.js"></script>
     <!-- End cookieyes banner -->
     <meta charset="utf-8">
-    <title> @yield('title') </title>
+    @php
+        $seoTitle = \App\Models\Seo::title(trim($__env->yieldContent('title')));
+        $seoDescription = \App\Models\Seo::description(trim($__env->yieldContent('description')));
+        $seoCanonical = trim($__env->yieldContent('canonical')) ?: \App\Models\Seo::canonical(request());
+        $seoRobots = trim($__env->yieldContent('robots')) ?: \App\Models\Seo::robots(request());
+        $seoImage = \App\Models\Seo::image(trim($__env->yieldContent('seo_image')));
+        $seoImageAlt = \App\Models\Seo::title(trim($__env->yieldContent('seo_image_alt')) ?: $seoTitle);
+        $seoType = trim($__env->yieldContent('og_type')) ?: \App\Models\Seo::ogType(request());
+        $seoPublishedTime = trim($__env->yieldContent('seo_published_time'));
+        $seoUpdatedTime = trim($__env->yieldContent('seo_updated_time'));
+    @endphp
+
+    <title>{{ $seoTitle }}</title>
     <!-- SEO Meta Tags-->
-    <meta name="description" content="@yield('description')">
+    <meta name="description" content="{{ $seoDescription }}">
     <meta name="author" content="Zuzi Shop">
+    <meta name="robots" content="{{ $seoRobots }}">
+    <link rel="canonical" href="{{ $seoCanonical }}" />
+    <meta property="og:locale" content="hr_HR" />
+    <meta property="og:type" content="{{ $seoType }}" />
+    <meta property="og:title" content="{{ $seoTitle }}" />
+    <meta property="og:description" content="{{ $seoDescription }}" />
+    <meta property="og:url" content="{{ $seoCanonical }}" />
+    <meta property="og:site_name" content="ZUZI Shop" />
+    <meta property="og:image" content="{{ $seoImage }}" />
+    <meta property="og:image:secure_url" content="{{ $seoImage }}" />
+    <meta property="og:image:alt" content="{{ $seoImageAlt }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ $seoTitle }}" />
+    <meta name="twitter:description" content="{{ $seoDescription }}" />
+    <meta name="twitter:image" content="{{ $seoImage }}" />
+    <meta name="twitter:image:alt" content="{{ $seoImageAlt }}" />
+    @if($seoPublishedTime)
+        <meta property="article:published_time" content="{{ $seoPublishedTime }}" />
+    @endif
+    @if($seoUpdatedTime)
+        <meta property="og:updated_time" content="{{ $seoUpdatedTime }}" />
+        @if($seoType === 'article')
+            <meta property="article:modified_time" content="{{ $seoUpdatedTime }}" />
+        @endif
+    @endif
     @stack('meta_tags')
     <!-- Viewport-->
     <meta name="viewport" content="width=device-width, user-scalable=no" />

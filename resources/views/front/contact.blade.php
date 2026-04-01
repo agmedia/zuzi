@@ -1,4 +1,6 @@
 @extends('front.layouts.app')
+@section('title', \App\Models\Seo::appendBrand('Kontakt'))
+@section('description', \App\Models\Seo::description(null, 'Kontaktirajte ' . \App\Models\Seo::brand() . ' za informacije o knjigama, narudzbama i dostavi.'))
 
 @section('content')
 
@@ -104,5 +106,11 @@
 @endsection
 
 @push('js_after')
+    <script type="application/ld+json">
+        {!! collect([
+            \App\Helpers\Metatags::organizationSchema(),
+            \App\Helpers\Metatags::contactPageSchema(),
+        ])->toJson() !!}
+    </script>
     @include('front.layouts.partials.recaptcha-js')
 @endpush

@@ -2,19 +2,19 @@
 
 namespace App\Helpers;
 
+use App\Models\Front\Blog;
 use App\Models\Front\Catalog\Product;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
+use App\Models\Seo;
 
 class Metatags
 {
-
-    public static function noFollow()
+    public static function noFollow(string $content = 'noindex,follow'): array
     {
         return [
             'name'    => 'robots',
-            'content' => 'noindex,nofollow'
+            'content' => $content,
         ];
     }
 
@@ -24,37 +24,158 @@ class Metatags
      */
     public static function indexSchema(): array
     {
+        return static::organizationSchema();
+    }
+
+
+    public static function organizationSchema(): array
+    {
         return [
-            '@context'     => 'https://schema.org',
-            '@type'        => 'LocalBusiness',
-            '@id'          => config('app.url') . '#store',
-            'name'         => config('app.name'),
-            'image'        => asset('img/logo-kakis.png'),
-            'logo'         => asset('img/logo-kakis.png'),
-            'url'          => config('app.url'),
-            'address'      => [
+            '@context' => 'https://schema.org',
+            '@type'    => 'BookStore',
+            '@id'      => config('app.url') . '#organization',
+            'name'     => Seo::brand(),
+            'image'    => Seo::defaultImage(),
+            'logo'     => asset('media/img/zuzi-logo.webp'),
+            'url'      => config('app.url'),
+            'email'    => 'info@zuzi.hr',
+            'telephone'=> '+38514831005',
+            'address'  => [
                 '@type'           => 'PostalAddress',
-                'streetAddress'   => 'Petrinjska 9',
+                'streetAddress'   => 'Antuna Soljana 33',
                 'addressLocality' => 'Zagreb',
                 'postalCode'      => '10000',
-                'addressCountry'  => 'HR'
+                'addressCountry'  => 'HR',
             ],
-            'geo'          => [
+            'geo'      => [
                 '@type'     => 'GeoCoordinates',
-                'latitude'  => 45.808,
-                'longitude' => 15.978
+                'latitude'  => 45.8020394107,
+                'longitude' => 15.8874534126,
             ],
-            'telephone'    => '+385915207047',
-            'openingHours' => [
-                'Mo-Fr 11:00-19:00',
-                'Sa 10:00-18:00'
+            'openingHoursSpecification' => [
+                [
+                    '@type'    => 'OpeningHoursSpecification',
+                    'dayOfWeek'=> ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                    'opens'    => '09:00',
+                    'closes'   => '20:00',
+                ],
+                [
+                    '@type'    => 'OpeningHoursSpecification',
+                    'dayOfWeek'=> 'Saturday',
+                    'opens'    => '09:00',
+                    'closes'   => '14:00',
+                ],
             ],
-            'priceRange'   => '€€',
-            'sameAs'       => [
-                'https://www.facebook.com/ricekakis',
-                'https://www.instagram.com/ricekakis',
-                'https://www.tiktok.com/@ricekakis'
-            ]
+            'priceRange' => '€€',
+            'sameAs'     => [
+                'https://www.facebook.com/zuziobrt/',
+                'https://www.instagram.com/zuziobrt/',
+            ],
+        ];
+    }
+
+
+    public static function websiteSchema(): array
+    {
+        $searchKey = config('settings.search_keyword', 'pojam');
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type'    => 'WebSite',
+            '@id'      => config('app.url') . '#website',
+            'name'     => Seo::brand(),
+            'url'      => config('app.url'),
+            'potentialAction' => [
+                '@type'       => 'SearchAction',
+                'target'      => route('pretrazi') . '?' . $searchKey . '={search_term_string}',
+                'query-input' => 'required name=search_term_string',
+            ],
+        ];
+    }
+
+
+    public static function pageSchema(
+        string $type,
+        string $name,
+        string $description,
+        string $url,
+        ?string $image = null
+    ): array {
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type'    => $type,
+            'name'     => $name,
+            'description' => $description,
+            'url'      => $url,
+            'isPartOf' => [
+                '@type' => 'WebSite',
+                '@id'   => config('app.url') . '#website',
+            ],
+        ];
+
+        if ($image) {
+            $schema['image'] = [$image];
+        }
+
+        return $schema;
+    }
+
+
+    public static function itemListSchema(iterable $items, string $url, ?string $name = null): array
+    {
+        $elements = [];
+
+        foreach ($items as $index => $item) {
+            $itemName = trim(strip_tags((string) data_get($item, 'name', '')));
+            $itemUrl = trim((string) data_get($item, 'url', ''));
+
+            if (! $itemName || ! $itemUrl) {
+                continue;
+            }
+
+            $elements[] = [
+                '@type'    => 'ListItem',
+                'position' => count($elements) + 1,
+                'name'     => $itemName,
+                'url'      => $itemUrl,
+            ];
+        }
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type'    => 'ItemList',
+            'name'     => $name ?: Seo::brand(),
+            'url'      => $url,
+            'numberOfItems' => count($elements),
+            'itemListElement' => $elements,
+        ];
+    }
+
+
+    public static function contactPageSchema(): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type'    => 'ContactPage',
+            'name'     => 'Kontakt | ' . Seo::brand(),
+            'description' => 'Kontakt podaci i obrazac za upit za kupnju knjiga u ' . Seo::brand() . '.',
+            'url'      => route('kontakt'),
+            'mainEntity' => [
+                '@type' => 'Organization',
+                '@id'   => config('app.url') . '#organization',
+                'name'  => Seo::brand(),
+                'url'   => config('app.url'),
+                'email' => 'info@zuzi.hr',
+                'telephone' => '+38514831005',
+                'contactPoint' => [
+                    '@type' => 'ContactPoint',
+                    'contactType' => 'customer support',
+                    'telephone' => '+38514831005',
+                    'email' => 'info@zuzi.hr',
+                    'availableLanguage' => ['hr'],
+                    'areaServed' => 'HR',
+                ],
+            ],
         ];
     }
 
@@ -65,49 +186,57 @@ class Metatags
      *
      * @return array
      */
-    public static function productSchema(Product $prod = null, Collection $reviews = null): array
+    public static function productSchema(?Product $prod = null, ?Collection $reviews = null): array
     {
         $response = [];
 
         if ($prod) {
             $price = ($prod->special()) ? $prod->special() : number_format($prod->price, 2, '.', '');
-
-            $url = url($prod->translation->url);
-
-            if (Str::contains($url, '/hr/')) {
-                $url = str_replace('/hr/', '/', $url);
-            }
+            $url = url($prod->url);
+            $description = Seo::descriptionFromContent(
+                [$prod->description],
+                'Kupite knjigu ' . $prod->name . ' uz brzu dostavu i sigurnu kupovinu u ' . Seo::brand() . '.'
+            );
 
             $response = [
-                '@context'      => 'https://schema.org/',
-                '@type'         => 'Product',
-                'sku'           => $prod->sku,
-                'description'   => $prod->translation->meta_description,
-                'name'          => $prod->name,
-                'itemCondition' => 'https://schema.org/NewCondition',
-                'image'         => [
-                    '@type'  => 'ImageObject',
-                    'url'    => asset($prod->image),
-                    'name'   => isset($prod->alt['title']) ? $prod->alt['title'] : '',
-                    'width'  => 500,
-                    'height' => 500,
-                ],
-                'brand'         => [
+                '@context'    => 'https://schema.org',
+                '@type'       => 'Product',
+                'name'        => $prod->name,
+                'description' => $description,
+                'sku'         => $prod->sku,
+                'image'       => [$prod->image],
+                'url'         => $url,
+                'brand'       => [
                     '@type' => 'Brand',
-                    'name'  => $prod->brand ? $prod->brand->title : '',
+                    'name'  => $prod->publisher ? $prod->publisher->title : Seo::brand(),
                 ],
-                'offers'        => [
+                'offers'      => [
                     '@type'           => 'Offer',
                     'priceCurrency'   => 'EUR',
                     'price'           => (string) $price,
                     'priceValidUntil' => now()->endOfYear()->format('Y-m-d'),
                     'sku'             => $prod->sku,
                     'url'             => $url,
-                    'availability'    => ($prod->quantity) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+                    'availability'    => $prod->quantity ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                    'seller'          => [
+                        '@type' => 'Organization',
+                        'name'  => Seo::brand(),
+                    ],
                 ],
             ];
 
-            if ($reviews->count()) {
+            if ($prod->isbn) {
+                $response['isbn'] = $prod->isbn;
+            }
+
+            if ($prod->author) {
+                $response['author'] = [
+                    '@type' => 'Person',
+                    'name'  => $prod->author->title,
+                ];
+            }
+
+            if ($reviews && $reviews->count()) {
                 $response['aggregateRating'] = [
                     '@type'       => 'AggregateRating',
                     'ratingValue' => floor($reviews->avg('stars')),
@@ -118,7 +247,7 @@ class Metatags
                     $res_review = [
                         '@type'         => 'Review',
                         'author'        => [
-                            '@type' => 'author',
+                            '@type' => 'Person',
                             'name'  => $review->fname,
                         ],
                         'datePublished' => Carbon::make($review->created_at)->locale('hr')->format('Y-m-d'),
@@ -141,30 +270,65 @@ class Metatags
     }
 
 
-    /**
-     * @param string      $uri
-     * @param string|null $search_query
-     *
-     * @return array
-     */
-    public static function searchSchema(string $uri, string $search_query = null): array
+    public static function articleSchema(Blog $blog): array
     {
-        if ($search_query) {
-            $uri_check = substr(str_replace($search_query, '', $uri), 1);
-            $target    = config('app.url') . $uri_check . '{' . $search_query . '}';
+        return [
+            '@context' => 'https://schema.org',
+            '@type'    => 'BlogPosting',
+            'headline' => $blog->title,
+            'description' => Seo::descriptionFromContent(
+                [$blog->short_description ?? null, $blog->description ?? null],
+                $blog->title
+            ),
+            'image' => [$blog->image],
+            'mainEntityOfPage' => [
+                '@type' => 'WebPage',
+                '@id'   => route('catalog.route.blog', ['blog' => $blog]),
+            ],
+            'datePublished' => Carbon::make($blog->publish_date ?: $blog->created_at)->toAtomString(),
+            'dateModified'  => Carbon::make($blog->updated_at ?: $blog->created_at)->toAtomString(),
+            'author' => [
+                '@type' => 'Organization',
+                'name'  => Seo::brand(),
+            ],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name'  => Seo::brand(),
+                'logo'  => [
+                    '@type' => 'ImageObject',
+                    'url'   => asset('media/img/zuzi-logo.webp'),
+                ],
+            ],
+        ];
+    }
 
-            return [
-                '@context'        => 'https://schema.org/',
-                '@type'           => 'WebSite',
-                'url'             => config('app.url'),
-                'potentialAction' => [
-                    '@type'  => 'SearchAction',
-                    'target' => $target,
-                    'query'  => 'required',
+
+    public static function faqSchema(iterable $faqItems): array
+    {
+        $entities = [];
+
+        foreach ($faqItems as $item) {
+            $question = trim(strip_tags((string) ($item->title ?? '')));
+            $answer = trim(strip_tags((string) ($item->description ?? '')));
+
+            if (! $question || ! $answer) {
+                continue;
+            }
+
+            $entities[] = [
+                '@type' => 'Question',
+                'name'  => $question,
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text'  => $answer,
                 ],
             ];
         }
 
-        return [];
+        return [
+            '@context' => 'https://schema.org',
+            '@type'    => 'FAQPage',
+            'mainEntity' => $entities,
+        ];
     }
 }

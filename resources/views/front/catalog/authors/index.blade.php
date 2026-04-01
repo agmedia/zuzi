@@ -1,12 +1,6 @@
 @extends('front.layouts.app')
-
-@if (isset($meta_tags))
-    @push('meta_tags')
-        @foreach ($meta_tags as $tag)
-            <meta name={{ $tag['name'] }} content={{ $tag['content'] }}>
-        @endforeach
-    @endpush
-@endif
+@section('title', \App\Models\Seo::appendBrand('Lista autora'))
+@section('description', \App\Models\Seo::description(null, 'Pregledajte listu autora i dostupne knjige po autorima u ' . \App\Models\Seo::brand() . '.'))
 
 @section('content')
 
@@ -72,6 +66,29 @@
 @endsection
 
 @push('js_after')
+    @php
+        $authorSchemas = [
+            \App\Helpers\Metatags::pageSchema(
+                'CollectionPage',
+                'Autori knjiga',
+                \App\Models\Seo::description(null, 'Pregledajte listu autora i dostupne knjige po autorima u ' . \App\Models\Seo::brand() . '.'),
+                \App\Models\Seo::canonical(request())
+            ),
+            \App\Helpers\Metatags::itemListSchema(
+                $authors->getCollection()->map(function ($author) {
+                    return [
+                        'name' => $author->title,
+                        'url' => url($author->url),
+                    ];
+                }),
+                \App\Models\Seo::canonical(request()),
+                $letter ? 'Autori knjiga na slovo ' . $letter : 'Autori knjiga'
+            ),
+        ];
+    @endphp
+    <script type="application/ld+json">
+        {!! collect($authorSchemas)->toJson() !!}
+    </script>
     <style>
         @media only screen and (max-width: 1040px) {
             .scrolling-wrapper {

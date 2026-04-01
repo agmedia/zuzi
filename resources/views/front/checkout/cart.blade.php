@@ -1,4 +1,6 @@
 @extends('front.layouts.app')
+@section('title', \App\Models\Seo::appendBrand('Kosarica'))
+@section('description', \App\Models\Seo::description(null, 'Pregled artikala u kosarici na ' . \App\Models\Seo::brand() . '.'))
 
 @if (isset($gdl))
     @section('google_data_layer')

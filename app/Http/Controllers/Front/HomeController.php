@@ -191,7 +191,15 @@ class HomeController extends Controller
             ])->header('Content-Type', 'text/xml');
         }
 
+        if (in_array($sitemap, ['images', 'images.xml', 'img'], true)) {
+            return $this->sitemapImageXML();
+        }
+
         $sm = new Sitemap($sitemap);
+
+        if (is_null($sm->getSitemap())) {
+            abort(404);
+        }
 
         return response()->view('front.layouts.partials.sitemap', [
             'items' => $sm->getSitemap()

@@ -1,4 +1,6 @@
 @extends('front.layouts.app')
+@section('title', \App\Models\Seo::appendBrand('Cesta pitanja'))
+@section('description', \App\Models\Seo::descriptionFromContent($faq->pluck('description')->take(1)->all(), 'Odgovori na najcesca pitanja o kupnji, dostavi i narudzbama u ' . \App\Models\Seo::brand() . '.'))
 
 @section('content')
 
@@ -61,3 +63,9 @@
 
 
 @endsection
+
+@push('js_after')
+    <script type="application/ld+json">
+        {!! collect(\App\Helpers\Metatags::faqSchema($faq))->toJson() !!}
+    </script>
+@endpush

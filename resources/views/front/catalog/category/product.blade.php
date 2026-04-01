@@ -14,7 +14,7 @@
             @endif
         </div>
         <a class="card-img-top d-block overflow-hidden text-center" href="{{ url($product->url) }}">
-            <img loading="lazy" src="{{ str_replace('.webp','-thumb.webp', $product->image) }}" width="250" height="300" alt="{{ $product->name }}">
+            <img loading="lazy" src="{{ str_replace('.webp','-thumb.webp', $product->image) }}" width="250" height="300" alt="Naslovnica knjige {{ $product->name }}">
         </a>
         <div class="card-body pt-2" style="min-height: 120px;">
 

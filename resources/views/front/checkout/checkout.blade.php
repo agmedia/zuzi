@@ -1,4 +1,6 @@
 @extends('front.layouts.app')
+@section('title', \App\Models\Seo::appendBrand('Naplata'))
+@section('description', \App\Models\Seo::description(null, 'Korak naplate i unosa podataka za narudzbu na ' . \App\Models\Seo::brand() . '.'))
 
 @push('css_after')
     @livewireStyles

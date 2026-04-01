@@ -38,7 +38,7 @@ class CatalogRouteController extends Controller
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function resolve(Request $request, $group, Category $cat = null, $subcat = null, Product $prod = null)
+    public function resolve(Request $request, $group, ?Category $cat = null, ?string $subcat = null, ?Product $prod = null)
     {
         //
         if ($subcat) {
@@ -66,14 +66,60 @@ class CatalogRouteController extends Controller
 
             $bc = new Breadcrumb();
             $crumbs = $bc->product($group, $cat, $subcat, $prod)->resolve();
-            $bookscheme = $bc->productBookSchema($prod);
+            $bookscheme = $bc->productBookSchema($prod, $cat, $subcat);
             $shipping_methods = Settings::getList('shipping', 'list.%', true);
             $payment_methods = Settings::getList('payment', 'list.%', true);
+            $authorProducts = collect();
+            $publisherProducts = collect();
+            $relatedProducts = collect();
 
             $prod->kat = CategoryProducts::where('product_id', $prod->id)->where('category_id', 109)->first();
 
+            if ($prod->author_id) {
+                $authorProducts = Product::query()
+                    ->active()
+                    ->hasStock()
+                    ->with('author')
+                    ->where('author_id', $prod->author_id)
+                    ->where('id', '!=', $prod->id)
+                    ->inRandomOrder()
+                    ->take(8)
+                    ->get();
+            }
 
-            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme','shipping_methods','payment_methods', 'gdl'));
+            if ($prod->publisher_id) {
+                $publisherProducts = Product::query()
+                    ->active()
+                    ->hasStock()
+                    ->with('author')
+                    ->where('publisher_id', $prod->publisher_id)
+                    ->where('id', '!=', $prod->id)
+                    ->inRandomOrder()
+                    ->take(8)
+                    ->get();
+            }
+
+            $relatedIds = collect(Helper::getRelated($cat, $subcat))
+                ->filter()
+                ->reject(fn ($item) => $item->id == $prod->id)
+                ->pluck('id')
+                ->unique()
+                ->take(10)
+                ->values();
+
+            if ($relatedIds->count()) {
+                $relatedProducts = Product::query()
+                    ->active()
+                    ->hasStock()
+                    ->with('author')
+                    ->whereIn('id', $relatedIds)
+                    ->get()
+                    ->sortBy(fn ($item) => $relatedIds->search($item->id))
+                    ->values();
+            }
+
+
+            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme','shipping_methods','payment_methods', 'gdl', 'authorProducts', 'publisherProducts', 'relatedProducts'));
         }
 
         // If only group...
@@ -135,7 +181,7 @@ class CatalogRouteController extends Controller
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function resolveOldCategoryUrl(string $group = null, $cat = null, $subcat = null)
+    public function resolveOldCategoryUrl(?string $group = null, $cat = null, $subcat = null)
     {
         if ($group) {
             return redirect()->route('catalog.route', ['group' => $group, 'cat' => $cat, 'subcat' => $subcat]);
@@ -152,7 +198,7 @@ class CatalogRouteController extends Controller
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function author(Request $request, Author $author = null, Category $cat = null, Category $subcat = null)
+    public function author(Request $request, ?Author $author = null, ?Category $cat = null, ?Category $subcat = null)
     {
         if ( ! $author) {
             $letters = Helper::resolveCache('authors')->remember('letters', config('cache.life'), function () {
@@ -188,7 +234,7 @@ class CatalogRouteController extends Controller
 
         $seo = Seo::getAuthorData($author, $cat, $subcat);
 
-        $crumbs = null;
+        $crumbs = (new Breadcrumb())->author($author, $cat, $subcat)->resolve();
 
         return view('front.catalog.category.index', compact('author', 'letter', 'cat', 'subcat', 'seo', 'crumbs'));
     }
@@ -201,7 +247,7 @@ class CatalogRouteController extends Controller
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function publisher(Request $request, Publisher $publisher = null, Category $cat = null, Category $subcat = null)
+    public function publisher(Request $request, ?Publisher $publisher = null, ?Category $cat = null, ?Category $subcat = null)
     {
         if ( ! $publisher) {
             $letters = Helper::resolveCache('publishers')->remember('letters', config('cache.life'), function () {
@@ -237,7 +283,7 @@ class CatalogRouteController extends Controller
 
         $seo = Seo::getPublisherData($publisher, $cat, $subcat);
 
-        $crumbs = null;
+        $crumbs = (new Breadcrumb())->publisher($publisher, $cat, $subcat)->resolve();
 
         return view('front.catalog.category.index', compact('publisher', 'letter', 'cat', 'subcat', 'seo', 'crumbs'));
     }
@@ -438,7 +484,7 @@ class CatalogRouteController extends Controller
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function actions(Request $request, Category $cat = null, $subcat = null)
+    public function actions(Request $request, ?Category $cat = null, ?Category $subcat = null)
     {
         $ids = Product::query()->whereNotNull('special')->pluck('id');
         $group = 'snizenja';

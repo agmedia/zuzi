@@ -1,5 +1,7 @@
 
 @extends('front.layouts.app')
+@section('title', \App\Models\Seo::appendBrand('Narudzba uspjesna'))
+@section('description', \App\Models\Seo::description(null, 'Narudzba je uspjesno zaprimljena na ' . \App\Models\Seo::brand() . '.'))
 
 @section('content')
 

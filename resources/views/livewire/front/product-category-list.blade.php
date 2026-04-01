@@ -72,9 +72,22 @@
 
     {{ $products->onEachSide(1)->links() }}
 
-
-
+    @if($products->count())
+        @php
+            $productListSchema = \App\Helpers\Metatags::itemListSchema(
+                $products->getCollection()->map(function ($product) {
+                    return [
+                        'name' => $product->name,
+                        'url' => url($product->url),
+                    ];
+                }),
+                \App\Models\Seo::canonical(request()),
+                request()->routeIs('pretrazi') ? 'Rezultati pretrage knjiga' : 'Popis knjiga'
+            );
+        @endphp
+        <script type="application/ld+json">
+            {!! collect($productListSchema)->toJson() !!}
+        </script>
+    @endif
 
 </section>
-
-
