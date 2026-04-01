@@ -1,9 +1,14 @@
 @extends('front.layouts.app')
-@if(isset($blogs))
+
+@php
+    $isBlogListing = isset($blogs);
+    $blogSeo = $isBlogListing ? null : \App\Models\Seo::getBlogData($blog);
+@endphp
+
+@if($isBlogListing)
     @section('title', \App\Models\Seo::appendBrand('Blog'))
     @section('description', \App\Models\Seo::description(null, 'Medijske objave, clanci i obavijesti iz ' . \App\Models\Seo::brand() . '.'))
 @else
-    @php($blogSeo = \App\Models\Seo::getBlogData($blog))
     @section('title', $blogSeo['title'])
     @section('description', $blogSeo['description'])
     @section('seo_image', $blog->image)
@@ -26,7 +31,7 @@
     <section class="d-md-flex justify-content-between align-items-center mb-4 pb-2">
 
 
-        @if(isset($blogs))
+        @if($isBlogListing)
             <h1 class="h2 mb-3 mb-md-0 me-3">Blog</h1>
         @else
             <h1 class="h2 mb-3 mb-md-0 me-3">{{ $blog->title }}</h1>
@@ -36,7 +41,7 @@
 
 
 
-    @if(isset($blogs))
+    @if($isBlogListing)
 
     <div class=" pb-5 mb-2 mb-md-4">
 
@@ -84,7 +89,7 @@
 
 @endsection
 
-@if(!isset($blogs))
+@if(! $isBlogListing)
     @push('js_after')
         <script type="application/ld+json">
             {!! collect(\App\Helpers\Metatags::articleSchema($blog))->toJson() !!}
