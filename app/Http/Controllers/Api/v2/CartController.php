@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v2;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Front\AgCart;
@@ -135,11 +136,21 @@ class CartController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function coupon($coupon)
+    public function coupon(Request $request, $coupon = null)
     {
-        session([$this->key . '_coupon' => $coupon]);
+        $coupon = Helper::normalizeCoupon($request->input('coupon', $coupon));
+        $response = $this->cart->coupon($coupon);
 
-        return response()->json($this->cart->coupon($coupon));
+        $this->cart->resolveDB($response['cart'] ?? null);
+
+        return response()->json([
+            'success' => (bool) ($response['success'] ?? false),
+            'coupon' => (string) ($response['coupon'] ?? ''),
+            'cart' => $response['cart'] ?? $this->cart->get(),
+            'message' => (bool) ($response['success'] ?? false)
+                ? 'Kupon je uspješno dodan u košaricu.'
+                : 'Nažalost nema kupona pod tim kodom.',
+        ]);
     }
 
 

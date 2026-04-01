@@ -24,6 +24,18 @@ use Illuminate\Support\Facades\DB;
 
 class Helper
 {
+    public static function normalizeCoupon(?string $coupon = null): string
+    {
+        return Str::upper(trim((string) $coupon));
+    }
+
+    public static function couponEquals(?string $left = null, ?string $right = null): bool
+    {
+        $left = self::normalizeCoupon($left);
+        $right = self::normalizeCoupon($right);
+
+        return $left !== '' && $left === $right;
+    }
 
     /**
      * @param float $price

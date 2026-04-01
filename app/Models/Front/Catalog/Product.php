@@ -2,6 +2,7 @@
 
 namespace App\Models\Front\Catalog;
 
+use App\Helpers\Helper;
 use App\Helpers\Currency;
 use App\Models\Back\Catalog\Product\ProductAction;
 use App\Models\Back\Settings\Settings;
@@ -218,7 +219,7 @@ class Product extends Model
         }
 
         if (isset($action->status) && $action->status) {
-            if ((isset($action->coupon) && $action->coupon) && session()->has($coupon_session_key) && session($coupon_session_key) == $action->coupon) {
+            if ((isset($action->coupon) && $action->coupon) && session()->has($coupon_session_key) && Helper::couponEquals(session($coupon_session_key), $action->coupon)) {
                 $coupon_ok = true;
             }
         }
@@ -258,7 +259,7 @@ class Product extends Model
         }
 
         if ($action && $action->status) {
-            if ((isset($action->coupon) && $action->coupon) && session()->has($coupon_session_key) && session($coupon_session_key) == $action->coupon) {
+            if ((isset($action->coupon) && $action->coupon) && session()->has($coupon_session_key) && Helper::couponEquals(session($coupon_session_key), $action->coupon)) {
                 $coupon_ok = true;
             }
         }

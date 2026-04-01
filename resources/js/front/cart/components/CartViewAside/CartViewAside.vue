@@ -68,9 +68,16 @@
 
                     <label class="form-label">Imate li kod za popust?</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" v-model="coupon" placeholder="Upišite kod ovdje...">
+                        <input
+                            type="text"
+                            class="form-control"
+                            v-model="coupon"
+                            placeholder="Upišite kod ovdje..."
+                            autocomplete="off"
+                            @keyup.enter="setCoupon"
+                        >
                         <div class="input-group-append">
-                            <button type="button" v-on:click="setCoupon" class="btn btn-outline-primary btn-shadow">Dodaj</button>
+                            <button type="button" v-on:click="setCoupon" class="btn btn-outline-primary btn-shadow" :disabled="couponSubmitting">Dodaj</button>
                         </div>
                     </div>
                 </div>
@@ -118,6 +125,7 @@ export default {
             mobile: false,
             show_delete_btn: true,
             coupon: '',
+            couponSubmitting: false,
             has_loyalty: false,
             selected_loyalty: 0,
             tax: 0,
@@ -189,11 +197,23 @@ export default {
          *
          */
         setCoupon() {
-            let cart = this.$store.state.storage.getCart();
-            if (cart) {
-                cart.coupon = this.coupon;
-                this.checkCoupon();
+            let normalizedCoupon = String(this.coupon || '').trim().toUpperCase();
+
+            this.coupon = normalizedCoupon;
+
+            if (this.couponSubmitting) {
+                return;
             }
+
+            if ( ! normalizedCoupon) {
+                this.checkCoupon();
+                return;
+            }
+
+            this.couponSubmitting = true;
+            this.checkCoupon().finally(() => {
+                this.couponSubmitting = false;
+            });
         },
 
         setLoyalty() {
@@ -210,7 +230,7 @@ export default {
          *
          */
         checkCoupon() {
-            this.$store.dispatch('checkCoupon', this.coupon);
+            return this.$store.dispatch('checkCoupon', this.coupon);
         },
 
 

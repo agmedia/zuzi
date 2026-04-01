@@ -6,6 +6,7 @@ use App\Helpers\Country;
 use App\Helpers\Currency;
 use App\Helpers\Helper;
 use App\Helpers\Session\CheckoutSession;
+use App\Services\AddressDirectoryService;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\GeoZone;
@@ -20,6 +21,7 @@ use Livewire\Component;
 
 class Checkout extends Component
 {
+    private const DEFAULT_COUNTRY = 'Croatia';
 
     /**
      * @var string
@@ -53,7 +55,7 @@ class Checkout extends Component
         'zip' => '',
         'company' => '',
         'oib' => '',
-        'state' => '',
+        'state' => 'Croatia',
     ];
 
     /**
@@ -172,6 +174,17 @@ class Checkout extends Component
         CheckoutSession::setComment($this->comment);
     }
 
+    public function updatedAddress($value, $key)
+    {
+        if ( ! in_array($key, ['zip', 'city'], true)) {
+            CheckoutSession::setAddress($this->address);
+
+            return;
+        }
+
+        $this->autofillAddressField($key, (string) $value);
+    }
+
 
     public function updatingHpPaketomat($value)
     {
@@ -284,6 +297,14 @@ class Checkout extends Component
     {
         $this->setAddress(['state' => $state], true);
 
+        if ($this->address['state'] === self::DEFAULT_COUNTRY) {
+            if ($this->address['zip']) {
+                $this->autofillAddressField('zip', (string) $this->address['zip']);
+            } elseif ($this->address['city']) {
+                $this->autofillAddressField('city', (string) $this->address['city']);
+            }
+        }
+
         CheckoutSession::forgetShipping();
         $this->shipping = '';
         $this->comment = '';
@@ -337,6 +358,10 @@ class Checkout extends Component
      */
     public function render()
     {
+        if (trim((string) ($this->address['state'] ?? '')) === '') {
+            $this->address['state'] = self::DEFAULT_COUNTRY;
+        }
+
         $geo = (new GeoZone())->findState($this->address['state'] ?: 'Croatia');
 
         if ( ! isset($geo->id)) {
@@ -360,39 +385,41 @@ class Checkout extends Component
     private function setAddress(array $value = [], bool $only_state = false)
     {
         if ( ! empty($value)) {
-            $value['state'] = isset($value['state']) ? $value['state'] : 'Croatia';
+            $value['state'] = trim((string) ($value['state'] ?? '')) ?: self::DEFAULT_COUNTRY;
 
             if ($only_state) {
                 $this->address['state'] = $value['state'];
 
             } else {
                 $this->address = [
-                    'fname' => $value['fname'],
-                    'lname' => $value['lname'],
-                    'email' => $value['email'],
-                    'phone' => $value['phone'],
-                    'address' => $value['address'],
-                    'city' => $value['city'],
-                    'company' => $value['company'],
-                    'oib' => $value['oib'],
-                    'zip' => $value['zip'],
+                    'fname' => $value['fname'] ?? '',
+                    'lname' => $value['lname'] ?? '',
+                    'email' => $value['email'] ?? '',
+                    'phone' => $value['phone'] ?? '',
+                    'address' => $value['address'] ?? '',
+                    'city' => $value['city'] ?? '',
+                    'company' => $value['company'] ?? '',
+                    'oib' => $value['oib'] ?? '',
+                    'zip' => $value['zip'] ?? '',
                     'state' => $value['state'],
                 ];
             }
         } else {
             if (auth()->user()) {
                 $this->address = [
-                    'fname' => auth()->user()->details->fname,
-                    'lname' => auth()->user()->details->lname,
-                    'email' => auth()->user()->email,
-                    'phone' => auth()->user()->details->phone,
-                    'address' => auth()->user()->details->address,
-                    'city' => auth()->user()->details->city,
-                    'company' => auth()->user()->details->company,
-                    'oib' => auth()->user()->details->oib,
-                    'zip' => auth()->user()->details->zip,
-                    'state' => auth()->user()->details->state
+                    'fname' => auth()->user()->details->fname ?? '',
+                    'lname' => auth()->user()->details->lname ?? '',
+                    'email' => auth()->user()->email ?? '',
+                    'phone' => auth()->user()->details->phone ?? '',
+                    'address' => auth()->user()->details->address ?? '',
+                    'city' => auth()->user()->details->city ?? '',
+                    'company' => auth()->user()->details->company ?? '',
+                    'oib' => auth()->user()->details->oib ?? '',
+                    'zip' => auth()->user()->details->zip ?? '',
+                    'state' => trim((string) (auth()->user()->details->state ?? '')) ?: self::DEFAULT_COUNTRY
                 ];
+            } else {
+                $this->address['state'] = self::DEFAULT_COUNTRY;
             }
         }
 
@@ -405,6 +432,25 @@ class Checkout extends Component
         //dd($this->address);
 
         return $this->address;
+    }
+
+    private function autofillAddressField(string $field, string $value): void
+    {
+        /** @var AddressDirectoryService $directory */
+        $directory = app(AddressDirectoryService::class);
+        $country = (string) ($this->address['state'] ?? self::DEFAULT_COUNTRY);
+
+        $place = $field === 'zip'
+            ? $directory->findByPostal($value, $country)
+            : $directory->findByCity($value, $country);
+
+        if ($place) {
+            $this->address['zip'] = $place['postal_code'];
+            $this->address['city'] = $place['city'];
+            $this->address['state'] = self::DEFAULT_COUNTRY;
+        }
+
+        CheckoutSession::setAddress($this->address);
     }
 
 

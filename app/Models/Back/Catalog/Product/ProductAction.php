@@ -35,10 +35,17 @@ class ProductAction extends Model
      */
     public static function active()
     {
-        return self::where('date_start', '<', Carbon::now())
-            ->where('date_end', '>', Carbon::now())
-            //->orWhereNull('date_start')
-            ->orWhereNull('date_end');
+        return self::where(function ($query) {
+            $query->where(function ($inner) {
+                $inner->where(function ($dateStart) {
+                    $dateStart->whereNull('date_start')
+                        ->orWhere('date_start', '<', Carbon::now());
+                })->where(function ($dateEnd) {
+                    $dateEnd->whereNull('date_end')
+                        ->orWhere('date_end', '>', Carbon::now());
+                });
+            });
+        });
     }
 
 

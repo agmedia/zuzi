@@ -10,6 +10,7 @@ let messages = {
     cartRemove: 'Proizvod maknut iz košarice.',
     couponSuccess: 'Kupon je uspješno dodan u košaricu.',
     couponError: 'Nažalost nema kupona pod tim kodom.',
+    couponEmpty: 'Upišite kod za popust.',
 }
 
 
@@ -106,15 +107,14 @@ class AgService {
      * @returns {*}
      */
     checkCoupon(coupon) {
-        if ( ! coupon) {
-            coupon = null;
-        }
-        return axios.get('cart/coupon/' + coupon)
-        .then(response => {
-            this.returnSuccess(messages.couponSuccess);
-            return response.data
+        return axios.post('cart/coupon', {coupon: coupon})
+        .then(response => response.data)
+        .catch(error => {
+            return {
+                success: false,
+                message: error?.response?.data?.message || messages.error,
+            };
         })
-        .catch(error => { return this.returnError(messages.error) })
     }
 
     /**
@@ -408,18 +408,28 @@ let store = {
          */
         checkCoupon(context, coupon) {
             let state = context.state;
+            let normalizedCoupon = String(coupon || '').trim().toUpperCase();
 
-            state.cart.coupon = coupon;
-            state.storage.setCart(state.cart);
+            if ( ! normalizedCoupon) {
+                state.service.returnError(messages.couponEmpty);
+                return Promise.resolve(false);
+            }
 
-            state.service.checkCoupon(coupon).then(response => {
-                if (response) {
-                    state.service.returnSuccess(messages.couponSuccess);
+            return state.service.checkCoupon(normalizedCoupon).then(response => {
+                if (response && response.cart) {
+                    state.storage.setCart(response.cart);
+                    state.cart = response.cart;
                 } else {
-                    state.service.returnError(messages.couponError);
+                    context.commit('setCart');
                 }
 
-                context.commit('setCart');
+                if (response && response.success) {
+                    state.service.returnSuccess(response.message || messages.couponSuccess);
+                    return response;
+                }
+
+                state.service.returnError((response && response.message) || messages.couponError);
+                return false;
             });
         },
 

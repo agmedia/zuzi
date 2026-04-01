@@ -351,7 +351,7 @@ class Order extends Model
         }
 
         if (isset($action->status) && $action->status) {
-            if ($action->coupon && $action->coupon == $this->order['cart']['coupon']) {
+            if ($action->coupon && Helper::couponEquals($action->coupon, $this->order['cart']['coupon'] ?? '')) {
                 $coupon_ok = true;
             }
 

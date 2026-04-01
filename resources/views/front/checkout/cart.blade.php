@@ -60,7 +60,11 @@
                 </a>
                 <a class="step-item" href="{{ route('pregled') }}">
                     <div class="step-progress"><span class="step-count">5</span></div>
-                    <div class="step-label"><i class="ci-check-circle"></i>Pregledaj</div>
+                    <div class="step-label"><i class="ci-eye"></i>Pregledaj</div>
+                </a>
+                <a class="step-item" href="javascript:void(0);">
+                    <div class="step-progress"><span class="step-count">6</span></div>
+                    <div class="step-label"><i class="ci-check-circle"></i>Uspješno</div>
                 </a>
             </div>
             <div class="card px-3">

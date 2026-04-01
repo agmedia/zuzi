@@ -2651,6 +2651,13 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2668,6 +2675,7 @@ __webpack_require__.r(__webpack_exports__);
       mobile: false,
       show_delete_btn: true,
       coupon: '',
+      couponSubmitting: false,
       has_loyalty: false,
       selected_loyalty: 0,
       tax: 0
@@ -2732,11 +2740,20 @@ __webpack_require__.r(__webpack_exports__);
      *
      */
     setCoupon: function setCoupon() {
-      var cart = this.$store.state.storage.getCart();
-      if (cart) {
-        cart.coupon = this.coupon;
-        this.checkCoupon();
+      var _this = this;
+      var normalizedCoupon = String(this.coupon || '').trim().toUpperCase();
+      this.coupon = normalizedCoupon;
+      if (this.couponSubmitting) {
+        return;
       }
+      if (!normalizedCoupon) {
+        this.checkCoupon();
+        return;
+      }
+      this.couponSubmitting = true;
+      this.checkCoupon()["finally"](function () {
+        _this.couponSubmitting = false;
+      });
     },
     setLoyalty: function setLoyalty() {
       var cart = this.$store.state.storage.getCart();
@@ -2750,7 +2767,7 @@ __webpack_require__.r(__webpack_exports__);
      *
      */
     checkCoupon: function checkCoupon() {
-      this.$store.dispatch('checkCoupon', this.coupon);
+      return this.$store.dispatch('checkCoupon', this.coupon);
     },
     /**
      *
@@ -4340,7 +4357,8 @@ var messages = {
   cartUpdate: 'Količina proizvoda je promjenjena',
   cartRemove: 'Proizvod maknut iz košarice.',
   couponSuccess: 'Kupon je uspješno dodan u košaricu.',
-  couponError: 'Nažalost nema kupona pod tim kodom.'
+  couponError: 'Nažalost nema kupona pod tim kodom.',
+  couponEmpty: 'Upišite kod za popust.'
 };
 var AgService = /*#__PURE__*/function () {
   function AgService() {
@@ -4462,15 +4480,16 @@ var AgService = /*#__PURE__*/function () {
   }, {
     key: "checkCoupon",
     value: function checkCoupon(coupon) {
-      var _this6 = this;
-      if (!coupon) {
-        coupon = null;
-      }
-      return axios.get('cart/coupon/' + coupon).then(function (response) {
-        _this6.returnSuccess(messages.couponSuccess);
+      return axios.post('cart/coupon', {
+        coupon: coupon
+      }).then(function (response) {
         return response.data;
       })["catch"](function (error) {
-        return _this6.returnError(messages.error);
+        var _error$response, _error$response$data;
+        return {
+          success: false,
+          message: (error === null || error === void 0 ? void 0 : (_error$response = error.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || messages.error
+        };
       });
     }
 
@@ -4482,15 +4501,15 @@ var AgService = /*#__PURE__*/function () {
   }, {
     key: "updateLoyalty",
     value: function updateLoyalty(loyalty) {
-      var _this7 = this;
+      var _this6 = this;
       if (!loyalty) {
         loyalty = null;
       }
       return axios.get('cart/loyalty/' + loyalty).then(function (response) {
-        _this7.returnSuccess(messages.couponSuccess);
+        _this6.returnSuccess(messages.couponSuccess);
         return response.data;
       })["catch"](function (error) {
-        return _this7.returnError(messages.error);
+        return _this6.returnError(messages.error);
       });
     }
 
@@ -4501,11 +4520,11 @@ var AgService = /*#__PURE__*/function () {
   }, {
     key: "getSettings",
     value: function getSettings() {
-      var _this8 = this;
+      var _this7 = this;
       return axios.get('settings/get').then(function (response) {
         return response.data;
       })["catch"](function (error) {
-        return _this8.returnError(messages.error);
+        return _this7.returnError(messages.error);
       });
     }
 
@@ -4568,10 +4587,10 @@ var AgService = /*#__PURE__*/function () {
   }, {
     key: "formatMainPrice",
     value: function formatMainPrice(price) {
-      var _this9 = this;
+      var _this8 = this;
       if (!store.state.settings) {
         this.getSettings().then(function (response) {
-          return _this9.resolvePrice(response['currency.list'], price);
+          return _this8.resolvePrice(response['currency.list'], price);
         });
       } else {
         return this.resolvePrice(store.state.settings['currency.list'], price);
@@ -4617,10 +4636,10 @@ var AgService = /*#__PURE__*/function () {
   }, {
     key: "formatSecondaryPrice",
     value: function formatSecondaryPrice(price) {
-      var _this10 = this;
+      var _this9 = this;
       if (!store.state.settings) {
         this.getSettings().then(function (response) {
-          return _this10.resolvePrice(response['currency.list'], price, false);
+          return _this9.resolvePrice(response['currency.list'], price, false);
         });
       } else {
         return this.resolvePrice(store.state.settings['currency.list'], price, false);
@@ -4777,15 +4796,24 @@ var store = {
      */
     checkCoupon: function checkCoupon(context, coupon) {
       var state = context.state;
-      state.cart.coupon = coupon;
-      state.storage.setCart(state.cart);
-      state.service.checkCoupon(coupon).then(function (response) {
-        if (response) {
-          state.service.returnSuccess(messages.couponSuccess);
+      var normalizedCoupon = String(coupon || '').trim().toUpperCase();
+      if (!normalizedCoupon) {
+        state.service.returnError(messages.couponEmpty);
+        return Promise.resolve(false);
+      }
+      return state.service.checkCoupon(normalizedCoupon).then(function (response) {
+        if (response && response.cart) {
+          state.storage.setCart(response.cart);
+          state.cart = response.cart;
         } else {
-          state.service.returnError(messages.couponError);
+          context.commit('setCart');
         }
-        context.commit('setCart');
+        if (response && response.success) {
+          state.service.returnSuccess(response.message || messages.couponSuccess);
+          return response;
+        }
+        state.service.returnError(response && response.message || messages.couponError);
+        return false;
       });
     },
     /**
@@ -7555,10 +7583,26 @@ var render = function() {
                     staticClass: "form-control",
                     attrs: {
                       type: "text",
-                      placeholder: "Upišite kod ovdje..."
+                      placeholder: "Upišite kod ovdje...",
+                      autocomplete: "off"
                     },
                     domProps: { value: _vm.coupon },
                     on: {
+                      keyup: function($event) {
+                        if (
+                          !$event.type.indexOf("key") &&
+                          _vm._k(
+                            $event.keyCode,
+                            "enter",
+                            13,
+                            $event.key,
+                            "Enter"
+                          )
+                        ) {
+                          return null
+                        }
+                        return _vm.setCoupon.apply(null, arguments)
+                      },
                       input: function($event) {
                         if ($event.target.composing) {
                           return
@@ -7573,7 +7617,10 @@ var render = function() {
                       "button",
                       {
                         staticClass: "btn btn-outline-primary btn-shadow",
-                        attrs: { type: "button" },
+                        attrs: {
+                          type: "button",
+                          disabled: _vm.couponSubmitting
+                        },
                         on: { click: _vm.setCoupon }
                       },
                       [_vm._v("Dodaj")]

@@ -108,7 +108,7 @@ class Action extends Model
         if ($is_valid) {
             $is_valid = false;
 
-            if ($this->coupon && $coupon !== '' && $coupon === $this->coupon) {
+            if ($this->coupon && $coupon !== '' && Helper::couponEquals($coupon, $this->coupon)) {
                 $is_valid = true;
             }
 
@@ -125,7 +125,7 @@ class Action extends Model
         $response = ['type' => '', 'description' => ''];
 
         if ($coupon !== '') {
-            $response = ['type' => 'coupon', 'description' => $coupon];
+            $response = ['type' => 'coupon', 'description' => Helper::normalizeCoupon($coupon)];
         }
 
         return $response;

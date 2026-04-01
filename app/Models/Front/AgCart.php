@@ -202,25 +202,44 @@ class AgCart extends Model
      *
      * @param $coupon
      *
-     * @return int
+     * @return array
      */
-    public function coupon($coupon): int
+    public function coupon($coupon): array
     {
-        $items = $this->cart->getContent();
+        $coupon = Helper::normalizeCoupon($coupon);
 
-        // Refreshaj košaricu sa upisanim kuponom.
-        foreach ($items as $item) {
-            $this->remove($item->id);
-            $this->addToCart($this->resolveItemRequest($item));
+        if ($coupon === '') {
+            session()->forget($this->session_key . '_coupon');
+            $this->coupon = '';
+            $this->refreshCouponAwareItems();
+
+            return [
+                'success' => false,
+                'coupon' => '',
+                'cart' => $this->get(),
+            ];
         }
 
-        $has_coupon = ProductAction::active()->where('coupon', $coupon)->get();
+        session([$this->session_key . '_coupon' => $coupon]);
+        $this->coupon = $coupon;
 
-        if ($has_coupon->count()) {
-            return 1;
+        $this->refreshCouponAwareItems();
+
+        $cart = $this->get();
+        $success = Helper::couponEquals(Helper::isCouponUsed($this->cart), $coupon);
+
+        if ( ! $success) {
+            session()->forget($this->session_key . '_coupon');
+            $this->coupon = '';
+            $this->refreshCouponAwareItems();
+            $cart = $this->get();
         }
 
-        return 0;
+        return [
+            'success' => $success,
+            'coupon' => $this->coupon,
+            'cart' => $cart,
+        ];
     }
 
 
@@ -375,6 +394,16 @@ class AgCart extends Model
         $this->cart->add($this->structureCartItem($request));
 
         return $this->get();
+    }
+
+    private function refreshCouponAwareItems(): void
+    {
+        $items = $this->cart->getContent();
+
+        foreach ($items as $item) {
+            $this->remove($item->id);
+            $this->addToCart($this->resolveItemRequest($item));
+        }
     }
 
 
