@@ -44,7 +44,7 @@
                         <div class="d-inline-flex align-items-center text-start"><i class="ci-truck text-zuzi" style="font-size: 3rem;"></i>
                             <div class="ps-3">
                                 <p class="text-dark fw-bold fs-base mb-1">Dostava? Zuzi časti!</p>
-                                <p class="text-dark fs-sm opacity-70 mb-0">Za narudžbe iznad 70 €, ne plaćaš poštarinu. Čista knjiška radost.</p>
+                                <p class="text-dark fs-sm opacity-70 mb-0">Za narudžbe iznad 50€, ne plaćaš poštarinu. Čista knjiška radost.</p>
                             </div>
                         </div>
                     </div>
