@@ -2760,6 +2760,10 @@ __webpack_require__.r(__webpack_exports__);
       cart.loyalty = this.selected_loyalty;
       this.updateLoyalty();
     },
+    clearLoyalty: function clearLoyalty() {
+      this.selected_loyalty = null;
+      this.updateLoyalty();
+    },
     /**
      *
      */
@@ -2976,14 +2980,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     this.checkQuery(this.$route);
     this.checkCategory();
     this.getCategories();
-    if (this.author == '') {
-      this.show_authors = true;
-      this.getAuthors();
-    }
-    if (this.publisher == '') {
-      this.show_publishers = true;
-      this.getPublishers();
-    }
     this.preselect();
   },
   methods: {
@@ -4358,7 +4354,10 @@ var messages = {
   cartRemove: 'Proizvod maknut iz košarice.',
   couponSuccess: 'Kupon je uspješno dodan u košaricu.',
   couponError: 'Nažalost nema kupona pod tim kodom.',
-  couponEmpty: 'Upišite kod za popust.'
+  couponEmpty: 'Upišite kod za popust.',
+  loyaltySuccess: 'Loyalty popust je uspješno primijenjen.',
+  loyaltyRemoved: 'Loyalty popust je uklonjen.',
+  loyaltyError: 'Loyalty popust nije moguće primijeniti.'
 };
 var AgService = /*#__PURE__*/function () {
   function AgService() {
@@ -4506,7 +4505,6 @@ var AgService = /*#__PURE__*/function () {
         loyalty = null;
       }
       return axios.get('cart/loyalty/' + loyalty).then(function (response) {
-        _this6.returnSuccess(messages.couponSuccess);
         return response.data;
       })["catch"](function (error) {
         return _this6.returnError(messages.error);
@@ -4825,11 +4823,11 @@ var store = {
       var state = context.state;
       state.cart.loyalty = loyalty;
       state.storage.setCart(state.cart);
-      state.service.updateLoyalty(loyalty).then(function (response) {
+      return state.service.updateLoyalty(loyalty).then(function (response) {
         if (response) {
-          state.service.returnSuccess(messages.couponSuccess);
+          state.service.returnSuccess(loyalty ? messages.loyaltySuccess : messages.loyaltyRemoved);
         } else {
-          state.service.returnError(messages.couponError);
+          state.service.returnError(messages.loyaltyError);
         }
         context.commit('setCart');
       });
@@ -7725,11 +7723,7 @@ var render = function() {
                 {
                   staticClass: "btn btn-outline-primary btn-shadow",
                   attrs: { type: "button" },
-                  on: {
-                    click: function($event) {
-                      _vm.selected_loyalty = null
-                    }
-                  }
+                  on: { click: _vm.clearLoyalty }
                 },
                 [_vm._v("Odbaci")]
               ),

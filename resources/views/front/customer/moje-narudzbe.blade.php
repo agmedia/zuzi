@@ -15,15 +15,33 @@
                     </div>
                     <div class="modal-body pb-0">
                         @foreach ($order->products as $product)
-
+                            @php
+                                $productUrl = optional($product->real)->url;
+                                $productImage = optional($product->product)->image;
+                            @endphp
 
                             <div class="d-sm-flex justify-content-between mb-4 pb-3 pb-sm-2 border-bottom">
                                 <div class="d-sm-flex text-center text-sm-start">
-                                    <a class="d-inline-block flex-shrink-0 mx-auto" href="{{ url($product->real->url) }}" style="width: 10rem;">
-                                        <img src="{{ $product->product->image ? asset($product->product->image) : asset('media/avatars/avatar0.jpg') }}" alt="{{ $product->name }}">
-                                    </a>
+                                    @if ($productUrl)
+                                        <a class="d-inline-block flex-shrink-0 mx-auto" href="{{ url($productUrl) }}" style="width: 10rem;">
+                                            <img src="{{ $productImage ? asset($productImage) : asset('media/avatars/avatar0.jpg') }}" alt="{{ $product->name }}">
+                                        </a>
+                                    @else
+                                        <span class="d-inline-block flex-shrink-0 mx-auto" style="width: 10rem;">
+                                            <img src="{{ $productImage ? asset($productImage) : asset('media/avatars/avatar0.jpg') }}" alt="{{ $product->name }}">
+                                        </span>
+                                    @endif
                                     <div class="ps-sm-4 pt-2">
-                                        <h3 class="product-title fs-base mb-2"><a href="{{ url($product->real->url) }}">{{ $product->name }}</a></h3>
+                                        <h3 class="product-title fs-base mb-2">
+                                            @if ($productUrl)
+                                                <a href="{{ url($productUrl) }}">{{ $product->name }}</a>
+                                            @else
+                                                <span>{{ $product->name }}</span>
+                                            @endif
+                                        </h3>
+                                        @if ( ! $productUrl)
+                                            <div class="fs-sm text-muted">Proizvod više nije dostupan u katalogu.</div>
+                                        @endif
                                         <div class="fs-lg text-accent pt-2">{{ number_format($product->price, 2, ',', '.') }} €</div>
                                     </div>
                                 </div>
@@ -76,7 +94,7 @@
                             <tr>
                                 <td class="py-3"><a class="nav-link-style fw-medium fs-sm" href="#order-details{{ $order->id }}" data-bs-toggle="modal">{{ $order->id }}</a></td>
                                 <td class="py-3">{{ \Illuminate\Support\Carbon::make($order->created_at)->format('d.m.Y') }}</td>
-                                <td class="py-3"><span class="badge bg-info m-0">{{ $order->status->title }}</span></td>
+                                <td class="py-3"><span class="badge bg-info m-0">{{ optional($order->status)->title ?: 'Nepoznat status' }}</span></td>
                                 <td class="py-3">{{ number_format($order->total, 2, ',', '.') }} €</td>
                                 <td class="py-3"><a class="badge bg-primary text-white m-0 " href="#order-details{{ $order->id }}" data-bs-toggle="modal">Pregled</a></td>
                             </tr>

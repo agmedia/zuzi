@@ -227,17 +227,54 @@
         </div>
     @endif
 
-    <div class="container pb-4 mb-2 mt-5 mb-md-4 text-center" >
-        @if ($cat && !$subcat)
-            {!! $cat->description !!}
-        @elseif ($subcat)
-            {!! $subcat->description !!}
-        @endif
-    </div>
+    @php
+        $categoryDescription = null;
 
+        if ($cat && ! $subcat) {
+            $categoryDescription = $cat->description;
+        } elseif ($subcat) {
+            $categoryDescription = $subcat->description;
+        }
 
+        do {
+            $previousCategoryDescription = (string) $categoryDescription;
+            $categoryDescription = preg_replace(
+                '/<([a-z][a-z0-9]*)\b[^>]*>(?:\s|&nbsp;|&#160;|&#xA0;|<br\s*\/?>)*<\/\1>/iu',
+                '',
+                $previousCategoryDescription
+            );
+        } while ((string) $categoryDescription !== $previousCategoryDescription);
 
+        $categoryDescription = trim((string) $categoryDescription);
 
+        $hasLongCategoryDescription = \Illuminate\Support\Str::length(trim(strip_tags((string) $categoryDescription))) > 420;
+    @endphp
+
+    @if (! empty($categoryDescription))
+        <div class="container pb-4 mb-2 mt-5 mb-md-4">
+            <div
+                class="category-description{{ $hasLongCategoryDescription ? ' is-collapsed' : '' }}"
+                data-category-description
+            >
+                <div class="category-description__content">
+                    {!! $categoryDescription !!}
+                </div>
+            </div>
+
+            @if ($hasLongCategoryDescription)
+                <div class="text-center mt-3">
+                    <button
+                        class="btn btn-outline-secondary btn-sm"
+                        type="button"
+                        data-category-description-toggle
+                        aria-expanded="false"
+                    >
+                        Prikaži više
+                    </button>
+                </div>
+            @endif
+        </div>
+    @endif
 
 @endsection
 
@@ -268,5 +305,70 @@
                 padding-bottom: 15px;
             }
         }
+
+        .category-description {
+            position: relative;
+            text-align: left;
+        }
+
+        .category-description.is-collapsed {
+            max-height: 16rem;
+            overflow: hidden;
+        }
+
+        .category-description.is-collapsed::after {
+            content: "";
+            position: absolute;
+            inset: auto 0 0;
+            height: 5rem;
+            background: linear-gradient(to bottom, rgba(246, 249, 252, 0), #f6f9fc 72%);
+            pointer-events: none;
+        }
+
+        .category-description__content > :last-child {
+            margin-bottom: 0;
+        }
+
+        .category-description__content h1,
+        .category-description__content h2,
+        .category-description__content h3,
+        .category-description__content h4 {
+            line-height: 1.2;
+            margin-bottom: 0.9rem;
+        }
+
+        .category-description__content h1 {
+            font-size: clamp(1.55rem, 2.2vw, 2rem);
+        }
+
+        .category-description__content h2 {
+            font-size: clamp(1.3rem, 1.8vw, 1.65rem);
+        }
+
+        .category-description__content h3 {
+            font-size: clamp(1.15rem, 1.55vw, 1.4rem);
+        }
+
+        .category-description__content h4 {
+            font-size: clamp(1rem, 1.35vw, 1.15rem);
+        }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const description = document.querySelector('[data-category-description]');
+            const toggle = document.querySelector('[data-category-description-toggle]');
+
+            if (!description || !toggle) {
+                return;
+            }
+
+            toggle.addEventListener('click', function () {
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+
+                description.classList.toggle('is-collapsed', isExpanded);
+                toggle.setAttribute('aria-expanded', String(!isExpanded));
+                toggle.textContent = isExpanded ? 'Prikaži više' : 'Prikaži manje';
+            });
+        });
+    </script>
 @endpush

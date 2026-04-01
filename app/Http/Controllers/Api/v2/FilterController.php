@@ -34,13 +34,16 @@ class FilterController extends Controller
         // Ako je normal kategorija
         if ($params['group']) {
             $response = Helper::resolveCache('categories')->remember($params['group'], config('cache.life'), function () use ($params) {
-                $response = Category::active()->topList($params['group'])->sortByName()->with('subcategories')->withCount([
-                    'products',
-                    'products as products_count' => function (Builder $query) {
-                        return $query->where('status', 1)
-                              ->where('quantity', '>', 0)
-                              ->where('price', '>', 0);
-                    }])->get()->toArray();
+                $response = Category::query()
+                    ->active()
+                    ->topList($params['group'])
+                    ->sortByName()
+                    ->select('id', 'title', 'slug', 'group')
+                    ->with(['subcategories' => function ($query) {
+                        $query->select('id', 'parent_id', 'title', 'slug', 'group');
+                    }])
+                    ->get()
+                    ->toArray();
 
                 return $this->resolveCategoryArray($response, 'categories');
             });
@@ -93,7 +96,7 @@ class FilterController extends Controller
             $response[] = [
                 'id' => $category['id'],
                 'title' => $category['title'],
-                'count' => $category['products_count'],
+                'count' => $category['products_count'] ?? 0,
                 'url' => $url,
                 'subs' => $subs
             ];

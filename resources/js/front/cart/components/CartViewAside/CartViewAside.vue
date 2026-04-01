@@ -102,7 +102,7 @@
 
 
                 </div>
-                <button type="button" v-on:click="selected_loyalty = null" class="btn btn-outline-primary btn-shadow">Odbaci</button>
+                <button type="button" v-on:click="clearLoyalty" class="btn btn-outline-primary btn-shadow">Odbaci</button>
                 <button type="button" v-on:click="setLoyalty" class="btn btn-outline-primary btn-shadow">Primjeni </button>
             </div>
         </div>
@@ -220,6 +220,11 @@ export default {
             let cart = this.$store.state.storage.getCart();
 
             cart.loyalty = this.selected_loyalty;
+            this.updateLoyalty();
+        },
+
+        clearLoyalty() {
+            this.selected_loyalty = null;
             this.updateLoyalty();
         },
 

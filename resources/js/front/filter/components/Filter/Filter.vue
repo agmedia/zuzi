@@ -169,18 +169,6 @@ export default {
         this.checkCategory();
         this.getCategories();
 
-
-
-        if (this.author == '') {
-            this.show_authors = true;
-            this.getAuthors();
-        }
-
-        if (this.publisher == '') {
-            this.show_publishers = true;
-            this.getPublishers();
-        }
-
         this.preselect();
     },
 

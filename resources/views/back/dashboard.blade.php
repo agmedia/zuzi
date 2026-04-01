@@ -229,7 +229,10 @@
                                         <a href="{{ route('orders.edit', ['order' => $order]) }}">{{ $order->payment_fname . ' ' . $order->payment_lname }}</a>
                                     </td>
                                     <td class="text-right" style="width: 5%;">
-                                        <span class="badge badge-pill badge-{{ $order->status->color }}">{{ $order->status->title }}</span>
+                                        @php($status = $order->status)
+                                        <span class="badge badge-pill badge-{{ $status->color ?? 'secondary' }}">
+                                            {{ $status->title ?? ('Nepoznat status (#' . $order->order_status_id . ')') }}
+                                        </span>
                                     </td>
                                     <td class="font-w600 text-right" style="width: 20%;">{{ \App\Helpers\Currency::main($order->total, true) }}</td>
                                 </tr>

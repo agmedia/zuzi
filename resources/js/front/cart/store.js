@@ -11,6 +11,9 @@ let messages = {
     couponSuccess: 'Kupon je uspješno dodan u košaricu.',
     couponError: 'Nažalost nema kupona pod tim kodom.',
     couponEmpty: 'Upišite kod za popust.',
+    loyaltySuccess: 'Loyalty popust je uspješno primijenjen.',
+    loyaltyRemoved: 'Loyalty popust je uklonjen.',
+    loyaltyError: 'Loyalty popust nije moguće primijeniti.',
 }
 
 
@@ -126,11 +129,9 @@ class AgService {
         if ( ! loyalty) {
             loyalty = null;
         }
+
         return axios.get('cart/loyalty/' + loyalty)
-            .then(response => {
-                this.returnSuccess(messages.couponSuccess);
-                return response.data
-            })
+            .then(response => response.data)
             .catch(error => { return this.returnError(messages.error) })
     }
 
@@ -444,11 +445,11 @@ let store = {
             state.cart.loyalty = loyalty;
             state.storage.setCart(state.cart);
 
-            state.service.updateLoyalty(loyalty).then(response => {
+            return state.service.updateLoyalty(loyalty).then(response => {
                 if (response) {
-                    state.service.returnSuccess(messages.couponSuccess);
+                    state.service.returnSuccess(loyalty ? messages.loyaltySuccess : messages.loyaltyRemoved);
                 } else {
-                    state.service.returnError(messages.couponError);
+                    state.service.returnError(messages.loyaltyError);
                 }
 
                 context.commit('setCart');

@@ -41,7 +41,14 @@ class CustomerController extends Controller
     public function orders(Request $request)
     {
         $user   = auth()->user();
-        $orders = Order::where('user_id', $user->id)->orWhere('payment_email', $user->email)->paginate(config('settings.pagination.front'));
+        $orders = Order::query()
+            ->with(['products.product', 'products.real', 'totals'])
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('payment_email', $user->email);
+            })
+            ->latest('created_at')
+            ->paginate(config('settings.pagination.front'));
 
         return view('front.customer.moje-narudzbe', compact('user', 'orders'));
     }
