@@ -87,7 +87,11 @@ class CatalogRouteController extends Controller
                     ->get();
             }
 
-            if ($prod->publisher_id) {
+            $hasKnownPublisher = $prod->publisher_id
+                && $prod->publisher
+                && Str::lower(trim((string) $prod->publisher->title)) !== 'nepoznati izdavač';
+
+            if ($hasKnownPublisher) {
                 $publisherProducts = Product::query()
                     ->active()
                     ->hasStock()

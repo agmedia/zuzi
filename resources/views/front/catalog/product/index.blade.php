@@ -8,6 +8,8 @@
 @php
     $productCoverAlt = $prod->image_alt ?: 'Naslovnica knjige ' . $prod->name;
     $relatedHeading = $subcat ? 'Slične knjige iz kategorije ' . $subcat->title : ($cat ? 'Slične knjige iz kategorije ' . $cat->title : 'Možda vas zanima');
+    $hasKnownPublisher = $prod->publisher
+        && \Illuminate\Support\Str::lower(trim((string) $prod->publisher->title)) !== 'nepoznati izdavač';
 @endphp
 
 @push('meta_tags')
@@ -202,7 +204,7 @@
                        @if ($prod->author)
                            <li><strong>Autor:</strong> <a href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">{{ $prod->author->title }} </a></li>
                        @endif
-                       @if ($prod->publisher)
+                       @if ($hasKnownPublisher)
                            <li><strong>Nakladnik:</strong> <a href="{{ route('catalog.route.publisher', ['publisher' => $prod->publisher]) }}">{{ $prod->publisher->title }}</a> </li>
                        @endif
                        @if ($prod->isbn)
@@ -276,14 +278,14 @@
        </div>
    </div>
 
-   @if ($prod->author || $prod->publisher || $cat || $subcat)
+   @if ($prod->author || $hasKnownPublisher || $cat || $subcat)
        <div class="border-top pt-3 mt-2">
            <h2 class="h6 mb-3">Istražite još</h2>
            <div class="d-flex flex-wrap gap-2">
                @if ($prod->author)
                    <a class="btn btn-outline-primary btn-sm" href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">Još knjiga autora {{ \Illuminate\Support\Str::limit($prod->author->title, 28) }}</a>
                @endif
-               @if ($prod->publisher)
+               @if ($hasKnownPublisher)
                    <a class="btn btn-outline-primary btn-sm" href="{{ route('catalog.route.publisher', ['publisher' => $prod->publisher]) }}">Više od nakladnika {{ \Illuminate\Support\Str::limit($prod->publisher->title, 24) }}</a>
                @endif
                @if ($cat)
@@ -378,7 +380,7 @@
                        @if ($prod->author)
                                <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Autor:</span><span><a href="{{ route('catalog.route.author', ['author' => $prod->author]) }}">{{ Illuminate\Support\Str::limit($prod->author->title, 30) }}</a></span></li>
                        @endif
-                       @if ($prod->publisher)
+                       @if ($hasKnownPublisher)
                                <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Nakladnik:</span><span><a href="{{ route('catalog.route.publisher', ['publisher' => $prod->publisher]) }}">{{ Illuminate\Support\Str::limit($prod->publisher->title, 30) }}</a> </span></li>
                        @endif
 
@@ -434,7 +436,7 @@
     </section>
 @endif
 
-@if ($prod->publisher && $publisherProducts->count())
+@if ($hasKnownPublisher && $publisherProducts->count())
     <section class="pb-5 mb-2 mb-xl-4">
         <div class="flex-wrap justify-content-between align-items-center text-center">
             <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Više knjiga nakladnika {{ $prod->publisher->title }}</h2>
