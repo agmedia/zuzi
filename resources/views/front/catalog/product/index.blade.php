@@ -14,7 +14,7 @@
         'items' => 2,
         'gutter' => 16,
         'controls' => true,
-        'nav' => false,
+        'nav' => true,
         'autoHeight' => false,
         'mouseDrag' => true,
         'touch' => true,
@@ -22,8 +22,8 @@
         'preventActionWhenRunning' => true,
         'preventScrollOnTouch' => 'auto',
         'responsive' => [
-            0 => ['items' => 2, 'controls' => false],
-            480 => ['items' => 2, 'controls' => true],
+            0 => ['items' => 2, 'controls' => true, 'nav' => true],
+            480 => ['items' => 2, 'controls' => true, 'nav' => true],
             720 => ['items' => 3],
             991 => ['items' => 2],
             1140 => ['items' => 3],
@@ -441,7 +441,7 @@
         <div class="flex-wrap justify-content-between align-items-center text-center">
             <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Još knjiga autora {{ $prod->author->title }}</h2>
         </div>
-        <div class="tns-carousel tns-controls-static tns-controls-outside pt-2 product-page-carousel">
+        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 product-page-carousel">
             <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
                 @foreach ($authorProducts as $authorProduct)
                     <div>
@@ -458,7 +458,7 @@
         <div class="flex-wrap justify-content-between align-items-center text-center">
             <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Više knjiga nakladnika {{ $prod->publisher->title }}</h2>
         </div>
-        <div class="tns-carousel tns-controls-static tns-controls-outside pt-2 product-page-carousel">
+        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 product-page-carousel">
             <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
                 @foreach ($publisherProducts as $publisherProduct)
                     <div>
@@ -475,7 +475,7 @@
         <div class="flex-wrap justify-content-between align-items-center text-center">
             <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">{{ $relatedHeading }}</h2>
         </div>
-        <div class="tns-carousel tns-controls-static tns-controls-outside pt-2 product-page-carousel">
+        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 product-page-carousel">
             <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
                 @foreach ($relatedProducts as $relatedProduct)
                     <div>
