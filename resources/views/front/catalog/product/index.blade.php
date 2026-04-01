@@ -39,20 +39,7 @@
 
 @section('content')
 
-    <section >
-        <div class="d-flex row justify-content-between">
 
-            <div class="col-md-12">
-                <div class="alert alert-info d-flex  mb-1 " role="alert">
-                    <div class="alert-icon">
-                        <i class="ci-gift"></i>
-                    </div>
-                    <small> <strong>Rok isporuke </strong></a> za regionalne naslove je do 20 dana. </small>
-
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- Page title + breadcrumb-->
     <nav class="mb-4" aria-label="breadcrumb">
@@ -279,7 +266,7 @@
    </div>
 
    @if ($prod->author || $hasKnownPublisher || $cat || $subcat)
-       <div class="border-top pt-3 mt-2">
+       <div class="border-top pt-3 mt-2 mb-3">
            <h2 class="h6 mb-3">Istražite još</h2>
            <div class="d-flex flex-wrap gap-2">
                @if ($prod->author)

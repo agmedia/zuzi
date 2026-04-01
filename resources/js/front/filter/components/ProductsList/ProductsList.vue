@@ -361,7 +361,7 @@
         display: flex !important;
         align-items: center;
         justify-content: center;
-        min-height: 300px;
+        min-height: 250px;
         padding: 0.5rem;
         background-color: #fff;
     }
@@ -370,7 +370,7 @@
         width: auto;
         height: auto;
         max-width: 100%;
-        max-height: 300px;
+        max-height: 250px;
         margin: 0 auto;
     }
 
@@ -378,7 +378,7 @@
         display: flex;
         flex: 1 1 auto;
         flex-direction: column;
-        min-height: 8.75rem;
+        min-height: 6.5rem;
     }
 
     h3.catalog-grid-card__title {
@@ -387,11 +387,21 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
         line-height: 1.25;
-        min-height: 3.75rem;
+        min-height: 3.2rem;
     }
 
     .catalog-grid-card__price-group {
         margin-top: auto;
+    }
+}
+
+@media (min-width: 1600px) {
+    .catalog-grid-card__image {
+        max-height: 260px;
+    }
+
+    .catalog-grid-card__body {
+        min-height: 6rem;
     }
 }
 </style>
