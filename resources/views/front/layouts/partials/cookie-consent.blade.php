@@ -1,25 +1,19 @@
 @php
-    $cookieTitle = 'Koristimo kolačiće';
-    $cookieMessage = 'Koristimo kolačiće za ispravan rad stranice i bolje korisničko iskustvo.';
-    $cookieAcceptLabel = 'U redu';
-    $cookiePolicyLabel = 'Više informacija';
-    $cookiePolicyUrl = route('catalog.route.page', ['page' => 'opci-uvjeti-kupnje']);
-    $cookiePreferencesTitle = 'Postavke kolačića';
+    $cookieTitle = 'Kolačići za ugodnije listanje';
+    $cookieMessage = 'Zuzi koristi kolačiće kako bi stranica radila kako treba, pretraga bila brža, a preporuke korisnije.';
+    $cookieAcceptLabel = 'Prihvati sve';
+    $cookiePreferencesTitle = 'Odaberi kolačiće';
     $cookiePreferencesAcceptAll = 'Prihvati sve';
     $cookiePreferencesAcceptNecessary = 'Samo nužni';
     $cookiePreferencesSave = 'Spremi odabir';
     $cookieNecessaryTitle = 'Nužni kolačići';
-    $cookieNecessaryDescription = 'Neki kolačići na ovoj internetskoj stranici neophodni su za pravilno funkcioniranje stranice stoga ih nije moguće onemogućiti.';
-    $cookieAnalyticsTitle = 'Analitički kolačići';
-    $cookieAnalyticsDescription = 'Analitički kolačići nam pomažu kako bismo poboljšali našu internetsku stranicu sakupljajući i analizirajući podatke o njenoj posjećenosti.';
-    $cookieMarketingTitle = 'Marketinški kolačići';
-    $cookieMarketingDescription = 'Marketinški kolačići služe za praćenje posjetitelja u korištenju internet stranice u svrhu omogućavanja prikazivanja relevantnih oglasa oglašivača trećih strana.';
+    $cookieNecessaryDescription = 'Bez njih webshop ne može ispravno raditi, zato su uvijek uključeni.';
+    $cookieAnalyticsTitle = 'Analitika';
+    $cookieAnalyticsDescription = 'Pomaže nam razumjeti kako koristiš stranicu kako bismo je mogli učiniti još boljom.';
+    $cookieMarketingTitle = 'Marketing';
+    $cookieMarketingDescription = 'Pomaže nam prikazati relevantnije preporuke i oglase, unutar i izvan Zuzi svijeta.';
     $cookieLocale = app()->getLocale();
     $cookieDescription = $cookieMessage;
-
-    if ($cookiePolicyUrl !== '') {
-        $cookieDescription .= ' <a href="'.e($cookiePolicyUrl).'">'.e($cookiePolicyLabel).'</a>';
-    }
 @endphp
 
 <button
