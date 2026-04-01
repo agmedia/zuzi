@@ -25,7 +25,7 @@
 
                 <div class="row pt-3 ">
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
-                        <div class="d-inline-flex align-items-center text-start"><i class="ci-book-open text-zuzi" style="font-size: 3rem;"></i>
+                        <div class="d-inline-flex align-items-center text-start"><i class="ci-rocket text-zuzi" style="font-size: 3rem;"></i>
                             <div class="ps-3">
                                 <p class="text-dark fw-bold fs-base mb-1">Knjige lete brzo</p>
                                 <p class="text-dark fs-sm opacity-70 mb-0">Tvoja knjiga stiže za 1–5 radnih dana. Brzina iz snova!</p>
@@ -33,7 +33,7 @@
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
-                        <div class="d-inline-flex align-items-center text-start"><i class="ci-shield text-zuzi" style="font-size: 3rem;"></i>
+                        <div class="d-inline-flex align-items-center text-start"><i class="ci-security-check text-zuzi" style="font-size: 3rem;"></i>
                             <div class="ps-3">
                                 <p class="text-dark fw-bold fs-base mb-1">Kupuj bez brige</p>
                                 <p class="text-dark fs-sm opacity-70 mb-0">Zaštićeni podaci, sigurni načini plaćanja, sve pod kontrolom.</p>
@@ -41,7 +41,7 @@
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
-                        <div class="d-inline-flex align-items-center text-start"><i class="ci-delivery-2 text-zuzi" style="font-size: 3rem;"></i>
+                        <div class="d-inline-flex align-items-center text-start"><i class="ci-truck text-zuzi" style="font-size: 3rem;"></i>
                             <div class="ps-3">
                                 <p class="text-dark fw-bold fs-base mb-1">Dostava? Zuzi časti!</p>
                                 <p class="text-dark fs-sm opacity-70 mb-0">Za narudžbe iznad 70 €, ne plaćaš poštarinu. Čista knjiška radost.</p>
@@ -146,8 +146,6 @@
 
 
 @endif
-
-
 
 
 
