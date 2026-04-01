@@ -119,6 +119,7 @@
 
 
     @stack('css_after')
+    @include('front.layouts.partials.cookie-consent-head')
 
     <style>
         .spinner {
@@ -180,44 +181,30 @@
 
     </style>
     @if (config('app.env') == 'production')
-        <!-- <script>
+        <script>
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
+            window.cookieAnalyticsAllowed = false;
+            window.cookieMarketingAllowed = false;
+            window.canTrackAnalytics = () => false;
+            window.updateGoogleConsentFromCookie = function (analyticsGranted, marketingGranted) {
+                window.cookieAnalyticsAllowed = analyticsGranted === true;
+                window.cookieMarketingAllowed = marketingGranted === true;
 
+                gtag('consent', 'update', {
+                    analytics_storage: analyticsGranted ? 'granted' : 'denied',
+                    ad_storage: marketingGranted ? 'granted' : 'denied',
+                    ad_user_data: marketingGranted ? 'granted' : 'denied',
+                    ad_personalization: marketingGranted ? 'granted' : 'denied'
+                });
+            };
             gtag('consent', 'default', {
-                'ad_storage': 'denied',
-                'ad_user_data': 'denied',
-                'ad_personalization': 'denied',
-                'analytics_storage': 'denied',
-                'functionality_storage': 'denied',
-                'personalization_storage': 'denied',
-                'security_storage': 'denied'
+                analytics_storage: 'denied',
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied'
             });
         </script>
-
-        <script>
-            function compgafad_consentGrantedAdStorage() {
-                gtag('consent', 'update', {
-                    'ad_storage': 'granted',
-                    'ad_user_data': 'granted',
-                    'ad_personalization': 'granted',
-                    'analytics_storage': 'granted',
-                    'functionality_storage': 'granted',
-                    'personalization_storage': 'granted',
-                    'security_storage': 'granted'
-                });
-
-                var ckdate = new Date();
-                ckdate.setTime(ckdate.getTime() + (30*24*60*60*1000));
-                document.cookie = 'cookie_consent_user_accepted=1;expires='+ckdate.toUTCString()+'; path=/';
-            }
-
-            $(document).delegate('#gdpr-cookie-accept', 'click', function() {
-                compgafad_consentGrantedAdStorage();
-                console.log('trigger - compgafad_consentGrantedAdStorage');
-            });
-
-        </script>-->
 
         @yield('google_data_layer')
 
@@ -285,6 +272,7 @@
 
 <!-- Sign in / sign up modal-->
 @include('front.layouts.modals.login')
+@include('front.layouts.partials.cookie-consent')
 
 
 
