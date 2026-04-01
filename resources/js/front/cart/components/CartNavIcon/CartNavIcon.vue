@@ -71,8 +71,6 @@
                 let kos = [];
                 let cart = this.$store.state.storage.getCart();
 
-                console.log(cart)
-
                 this.$store.dispatch('getSettings');
 
                 if ( ! cart) {

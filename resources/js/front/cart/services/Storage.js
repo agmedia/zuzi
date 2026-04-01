@@ -59,8 +59,7 @@ class AgStorage {
 
     get(key = null) {
         let _array = this.asJson();
-
-        console.log('AgStorage get() ', _array);
+        return _array;
     }
 
     remove() {

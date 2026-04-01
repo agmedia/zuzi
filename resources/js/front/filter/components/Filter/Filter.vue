@@ -193,7 +193,6 @@ export default {
 
             axios.post('filter/getCategories', { params }).then(response => {
                 this.categories = response.data;
-                console.log(this.categories);
             });
         },
 
@@ -354,10 +353,6 @@ export default {
                 }
             }
 
-            console.log(location)
-            console.log(this.category)
-            console.log(this.subcategory)
-            console.log(this)
         },
 
         /**

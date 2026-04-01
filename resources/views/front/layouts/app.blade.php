@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="hr">
 <head>
-    <!-- Start cookieyes banner -->
-    <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/f36cda12a26aeec8707a076b/script.js"></script>
-    <!-- End cookieyes banner -->
     <meta charset="utf-8">
     @php
         $seoTitle = \App\Models\Seo::title(trim($__env->yieldContent('title')));
@@ -109,13 +106,13 @@
     </style>
 
     <!-- Favicon and Touch Icons-->
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ config('settings.images_domain') . 'media/img/favicon-16x16.png' }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'media/img/apple-touch-icon.png' }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ config('settings.images_domain') . 'media/img/favicon-16x16.png' }}">
-    <link rel="mask-icon" href="{{ config('settings.images_domain') . 'safari-pinned-tab.svg' }}" color="#e50077">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('media/img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('media/img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('media/img/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('media/img/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('media/img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('media/img/favicon-16x16.png') }}">
+    <link rel="mask-icon" href="{{ asset('media/img/safari-pinned-tab.svg') }}" color="#e50077">
     <meta name="msapplication-TileColor" content="#e50077">
     <meta name="theme-color" content="#ffffff">
 
@@ -407,7 +404,7 @@
 
 
 <!-- Vendor Styles including: Font Icons, Plugins, etc.-->
-<link rel="stylesheet" media="screen" href="{{ asset(config('settings.images_domain') . 'css/tiny-slider.css?v=1.2') }}"/>
+<link rel="stylesheet" media="screen" href="{{ asset('css/tiny-slider.css') }}?v=1.2"/>
 <!-- Vendor scrits: js libraries and plugins-->
 
 
@@ -421,11 +418,6 @@
 <script src="{{ asset('vendor/lightgallery/lightgallery.min.js') }}"></script>
 <script src="{{ asset('vendor/lightgallery/plugins/fullscreen/lg-fullscreen.min.js') }}"></script>
 <script src="{{ asset('vendor/lightgallery/plugins/zoom/lg-zoom.min.js') }}"></script>
-
-
-<!-- Font icons -->
-<link rel="preload" href="{{ asset('icons/cartzilla-icons.woff2') }}" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="{{ asset('icons/cartzilla-icons.min.css') }}">
 
 
 <!-- Main theme script-->

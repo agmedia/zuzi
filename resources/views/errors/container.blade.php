@@ -6,20 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>  @yield ('title' ) - {{ config('app.name') }}</title>
     <!-- Favicon and Touch Icons-->
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ config('settings.images_domain') . 'media/img/favicon-32x32.png' }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ config('settings.images_domain') . 'media/img/favicon-16x16.png' }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ config('settings.images_domain') . 'apple-touch-icon.png' }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ config('settings.images_domain') . 'favicon-32x32.png' }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ config('settings.images_domain') . 'favicon-16x16.png' }}">
-    <link rel="mask-icon" href="{{ config('settings.images_domain') . 'safari-pinned-tab.svg' }}" color="#314837">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('media/img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('media/img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('media/img/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('media/img/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('media/img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('media/img/favicon-16x16.png') }}">
+    <link rel="mask-icon" href="{{ asset('media/img/safari-pinned-tab.svg') }}" color="#314837">
     <meta name="msapplication-TileColor" content="#314837">
     <meta name="theme-color" content="#ffffff">
 
     <!-- Vendor Styles including: Font Icons, Plugins, etc.-->
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <!-- Main Theme Styles + Bootstrap-->
-    <link rel="stylesheet" media="screen" href="{{ config('settings.images_domain') . 'css/theme.min.css?v=1.6' }}">
+    <link rel="stylesheet" media="screen" href="{{ asset('css/theme.min.css') }}?v=1.6">
     <!-- Fire the plugin -->
     <script>
         document.addEventListener(
@@ -60,7 +60,7 @@
     @include('front.layouts.partials.footer')
 </div><!-- #wrapper end -->
 
-<link rel="stylesheet" media="screen" href="{{ config('settings.images_domain') . 'css/tiny-slider.css?v=1.2' }}"/>
+<link rel="stylesheet" media="screen" href="{{ asset('css/tiny-slider.css') }}?v=1.2"/>
 <!-- Vendor scrits: js libraries and plugins-->
 <script src="{{ asset('js/jquery/jquery-2.1.1.min.js?v=1.2') }}"></script>
 <script src="{{ asset('js/bootstrap.bundle.min.js?v=1.2') }}"></script>

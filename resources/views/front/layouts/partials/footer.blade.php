@@ -18,7 +18,7 @@
 @else
 
 
-    <footer class="footer bg-light mt-2 pt-3" style="background-image: url({{ config('settings.script_domain') . 'media/img/zuzi-bck.svg' }});background-repeat: repeat-x;background-position-y: bottom;">
+    <footer class="footer bg-light mt-2 pt-3" style="background-image: url('{{ asset('media/img/zuzi-bck.svg') }}');background-repeat: repeat-x;background-position-y: bottom;">
 
         <div class="px-lg-5 pt-2 pb-4">
             <div class="mx-auto px-3" >
@@ -112,11 +112,11 @@
                         <div class="widget widget-links widget-dark pb-2">
                             <p class="widget-title h3 fw-700 text-dark"><span>Načini plaćanja</span></p>
                             <ul class="widget-list  ">
-                                <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" > kreditnom karticom jednokratno ili na rate</a></li>
-                                <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" > virmanom / općom uplatnicom / internet bankarstvom</a></li>
-                                <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" >gotovinom prilikom pouzeća</a></li>
+                                <li class="widget-list-item"><a href="{{ url('info/nacini-placanja') }}" class="widget-list-link" > kreditnom karticom jednokratno ili na rate</a></li>
+                                <li class="widget-list-item"><a href="{{ url('info/nacini-placanja') }}" class="widget-list-link" > virmanom / općom uplatnicom / internet bankarstvom</a></li>
+                                <li class="widget-list-item"><a href="{{ url('info/nacini-placanja') }}" class="widget-list-link" >gotovinom prilikom pouzeća</a></li>
 
-                                <li class="widget-list-item"><a href="https://www.zuzi.hr/info/nacini-placanja" class="widget-list-link" >osobno preuzimanje i plaćanje u antikvarijatu</a></li>
+                                <li class="widget-list-item"><a href="{{ url('info/nacini-placanja') }}" class="widget-list-link" >osobno preuzimanje i plaćanje u antikvarijatu</a></li>
                             </ul>
 
                         </div>
@@ -127,10 +127,10 @@
                     <div class="pb-4 fs-sm text-dark  text-center text-md-start">© 2025. Sva prava pridržana Zuzi. Web by <a class="text-dark" title="Izrada web shopa - B2C ili B2B web trgovina - AG media" href="https://www.agmedia.hr/usluge/izrada-web-shopa/" target="_blank" rel="noopener">AG media</a>
                     </div>
                     <div class="widget widget-links widget-light pb-4 text-center text-md-end">
-                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/visa.svg" width="55" height="35" alt="Visa"/>
-                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/maestro.svg" width="55" height="35" alt="Maestro"/>
-                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/mastercard.svg" width="55" height="35" alt="MasterCard"/>
-                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ config('settings.images_domain') }}media/cards/diners.svg" width="55" height="35" alt="Diners"/>
+                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ asset('media/cards/visa.svg') }}" width="55" height="35" alt="Visa"/>
+                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ asset('media/cards/maestro.svg') }}" width="55" height="35" alt="Maestro"/>
+                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ asset('media/cards/mastercard.svg') }}" width="55" height="35" alt="MasterCard"/>
+                        <img class="d-inline-block" style="width: 50px;margin-right:3px" src="{{ asset('media/cards/diners.svg') }}" width="55" height="35" alt="Diners"/>
                         <img src="https://www.zuzi.hr/media/cards/google_pay.svg" width="55" height="35" alt="Gogole pay" class="d-inline-block" style="width: 50px; margin-right: 3px;"><img src="https://www.zuzi.hr/media/cards/apple_pay.svg" width="55" height="35" alt="Apple Pay" class="d-inline-block" style="width: 50px; margin-right: 3px;">
                     </div>
                 </div>
@@ -146,7 +146,6 @@
 
 
 @endif
-
 
 
 

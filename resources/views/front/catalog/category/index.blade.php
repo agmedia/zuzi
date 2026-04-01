@@ -72,6 +72,7 @@
     } elseif (isset($group) && $group) {
         $listingIntro = 'Pregledajte aktualnu ponudu knjiga i izdvojena izdanja u ovoj grupi.';
     }
+
 @endphp
 
 @section('title', $listingSeo['title'])

@@ -218,8 +218,6 @@ export default {
          *
          */
         updateLoyalty() {
-            console.log('updateLoyalty')
-            console.log(this.selected_loyalty)
             this.$store.dispatch('updateLoyalty', this.selected_loyalty);
         },
 
@@ -228,9 +226,6 @@ export default {
          */
         checkLoyalty() {
             let cart = this.$store.state.storage.getCart();
-
-            console.log('cart LOYALTY')
-            console.log(cart.has_loyalty)
 
             if (cart.has_loyalty > 100) {
                 this.has_loyalty = true;

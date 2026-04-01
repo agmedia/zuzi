@@ -170,9 +170,9 @@
 
 
 
-
-                <div class="d-flex row justify-content-between mt-2"><div class="col-md-12"><div role="alert" class="alert alert-info d-flex  mb-1 "><div class="alert-icon"><i class="ci-truck"></i></div> <small> @if($prod->kat)Dostava za Regionalne naslove je 20 dana.   @endif Besplatna dostava za narudžbe iznad {{ config('settings.free_shipping') }}€</small></div></div></div>
-
+            @if($prod->kat)
+                <div class="d-flex row justify-content-between mt-2"><div class="col-md-12"><div role="alert" class="alert alert-info d-flex  mb-1 "><div class="alert-icon"><i class="ci-truck"></i></div> <small>Dostava za Regionalne naslove je 20 dana.  </small></div></div></div>
+            @endif
             @if ( $prod->quantity > 0)
    <add-to-cart-btn id="{{ $prod->id }}" available="{{ $prod->quantity }}"></add-to-cart-btn>
                 @else
@@ -232,9 +232,10 @@
                            <div>{{ $shipping_method->data->price }}€ </div>
                        </div>
                    @endforeach
-
+                       <div class="d-flex row justify-content-between mt-2"><div class="col-md-12"><div role="alert" class="alert alert-info d-flex  mb-1 "><div class="alert-icon"><i class="ci-truck"></i></div> Besplatna dostava za narudžbe iznad {{ config('settings.free_shipping') }}€</div></div></div>
                </div>
                <small class="mt-2"></small>
+
            </div>
        </div>
        <div class="accordion-item">

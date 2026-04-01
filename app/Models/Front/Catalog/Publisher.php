@@ -89,9 +89,10 @@ class Publisher extends Model
      *
      * @return Builder
      */
-    public function filter(array $request, int $limit = 20): Builder
+    public function filter(array $request, int $limit = 200): Builder
     {
         $query = (new Publisher())->newQuery();
+        $hasContext = ! empty($request['group']) || ! empty($request['cat']) || ! empty($request['subcat']) || ! empty($request['ids']);
 
         if ($request['search_publisher']) {
             $query->active();
@@ -99,11 +100,27 @@ class Publisher extends Model
             $query = Helper::searchByTitle($query, $request['search_publisher']);
 
         } else {
-            $query->active()->featured();
+            $query->active();
+
+            if ( ! $hasContext && ! $request['author']) {
+                $query->featured();
+            }
 
             if ($request['group'] && ! $request['search_publisher']) {
                 $query->whereHas('products', function ($query) use ($request) {
                     $query = ProductHelper::queryCategories($query, $request);
+
+                    if ( ! empty($request['condition'])) {
+                        $query->where('condition', $request['condition']);
+                    }
+
+                    if ( ! empty($request['binding'])) {
+                        $query->where('binding', $request['binding']);
+                    }
+
+                    if ( ! empty($request['letter'])) {
+                        $query->where('letter', $request['letter']);
+                    }
 
                     if ($request['author']) {
                         if (strpos($request['author'], '+') !== false) {
@@ -121,6 +138,15 @@ class Publisher extends Model
             if ($request['author'] && ! $request['group']) {
                 $query->whereHas('products', function ($query) use ($request) {
                     $query = ProductHelper::queryCategories($query, $request);
+                    if ( ! empty($request['condition'])) {
+                        $query->where('condition', $request['condition']);
+                    }
+                    if ( ! empty($request['binding'])) {
+                        $query->where('binding', $request['binding']);
+                    }
+                    if ( ! empty($request['letter'])) {
+                        $query->where('letter', $request['letter']);
+                    }
                     $query->where('author_id', Author::where('slug', $request['author'])->pluck('id')->first());
                 });
             }
@@ -128,8 +154,20 @@ class Publisher extends Model
             if ($request['ids'] && $request['ids'] != '') {
                 $_ids = collect(explode(',', substr($request['ids'], 1, -1)))->unique();
 
-                $query->whereHas('products', function ($query) use ($_ids) {
+                $query->whereHas('products', function ($query) use ($_ids, $request) {
                     $query->active()->hasStock()->whereIn('id', $_ids);
+
+                    if ( ! empty($request['condition'])) {
+                        $query->where('condition', $request['condition']);
+                    }
+
+                    if ( ! empty($request['binding'])) {
+                        $query->where('binding', $request['binding']);
+                    }
+
+                    if ( ! empty($request['letter'])) {
+                        $query->where('letter', $request['letter']);
+                    }
                 });
             }
         }

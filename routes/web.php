@@ -264,6 +264,7 @@ Route::prefix('api/v2')->group(function () {
     Route::prefix('filter')->group(function () {
         Route::post('/getCategories', [FilterController::class, 'categories']);
         Route::post('/getProducts', [FilterController::class, 'products']);
+        Route::post('/getToolbarFilters', [FilterController::class, 'toolbarFilters']);
         Route::post('/getAuthors', [FilterController::class, 'authors']);
         Route::post('/getPublishers', [FilterController::class, 'publishers']);
     });

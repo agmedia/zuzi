@@ -2363,7 +2363,6 @@ __webpack_require__.r(__webpack_exports__);
     checkCart: function checkCart() {
       var kos = [];
       var cart = this.$store.state.storage.getCart();
-      console.log(cart);
       this.$store.dispatch('getSettings');
       if (!cart) {
         return this.$store.dispatch('getCart');
@@ -2757,8 +2756,6 @@ __webpack_require__.r(__webpack_exports__);
      *
      */
     updateLoyalty: function updateLoyalty() {
-      console.log('updateLoyalty');
-      console.log(this.selected_loyalty);
       this.$store.dispatch('updateLoyalty', this.selected_loyalty);
     },
     /**
@@ -2766,8 +2763,6 @@ __webpack_require__.r(__webpack_exports__);
      */
     checkLoyalty: function checkLoyalty() {
       var cart = this.$store.state.storage.getCart();
-      console.log('cart LOYALTY');
-      console.log(cart.has_loyalty);
       if (cart.has_loyalty > 100) {
         this.has_loyalty = true;
       }
@@ -2985,7 +2980,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         params: params
       }).then(function (response) {
         _this.categories = response.data;
-        console.log(_this.categories);
       });
     },
     /**
@@ -3144,10 +3138,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
           this.selectedPublishers = [this.nakladnik];
         }
       }
-      console.log(location);
-      console.log(this.category);
-      console.log(this.subcategory);
-      console.log(this);
     },
     /**
      *
@@ -3566,6 +3556,204 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -3581,43 +3769,125 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
   data: function data() {
     return {
       products: {},
+      activeAuthorDropdown: '',
+      authorSearchTerm: '',
+      facetAuthors: [],
       autor: '',
       nakladnik: '',
       start: '',
       end: '',
+      condition: '',
+      binding: '',
+      letter: '',
+      facetConditions: [],
+      facetBindings: [],
+      facetLetters: [],
+      productsRequestToken: 0,
       sorting: '',
       search_query: '',
       page: 1,
+      showMobileFilters: false,
+      toolbarRequestToken: 0,
+      bodyOverflowValue: '',
       origin: location.origin + '/',
       hr_total: 'rezultata',
       products_loaded: false,
+      defaultRobots: '',
       search_zero_result: false,
       navigation_zero_result: false
     };
   },
+  computed: {
+    normalizedFacetAuthors: function normalizedFacetAuthors() {
+      return this.facetAuthors.filter(function (authorItem) {
+        return authorItem && authorItem.title && authorItem.title.toString().trim() !== '';
+      });
+    },
+    filteredFacetAuthors: function filteredFacetAuthors() {
+      var _this = this;
+      var search = this.normalizeAuthorSearchValue(this.authorSearchTerm);
+      var authors = this.normalizedFacetAuthors;
+      if (!search) {
+        return authors;
+      }
+      return authors.filter(function (authorItem) {
+        return _this.normalizeAuthorSearchValue(authorItem.title).includes(search);
+      });
+    },
+    hasToolbarFilters: function hasToolbarFilters() {
+      return this.facetConditions.length || this.facetBindings.length || this.facetLetters.length || this.author === '' && this.normalizedFacetAuthors.length;
+    },
+    hasActiveToolbarFilters: function hasActiveToolbarFilters() {
+      return this.autor || this.nakladnik || this.start || this.end || this.condition || this.binding || this.letter;
+    },
+    selectedAuthorTitle: function selectedAuthorTitle() {
+      var _this2 = this;
+      if (!this.autor) {
+        return 'Autor';
+      }
+      var selectedAuthor = this.normalizedFacetAuthors.find(function (authorItem) {
+        return authorItem.slug === _this2.autor;
+      });
+      return selectedAuthor ? selectedAuthor.title : 'Autor';
+    }
+  },
   //
   watch: {
     sorting: function sorting(value) {
+      this.page = '';
       this.setQueryParam('sort', value);
     },
     $route: function $route(params) {
       this.checkQuery(params);
+      this.getToolbarFilters();
     }
   },
   //
   mounted: function mounted() {
+    var robotsMeta = document.querySelector("meta[name='robots']");
+    this.defaultRobots = robotsMeta ? robotsMeta.getAttribute('content') || '' : '';
+    document.addEventListener('click', this.handleDocumentClick);
+    document.addEventListener('keydown', this.handleDocumentKeydown);
     this.checkQuery(this.$route);
+    this.getToolbarFilters();
 
     /*console.log('twindow.AGSettings')
     console.log(window.AGSettings)*/
   },
-
+  beforeDestroy: function beforeDestroy() {
+    document.removeEventListener('click', this.handleDocumentClick);
+    document.removeEventListener('keydown', this.handleDocumentKeydown);
+    this.setBodyScrollLock(false);
+  },
   methods: {
     /**
      *
      */
+    getToolbarFilters: function getToolbarFilters() {
+      var _this3 = this;
+      var requestToken = ++this.toolbarRequestToken;
+      var params = this.setParams();
+      axios.post('filter/getToolbarFilters', {
+        params: params
+      }).then(function (response) {
+        if (requestToken !== _this3.toolbarRequestToken) {
+          return;
+        }
+        _this3.facetAuthors = response.data.authors || [];
+        _this3.facetConditions = response.data.conditions || [];
+        _this3.facetBindings = response.data.bindings || [];
+        _this3.facetLetters = response.data.letters || [];
+        if (!_this3.hasToolbarFilters) {
+          _this3.closeMobileFilters();
+        }
+      });
+    },
+    /**
+     *
+     */
     getProducts: function getProducts() {
-      var _this = this;
+      var _this4 = this;
+      var requestToken = ++this.productsRequestToken;
       this.search_zero_result = false;
       this.navigation_zero_result = false;
       this.products_loaded = false;
@@ -3625,16 +3895,19 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       axios.post('filter/getProducts', {
         params: params
       }).then(function (response) {
-        _this.products_loaded = true;
-        _this.products = response.data;
-        _this.checkHrTotal();
-        _this.checkSpecials();
-        _this.checkAvailables();
-        if (params.pojam != '' && !_this.products.total) {
-          _this.search_zero_result = true;
+        if (requestToken !== _this4.productsRequestToken) {
+          return;
         }
-        if (params.pojam == '' && !_this.products.total) {
-          _this.navigation_zero_result = true;
+        _this4.products_loaded = true;
+        _this4.products = response.data;
+        _this4.checkHrTotal();
+        _this4.checkSpecials();
+        _this4.checkAvailables();
+        if (params.pojam != '' && !_this4.products.total) {
+          _this4.search_zero_result = true;
+        }
+        if (params.pojam == '' && !_this4.products.total) {
+          _this4.navigation_zero_result = true;
         }
       });
     },
@@ -3643,25 +3916,72 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
      * @param page
      */
     getProductsPage: function getProductsPage() {
-      var _this2 = this;
+      var _this5 = this;
       var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-      this.products_loaded = false;
+      var syncRoute = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       this.page = page;
-      this.setQueryParam('page', page);
+      if (syncRoute) {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+        this.setQueryParam('page', page);
+        return;
+      }
+      var requestToken = ++this.productsRequestToken;
+      this.products_loaded = false;
       var params = this.setParams();
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
       axios.post('filter/getProducts?page=' + page, {
         params: params
       }).then(function (response) {
-        _this2.products_loaded = true;
-        _this2.products = response.data;
-        _this2.checkHrTotal();
-        _this2.checkSpecials();
-        _this2.checkAvailables();
+        if (requestToken !== _this5.productsRequestToken) {
+          return;
+        }
+        _this5.products_loaded = true;
+        _this5.products = response.data;
+        _this5.checkHrTotal();
+        _this5.checkSpecials();
+        _this5.checkAvailables();
       });
+    },
+    /**
+     *
+     */
+    applyToolbarFilters: function applyToolbarFilters() {
+      this.page = '';
+      this.setQueryParam('filters', '');
+    },
+    /**
+     *
+     */
+    clearToolbarFilters: function clearToolbarFilters() {
+      this.page = '';
+      this.autor = '';
+      this.authorSearchTerm = '';
+      this.nakladnik = '';
+      this.start = '';
+      this.end = '';
+      this.condition = '';
+      this.binding = '';
+      this.letter = '';
+      this.closeAuthorDropdown();
+      this.closeMobileFilters();
+      this.setQueryParam('clear', '');
+    },
+    /**
+     *
+     * @param slug
+     */
+    selectAuthor: function selectAuthor() {
+      var slug = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+      if (this.autor === slug) {
+        this.closeAuthorDropdown();
+        return;
+      }
+      this.autor = slug;
+      this.authorSearchTerm = '';
+      this.closeAuthorDropdown();
+      this.applyToolbarFilters();
     },
     /**
      *
@@ -3673,11 +3993,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       this.$router.push({
         query: this.resolveQuery()
       })["catch"](function () {});
-      if (value == '' || value == 1) {
-        this.$router.push({
-          query: this.resolveQuery()
-        })["catch"](function () {});
-      }
     },
     /**
      *
@@ -3689,10 +4004,14 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         end: this.end,
         autor: this.autor,
         nakladnik: this.nakladnik,
+        condition: this.condition,
+        binding: this.binding,
+        letter: this.letter,
         sort: this.sorting,
         pojam: this.search_query,
         page: this.page
       };
+      this.checkNoFollowQuery(params);
       return Object.entries(params).reduce(function (acc, _ref) {
         var _ref2 = _slicedToArray(_ref, 2),
           key = _ref2[0],
@@ -3710,11 +4029,14 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       this.end = params.query.end ? params.query.end : '';
       this.autor = params.query.autor ? params.query.autor : '';
       this.nakladnik = params.query.nakladnik ? params.query.nakladnik : '';
+      this.condition = params.query.condition ? params.query.condition : '';
+      this.binding = params.query.binding ? params.query.binding : '';
+      this.letter = params.query.letter ? params.query.letter : '';
       this.page = params.query.page ? params.query.page : '';
       this.sorting = params.query.sort ? params.query.sort : '';
       this.search_query = params.query.pojam ? params.query.pojam : '';
       if (this.page != '') {
-        this.getProductsPage(this.page);
+        this.getProductsPage(this.page, false);
       } else {
         this.getProducts();
       }
@@ -3733,6 +4055,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         nakladnik: this.nakladnik,
         start: this.start,
         end: this.end,
+        condition: this.condition,
+        binding: this.binding,
+        letter: this.letter,
         sort: this.sorting,
         pojam: this.search_query
       };
@@ -3743,6 +4068,27 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         params.nakladnik = this.publisher;
       }
       return params;
+    },
+    /**
+     *
+     * @param params
+     */
+    checkNoFollowQuery: function checkNoFollowQuery(params) {
+      var robotsMeta = document.querySelector("meta[name='robots']");
+      if (!robotsMeta) {
+        $('head').append('<meta name="robots" content="">');
+        robotsMeta = document.querySelector("meta[name='robots']");
+      }
+      if (!robotsMeta) {
+        return;
+      }
+      if (params.nakladnik || params.autor || params.start || params.end || params.condition || params.binding || params.letter) {
+        robotsMeta.setAttribute('content', 'noindex,nofollow');
+      } else if (this.defaultRobots) {
+        robotsMeta.setAttribute('content', this.defaultRobots);
+      } else {
+        robotsMeta.remove();
+      }
     },
     /**
      *
@@ -3807,6 +4153,107 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
      */
     closeFilter: function closeFilter() {
       $('#shop-sidebar').removeClass('collapse show');
+      this.closeAuthorDropdown();
+      this.closeMobileFilters();
+    },
+    /**
+     *
+     */
+    toggleMobileFilters: function toggleMobileFilters() {
+      if (this.showMobileFilters) {
+        this.closeMobileFilters();
+        return;
+      }
+      this.openMobileFilters();
+    },
+    /**
+     *
+     */
+    openMobileFilters: function openMobileFilters() {
+      this.closeAuthorDropdown();
+      this.showMobileFilters = true;
+      this.setBodyScrollLock(true);
+    },
+    /**
+     *
+     */
+    closeMobileFilters: function closeMobileFilters() {
+      this.showMobileFilters = false;
+      this.closeAuthorDropdown();
+      this.setBodyScrollLock(false);
+    },
+    /**
+     *
+     * @param target
+     */
+    toggleAuthorDropdown: function toggleAuthorDropdown(target) {
+      var _this6 = this;
+      if (this.activeAuthorDropdown === target) {
+        this.closeAuthorDropdown();
+        return;
+      }
+      this.activeAuthorDropdown = target;
+      this.authorSearchTerm = '';
+      this.$nextTick(function () {
+        var refName = target === 'mobile' ? 'mobileAuthorSearch' : 'desktopAuthorSearch';
+        if (_this6.$refs[refName]) {
+          _this6.$refs[refName].focus();
+        }
+      });
+    },
+    /**
+     *
+     */
+    closeAuthorDropdown: function closeAuthorDropdown() {
+      this.activeAuthorDropdown = '';
+      this.authorSearchTerm = '';
+    },
+    /**
+     *
+     * @param event
+     */
+    handleDocumentClick: function handleDocumentClick(event) {
+      if (!this.activeAuthorDropdown) {
+        return;
+      }
+      var refName = this.activeAuthorDropdown === 'mobile' ? 'mobileAuthorDropdown' : 'desktopAuthorDropdown';
+      var dropdown = this.$refs[refName];
+      if (dropdown && !dropdown.contains(event.target)) {
+        this.closeAuthorDropdown();
+      }
+    },
+    /**
+     *
+     * @param event
+     */
+    handleDocumentKeydown: function handleDocumentKeydown(event) {
+      if (event.key === 'Escape') {
+        this.closeMobileFilters();
+        this.closeAuthorDropdown();
+      }
+    },
+    /**
+     *
+     * @param locked
+     */
+    setBodyScrollLock: function setBodyScrollLock(locked) {
+      if (typeof document === 'undefined') {
+        return;
+      }
+      if (locked) {
+        this.bodyOverflowValue = document.body.style.overflow || '';
+        document.body.style.overflow = 'hidden';
+        return;
+      }
+      document.body.style.overflow = this.bodyOverflowValue;
+    },
+    /**
+     *
+     * @param value
+     * @return {string}
+     */
+    normalizeAuthorSearchValue: function normalizeAuthorSearchValue(value) {
+      return (value || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     }
   }
 });
@@ -4487,7 +4934,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n@media (min-width: 1400px) {\n.catalog-grid-card {\n        width: 100%;\n        height: 100%;\n}\n.catalog-grid-card__image-link {\n        display: flex !important;\n        align-items: center;\n        justify-content: center;\n        min-height: 250px;\n        padding: 0.5rem;\n        background-color: #fff;\n}\n.catalog-grid-card__image {\n        width: auto;\n        height: auto;\n        max-width: 100%;\n        max-height: 250px;\n        margin: 0 auto;\n}\n.catalog-grid-card__body {\n        display: flex;\n        flex: 1 1 auto;\n        flex-direction: column;\n        min-height: 6.5rem;\n}\nh3.catalog-grid-card__title {\n        display: -webkit-box;\n        -webkit-line-clamp: 3;\n        -webkit-box-orient: vertical;\n        overflow: hidden;\n        line-height: 1.25;\n        min-height: 3.2rem;\n}\n.catalog-grid-card__price-group {\n        margin-top: auto;\n}\n}\n@media (min-width: 1600px) {\n.catalog-grid-card__image {\n        max-height: 260px;\n}\n.catalog-grid-card__body {\n        min-height: 6rem;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.catalog-toolbar__desktop {\n    gap: 1rem;\n    min-width: 0;\n}\n.catalog-toolbar__filters {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 1 1 auto;\n    min-width: 0;\n}\n.catalog-toolbar__filter-scroll {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 0 1 auto;\n    min-width: 0;\n    overflow-x: auto;\n    padding-bottom: 0.15rem;\n}\n.catalog-toolbar__filter-scroll::-webkit-scrollbar {\n    height: 6px;\n}\n.catalog-toolbar__filter-scroll::-webkit-scrollbar-thumb {\n    background: rgba(148, 163, 184, 0.45);\n    border-radius: 999px;\n}\n.catalog-toolbar__select {\n    min-width: 150px;\n    min-height: 46px;\n    padding: 0.7rem 2.85rem 0.7rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background-color: #fff;\n    background-image:\n        url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235f6c82' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\"),\n        linear-gradient(180deg, #ffffff 0%, #ffffff 100%);\n    background-repeat: no-repeat, no-repeat;\n    background-position: right 1rem center, center;\n    background-size: 0.95rem, 100% 100%;\n    box-shadow: none;\n    color: #334155;\n    font-weight: 500;\n    -moz-appearance: none;\n         appearance: none;\n    -webkit-appearance: none;\n    transition: border-color 0.2s ease;\n}\n.catalog-toolbar__select:hover,\n.catalog-toolbar__select:focus {\n    border-color: #bfcada;\n    box-shadow: none;\n}\n.catalog-toolbar__select:focus {\n    outline: none;\n}\n.catalog-toolbar__select--sort {\n    min-width: 170px;\n}\n.catalog-toolbar__author-select {\n    position: relative;\n    flex: 0 0 150px;\n    min-width: 150px;\n    max-width: 150px;\n}\n.catalog-toolbar__author-select--mobile {\n    flex: 1 1 auto;\n    min-width: 100%;\n    max-width: none;\n}\n.catalog-toolbar__author-trigger {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    width: 100%;\n    min-height: 46px;\n    padding: 0.7rem 0.95rem 0.7rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n    color: #334155;\n    font-size: 0.875rem;\n    font-weight: 500;\n    line-height: 1.25;\n    text-align: left;\n}\n.catalog-toolbar__author-trigger:focus,\n.catalog-toolbar__author-trigger:hover {\n    border-color: #bfcada;\n    box-shadow: none;\n    outline: none;\n}\n.catalog-toolbar__author-trigger-label {\n    display: block;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    padding-right: 0.75rem;\n}\n.catalog-toolbar__author-trigger-icon {\n    flex: 0 0 auto;\n    width: 0.95rem;\n    height: 0.95rem;\n    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235f6c82' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\");\n    background-repeat: no-repeat;\n    background-position: center;\n    background-size: contain;\n}\n.catalog-toolbar__author-panel {\n    position: absolute;\n    top: calc(100% + 0.35rem);\n    left: 0;\n    z-index: 30;\n    width: 280px;\n    max-width: min(280px, calc(100vw - 2rem));\n    padding: 0.65rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n}\n.catalog-toolbar__author-panel--mobile {\n    position: static;\n    width: 100%;\n    max-width: none;\n    margin-top: 0.35rem;\n}\n.catalog-toolbar__author-search {\n    min-height: 38px;\n    margin-bottom: 0.5rem;\n    padding: 0.45rem 0.75rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    box-shadow: none !important;\n    font-size: 0.875rem;\n}\n.catalog-toolbar__author-search:focus {\n    border-color: #bfcada;\n    box-shadow: none !important;\n}\n.catalog-toolbar__author-options {\n    max-height: 260px;\n    overflow-y: auto;\n    padding-right: 0.15rem;\n}\n.catalog-toolbar__author-option {\n    display: block;\n    width: 100%;\n    padding: 0.45rem 0.6rem;\n    border: 0;\n    border-radius: 0.35rem;\n    background: transparent;\n    color: #334155;\n    font-size: 0.875rem;\n    line-height: 1.35;\n    text-align: left;\n}\n.catalog-toolbar__author-option:hover,\n.catalog-toolbar__author-option--active {\n    background: #eef4ff;\n    color: #1d4ed8;\n}\n.catalog-toolbar__author-empty {\n    padding: 0.45rem 0.6rem;\n    color: #64748b;\n    font-size: 0.875rem;\n}\n.catalog-toolbar__actions {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 0.75rem;\n    flex-shrink: 0;\n    margin-left: auto;\n}\n.catalog-toolbar__clear,\n.catalog-toolbar__toggle {\n    min-height: 46px;\n    padding-inline: 1rem;\n    border-radius: 0.45rem;\n    border-color: #d8e0ea;\n    background: #fff;\n    box-shadow: none;\n    color: #334155;\n    white-space: nowrap;\n}\n.catalog-toolbar__clear {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.45rem;\n    border-color: #e50077;\n    color: #e50077;\n    font-weight: 500;\n}\n.catalog-toolbar__clear:hover,\n.catalog-toolbar__clear:focus {\n    border-color: #e50077;\n    background: rgba(229, 0, 119, 0.05);\n    color: #e50077;\n    box-shadow: none;\n}\n.catalog-toolbar__clear-icon {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    width: 1rem;\n    font-size: 1rem;\n    font-weight: 600;\n    line-height: 1;\n}\n.catalog-toolbar__summary {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 46px;\n    padding: 0.45rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n    color: #475569;\n    font-size: 0.875rem;\n    font-weight: 600;\n    white-space: nowrap;\n}\n.catalog-toolbar__mobile-top,\n.catalog-toolbar__mobile-grid {\n    gap: 0.75rem;\n}\n.catalog-toolbar__drawer {\n    position: fixed;\n    inset: 0;\n    z-index: 1080;\n}\n.catalog-toolbar__drawer-backdrop {\n    position: absolute;\n    inset: 0;\n    border: 0;\n    background: rgba(15, 23, 42, 0.4);\n}\n.catalog-toolbar__drawer-panel {\n    position: absolute;\n    top: 0;\n    left: 0;\n    display: flex;\n    flex-direction: column;\n    width: min(22rem, calc(100vw - 2rem));\n    height: 100dvh;\n    max-height: 100dvh;\n    padding: 1rem;\n    border-right: 1px solid #d8e0ea;\n    background: #fff;\n    overflow: hidden;\n}\n.catalog-toolbar__drawer-header {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    gap: 1rem;\n    padding-bottom: 0.85rem;\n    border-bottom: 1px solid #e2e8f0;\n}\n.catalog-toolbar__drawer-eyebrow {\n    margin: 0 0 0.2rem;\n    color: #64748b;\n    font-size: 0.75rem;\n    letter-spacing: 0.08em;\n    text-transform: uppercase;\n}\n.catalog-toolbar__drawer-title {\n    margin: 0;\n    color: #0f172a;\n    font-size: 1.1rem;\n    font-weight: 700;\n}\n.catalog-toolbar__drawer-close {\n    position: relative;\n    flex: 0 0 auto;\n    width: 2.25rem;\n    height: 2.25rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n}\n.catalog-toolbar__drawer-close span {\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    width: 0.95rem;\n    height: 1.5px;\n    background: #334155;\n}\n.catalog-toolbar__drawer-close span:first-child {\n    transform: translate(-50%, -50%) rotate(45deg);\n}\n.catalog-toolbar__drawer-close span:last-child {\n    transform: translate(-50%, -50%) rotate(-45deg);\n}\n.catalog-toolbar__drawer-body {\n    flex: 1 1 auto;\n    min-height: 0;\n    padding-top: 1rem;\n    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));\n    overflow-y: auto;\n}\n.catalog-toolbar__mobile-grid {\n    display: grid;\n    grid-template-columns: 1fr;\n}\n.catalog-toolbar__clear--mobile {\n    margin-top: 0.75rem;\n}\n.filter-drawer-enter-active .catalog-toolbar__drawer-backdrop,\n.filter-drawer-leave-active .catalog-toolbar__drawer-backdrop {\n    transition: opacity 0.22s ease;\n}\n.filter-drawer-enter-active .catalog-toolbar__drawer-panel,\n.filter-drawer-leave-active .catalog-toolbar__drawer-panel {\n    transition: transform 0.24s ease;\n}\n.filter-drawer-enter .catalog-toolbar__drawer-backdrop,\n.filter-drawer-leave-to .catalog-toolbar__drawer-backdrop {\n    opacity: 0;\n}\n.filter-drawer-enter .catalog-toolbar__drawer-panel,\n.filter-drawer-leave-to .catalog-toolbar__drawer-panel {\n    transform: translateX(-100%);\n}\n@media (max-width: 1199.98px) {\n.catalog-toolbar__mobile-top {\n        align-items: stretch;\n}\n.catalog-toolbar__toggle,\n    .catalog-toolbar__toggle--clear,\n    .catalog-toolbar__select--sort,\n    .catalog-toolbar__summary {\n        flex: 1 1 calc(50% - 0.375rem);\n}\n}\n@media (max-width: 767.98px) {\n.catalog-toolbar__toggle,\n    .catalog-toolbar__toggle--clear,\n    .catalog-toolbar__select--sort,\n    .catalog-toolbar__summary,\n    .catalog-toolbar__select,\n    .catalog-toolbar__author-select {\n        width: 100%;\n        flex-basis: 100%;\n}\n.catalog-toolbar__drawer-panel {\n        padding: 0.9rem;\n}\n}\n@media (min-width: 1400px) {\n.catalog-grid-card {\n        width: 100%;\n        height: 100%;\n}\n.catalog-grid-card__image-link {\n        display: flex !important;\n        align-items: center;\n        justify-content: center;\n        min-height: 250px;\n        padding: 0.5rem;\n        background-color: #fff;\n}\n.catalog-grid-card__image {\n        width: auto;\n        height: auto;\n        max-width: 100%;\n        max-height: 250px;\n        margin: 0 auto;\n}\n.catalog-grid-card__body {\n        display: flex;\n        flex: 1 1 auto;\n        flex-direction: column;\n        min-height: 6.5rem;\n}\nh3.catalog-grid-card__title {\n        display: -webkit-box;\n        -webkit-line-clamp: 3;\n        -webkit-box-orient: vertical;\n        overflow: hidden;\n        line-height: 1.25;\n        min-height: 3.2rem;\n}\n.catalog-grid-card__price-group {\n        margin-top: auto;\n}\n}\n@media (min-width: 1600px) {\n.catalog-grid-card__image {\n        max-height: 260px;\n}\n.catalog-grid-card__body {\n        min-height: 6rem;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -7887,23 +8334,501 @@ var render = function() {
     "section",
     { staticClass: "col" },
     [
-      _c(
-        "div",
-        {
-          staticClass:
-            "d-flex justify-content-center justify-content-sm-between align-items-center pt-2 pb-4 pb-sm-2"
-        },
-        [
-          _c("div", { staticClass: "d-flex flex-wrap" }, [
-            _vm._m(0),
+      _c("div", { staticClass: "catalog-toolbar pt-2 pb-4 pb-sm-2 mb-3" }, [
+        _c(
+          "div",
+          {
+            staticClass:
+              "catalog-toolbar__desktop d-none d-xl-flex align-items-center"
+          },
+          [
+            _c("div", { staticClass: "catalog-toolbar__filters" }, [
+              _c("div", { staticClass: "catalog-toolbar__filter-scroll" }, [
+                _vm.facetConditions.length
+                  ? _c(
+                      "select",
+                      {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.condition,
+                            expression: "condition"
+                          }
+                        ],
+                        staticClass: "form-select catalog-toolbar__select",
+                        attrs: { "aria-label": "Filtriraj po stanju" },
+                        on: {
+                          change: [
+                            function($event) {
+                              var $$selectedVal = Array.prototype.filter
+                                .call($event.target.options, function(o) {
+                                  return o.selected
+                                })
+                                .map(function(o) {
+                                  var val = "_value" in o ? o._value : o.value
+                                  return val
+                                })
+                              _vm.condition = $event.target.multiple
+                                ? $$selectedVal
+                                : $$selectedVal[0]
+                            },
+                            _vm.applyToolbarFilters
+                          ]
+                        }
+                      },
+                      [
+                        _c("option", { attrs: { value: "" } }, [
+                          _vm._v("Stanje")
+                        ]),
+                        _vm._v(" "),
+                        _vm._l(_vm.facetConditions, function(option) {
+                          return _c(
+                            "option",
+                            {
+                              key: "desktop-condition-" + option,
+                              domProps: { value: option }
+                            },
+                            [_vm._v(_vm._s(option))]
+                          )
+                        })
+                      ],
+                      2
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.facetBindings.length
+                  ? _c(
+                      "select",
+                      {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.binding,
+                            expression: "binding"
+                          }
+                        ],
+                        staticClass: "form-select catalog-toolbar__select",
+                        attrs: { "aria-label": "Filtriraj po uvezu" },
+                        on: {
+                          change: [
+                            function($event) {
+                              var $$selectedVal = Array.prototype.filter
+                                .call($event.target.options, function(o) {
+                                  return o.selected
+                                })
+                                .map(function(o) {
+                                  var val = "_value" in o ? o._value : o.value
+                                  return val
+                                })
+                              _vm.binding = $event.target.multiple
+                                ? $$selectedVal
+                                : $$selectedVal[0]
+                            },
+                            _vm.applyToolbarFilters
+                          ]
+                        }
+                      },
+                      [
+                        _c("option", { attrs: { value: "" } }, [
+                          _vm._v("Uvez")
+                        ]),
+                        _vm._v(" "),
+                        _vm._l(_vm.facetBindings, function(option) {
+                          return _c(
+                            "option",
+                            {
+                              key: "desktop-binding-" + option,
+                              domProps: { value: option }
+                            },
+                            [_vm._v(_vm._s(option))]
+                          )
+                        })
+                      ],
+                      2
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.facetLetters.length
+                  ? _c(
+                      "select",
+                      {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.letter,
+                            expression: "letter"
+                          }
+                        ],
+                        staticClass: "form-select catalog-toolbar__select",
+                        attrs: { "aria-label": "Filtriraj po pismu" },
+                        on: {
+                          change: [
+                            function($event) {
+                              var $$selectedVal = Array.prototype.filter
+                                .call($event.target.options, function(o) {
+                                  return o.selected
+                                })
+                                .map(function(o) {
+                                  var val = "_value" in o ? o._value : o.value
+                                  return val
+                                })
+                              _vm.letter = $event.target.multiple
+                                ? $$selectedVal
+                                : $$selectedVal[0]
+                            },
+                            _vm.applyToolbarFilters
+                          ]
+                        }
+                      },
+                      [
+                        _c("option", { attrs: { value: "" } }, [
+                          _vm._v("Pismo")
+                        ]),
+                        _vm._v(" "),
+                        _vm._l(_vm.facetLetters, function(option) {
+                          return _c(
+                            "option",
+                            {
+                              key: "desktop-letter-" + option,
+                              domProps: { value: option }
+                            },
+                            [_vm._v(_vm._s(option))]
+                          )
+                        })
+                      ],
+                      2
+                    )
+                  : _vm._e()
+              ]),
+              _vm._v(" "),
+              _vm.author === "" && _vm.facetAuthors.length
+                ? _c(
+                    "div",
+                    {
+                      ref: "desktopAuthorDropdown",
+                      staticClass: "catalog-toolbar__author-select"
+                    },
+                    [
+                      _c(
+                        "button",
+                        {
+                          staticClass: "catalog-toolbar__author-trigger",
+                          attrs: {
+                            type: "button",
+                            "aria-expanded":
+                              _vm.activeAuthorDropdown === "desktop",
+                            "aria-label": "Filtriraj po autoru"
+                          },
+                          on: {
+                            click: function($event) {
+                              return _vm.toggleAuthorDropdown("desktop")
+                            }
+                          }
+                        },
+                        [
+                          _c(
+                            "span",
+                            {
+                              staticClass:
+                                "catalog-toolbar__author-trigger-label"
+                            },
+                            [_vm._v(_vm._s(_vm.selectedAuthorTitle))]
+                          ),
+                          _vm._v(" "),
+                          _c("span", {
+                            staticClass: "catalog-toolbar__author-trigger-icon"
+                          })
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _vm.activeAuthorDropdown === "desktop"
+                        ? _c(
+                            "div",
+                            { staticClass: "catalog-toolbar__author-panel" },
+                            [
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.authorSearchTerm,
+                                    expression: "authorSearchTerm"
+                                  }
+                                ],
+                                ref: "desktopAuthorSearch",
+                                staticClass:
+                                  "form-control catalog-toolbar__author-search",
+                                attrs: {
+                                  type: "search",
+                                  placeholder: "Pretraži autora"
+                                },
+                                domProps: { value: _vm.authorSearchTerm },
+                                on: {
+                                  input: function($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.authorSearchTerm = $event.target.value
+                                  }
+                                }
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "catalog-toolbar__author-options"
+                                },
+                                [
+                                  _c(
+                                    "button",
+                                    {
+                                      staticClass:
+                                        "catalog-toolbar__author-option",
+                                      class: {
+                                        "catalog-toolbar__author-option--active":
+                                          _vm.autor === ""
+                                      },
+                                      attrs: { type: "button" },
+                                      on: {
+                                        click: function($event) {
+                                          return _vm.selectAuthor("")
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _vm._v(
+                                        "\n                                Svi autori\n                            "
+                                      )
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _vm._l(_vm.filteredFacetAuthors, function(
+                                    authorItem,
+                                    authorIndex
+                                  ) {
+                                    return _c(
+                                      "button",
+                                      {
+                                        key:
+                                          "desktop-author-" +
+                                          authorItem.id +
+                                          "-" +
+                                          authorIndex,
+                                        staticClass:
+                                          "catalog-toolbar__author-option",
+                                        class: {
+                                          "catalog-toolbar__author-option--active":
+                                            _vm.autor === authorItem.slug
+                                        },
+                                        attrs: { type: "button" },
+                                        on: {
+                                          click: function($event) {
+                                            return _vm.selectAuthor(
+                                              authorItem.slug
+                                            )
+                                          }
+                                        }
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(authorItem.title) +
+                                            "\n                            "
+                                        )
+                                      ]
+                                    )
+                                  }),
+                                  _vm._v(" "),
+                                  !_vm.filteredFacetAuthors.length
+                                    ? _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "catalog-toolbar__author-empty"
+                                        },
+                                        [
+                                          _vm._v(
+                                            "\n                                Nema autora za taj pojam.\n                            "
+                                          )
+                                        ]
+                                      )
+                                    : _vm._e()
+                                ],
+                                2
+                              )
+                            ]
+                          )
+                        : _vm._e()
+                    ]
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.hasActiveToolbarFilters
+                ? _c(
+                    "button",
+                    {
+                      staticClass:
+                        "btn btn-outline-secondary catalog-toolbar__clear",
+                      attrs: { type: "button" },
+                      on: { click: _vm.clearToolbarFilters }
+                    },
+                    [
+                      _c(
+                        "span",
+                        {
+                          staticClass: "catalog-toolbar__clear-icon",
+                          attrs: { "aria-hidden": "true" }
+                        },
+                        [_vm._v("×")]
+                      ),
+                      _vm._v(" "),
+                      _c("span", [_vm._v("Očisti filtere")])
+                    ]
+                  )
+                : _vm._e()
+            ]),
             _vm._v(" "),
+            _c("div", { staticClass: "catalog-toolbar__actions" }, [
+              _c(
+                "select",
+                {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.sorting,
+                      expression: "sorting"
+                    }
+                  ],
+                  staticClass:
+                    "form-select catalog-toolbar__select catalog-toolbar__select--sort",
+                  attrs: { "aria-label": "Sortiraj proizvode" },
+                  on: {
+                    change: function($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function(o) {
+                          return o.selected
+                        })
+                        .map(function(o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.sorting = $event.target.multiple
+                        ? $$selectedVal
+                        : $$selectedVal[0]
+                    }
+                  }
+                },
+                [
+                  _c("option", { attrs: { value: "" } }, [_vm._v("Sortiraj")]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "novi" } }, [
+                    _vm._v("Najnovije")
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "price_up" } }, [
+                    _vm._v("Najmanja cijena")
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "price_down" } }, [
+                    _vm._v("Najveća cijena")
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "naziv_up" } }, [
+                    _vm._v("A - Ž")
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "naziv_down" } }, [
+                    _vm._v("Ž - A")
+                  ])
+                ]
+              ),
+              _vm._v(" "),
+              _c("span", { staticClass: "catalog-toolbar__summary" }, [
+                _vm._v(
+                  "\n                    Ukupno " +
+                    _vm._s(
+                      _vm.products.total
+                        ? Number(_vm.products.total).toLocaleString("hr-HR")
+                        : 0
+                    ) +
+                    " artikala\n                "
+                )
+              ])
+            ])
+          ]
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "catalog-toolbar__mobile d-xl-none" },
+          [
             _c(
               "div",
               {
                 staticClass:
-                  "d-flex align-items-center flex-nowrap me-3 me-sm-4 pb-3"
+                  "catalog-toolbar__mobile-top d-flex flex-wrap align-items-center"
               },
               [
+                _c(
+                  "a",
+                  {
+                    staticClass:
+                      "btn btn-outline-secondary catalog-toolbar__toggle d-sm-none",
+                    attrs: {
+                      href: "#shop-sidebar",
+                      "data-bs-toggle": "offcanvas",
+                      "aria-label": "Otvori kategorije",
+                      "data-bs-target": "#sideNav"
+                    }
+                  },
+                  [_vm._v("\n                    Kategorije\n                ")]
+                ),
+                _vm._v(" "),
+                _vm.hasToolbarFilters
+                  ? _c(
+                      "button",
+                      {
+                        staticClass:
+                          "btn btn-outline-secondary catalog-toolbar__toggle",
+                        attrs: { type: "button" },
+                        on: { click: _vm.toggleMobileFilters }
+                      },
+                      [
+                        _vm._v(
+                          "\n                    Filteri\n                "
+                        )
+                      ]
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.hasActiveToolbarFilters
+                  ? _c(
+                      "button",
+                      {
+                        staticClass:
+                          "btn btn-outline-secondary catalog-toolbar__clear catalog-toolbar__toggle catalog-toolbar__toggle--clear",
+                        attrs: { type: "button" },
+                        on: { click: _vm.clearToolbarFilters }
+                      },
+                      [
+                        _c(
+                          "span",
+                          {
+                            staticClass: "catalog-toolbar__clear-icon",
+                            attrs: { "aria-hidden": "true" }
+                          },
+                          [_vm._v("×")]
+                        ),
+                        _vm._v(" "),
+                        _c("span", [_vm._v("Očisti")])
+                      ]
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
                 _c(
                   "select",
                   {
@@ -7915,8 +8840,9 @@ var render = function() {
                         expression: "sorting"
                       }
                     ],
-                    staticClass: "form-select pe-2",
-                    staticStyle: { "min-width": "165px" },
+                    staticClass:
+                      "form-select catalog-toolbar__select catalog-toolbar__select--sort",
+                    attrs: { "aria-label": "Sortiraj proizvode" },
                     on: {
                       change: function($event) {
                         var $$selectedVal = Array.prototype.filter
@@ -7958,33 +8884,519 @@ var render = function() {
                       _vm._v("Ž - A")
                     ])
                   ]
-                )
+                ),
+                _vm._v(" "),
+                _c("span", { staticClass: "catalog-toolbar__summary" }, [
+                  _vm._v(
+                    "\n                    Ukupno " +
+                      _vm._s(
+                        _vm.products.total
+                          ? Number(_vm.products.total).toLocaleString("hr-HR")
+                          : 0
+                      ) +
+                      " artikala\n                "
+                  )
+                ])
               ]
-            )
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "d-flex pb-3" }, [
-            _c(
-              "span",
-              {
-                staticClass:
-                  "fs-sm text-dark btn btn-white btn-sm text-nowrap ms-2 d-none d-sm-block"
-              },
-              [
-                _vm._v(
-                  "Ukupno " +
-                    _vm._s(
-                      _vm.products.total
-                        ? Number(_vm.products.total).toLocaleString("hr-HR")
-                        : 0
-                    ) +
-                    " artikala"
-                )
-              ]
-            )
-          ])
-        ]
-      ),
+            ),
+            _vm._v(" "),
+            _c("transition", { attrs: { name: "filter-drawer" } }, [
+              _vm.showMobileFilters && _vm.hasToolbarFilters
+                ? _c("div", { staticClass: "catalog-toolbar__drawer" }, [
+                    _c("button", {
+                      staticClass: "catalog-toolbar__drawer-backdrop",
+                      attrs: {
+                        type: "button",
+                        "aria-label": "Zatvori filtere"
+                      },
+                      on: { click: _vm.closeMobileFilters }
+                    }),
+                    _vm._v(" "),
+                    _c(
+                      "aside",
+                      { staticClass: "catalog-toolbar__drawer-panel" },
+                      [
+                        _c(
+                          "div",
+                          { staticClass: "catalog-toolbar__drawer-header" },
+                          [
+                            _c("div", [
+                              _c(
+                                "p",
+                                {
+                                  staticClass: "catalog-toolbar__drawer-eyebrow"
+                                },
+                                [_vm._v("Pregled filtera")]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "h3",
+                                {
+                                  staticClass: "catalog-toolbar__drawer-title"
+                                },
+                                [_vm._v("Filteri")]
+                              )
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "button",
+                              {
+                                staticClass: "catalog-toolbar__drawer-close",
+                                attrs: {
+                                  type: "button",
+                                  "aria-label": "Zatvori filtere"
+                                },
+                                on: { click: _vm.closeMobileFilters }
+                              },
+                              [_c("span"), _vm._v(" "), _c("span")]
+                            )
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "catalog-toolbar__drawer-body" },
+                          [
+                            _c(
+                              "div",
+                              { staticClass: "catalog-toolbar__mobile-grid" },
+                              [
+                                _vm.facetConditions.length
+                                  ? _c(
+                                      "select",
+                                      {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: _vm.condition,
+                                            expression: "condition"
+                                          }
+                                        ],
+                                        staticClass:
+                                          "form-select catalog-toolbar__select",
+                                        attrs: {
+                                          "aria-label": "Filtriraj po stanju"
+                                        },
+                                        on: {
+                                          change: [
+                                            function($event) {
+                                              var $$selectedVal = Array.prototype.filter
+                                                .call(
+                                                  $event.target.options,
+                                                  function(o) {
+                                                    return o.selected
+                                                  }
+                                                )
+                                                .map(function(o) {
+                                                  var val =
+                                                    "_value" in o
+                                                      ? o._value
+                                                      : o.value
+                                                  return val
+                                                })
+                                              _vm.condition = $event.target
+                                                .multiple
+                                                ? $$selectedVal
+                                                : $$selectedVal[0]
+                                            },
+                                            _vm.applyToolbarFilters
+                                          ]
+                                        }
+                                      },
+                                      [
+                                        _c("option", { attrs: { value: "" } }, [
+                                          _vm._v("Stanje")
+                                        ]),
+                                        _vm._v(" "),
+                                        _vm._l(_vm.facetConditions, function(
+                                          option
+                                        ) {
+                                          return _c(
+                                            "option",
+                                            {
+                                              key: "mobile-condition-" + option,
+                                              domProps: { value: option }
+                                            },
+                                            [_vm._v(_vm._s(option))]
+                                          )
+                                        })
+                                      ],
+                                      2
+                                    )
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                _vm.facetBindings.length
+                                  ? _c(
+                                      "select",
+                                      {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: _vm.binding,
+                                            expression: "binding"
+                                          }
+                                        ],
+                                        staticClass:
+                                          "form-select catalog-toolbar__select",
+                                        attrs: {
+                                          "aria-label": "Filtriraj po uvezu"
+                                        },
+                                        on: {
+                                          change: [
+                                            function($event) {
+                                              var $$selectedVal = Array.prototype.filter
+                                                .call(
+                                                  $event.target.options,
+                                                  function(o) {
+                                                    return o.selected
+                                                  }
+                                                )
+                                                .map(function(o) {
+                                                  var val =
+                                                    "_value" in o
+                                                      ? o._value
+                                                      : o.value
+                                                  return val
+                                                })
+                                              _vm.binding = $event.target
+                                                .multiple
+                                                ? $$selectedVal
+                                                : $$selectedVal[0]
+                                            },
+                                            _vm.applyToolbarFilters
+                                          ]
+                                        }
+                                      },
+                                      [
+                                        _c("option", { attrs: { value: "" } }, [
+                                          _vm._v("Uvez")
+                                        ]),
+                                        _vm._v(" "),
+                                        _vm._l(_vm.facetBindings, function(
+                                          option
+                                        ) {
+                                          return _c(
+                                            "option",
+                                            {
+                                              key: "mobile-binding-" + option,
+                                              domProps: { value: option }
+                                            },
+                                            [_vm._v(_vm._s(option))]
+                                          )
+                                        })
+                                      ],
+                                      2
+                                    )
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                _vm.facetLetters.length
+                                  ? _c(
+                                      "select",
+                                      {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: _vm.letter,
+                                            expression: "letter"
+                                          }
+                                        ],
+                                        staticClass:
+                                          "form-select catalog-toolbar__select",
+                                        attrs: {
+                                          "aria-label": "Filtriraj po pismu"
+                                        },
+                                        on: {
+                                          change: [
+                                            function($event) {
+                                              var $$selectedVal = Array.prototype.filter
+                                                .call(
+                                                  $event.target.options,
+                                                  function(o) {
+                                                    return o.selected
+                                                  }
+                                                )
+                                                .map(function(o) {
+                                                  var val =
+                                                    "_value" in o
+                                                      ? o._value
+                                                      : o.value
+                                                  return val
+                                                })
+                                              _vm.letter = $event.target
+                                                .multiple
+                                                ? $$selectedVal
+                                                : $$selectedVal[0]
+                                            },
+                                            _vm.applyToolbarFilters
+                                          ]
+                                        }
+                                      },
+                                      [
+                                        _c("option", { attrs: { value: "" } }, [
+                                          _vm._v("Pismo")
+                                        ]),
+                                        _vm._v(" "),
+                                        _vm._l(_vm.facetLetters, function(
+                                          option
+                                        ) {
+                                          return _c(
+                                            "option",
+                                            {
+                                              key: "mobile-letter-" + option,
+                                              domProps: { value: option }
+                                            },
+                                            [_vm._v(_vm._s(option))]
+                                          )
+                                        })
+                                      ],
+                                      2
+                                    )
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                _vm.author === "" && _vm.facetAuthors.length
+                                  ? _c(
+                                      "div",
+                                      {
+                                        ref: "mobileAuthorDropdown",
+                                        staticClass:
+                                          "catalog-toolbar__author-select catalog-toolbar__author-select--mobile"
+                                      },
+                                      [
+                                        _c(
+                                          "button",
+                                          {
+                                            staticClass:
+                                              "catalog-toolbar__author-trigger",
+                                            attrs: {
+                                              type: "button",
+                                              "aria-expanded":
+                                                _vm.activeAuthorDropdown ===
+                                                "mobile",
+                                              "aria-label":
+                                                "Filtriraj po autoru"
+                                            },
+                                            on: {
+                                              click: function($event) {
+                                                return _vm.toggleAuthorDropdown(
+                                                  "mobile"
+                                                )
+                                              }
+                                            }
+                                          },
+                                          [
+                                            _c(
+                                              "span",
+                                              {
+                                                staticClass:
+                                                  "catalog-toolbar__author-trigger-label"
+                                              },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.selectedAuthorTitle
+                                                  )
+                                                )
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c("span", {
+                                              staticClass:
+                                                "catalog-toolbar__author-trigger-icon"
+                                            })
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _vm.activeAuthorDropdown === "mobile"
+                                          ? _c(
+                                              "div",
+                                              {
+                                                staticClass:
+                                                  "catalog-toolbar__author-panel catalog-toolbar__author-panel--mobile"
+                                              },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        _vm.authorSearchTerm,
+                                                      expression:
+                                                        "authorSearchTerm"
+                                                    }
+                                                  ],
+                                                  ref: "mobileAuthorSearch",
+                                                  staticClass:
+                                                    "form-control catalog-toolbar__author-search",
+                                                  attrs: {
+                                                    type: "search",
+                                                    placeholder:
+                                                      "Pretraži autora"
+                                                  },
+                                                  domProps: {
+                                                    value: _vm.authorSearchTerm
+                                                  },
+                                                  on: {
+                                                    input: function($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.authorSearchTerm =
+                                                        $event.target.value
+                                                    }
+                                                  }
+                                                }),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass:
+                                                      "catalog-toolbar__author-options"
+                                                  },
+                                                  [
+                                                    _c(
+                                                      "button",
+                                                      {
+                                                        staticClass:
+                                                          "catalog-toolbar__author-option",
+                                                        class: {
+                                                          "catalog-toolbar__author-option--active":
+                                                            _vm.autor === ""
+                                                        },
+                                                        attrs: {
+                                                          type: "button"
+                                                        },
+                                                        on: {
+                                                          click: function(
+                                                            $event
+                                                          ) {
+                                                            return _vm.selectAuthor(
+                                                              ""
+                                                            )
+                                                          }
+                                                        }
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "\n                                                Svi autori\n                                            "
+                                                        )
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _vm._l(
+                                                      _vm.filteredFacetAuthors,
+                                                      function(
+                                                        authorItem,
+                                                        authorIndex
+                                                      ) {
+                                                        return _c(
+                                                          "button",
+                                                          {
+                                                            key:
+                                                              "mobile-author-" +
+                                                              authorItem.id +
+                                                              "-" +
+                                                              authorIndex,
+                                                            staticClass:
+                                                              "catalog-toolbar__author-option",
+                                                            class: {
+                                                              "catalog-toolbar__author-option--active":
+                                                                _vm.autor ===
+                                                                authorItem.slug
+                                                            },
+                                                            attrs: {
+                                                              type: "button"
+                                                            },
+                                                            on: {
+                                                              click: function(
+                                                                $event
+                                                              ) {
+                                                                return _vm.selectAuthor(
+                                                                  authorItem.slug
+                                                                )
+                                                              }
+                                                            }
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              "\n                                                " +
+                                                                _vm._s(
+                                                                  authorItem.title
+                                                                ) +
+                                                                "\n                                            "
+                                                            )
+                                                          ]
+                                                        )
+                                                      }
+                                                    ),
+                                                    _vm._v(" "),
+                                                    !_vm.filteredFacetAuthors
+                                                      .length
+                                                      ? _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "catalog-toolbar__author-empty"
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              "\n                                                Nema autora za taj pojam.\n                                            "
+                                                            )
+                                                          ]
+                                                        )
+                                                      : _vm._e()
+                                                  ],
+                                                  2
+                                                )
+                                              ]
+                                            )
+                                          : _vm._e()
+                                      ]
+                                    )
+                                  : _vm._e()
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _vm.hasActiveToolbarFilters
+                              ? _c(
+                                  "button",
+                                  {
+                                    staticClass:
+                                      "btn btn-outline-secondary catalog-toolbar__clear catalog-toolbar__clear--mobile",
+                                    attrs: { type: "button" },
+                                    on: { click: _vm.clearToolbarFilters }
+                                  },
+                                  [
+                                    _c(
+                                      "span",
+                                      {
+                                        staticClass:
+                                          "catalog-toolbar__clear-icon",
+                                        attrs: { "aria-hidden": "true" }
+                                      },
+                                      [_vm._v("×")]
+                                    ),
+                                    _vm._v(" "),
+                                    _c("span", [_vm._v("Očisti filtere")])
+                                  ]
+                                )
+                              : _vm._e()
+                          ]
+                        )
+                      ]
+                    )
+                  ])
+                : _vm._e()
+            ])
+          ],
+          1
+        )
+      ]),
       _vm._v(" "),
       _vm.products.total
         ? _c(
@@ -8200,7 +9612,7 @@ var render = function() {
       }),
       _vm._v(" "),
       !_vm.products_loaded
-        ? _c("div", { staticClass: "row" }, [_vm._m(1)])
+        ? _c("div", { staticClass: "row" }, [_vm._m(0)])
         : _vm._e(),
       _vm._v(" "),
       _vm.products.total
@@ -8257,7 +9669,7 @@ var render = function() {
             _vm._v(" "),
             _c("h4", { staticClass: "h5" }, [_vm._v("Savjeti i smjernica")]),
             _vm._v(" "),
-            _vm._m(2),
+            _vm._m(1),
             _vm._v(" "),
             _c("hr", { staticClass: "d-sm-none" })
           ])
@@ -8281,26 +9693,6 @@ var render = function() {
   )
 }
 var staticRenderFns = [
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "dropdown me-2 d-sm-none" }, [
-      _c(
-        "a",
-        {
-          staticClass: "btn btn-dark dropdown-toggle ",
-          attrs: {
-            href: "#shop-sidebar",
-            "data-bs-toggle": "offcanvas",
-            "aria-label": "Open the menu",
-            "data-bs-target": "#sideNav"
-          }
-        },
-        [_vm._v("Kategorije")]
-      )
-    ])
-  },
   function() {
     var _vm = this
     var _h = _vm.$createElement

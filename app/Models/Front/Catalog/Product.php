@@ -545,6 +545,18 @@ class Product extends Model
             });
         }
 
+        if ($request->has('condition')) {
+            $query->where('condition', $request->input('condition'));
+        }
+
+        if ($request->has('binding')) {
+            $query->where('binding', $request->input('binding'));
+        }
+
+        if ($request->has('letter')) {
+            $query->where('letter', $request->input('letter'));
+        }
+
         if ($request->has('sort')) {
             $sort = $request->input('sort');
 
