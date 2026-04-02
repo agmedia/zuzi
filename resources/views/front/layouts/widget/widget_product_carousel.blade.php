@@ -11,7 +11,7 @@
         'preventActionWhenRunning' => true,
         'preventScrollOnTouch' => 'auto',
         'responsive' => [
-            0 => ['items' => 2, 'gutter' => 10, 'controls' => false],
+            0 => ['items' => 2, 'gutter' => 10, 'controls' => true],
             500 => ['items' => 2, 'gutter' => 10, 'controls' => true],
             768 => ['items' => 3, 'gutter' => 10],
             1100 => ['items' => 4, 'gutter' => 10],
