@@ -52,7 +52,7 @@
         ],
     ];
 @endphp
-<section class=" py-0 pt-3" >
+<section class=" py-0 pt-5" >
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1  pb-3 mb-2">
         <h2 class="h3 mb-0 pt-0 font-title me-3"> {{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h2>
         @if ($data['tablename'] == 'blog')
