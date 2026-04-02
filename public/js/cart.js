@@ -3765,8 +3765,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
-//
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -3802,6 +3800,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       showMobileFilters: false,
       toolbarRequestToken: 0,
       bodyOverflowValue: '',
+      isIPhone: false,
       origin: location.origin + '/',
       hr_total: 'rezultata',
       products_loaded: false,
@@ -3859,6 +3858,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
   mounted: function mounted() {
     var robotsMeta = document.querySelector("meta[name='robots']");
     this.defaultRobots = robotsMeta ? robotsMeta.getAttribute('content') || '' : '';
+    this.isIPhone = this.detectIPhone();
     document.addEventListener('click', this.handleDocumentClick);
     document.addEventListener('keydown', this.handleDocumentKeydown);
     this.checkQuery(this.$route);
@@ -4208,6 +4208,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       this.activeAuthorDropdown = target;
       this.authorSearchTerm = '';
       this.$nextTick(function () {
+        if (_this6.shouldSkipAuthorSearchAutofocus(target)) {
+          return;
+        }
         var refName = target === 'mobile' ? 'mobileAuthorSearch' : 'desktopAuthorSearch';
         if (_this6.$refs[refName]) {
           _this6.$refs[refName].focus();
@@ -4259,6 +4262,24 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         return;
       }
       document.body.style.overflow = this.bodyOverflowValue;
+    },
+    /**
+     *
+     * @return {boolean}
+     */
+    detectIPhone: function detectIPhone() {
+      if (typeof navigator === 'undefined') {
+        return false;
+      }
+      return /iPhone/i.test(navigator.userAgent || '') || navigator.platform === 'iPhone';
+    },
+    /**
+     *
+     * @param target
+     * @return {boolean}
+     */
+    shouldSkipAuthorSearchAutofocus: function shouldSkipAuthorSearchAutofocus(target) {
+      return target === 'mobile' && this.isIPhone;
     },
     /**
      *
@@ -8814,21 +8835,6 @@ var render = function() {
                   "catalog-toolbar__mobile-top d-flex flex-wrap align-items-center"
               },
               [
-                _c(
-                  "a",
-                  {
-                    staticClass:
-                      "btn btn-outline-secondary catalog-toolbar__toggle d-sm-none",
-                    attrs: {
-                      href: "#shop-sidebar",
-                      "data-bs-toggle": "offcanvas",
-                      "aria-label": "Otvori kategorije",
-                      "data-bs-target": "#sideNav"
-                    }
-                  },
-                  [_vm._v("\n                    Kategorije\n                ")]
-                ),
-                _vm._v(" "),
                 _vm.hasToolbarFilters
                   ? _c(
                       "button",

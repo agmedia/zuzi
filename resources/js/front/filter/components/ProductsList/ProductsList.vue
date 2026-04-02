@@ -98,9 +98,7 @@
 
             <div class="catalog-toolbar__mobile d-xl-none">
                 <div class="catalog-toolbar__mobile-top d-flex flex-wrap align-items-center">
-                    <a class="btn btn-outline-secondary catalog-toolbar__toggle d-sm-none" href="#shop-sidebar" data-bs-toggle="offcanvas" aria-label="Otvori kategorije" data-bs-target="#sideNav">
-                        Kategorije
-                    </a>
+
 
                     <button v-if="hasToolbarFilters" class="btn btn-outline-secondary catalog-toolbar__toggle" type="button" @click="toggleMobileFilters">
                         Filteri
@@ -328,6 +326,7 @@
                 showMobileFilters: false,
                 toolbarRequestToken: 0,
                 bodyOverflowValue: '',
+                isIPhone: false,
                 origin: location.origin + '/',
                 hr_total: 'rezultata',
                 products_loaded: false,
@@ -385,6 +384,7 @@
         mounted() {
             const robotsMeta = document.querySelector("meta[name='robots']");
             this.defaultRobots = robotsMeta ? robotsMeta.getAttribute('content') || '' : '';
+            this.isIPhone = this.detectIPhone();
 
             document.addEventListener('click', this.handleDocumentClick);
             document.addEventListener('keydown', this.handleDocumentKeydown);
@@ -764,6 +764,10 @@
                 this.authorSearchTerm = '';
 
                 this.$nextTick(() => {
+                    if (this.shouldSkipAuthorSearchAutofocus(target)) {
+                        return;
+                    }
+
                     let refName = target === 'mobile' ? 'mobileAuthorSearch' : 'desktopAuthorSearch';
 
                     if (this.$refs[refName]) {
@@ -824,6 +828,27 @@
                 }
 
                 document.body.style.overflow = this.bodyOverflowValue;
+            },
+
+            /**
+             *
+             * @return {boolean}
+             */
+            detectIPhone() {
+                if (typeof navigator === 'undefined') {
+                    return false;
+                }
+
+                return /iPhone/i.test(navigator.userAgent || '') || navigator.platform === 'iPhone';
+            },
+
+            /**
+             *
+             * @param target
+             * @return {boolean}
+             */
+            shouldSkipAuthorSearchAutofocus(target) {
+                return target === 'mobile' && this.isIPhone;
             },
 
             /**
