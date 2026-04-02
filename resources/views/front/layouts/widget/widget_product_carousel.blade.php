@@ -20,7 +20,7 @@
         ],
     ];
 @endphp
-<section class="pt-2 pb-3">
+<section class="pt-0 pb-0">
 
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1   pb-2 mb-2">
         <h4 class="h3 mb-0 pt-3 font-title me-3">{{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h4>
