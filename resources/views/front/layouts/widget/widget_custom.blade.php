@@ -33,7 +33,7 @@
 
                                      <i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                         </div>
-                        <div class="p-3"><a  href="{{ url($widget['url']) }}" ><img src="{{ $widget['image'] }}" alt="{{ $widget['title'] }}" width="350" height="350"></a></div>
+                        <div class="p-3"><a  href="{{ url($widget['url']) }}" ><img src="{{ $widget['image'] }}" alt="{{ $widget['title'] }}" width="350" height="350" style="border-radius: 10px;"></a></div>
                     </div>
                 </div>
             </div>
