@@ -319,13 +319,7 @@
    <!-- ShareThis BEGIN --><div class="sharethis-inline-share-buttons"></div><!-- ShareThis END -->
 
 
-            <button
-                type="button"
-                class="btn btn-dark flex-fill mx-0 mt-3"
-                data-bs-toggle="modal"
-                data-bs-target="#newsletterModal">
-                <i class="ci-mail"></i>  Prijava na newsletter
-            </button>
+
 
             </div>
 </div>
