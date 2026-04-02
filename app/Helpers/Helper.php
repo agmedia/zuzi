@@ -600,7 +600,7 @@ class Helper
     {
         $prods = (new Product())->newQuery();
 
-        $prods->active()->available();
+        $prods->active()->available()->hasImage();
 
         if (isset($data['popular']) && $data['popular'] == 'on') {
             $prods->popular();

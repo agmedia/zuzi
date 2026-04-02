@@ -19,7 +19,18 @@
             1600 => ['items' => 6, 'gutter' => 10],
         ],
     ];
+
+    $products = collect($data['items'] ?? [])->filter(function ($product) {
+        if (! method_exists($product, 'getRawOriginal')) {
+            return filled($product->image ?? null);
+        }
+
+        $image = $product->getRawOriginal('image');
+
+        return filled($image) && $image !== 'media/avatars/avatar0.jpg';
+    })->values();
 @endphp
+@if ($products->isNotEmpty())
 <section class="pt-0 pb-0">
 
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1   pb-2 mb-2">
@@ -32,7 +43,7 @@
     </div>
     <div class="tns-carousel widget-touch-carousel">
         <div class="tns-carousel-inner" data-carousel-options='@json($productWidgetCarouselOptions)'>
-            @foreach ($data['items'] as $product)
+            @foreach ($products as $product)
                 <!-- Product-->
                 <div>
                     @include('front.catalog.category.product')
@@ -43,3 +54,4 @@
 
 
 </section>
+@endif

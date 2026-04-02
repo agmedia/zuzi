@@ -417,6 +417,19 @@ class Product extends Model
 
 
     /**
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeHasImage(Builder $query): Builder
+    {
+        return $query->whereNotNull('image')
+                     ->where('image', '!=', '')
+                     ->where('image', '!=', 'media/avatars/avatar0.jpg');
+    }
+
+
+    /**
      * @param $query
      *
      * @return mixed
