@@ -205,7 +205,7 @@
 
                 </section>
 
-                @if ($cat && ! $subcat)
+                @if ($cat && ! $subcat && ! $isActionListing)
 
                     @if ($cat->subcategories()->count())
                         <section class="py-2 mb-0">
@@ -269,6 +269,27 @@
                 <section class="mb-3">
                     <p class="fs-md text-muted mb-0">{{ $listingIntro }}</p>
                 </section>
+            @endif
+
+            @if ($cat && ! $subcat && $isActionListing)
+
+                @if ($cat->subcategories()->count())
+                    <section class="py-2 mb-3">
+                        <div class="row">
+                            <div class="col-lg-12 py-1">
+                                <div class="scrolling-wrapper">
+                                    @foreach ($cat->subcategories as $item)
+                                        <a href="{{ route('catalog.route.actions', ['cat' => $cat, 'subcat' => $item]) }}"
+                                           class="btn btn-dark btn-sm mb-2">
+                                            <p class="py-0 mb-0 px-1">{{ $item->title }}</p>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                @endif
+
             @endif
 
             <products-view ids="{{ isset($ids) ? $ids : null }}"
