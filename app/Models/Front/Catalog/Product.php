@@ -591,8 +591,10 @@ class Product extends Model
             $query->where('letter', $request->input('letter'));
         }
 
-        if ($request->has('sort')) {
-            $sort = $request->input('sort');
+        $sort = $request->input('sort');
+        $isActionListing = $request->input('group') === 'snizenja';
+
+        if ($sort) {
 
             if ($sort == 'popular') {
                 $query->orderBy('viewed', 'desc')->orderBy('created_at', 'desc');
@@ -617,6 +619,8 @@ class Product extends Model
             if ($sort == 'naziv_down') {
                 $query->orderBy('name', 'desc');
             }
+        } elseif ($isActionListing) {
+            $query->orderBy('viewed', 'desc')->orderBy('created_at', 'desc');
         } else {
             $query->orderBy('created_at', 'desc');
         }
