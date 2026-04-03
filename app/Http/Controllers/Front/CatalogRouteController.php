@@ -388,11 +388,17 @@ class CatalogRouteController extends Controller
 
             $categoriesPayload = $categories->map(function ($c) use ($group) {
                 $slug = $c->slug ?: $c->id;
-                $path = '/' . $group . '/' . $slug;
+
+                if ($group === 'snizenja') {
+                    $path = route('catalog.route.actions', ['cat' => $slug]);
+                } else {
+                    $path = route('catalog.route', ['group' => $group, 'cat' => $slug]);
+                }
+
                 return [
                     'id'   => $c->id,
                     'name' => $c->title,
-                    'url'  => url($path),
+                    'url'  => $path,
                 ];
             })->values()->all();
 
@@ -490,7 +496,17 @@ class CatalogRouteController extends Controller
      */
     public function actions(Request $request, ?Category $cat = null, ?Category $subcat = null)
     {
-        $ids = Product::query()->whereNotNull('special')->pluck('id');
+        $ids = Product::query()
+            ->active()
+            ->hasStock()
+            ->where('special', '!=', '')
+            ->where(function (Builder $query) {
+                $query->whereDate('special_from', '<=', now())->orWhereNull('special_from');
+            })
+            ->where(function (Builder $query) {
+                $query->whereDate('special_to', '>=', now())->orWhereNull('special_to');
+            })
+            ->pluck('id');
         $group = 'snizenja';
 
         $crumbs = null;

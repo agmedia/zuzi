@@ -30,9 +30,10 @@ class FilterController extends Controller
 
         $response = [];
         $params = $request->input('params');
+        $is_actions_page = ($params['group'] ?? null) === 'snizenja';
 
         // Ako je normal kategorija
-        if ($params['group']) {
+        if (($params['group'] ?? null) && ! $is_actions_page) {
             $response = Helper::resolveCache('categories')->remember($params['group'], config('cache.life'), function () use ($params) {
                 $response = Category::query()
                     ->active()
@@ -57,7 +58,7 @@ class FilterController extends Controller
                 $query->active()->hasStock()->whereIn('id', $_ids);
             })->sortByName()->withCount('products')->get()->toArray();
 
-            $response = $this->resolveCategoryArray($categories, 'categories');
+            $response = $this->resolveCategoryArray($categories, $is_actions_page ? 'actions' : 'categories');
         }
 
         return response()->json($response);
@@ -128,6 +129,12 @@ class FilterController extends Controller
         } elseif ($type == 'publisher') {
             return route('catalog.route.publisher', [
                 'publisher' => $target,
+                'cat' => $parent_slug ?: $category['slug'],
+                'subcat' => $parent_slug ? $category['slug'] : null
+            ]);
+
+        } elseif ($type == 'actions') {
+            return route('catalog.route.actions', [
                 'cat' => $parent_slug ?: $category['slug'],
                 'subcat' => $parent_slug ? $category['slug'] : null
             ]);

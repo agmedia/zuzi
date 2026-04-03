@@ -26,6 +26,7 @@
     $listingUpdatedAt = $listingUpdatedAt ?: (isset($cat) && $cat ? $cat->updated_at : null);
     $listingUpdatedAt = $listingUpdatedAt ?: (isset($author) && $author ? $author->updated_at : null);
     $listingUpdatedAt = $listingUpdatedAt ?: (isset($publisher) && $publisher ? $publisher->updated_at : null);
+    $isActionListing = Route::currentRouteName() === 'catalog.route.actions';
     $groupHeading = 'Knjige';
 
     if (($group ?? null) === 'snizenja') {
@@ -158,7 +159,7 @@
                             @if ($cat && ! $subcat)
                                 <li class="breadcrumb-item text-nowrap active" aria-current="page">{{ $cat->title }}</li>
                             @elseif ($cat && $subcat)
-                                <li class="breadcrumb-item text-nowrap active" aria-current="page"><a class="text-nowrap" href="{{ route('catalog.route', ['group' => $group, 'cat' => $cat]) }}">{{ $cat->title }}</a></li>
+                                <li class="breadcrumb-item text-nowrap active" aria-current="page"><a class="text-nowrap" href="{{ $isActionListing ? route('catalog.route.actions', ['cat' => $cat]) : route('catalog.route', ['group' => $group, 'cat' => $cat]) }}">{{ $cat->title }}</a></li>
                                 <li class="breadcrumb-item text-nowrap active" aria-current="page">{{ $subcat->title }}</li>
                             @endif
                         </ol>
@@ -188,7 +189,7 @@
                                 <div class="col-lg-12   py-1 ">
                                     <div class="scrolling-wrapper">
                                         @foreach ($cat->subcategories as $item)
-                                            <a href="{{ route('catalog.route', ['group' => $group, 'cat' => $cat, 'subcat' => $item]) }}"
+                                            <a href="{{ $isActionListing ? route('catalog.route.actions', ['cat' => $cat, 'subcat' => $item]) : route('catalog.route', ['group' => $group, 'cat' => $cat, 'subcat' => $item]) }}"
                                                class="btn btn-dark btn-sm mb-2">
                                                 <p class=" py-0 mb-0 px-1">{{ $item->title }}</p></a>
                                         @endforeach
