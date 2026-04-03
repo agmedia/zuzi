@@ -175,6 +175,15 @@
                 <nav class="mb-2 text-center text-lg-start" aria-label="breadcrumb">
                         <ol class="breadcrumb flex-lg-nowrap">
                             <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
+                            @if ($isActionListing)
+                                @if (! $cat && ! $subcat)
+                                    <li class="breadcrumb-item text-nowrap active" aria-current="page">Akcijska ponuda</li>
+                                @else
+                                    <li class="breadcrumb-item text-nowrap active" aria-current="page">
+                                        <a class="text-nowrap" href="{{ route('catalog.route.actions') }}">Akcijska ponuda</a>
+                                    </li>
+                                @endif
+                            @endif
                             @if ($group && ! $cat && ! $subcat)
                                <!-- <li class="breadcrumb-item text-nowrap active" aria-current="page">{{ \Illuminate\Support\Str::ucfirst($group) }}</li> -->
                             @elseif ($group && $cat)
