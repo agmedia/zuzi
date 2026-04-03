@@ -27,7 +27,7 @@ class WidgetController extends Controller
             $query->where('group_id', $request->input('group'));
         }
 
-        $groups = $query->with('widgets')->paginate(config('settings.pagination.items'));
+        $groups = $query->with('widgets')->get();
 
         return view('back.widget.index', compact('groups'));
     }
