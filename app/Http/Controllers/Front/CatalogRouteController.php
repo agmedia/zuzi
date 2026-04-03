@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -58,7 +59,9 @@ class CatalogRouteController extends Controller
                 abort(404);
             }
 
-            $prod->increment('viewed', 1);
+            DB::table('products')
+                ->where('id', $prod->id)
+                ->increment('viewed');
 
             $seo = Seo::getProductData($prod);
             $gdl = TagManager::getGoogleProductDataLayer($prod);
