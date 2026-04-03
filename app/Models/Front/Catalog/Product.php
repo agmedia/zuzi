@@ -51,6 +51,16 @@ class Product extends Model
      */
     protected $eur;
 
+    /**
+     * @var mixed
+     */
+    protected $resolvedSpecialValue;
+
+    /**
+     * @var bool
+     */
+    protected $hasResolvedSpecialValue = false;
+
 
     /**
      * Get the route key for the model.
@@ -210,38 +220,48 @@ class Product extends Model
      */
     public function special()
     {
-        $action = $this->action;
+        if ($this->hasResolvedSpecialValue) {
+            return $this->resolvedSpecialValue;
+        }
+
+        $this->hasResolvedSpecialValue = true;
+        $this->resolvedSpecialValue = $this->price;
+
+        if ( ! $this->special) {
+            return $this->resolvedSpecialValue;
+        }
+
+        $now = now();
+        $from = $now->copy()->subDay();
+        $to = $now->copy()->addDay();
+
+        if ($this->special_from && $this->special_from != '0000-00-00 00:00:00') {
+            $from = Carbon::make($this->special_from) ?: $from;
+        }
+
+        if ($this->special_to && $this->special_to != '0000-00-00 00:00:00') {
+            $to = Carbon::make($this->special_to) ?: $to;
+        }
+
+        if ($from > $now || $now > $to) {
+            return $this->resolvedSpecialValue;
+        }
+
+        $action = $this->relationLoaded('action') ? $this->getRelation('action') : $this->action;
+
+        if ( ! $action || ! $action->coupon) {
+            $this->resolvedSpecialValue = $this->special;
+
+            return $this->resolvedSpecialValue;
+        }
+
         $coupon_session_key = config('session.cart') . '_coupon';
-        $coupon_ok = false;
 
-        if ( ! $action || ($action && ! $action->coupon)) {
-            $coupon_ok = true;
+        if (session()->has($coupon_session_key) && Helper::couponEquals(session($coupon_session_key), $action->coupon)) {
+            $this->resolvedSpecialValue = $this->special;
         }
 
-        if (isset($action->status) && $action->status) {
-            if ((isset($action->coupon) && $action->coupon) && session()->has($coupon_session_key) && Helper::couponEquals(session($coupon_session_key), $action->coupon)) {
-                $coupon_ok = true;
-            }
-        }
-
-        // If special is set, return special.
-        if ($this->special && $coupon_ok) {
-            $from = now()->subDay();
-            $to = now()->addDay();
-
-            if ($this->special_from && $this->special_from != '0000-00-00 00:00:00') {
-                $from = Carbon::make($this->special_from);
-            }
-            if ($this->special_to && $this->special_to != '0000-00-00 00:00:00') {
-                $to = Carbon::make($this->special_to);
-            }
-
-            if ($from <= now() && now() <= $to) {
-                return $this->special;
-            }
-        }
-
-        return $this->price;
+        return $this->resolvedSpecialValue;
     }
 
 

@@ -79,7 +79,7 @@ class CatalogRouteController extends Controller
                 $authorProducts = Product::query()
                     ->active()
                     ->hasStock()
-                    ->with('author')
+                    ->with(['author', 'action'])
                     ->where('author_id', $prod->author_id)
                     ->where('id', '!=', $prod->id)
                     ->inRandomOrder()
@@ -95,7 +95,7 @@ class CatalogRouteController extends Controller
                 $publisherProducts = Product::query()
                     ->active()
                     ->hasStock()
-                    ->with('author')
+                    ->with(['author', 'action'])
                     ->where('publisher_id', $prod->publisher_id)
                     ->where('id', '!=', $prod->id)
                     ->inRandomOrder()
@@ -115,7 +115,7 @@ class CatalogRouteController extends Controller
                 $relatedProducts = Product::query()
                     ->active()
                     ->hasStock()
-                    ->with('author')
+                    ->with(['author', 'action'])
                     ->whereIn('id', $relatedIds)
                     ->get()
                     ->sortBy(fn ($item) => $relatedIds->search($item->id))
@@ -340,7 +340,7 @@ class CatalogRouteController extends Controller
 
             // Učitaj proizvode i povezanog autora
             $items = Product::query()
-                ->with(['author'])
+                ->with(['author', 'action'])
                 ->whereIn('id', $productIds)
                 ->get()
                 ->keyBy('id');

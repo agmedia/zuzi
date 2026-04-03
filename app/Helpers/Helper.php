@@ -617,7 +617,7 @@ class Helper
             $prods->whereIn('id', $data['list']);
         }
 
-        return $prods->with('author');
+        return $prods->with(['author', 'action']);
     }
 
 
@@ -698,7 +698,7 @@ class Helper
                         ->orderBy('price', 'desc')
                         ->orderBy('updated_at', 'desc')
                         ->limit(12)
-                        ->with('author');
+                        ->with(['author', 'action']);
     }
 
 

@@ -180,13 +180,13 @@ class FilterController extends Controller
 
         if (isset($params['ids']) && $params['ids'] != '') {
             $products = (new Product())->filter($request)
-                                       ->with('author')
+                                       ->with(['author', 'action'])
                                        ->paginate(config('settings.pagination.front'));
         } else {
 
             $products = Helper::resolveCache('products')->remember($cache_string, config('cache.life'), function () use ($request) {
                 $products = (new Product())->filter($request)
-                                           ->with('author')
+                                           ->with(['author', 'action'])
                                            ->paginate(config('settings.pagination.front'));
                 return $products;
 

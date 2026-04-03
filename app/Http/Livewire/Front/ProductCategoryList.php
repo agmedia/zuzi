@@ -200,7 +200,7 @@ class ProductCategoryList extends Component
             $this->ids = collect($this->ids);
         }
 
-        $products = (new Product())->filter($request, $this->ids)->with('author')->paginate(config('settings.pagination.front'));
+        $products = (new Product())->filter($request, $this->ids)->with(['author', 'action'])->paginate(config('settings.pagination.front'));
 
         return view('livewire.front.product-category-list', [
             'products' => $products
