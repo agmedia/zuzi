@@ -494,8 +494,13 @@ class Helper
             }
 
             if (static::isDescriptionTarget($data, 'category')) {
-                $items     = static::category($data)->get();
-                $tablename = 'category';
+                if ($wg->template == 'product_carousel') {
+                    $items     = static::categoryProducts($data)->get();
+                    $tablename = 'product';
+                } else {
+                    $items     = static::category($data)->get();
+                    $tablename = 'category';
+                }
             }
 
             if (static::isDescriptionTarget($data, 'publisher')) {
@@ -667,6 +672,33 @@ class Helper
         }
 
         return $category;
+    }
+
+
+    /**
+     * @param array $data
+     *
+     * @return Builder
+     */
+    private static function categoryProducts(array $data): Builder
+    {
+        $products = (new Product())->newQuery();
+
+        $products->active()->available()->hasImage();
+
+        if (isset($data['list']) && $data['list']) {
+            $products->whereHas('categories', function (Builder $query) use ($data) {
+                $query->whereIn('category_id', $data['list']);
+            });
+        } else {
+            $products->whereRaw('1 = 0');
+        }
+
+        return $products->distinct()
+                        ->orderBy('price', 'desc')
+                        ->orderBy('updated_at', 'desc')
+                        ->limit(12)
+                        ->with('author');
     }
 
 

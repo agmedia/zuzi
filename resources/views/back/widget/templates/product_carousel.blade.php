@@ -12,6 +12,10 @@
 
 
 @section('content')
+    @php
+        $selectedTarget = old('target', isset($widget) ? $widget->target : 'product');
+        $selectedList = old('action_list', isset($widget) ? (array) json_decode($widget->links, true) : []);
+    @endphp
     <div class="content" id="pages-app">
 
         @include('back.layouts.partials.session')
@@ -44,7 +48,8 @@
                                     <label for="group-select">Grupa stavki @include('back.layouts.partials.required-star')</label>
                                     <select class="form-control" id="target-select" name="target">
                                         <option></option>
-                                        <option value="product" {{ (isset($widget->target) and $widget->target == 'product') ? 'selected="selected"' : '' }}>Artikli</option>
+                                        <option value="product" {{ $selectedTarget == 'product' ? 'selected="selected"' : '' }}>Artikli</option>
+                                        <option value="category" {{ $selectedTarget == 'category' ? 'selected="selected"' : '' }}>Kategorije</option>
                                         {{--@foreach ($targets as $target)
                                             <option value="{{ $target->id }}" {{ (isset($widget) and $target->id == $widget->target) ? 'selected="selected"' : '' }}>{{ $target->title }}</option>
                                         @endforeach--}}
@@ -115,11 +120,7 @@
                             <h5 class="text-black mb-0 mt-20">Stavke Widgeta</h5>
                             <hr class="mb-30">
 
-                            @if (isset($widget))
-                                @livewire('back.marketing.action-group-list', ['group' => $widget->target, 'list' => json_decode($widget->links)])
-                            @else
-                                @livewire('back.marketing.action-group-list', ['group' => 'products'])
-                            @endif
+                            @livewire('back.marketing.action-group-list', ['group' => $selectedTarget, 'list' => $selectedList])
 
                         </div>
                     </div>
