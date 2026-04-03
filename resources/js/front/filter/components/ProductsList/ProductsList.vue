@@ -83,6 +83,7 @@
                 <div class="catalog-toolbar__actions">
                     <select class="form-select catalog-toolbar__select catalog-toolbar__select--sort" v-model="sorting" aria-label="Sortiraj proizvode">
                         <option value="">Sortiraj</option>
+                        <option value="popular">Popularnost</option>
                         <option value="novi">Najnovije</option>
                         <option value="price_up">Najmanja cijena</option>
                         <option value="price_down">Najveća cijena</option>
@@ -111,6 +112,7 @@
 
                     <select class="form-select catalog-toolbar__select catalog-toolbar__select--sort" v-model="sorting" aria-label="Sortiraj proizvode">
                         <option value="">Sortiraj</option>
+                        <option value="popular">Popularnost</option>
                         <option value="novi">Najnovije</option>
                         <option value="price_up">Najmanja cijena</option>
                         <option value="price_down">Najveća cijena</option>
@@ -240,14 +242,24 @@
                     <div class="card-body catalog-grid-card__body py-2">
                         <h3 class="product-title catalog-grid-card__title fs-sm mt-2 mb-1"><a :href="origin + product.url">{{ product.name }}</a></h3>
                         <div class="catalog-grid-card__price-group">
-                            <div class="product-price" >
-                                <span class="text-muted p-0" v-if="product.special" ><small >NC 30 dana: {{ product.main_price_text }} </small></span>
+                            <div class="product-price" v-if="product.special">
+                                <small>
+                                    <span class="text-muted">
+                                        NC30:
+                                        <s>{{ product.main_price_text }}</s>
+                                        <template v-if="product.secondary_price_text">{{ product.secondary_price_text }}</template>
+                                    </span>
+                                </small>
+                                <span class="text-dark fs-md">
+                                    {{ product.main_special_text }}
+                                    <small class="text-muted" v-if="product.secondary_special_text">{{ product.secondary_special_text }}</small>
+                                </span>
                             </div>
-                            <div class="product-price">
-                                <span class="text-primary" v-if="product.special">{{ product.main_special_text }}</span>
-                             </div>
-                            <div class="product-price">
-                                <span class="text-primary" v-if="!product.special">{{ product.main_price_text }}</span>
+                            <div class="product-price" v-else>
+                                <span class="text-dark fs-md">
+                                    {{ product.main_price_text }}
+                                    <small class="fs-sm text-muted" v-if="product.secondary_price_text">{{ product.secondary_price_text }}</small>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -301,6 +313,10 @@
             subcat: String,
             author: String,
             publisher: String,
+            defaultSort: {
+                type: String,
+                default: ''
+            },
         },
         //
         data() {
@@ -327,6 +343,7 @@
                 toolbarRequestToken: 0,
                 bodyOverflowValue: '',
                 isIPhone: false,
+                suppressSortWatcher: false,
                 origin: location.origin + '/',
                 hr_total: 'rezultata',
                 products_loaded: false,
@@ -372,6 +389,10 @@
         //
         watch: {
             sorting(value) {
+                if (this.suppressSortWatcher) {
+                    return;
+                }
+
                 this.page = '';
                 this.setQueryParam('sort', value);
             },
@@ -569,6 +590,8 @@
              * @param params
              */
             checkQuery(params) {
+                const resolvedSort = params.query.sort ? params.query.sort : (this.defaultSort || '');
+
                 this.start = params.query.start ? params.query.start : '';
                 this.end = params.query.end ? params.query.end : '';
                 this.autor = params.query.autor ? params.query.autor : '';
@@ -577,8 +600,14 @@
                 this.binding = params.query.binding ? params.query.binding : '';
                 this.letter = params.query.letter ? params.query.letter : '';
                 this.page = params.query.page ? params.query.page : '';
-                this.sorting = params.query.sort ? params.query.sort : '';
                 this.search_query = params.query.pojam ? params.query.pojam : '';
+
+                this.suppressSortWatcher = true;
+                this.sorting = resolvedSort;
+
+                this.$nextTick(() => {
+                    this.suppressSortWatcher = false;
+                });
 
                 if (this.page != '') {
                     this.getProductsPage(this.page, false);

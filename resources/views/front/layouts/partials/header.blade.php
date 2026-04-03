@@ -83,6 +83,23 @@
 </header>
 
 <!-- Sidebar menu-->
+@php
+    $isActionListing = Route::currentRouteName() === 'catalog.route.actions';
+    $sidebarGroup = $isActionListing ? \App\Helpers\Helper::categoryGroupPath(true) : ($group ?? \App\Helpers\Helper::categoryGroupPath(true));
+    $sidebarIds = $isActionListing ? null : (isset($ids) ? $ids : null);
+    $sidebarCat = isset($cat) ? $cat : null;
+    $sidebarSubcat = isset($subcat) ? $subcat : null;
+
+    if (
+        $isActionListing
+        && $sidebarCat instanceof \App\Models\Front\Catalog\Category
+        && ! $sidebarSubcat
+        && (int) $sidebarCat->parent_id > 0
+    ) {
+        $sidebarSubcat = $sidebarCat;
+        $sidebarCat = $sidebarCat->relationLoaded('parent') ? $sidebarCat->parent : $sidebarCat->parent()->first();
+    }
+@endphp
 <aside class="offcanvas offcanvas-expand w-100 border-end zindex-lg-5 pt-lg-5" id="sideNav" style="max-width: 18.875rem;">
 
     <ul class="nav nav-tabs nav-justified mt-0 mt-lg-5 mb-0" role="tablist" >
@@ -92,10 +109,10 @@
     </ul>
     <div class="offcanvas-body px-0 pt-3 pb-0" data-simplebar>
         <div class="tab-content">
-            <filter-view ids="{{ isset($ids) ? $ids : null }}"
-                         group="{{ $group ?? \App\Helpers\Helper::categoryGroupPath(true) }}"
-                         cat="{{ isset($cat) ? $cat : null }}"
-                         subcat="{{ isset($subcat) ? $subcat : null }}"
+            <filter-view ids="{{ $sidebarIds }}"
+                         group="{{ $sidebarGroup }}"
+                         cat="{{ $sidebarCat }}"
+                         subcat="{{ $sidebarSubcat }}"
                          author="{{ isset($author) ? $author['slug'] : null }}"
                          publisher="{{ isset($publisher) ? $publisher['slug'] : null }}">
             </filter-view>
@@ -390,5 +407,3 @@
         });
     </script>
 @endpush
-
-

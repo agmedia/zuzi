@@ -3765,6 +3765,18 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -3774,7 +3786,11 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     cat: String,
     subcat: String,
     author: String,
-    publisher: String
+    publisher: String,
+    defaultSort: {
+      type: String,
+      "default": ''
+    }
   },
   //
   data: function data() {
@@ -3801,6 +3817,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       toolbarRequestToken: 0,
       bodyOverflowValue: '',
       isIPhone: false,
+      suppressSortWatcher: false,
       origin: location.origin + '/',
       hr_total: 'rezultata',
       products_loaded: false,
@@ -3846,6 +3863,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
   //
   watch: {
     sorting: function sorting(value) {
+      if (this.suppressSortWatcher) {
+        return;
+      }
       this.page = '';
       this.setQueryParam('sort', value);
     },
@@ -4038,6 +4058,8 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
      * @param params
      */
     checkQuery: function checkQuery(params) {
+      var _this6 = this;
+      var resolvedSort = params.query.sort ? params.query.sort : this.defaultSort || '';
       this.start = params.query.start ? params.query.start : '';
       this.end = params.query.end ? params.query.end : '';
       this.autor = params.query.autor ? params.query.autor : '';
@@ -4046,8 +4068,12 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       this.binding = params.query.binding ? params.query.binding : '';
       this.letter = params.query.letter ? params.query.letter : '';
       this.page = params.query.page ? params.query.page : '';
-      this.sorting = params.query.sort ? params.query.sort : '';
       this.search_query = params.query.pojam ? params.query.pojam : '';
+      this.suppressSortWatcher = true;
+      this.sorting = resolvedSort;
+      this.$nextTick(function () {
+        _this6.suppressSortWatcher = false;
+      });
       if (this.page != '') {
         this.getProductsPage(this.page, false);
       } else {
@@ -4200,7 +4226,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
      * @param target
      */
     toggleAuthorDropdown: function toggleAuthorDropdown(target) {
-      var _this6 = this;
+      var _this7 = this;
       if (this.activeAuthorDropdown === target) {
         this.closeAuthorDropdown();
         return;
@@ -4208,12 +4234,12 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       this.activeAuthorDropdown = target;
       this.authorSearchTerm = '';
       this.$nextTick(function () {
-        if (_this6.shouldSkipAuthorSearchAutofocus(target)) {
+        if (_this7.shouldSkipAuthorSearchAutofocus(target)) {
           return;
         }
         var refName = target === 'mobile' ? 'mobileAuthorSearch' : 'desktopAuthorSearch';
-        if (_this6.$refs[refName]) {
-          _this6.$refs[refName].focus();
+        if (_this7.$refs[refName]) {
+          _this7.$refs[refName].focus();
         }
       });
     },
@@ -8787,6 +8813,10 @@ var render = function() {
                 [
                   _c("option", { attrs: { value: "" } }, [_vm._v("Sortiraj")]),
                   _vm._v(" "),
+                  _c("option", { attrs: { value: "popular" } }, [
+                    _vm._v("Popularnost")
+                  ]),
+                  _vm._v(" "),
                   _c("option", { attrs: { value: "novi" } }, [
                     _vm._v("Najnovije")
                   ]),
@@ -8909,6 +8939,10 @@ var render = function() {
                   [
                     _c("option", { attrs: { value: "" } }, [
                       _vm._v("Sortiraj")
+                    ]),
+                    _vm._v(" "),
+                    _c("option", { attrs: { value: "popular" } }, [
+                      _vm._v("Popularnost")
                     ]),
                     _vm._v(" "),
                     _c("option", { attrs: { value: "novi" } }, [
@@ -9572,47 +9606,89 @@ var render = function() {
                             "div",
                             { staticClass: "catalog-grid-card__price-group" },
                             [
-                              _c("div", { staticClass: "product-price" }, [
-                                product.special
-                                  ? _c(
-                                      "span",
-                                      { staticClass: "text-muted p-0" },
-                                      [
-                                        _c("small", [
+                              product.special
+                                ? _c("div", { staticClass: "product-price" }, [
+                                    _c("small", [
+                                      _c(
+                                        "span",
+                                        { staticClass: "text-muted" },
+                                        [
                                           _vm._v(
-                                            "NC 30 dana: " +
-                                              _vm._s(product.main_price_text) +
-                                              " "
-                                          )
-                                        ])
-                                      ]
-                                    )
-                                  : _vm._e()
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "product-price" }, [
-                                product.special
-                                  ? _c(
+                                            "\n                                    NC30:\n                                    "
+                                          ),
+                                          _c("s", [
+                                            _vm._v(
+                                              _vm._s(product.main_price_text)
+                                            )
+                                          ]),
+                                          _vm._v(" "),
+                                          product.secondary_price_text
+                                            ? [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    product.secondary_price_text
+                                                  )
+                                                )
+                                              ]
+                                            : _vm._e()
+                                        ],
+                                        2
+                                      )
+                                    ]),
+                                    _vm._v(" "),
+                                    _c(
                                       "span",
-                                      { staticClass: "text-primary" },
+                                      { staticClass: "text-dark fs-md" },
                                       [
                                         _vm._v(
-                                          _vm._s(product.main_special_text)
-                                        )
+                                          "\n                                " +
+                                            _vm._s(product.main_special_text) +
+                                            "\n                                "
+                                        ),
+                                        product.secondary_special_text
+                                          ? _c(
+                                              "small",
+                                              { staticClass: "text-muted" },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    product.secondary_special_text
+                                                  )
+                                                )
+                                              ]
+                                            )
+                                          : _vm._e()
                                       ]
                                     )
-                                  : _vm._e()
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "product-price" }, [
-                                !product.special
-                                  ? _c(
+                                  ])
+                                : _c("div", { staticClass: "product-price" }, [
+                                    _c(
                                       "span",
-                                      { staticClass: "text-primary" },
-                                      [_vm._v(_vm._s(product.main_price_text))]
+                                      { staticClass: "text-dark fs-md" },
+                                      [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(product.main_price_text) +
+                                            "\n                                "
+                                        ),
+                                        product.secondary_price_text
+                                          ? _c(
+                                              "small",
+                                              {
+                                                staticClass: "fs-sm text-muted"
+                                              },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    product.secondary_price_text
+                                                  )
+                                                )
+                                              ]
+                                            )
+                                          : _vm._e()
+                                      ]
                                     )
-                                  : _vm._e()
-                              ])
+                                  ])
                             ]
                           )
                         ]

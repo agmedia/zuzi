@@ -6,6 +6,7 @@ use App\Helpers\Breadcrumb;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Imports\ProductImport;
+use App\Models\Back\Marketing\Action as MarketingAction;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\Blog;
 use App\Models\Front\Page;
@@ -508,10 +509,11 @@ class CatalogRouteController extends Controller
             })
             ->pluck('id');
         $group = 'snizenja';
+        $actionLanding = $this->resolveActionLanding($cat, $subcat);
 
         $crumbs = null;
 
-        return view('front.catalog.category.index', compact('group', 'cat', 'subcat', 'ids', 'crumbs'));
+        return view('front.catalog.category.index', compact('group', 'cat', 'subcat', 'ids', 'crumbs', 'actionLanding'));
     }
 
 
@@ -569,6 +571,182 @@ class CatalogRouteController extends Controller
         }
 
         return 'A';
+    }
+
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveActionLanding(?Category $cat = null, ?Category $subcat = null): array
+    {
+        $actions = $this->resolveActiveActionLandingActions();
+
+        return [
+            'title' => '7 godina ljubavi prema knjigama 💖',
+            'lead' => 'Zuzi knjižara slavi rođendan, a ti biraš poklon!',
+            'body' => 'Iskoristi rođendanske popuste i pronađi nove naslove, antikvarne dragulje i omiljene knjiške ulove po posebnim cijenama.',
+            'seo_title' => \App\Models\Seo::appendBrand('7 godina ljubavi prema knjigama 💖'),
+            'seo_description' => \App\Models\Seo::description(
+                null,
+                'Zuzi knjižara slavi rođendan, a ti biraš poklon! Iskoristi rođendanske popuste i pronađi nove naslove, antikvarne dragulje i omiljene knjiške ulove po posebnim cijenama.'
+            ),
+            'landing_url' => route('catalog.route.actions'),
+            'promotion_start' => optional(
+                $actions->pluck('date_start')
+                    ->filter()
+                    ->map(fn ($date) => \Illuminate\Support\Carbon::make($date))
+                    ->filter()
+                    ->sortBy(fn ($date) => $date->getTimestamp())
+                    ->first()
+            )->toAtomString(),
+            'promotion_end' => optional(
+                $actions->pluck('date_end')
+                    ->filter()
+                    ->map(fn ($date) => \Illuminate\Support\Carbon::make($date))
+                    ->filter()
+                    ->sortByDesc(fn ($date) => $date->getTimestamp())
+                    ->first()
+            )->toAtomString(),
+            'categories' => $this->resolveActionLandingCategories($actions, $cat, $subcat),
+            'products' => $this->resolveActionLandingProducts($cat, $subcat),
+        ];
+    }
+
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveActionLandingCategories(Collection $actions, ?Category $cat = null, ?Category $subcat = null): array
+    {
+        $selectedCategoryId = $subcat?->id ?: $cat?->id;
+
+        if ($actions->isEmpty()) {
+            return [];
+        }
+
+        $categoryIds = $actions
+            ->flatMap(function (MarketingAction $action) {
+                return collect(json_decode((string) $action->links, true));
+            })
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($categoryIds->isEmpty()) {
+            return [];
+        }
+
+        $categories = Category::query()
+            ->active()
+            ->with(['parent:id,parent_id,title,slug'])
+            ->whereIn('id', $categoryIds)
+            ->get(['id', 'parent_id', 'title', 'slug'])
+            ->keyBy('id');
+
+        return $actions
+            ->flatMap(function (MarketingAction $action) use ($categories, $selectedCategoryId) {
+                $discountLabel = $action->type === 'P'
+                    ? rtrim(rtrim(number_format((float) $action->discount, 2, '.', ''), '0'), '.') . '%'
+                    : (string) $action->discount_text;
+
+                return collect(json_decode((string) $action->links, true))
+                    ->map(fn ($id) => (int) $id)
+                    ->filter()
+                    ->map(function (int $categoryId) use ($action, $categories, $selectedCategoryId, $discountLabel) {
+                        /** @var Category|null $category */
+                        $category = $categories->get($categoryId);
+
+                        if (! $category) {
+                            return null;
+                        }
+
+                        $parent = $category->parent;
+
+                        return [
+                            'id' => $category->id,
+                            'title' => $category->title,
+                            'discount' => $discountLabel,
+                            'url' => route('catalog.route.actions', [
+                                'cat' => $parent ?: $category,
+                                'subcat' => $parent ? $category : null,
+                            ]),
+                            'is_active' => $selectedCategoryId === $category->id,
+                        ];
+                    })
+                    ->filter();
+            })
+            ->filter()
+            ->unique('id')
+            ->values()
+            ->all();
+    }
+
+
+    /**
+     * @return \Illuminate\Support\Collection<int, \App\Models\Back\Marketing\Action>
+     */
+    private function resolveActiveActionLandingActions(): Collection
+    {
+        return MarketingAction::query()
+            ->where('status', 1)
+            ->where('group', 'category')
+            ->where(function (Builder $query) {
+                $query->whereNull('coupon')->orWhere('coupon', '');
+            })
+            ->where(function (Builder $query) {
+                $query->whereNull('date_start')->orWhere('date_start', '<=', now());
+            })
+            ->where(function (Builder $query) {
+                $query->whereNull('date_end')->orWhere('date_end', '>=', now());
+            })
+            ->orderByDesc('discount')
+            ->orderBy('title')
+            ->get(['id', 'title', 'type', 'discount', 'links', 'date_start', 'date_end']);
+    }
+
+
+    /**
+     * @return array<int, array{name: string, url: string}>
+     */
+    private function resolveActionLandingProducts(?Category $cat = null, ?Category $subcat = null): array
+    {
+        $query = Product::query()
+            ->active()
+            ->hasStock()
+            ->where('special', '!=', '')
+            ->where(function (Builder $builder) {
+                $builder->whereDate('special_from', '<=', now())->orWhereNull('special_from');
+            })
+            ->where(function (Builder $builder) {
+                $builder->whereDate('special_to', '>=', now())->orWhereNull('special_to');
+            });
+
+        if ($cat) {
+            $query->whereHas('categories', function (Builder $builder) use ($cat) {
+                $builder->where('category_id', $cat->id);
+            });
+        }
+
+        if ($subcat) {
+            $query->whereHas('categories', function (Builder $builder) use ($subcat) {
+                $builder->where('category_id', $subcat->id);
+            });
+        }
+
+        return $query
+            ->orderBy('viewed', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit(12)
+            ->get(['name', 'url'])
+            ->map(function (Product $product) {
+                return [
+                    'name' => $product->name,
+                    'url' => url($product->url),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
 }

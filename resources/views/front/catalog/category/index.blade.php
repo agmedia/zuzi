@@ -27,6 +27,16 @@
     $listingUpdatedAt = $listingUpdatedAt ?: (isset($author) && $author ? $author->updated_at : null);
     $listingUpdatedAt = $listingUpdatedAt ?: (isset($publisher) && $publisher ? $publisher->updated_at : null);
     $isActionListing = Route::currentRouteName() === 'catalog.route.actions';
+    $actionLanding = $actionLanding ?? [];
+    $actionLandingTitle = $isActionListing ? ($actionLanding['title'] ?? null) : null;
+    $actionLandingLead = $isActionListing ? ($actionLanding['lead'] ?? null) : null;
+    $actionLandingBody = $isActionListing ? ($actionLanding['body'] ?? null) : null;
+    $actionLandingCategories = collect($isActionListing ? ($actionLanding['categories'] ?? []) : []);
+    $actionLandingProducts = collect($isActionListing ? ($actionLanding['products'] ?? []) : []);
+    $actionLandingUrl = $isActionListing ? ($actionLanding['landing_url'] ?? route('catalog.route.actions')) : null;
+    $actionLandingPromotionStart = $isActionListing ? ($actionLanding['promotion_start'] ?? null) : null;
+    $actionLandingPromotionEnd = $isActionListing ? ($actionLanding['promotion_end'] ?? null) : null;
+    $actionLandingCurrentTitle = isset($subcat) && $subcat ? $subcat->title : (isset($cat) && $cat ? $cat->title : null);
     $groupHeading = 'Knjige';
 
     if (($group ?? null) === 'snizenja') {
@@ -35,6 +45,10 @@
         $groupHeading = 'Zemljovidi i vedute';
     } elseif (isset($group) && $group) {
         $groupHeading = \Illuminate\Support\Str::headline(str_replace('-', ' ', (string) $group));
+    }
+
+    if ($isActionListing && ! $cat && ! $subcat && $actionLandingTitle) {
+        $groupHeading = $actionLandingTitle;
     }
 
     $listingSchemaType = Route::currentRouteName() === 'pretrazi' ? 'SearchResultsPage' : 'CollectionPage';
@@ -72,6 +86,16 @@
         $listingIntro = 'Pregledajte aktualno snižene knjige i izdvojena izdanja po povoljnijim cijenama.';
     } elseif (isset($group) && $group) {
         $listingIntro = 'Pregledajte aktualnu ponudu knjiga i izdvojena izdanja u ovoj grupi.';
+    }
+
+    if ($isActionListing && $actionLandingTitle) {
+        $listingIntro = null;
+
+        if (! $cat && ! $subcat) {
+            $listingSeo['title'] = $actionLanding['seo_title'] ?? $listingSeo['title'];
+            $listingSeo['description'] = $actionLanding['seo_description'] ?? $listingSeo['description'];
+            $listingSchemaName = $actionLandingTitle;
+        }
     }
 
 @endphp
@@ -168,13 +192,13 @@
 
                 <section class="d-md-flex justify-content-between align-items-center text-center text-lg-start mb-1 pb-1">
 
-                    @if ($group && ! $cat && ! $subcat)
+                    @if ($group && ! $cat && ! $subcat && ! ($isActionListing && $actionLandingTitle))
                         <h1 class="h2 mb-2 mb-md-0 me-3">{{ $groupHeading }}</h1>
 
                     @endif
-                    @if ($cat && ! $subcat)
+                    @if ($cat && ! $subcat && ! $isActionListing)
                             <h1 class="h2 mb-2 mt-2 mb-md-0 me-3">{{ $cat->title }}</h1>
-                    @elseif ($cat && $subcat)
+                    @elseif ($cat && $subcat && ! $isActionListing)
                             <h1 class="h2 mb-2 mt-2 mb-md-0 me-3">{{ $subcat->title }}</h1>
                     @endif
 
@@ -205,6 +229,42 @@
 
             @endif
 
+            @if ($isActionListing && $actionLandingTitle)
+                <section class="birthday-landing mb-4">
+                    <div class="birthday-landing__panel">
+                        <p class="birthday-landing__eyebrow">Rođendanska akcija</p>
+                        <h1 class="birthday-landing__title mb-3">{{ $actionLandingTitle }}</h1>
+
+                        @if ($actionLandingLead)
+                            <p class="birthday-landing__lead mb-2">{{ $actionLandingLead }}</p>
+                        @endif
+
+                        @if ($actionLandingBody)
+                            <p class="birthday-landing__body mb-0">{{ $actionLandingBody }}</p>
+                        @endif
+
+                        @if ($actionLandingCurrentTitle)
+                            <div class="birthday-landing__current mt-3">
+                                Trenutno pregledavaš: <strong>{{ $actionLandingCurrentTitle }}</strong>
+                            </div>
+                        @endif
+                    </div>
+                </section>
+            @endif
+
+            @if ($isActionListing && $actionLandingCategories->isNotEmpty())
+                <section class="discount-category-pills mb-4" aria-label="Kategorije na popustu">
+                    <div class="discount-category-pills__inner">
+                        @foreach ($actionLandingCategories as $actionCategory)
+                            <a href="{{ $actionCategory['url'] }}" class="discount-category-pill{{ ! empty($actionCategory['is_active']) ? ' is-active' : '' }}">
+                                <span class="discount-category-pill__title">{{ $actionCategory['title'] }}</span>
+                                <span class="discount-category-pill__discount">-{{ $actionCategory['discount'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
             @if ($listingIntro)
                 <section class="mb-3">
                     <p class="fs-md text-muted mb-0">{{ $listingIntro }}</p>
@@ -216,7 +276,8 @@
                            cat="{{ isset($cat) ? $cat['id'] : null }}"
                            subcat="{{ isset($subcat) ? $subcat['id'] : null }}"
                            author="{{ isset($author) ? $author['slug'] : null }}"
-                           publisher="{{ isset($publisher) ? $publisher['slug'] : null }}">
+                           publisher="{{ isset($publisher) ? $publisher['slug'] : null }}"
+                           default-sort="{{ $isActionListing ? 'popular' : '' }}">
             </products-view>
 
 
@@ -297,6 +358,58 @@
             $listingImage ? \App\Models\Seo::image($listingImage) : null
         ))->toJson() !!}
     </script>
+    @if ($isActionListing && $actionLandingCategories->isNotEmpty())
+        <script type="application/ld+json">
+            {!! collect(\App\Helpers\Metatags::itemListSchema(
+                $actionLandingCategories->map(function ($item) {
+                    return [
+                        'name' => $item['title'] . ' (-' . $item['discount'] . ')',
+                        'url' => $item['url'],
+                    ];
+                }),
+                $actionLandingUrl ?: $listingSchemaUrl,
+                'Kategorije na popustu'
+            ))->toJson() !!}
+        </script>
+        <script type="application/ld+json">
+            {!! collect(\App\Helpers\Metatags::offerCatalogSchema(
+                'Rođendanski popusti po kategorijama',
+                $actionLandingBody ?: $listingSeo['description'],
+                $actionLandingUrl ?: $listingSchemaUrl,
+                $actionLandingCategories->map(function ($item) {
+                    return [
+                        'name' => $item['title'],
+                        'url' => $item['url'],
+                        'discount' => $item['discount'],
+                        'description' => 'Rođendanski popust ' . $item['discount'] . ' na kategoriju ' . $item['title'] . '.',
+                    ];
+                }),
+                ($actionLandingUrl ?: $listingSchemaUrl) . '#offer-catalog'
+            ))->toJson() !!}
+        </script>
+    @endif
+    @if ($isActionListing && $actionLandingProducts->isNotEmpty())
+        <script type="application/ld+json">
+            {!! collect(\App\Helpers\Metatags::itemListSchema(
+                $actionLandingProducts,
+                $listingSchemaUrl,
+                $actionLandingCurrentTitle ? 'Sniženi proizvodi: ' . $actionLandingCurrentTitle : 'Izdvojeni sniženi proizvodi'
+            ))->toJson() !!}
+        </script>
+    @endif
+    @if ($isActionListing && $actionLandingTitle)
+        <script type="application/ld+json">
+            {!! collect(\App\Helpers\Metatags::saleEventSchema(
+                $actionLandingTitle,
+                trim(collect([$actionLandingLead, $actionLandingBody])->filter()->implode(' ')),
+                $actionLandingUrl ?: $listingSchemaUrl,
+                $actionLandingPromotionStart,
+                $actionLandingPromotionEnd,
+                $listingImage ? \App\Models\Seo::image($listingImage) : null,
+                ($actionLandingUrl ?: $listingSchemaUrl) . '#offer-catalog'
+            ))->toJson() !!}
+        </script>
+    @endif
     <style>
         @media only screen and (max-width: 1040px) {
             .scrolling-wrapper {
@@ -352,6 +465,179 @@
 
         .category-description__content h4 {
             font-size: clamp(1rem, 1.35vw, 1.15rem);
+        }
+
+        .birthday-landing__panel {
+            position: relative;
+            overflow: hidden;
+            padding: 1.1rem 1.35rem 1.15rem;
+            border-radius: 1rem;
+            background:
+                radial-gradient(circle at top right, rgba(229, 0, 119, 0.12), transparent 26%),
+                radial-gradient(circle at left center, rgba(53, 56, 74, 0.08), transparent 30%),
+                linear-gradient(135deg, #ffffff 0%, #f8f9fc 46%, #fff3f8 100%);
+            border: 1px solid rgba(229, 0, 119, 0.12);
+            box-shadow: 0 0.8rem 1.8rem rgba(53, 56, 74, 0.08);
+        }
+
+        .birthday-landing__panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(53, 56, 74, 0.03) 0%, transparent 28%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .birthday-landing__panel > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .birthday-landing__eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-bottom: 0.45rem;
+            padding: 0.32rem 0.68rem;
+            border-radius: 999px;
+            background: rgba(229, 0, 119, 0.08);
+            color: #c32673;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .birthday-landing__title {
+            color: #231f31;
+            font-size: clamp(1.75rem, 3vw, 2.75rem);
+            line-height: 1.02;
+            letter-spacing: -0.03em;
+        }
+
+        .birthday-landing__lead {
+            max-width: 60rem;
+            color: #bb296f;
+            font-size: clamp(1rem, 1.35vw, 1.15rem);
+            font-weight: 700;
+        }
+
+        .birthday-landing__body {
+            max-width: 66rem;
+            color: #5b5d6f;
+            font-size: 0.98rem;
+            line-height: 1.5;
+        }
+
+        .birthday-landing__current {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(53, 56, 74, 0.06);
+            color: #48485c;
+            font-size: 0.9rem;
+        }
+
+        .discount-category-pills__inner {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.55rem;
+        }
+
+        .discount-category-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.45rem;
+            min-width: 0;
+            padding: 0.55rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid rgba(229, 0, 119, 0.22);
+            background: #fff;
+            color: #4a3441;
+            text-decoration: none;
+            transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+            box-shadow: none;
+        }
+
+        .discount-category-pill:hover {
+            color: #b80061;
+            background: rgba(229, 0, 119, 0.04);
+            border-color: rgba(229, 0, 119, 0.4);
+        }
+
+        .discount-category-pill.is-active {
+            border-color: transparent;
+            background: linear-gradient(135deg, #e50077 0%, #ff4b9a 100%);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .discount-category-pill__title {
+            min-width: 0;
+            font-size: 0.84rem;
+            font-weight: 600;
+            line-height: 1.15;
+        }
+
+        .discount-category-pill__discount {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 3.15rem;
+            padding: 0.22rem 0.46rem;
+            border-radius: 999px;
+            background: rgba(229, 0, 119, 0.1);
+            color: #d1006c;
+            font-size: 0.76rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .discount-category-pill.is-active .discount-category-pill__discount {
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+        }
+
+        @media only screen and (min-width: 992px) {
+            .birthday-landing__title {
+                white-space: nowrap;
+            }
+        }
+
+        @media only screen and (max-width: 1199px) {
+            .discount-category-pills__inner {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        @media only screen and (max-width: 991px) {
+            .discount-category-pills__inner {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media only screen and (max-width: 767px) {
+            .birthday-landing__panel {
+                padding: 1rem;
+                border-radius: 0.95rem;
+            }
+
+            .birthday-landing__title {
+                font-size: clamp(1.65rem, 8vw, 2.2rem);
+            }
+
+            .discount-category-pill {
+                padding: 0.55rem 0.65rem;
+            }
+
+            .discount-category-pills__inner {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
     </style>
     <script>

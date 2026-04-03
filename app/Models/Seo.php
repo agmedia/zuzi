@@ -156,7 +156,12 @@ class Seo
         }
 
         if ($request->routeIs('catalog.route')
-            && static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'sort'])) {
+            && static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'sort'])) {
+            return 'noindex,follow';
+        }
+
+        if ($request->routeIs('catalog.route.actions')
+            && static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'sort'])) {
             return 'noindex,follow';
         }
 
@@ -195,8 +200,20 @@ class Seo
         }
 
         if ($request->routeIs('catalog.route')) {
-            if (static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'sort'])) {
+            if (static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'sort'])) {
                 return static::canonicalUrl($request);
+            }
+
+            if (! static::hasDisallowedQuery($request, ['page'])) {
+                return static::canonicalUrl($request, ['page']);
+            }
+
+            return static::canonicalUrl($request);
+        }
+
+        if ($request->routeIs('catalog.route.actions')) {
+            if (static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'sort'])) {
+                return $request->url();
             }
 
             if (! static::hasDisallowedQuery($request, ['page'])) {

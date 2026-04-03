@@ -152,6 +152,115 @@ class Metatags
     }
 
 
+    public static function offerCatalogSchema(
+        string $name,
+        string $description,
+        string $url,
+        iterable $items,
+        ?string $id = null
+    ): array {
+        $elements = [];
+
+        foreach ($items as $item) {
+            $itemName = trim(strip_tags((string) data_get($item, 'name', '')));
+            $itemUrl = trim((string) data_get($item, 'url', ''));
+            $itemDiscount = trim((string) data_get($item, 'discount', ''));
+            $itemDescription = trim(strip_tags((string) data_get($item, 'description', '')));
+
+            if (! $itemName || ! $itemUrl) {
+                continue;
+            }
+
+            if (! $itemDescription) {
+                $itemDescription = $itemDiscount
+                    ? 'Rođendanski popust ' . $itemDiscount . ' na kategoriju ' . $itemName . '.'
+                    : 'Aktualna ponuda za kategoriju ' . $itemName . '.';
+            }
+
+            $elements[] = [
+                '@type' => 'Offer',
+                '@id' => $itemUrl . '#offer',
+                'name' => $itemDiscount ? $itemName . ' (-' . $itemDiscount . ')' : $itemName,
+                'url' => $itemUrl,
+                'description' => $itemDescription,
+                'availability' => 'https://schema.org/InStock',
+                'seller' => [
+                    '@type' => 'Organization',
+                    '@id' => config('app.url') . '#organization',
+                ],
+                'itemOffered' => [
+                    '@type' => 'Thing',
+                    'name' => $itemName,
+                    'url' => $itemUrl,
+                ],
+            ];
+        }
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'OfferCatalog',
+            '@id' => $id ?: $url . '#offer-catalog',
+            'name' => $name,
+            'description' => $description,
+            'url' => $url,
+            'numberOfItems' => count($elements),
+            'itemListElement' => $elements,
+        ];
+    }
+
+
+    public static function saleEventSchema(
+        string $name,
+        string $description,
+        string $url,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?string $image = null,
+        ?string $catalogId = null
+    ): array {
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'SaleEvent',
+            '@id' => $url . '#sale-event',
+            'name' => $name,
+            'description' => $description,
+            'url' => $url,
+            'eventAttendanceMode' => 'https://schema.org/OnlineEventAttendanceMode',
+            'eventStatus' => 'https://schema.org/EventScheduled',
+            'location' => [
+                '@type' => 'VirtualLocation',
+                'url' => $url,
+            ],
+            'organizer' => [
+                '@type' => 'Organization',
+                '@id' => config('app.url') . '#organization',
+                'name' => Seo::brand(),
+                'url' => config('app.url'),
+            ],
+        ];
+
+        if ($startDate) {
+            $schema['startDate'] = $startDate;
+        }
+
+        if ($endDate) {
+            $schema['endDate'] = $endDate;
+        }
+
+        if ($image) {
+            $schema['image'] = [$image];
+        }
+
+        if ($catalogId) {
+            $schema['about'] = [
+                '@id' => $catalogId,
+            ];
+        }
+
+        return $schema;
+    }
+
+
     public static function contactPageSchema(): array
     {
         return [

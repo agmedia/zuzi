@@ -594,6 +594,10 @@ class Product extends Model
         if ($request->has('sort')) {
             $sort = $request->input('sort');
 
+            if ($sort == 'popular') {
+                $query->orderBy('viewed', 'desc')->orderBy('created_at', 'desc');
+            }
+
             if ($sort == 'novi') {
                 $query->orderBy('created_at', 'desc');
             }
