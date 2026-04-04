@@ -9,6 +9,7 @@ use App\Models\Back\Catalog\Product\ProductCategory;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class Action extends Model
@@ -22,6 +23,10 @@ class Action extends Model
 
     public function getDataAttribute($value)
     {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
         return json_decode($value, true);
     }
 
@@ -60,7 +65,9 @@ class Action extends Model
         $id   = $this->insertGetId($this->getModelArray());
 
         if ($id) {
-            if ($this->shouldUpdateProducts($data)) {
+            if ($this->request->group === 'category') {
+                $this->syncCategoryProductsForAction($id, $data);
+            } elseif ($this->shouldUpdateProducts($data)) {
                 $this->updateProducts($this->resolveTarget($data['links']), $id, $data);
             }
             return $this->find($id);
@@ -71,14 +78,24 @@ class Action extends Model
 
     public function edit()
     {
+        $existing_action_product_ids = Product::query()
+            ->where('action_id', $this->id)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values();
+
+        $previous_group = $this->group;
         $data    = $this->getRequestData();
         $updated = $this->update($this->getModelArray(false));
 
         if ($updated) {
-            if ($this->shouldUpdateProducts($data)) {
+            if ($previous_group === 'category' || $this->request->group === 'category') {
+                $this->syncCategoryProductsForAction($this->id, $data, $existing_action_product_ids);
+            } elseif ($this->shouldUpdateProducts($data)) {
                 $this->updateProducts($this->resolveTarget($data['links']), $this->id, $data);
             }
-            if ($this->shouldRemoveActions($data)) {
+            if ($previous_group !== 'category' && $this->shouldRemoveActions($data)) {
                 $this->deleteProductActions();
             }
             return $this;
@@ -385,5 +402,206 @@ class Action extends Model
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
+    }
+
+    /**
+     * Sync the best active category action to a specific product.
+     */
+    public static function syncCategoryActionForProduct(int $product_id): void
+    {
+        $product = Product::query()->find($product_id, [
+            'id',
+            'price',
+            'special',
+            'special_from',
+            'special_to',
+            'special_lock',
+            'action_id',
+        ]);
+
+        if (! $product || $product->special_lock) {
+            return;
+        }
+
+        $currentAction = null;
+
+        if ($product->action_id) {
+            $currentAction = self::query()->find($product->action_id, ['id', 'group']);
+        }
+
+        $category_ids = ProductCategory::query()
+            ->where('product_id', $product_id)
+            ->pluck('category_id')
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $best_action = self::resolveBestCategoryActionForProduct($product, $category_ids);
+
+        if ($currentAction && $currentAction->group === 'category') {
+            if ($best_action) {
+                self::applyResolvedActionToProduct($product_id, $best_action);
+            } else {
+                self::clearCategoryActionFromProduct($product_id);
+            }
+
+            return;
+        }
+
+        if (! $best_action) {
+            return;
+        }
+
+        if (self::shouldApplyResolvedAction($product, (float) $best_action['special'])) {
+            self::applyResolvedActionToProduct($product_id, $best_action);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function resolveBestCategoryActionForProduct(Product $product, Collection $category_ids): ?array
+    {
+        if ($category_ids->isEmpty()) {
+            return null;
+        }
+
+        $actions = self::query()
+            ->where('group', 'category')
+            ->where('status', 1)
+            ->where(function ($query) {
+                $query->whereNull('date_start')->orWhere('date_start', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('date_end')->orWhere('date_end', '>=', now());
+            })
+            ->get(['id', 'type', 'discount', 'links', 'date_start', 'date_end', 'data', 'lock']);
+
+        $best_action = null;
+        $best_special = null;
+        $price = (float) $product->price;
+
+        foreach ($actions as $action) {
+            $links = collect(json_decode((string) $action->getRawOriginal('links'), true))
+                ->map(fn ($id) => (int) $id)
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($links->isEmpty() || $links->intersect($category_ids)->isEmpty()) {
+                continue;
+            }
+
+            $data = is_array($action->data) ? $action->data : [];
+            $min = isset($data['min']) && $data['min'] !== '' ? (float) $data['min'] : null;
+            $max = isset($data['max']) && $data['max'] !== '' ? (float) $data['max'] : null;
+
+            if ($min !== null && $price <= $min) {
+                continue;
+            }
+
+            if ($max !== null && $price >= $max) {
+                continue;
+            }
+
+            $special = (float) Helper::calculateDiscountPrice($price, $action->discount, $action->type);
+
+            if ($best_special === null || $special < $best_special) {
+                $best_special = $special;
+                $best_action = [
+                    'action_id' => $action->id,
+                    'special' => $special,
+                    'special_from' => $action->date_start ? Carbon::make($action->date_start)->toDateTimeString() : null,
+                    'special_to' => $action->date_end ? Carbon::make($action->date_end)->toDateTimeString() : null,
+                    'special_lock' => (int) ($action->lock ?? 0),
+                ];
+            }
+        }
+
+        return $best_action;
+    }
+
+    private static function shouldApplyResolvedAction(Product $product, float $new_special): bool
+    {
+        $old_special = $product->special !== null ? (float) $product->special : null;
+
+        if ($old_special === null || $old_special <= 0) {
+            return true;
+        }
+
+        $now = Carbon::now();
+        $from = $product->special_from ? Carbon::make($product->special_from) : null;
+        $to = $product->special_to ? Carbon::make($product->special_to) : null;
+
+        $old_active_now =
+            $old_special > 0 &&
+            (is_null($from) || $from->lte($now)) &&
+            (is_null($to) || $now->lte($to));
+
+        if (! $old_active_now) {
+            return true;
+        }
+
+        return $new_special < $old_special;
+    }
+
+    /**
+     * @param array<string, mixed> $resolved_action
+     */
+    private static function applyResolvedActionToProduct(int $product_id, array $resolved_action): void
+    {
+        Product::query()
+            ->where('id', $product_id)
+            ->update([
+                'action_id' => $resolved_action['action_id'],
+                'special' => $resolved_action['special'],
+                'special_from' => $resolved_action['special_from'],
+                'special_to' => $resolved_action['special_to'],
+                'special_lock' => $resolved_action['special_lock'],
+            ]);
+    }
+
+    private static function clearCategoryActionFromProduct(int $product_id): void
+    {
+        Product::query()
+            ->where('id', $product_id)
+            ->update([
+                'action_id' => 0,
+                'special' => null,
+                'special_from' => null,
+                'special_to' => null,
+                'special_lock' => 0,
+            ]);
+    }
+
+    private function syncCategoryProductsForAction(int $action_id, array $data, ?Collection $existing_action_product_ids = null): void
+    {
+        $existing_action_product_ids = ($existing_action_product_ids ?: collect())
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values();
+
+        $target_ids = collect();
+
+        if ((bool) $data['status'] && $this->request->group === 'category') {
+            $target_ids = $this->resolveTarget($data['links'])
+                ->map(fn ($id) => (int) $id)
+                ->filter()
+                ->values();
+        }
+
+        $affected_ids = $existing_action_product_ids
+            ->merge($target_ids)
+            ->unique()
+            ->values();
+
+        if ($affected_ids->isEmpty()) {
+            return;
+        }
+
+        foreach ($affected_ids as $product_id) {
+            self::syncCategoryActionForProduct((int) $product_id);
+        }
     }
 }

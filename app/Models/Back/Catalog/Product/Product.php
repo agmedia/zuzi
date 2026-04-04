@@ -235,6 +235,9 @@ class Product extends Model
                 'special_lock'    => $this->resolveActionLock($id)
             ]);
 
+            Action::syncCategoryActionForProduct($product->id);
+            $product->refresh();
+
             return $product;
         }
 
@@ -259,6 +262,9 @@ class Product extends Model
                 'category_string' => ProductHelper::categoryString($this),
                 'special_lock'    => $this->resolveActionLock($this->id, false)
             ]);
+
+            Action::syncCategoryActionForProduct($this->id);
+            $this->refresh();
 
             return $this;
         }
@@ -670,7 +676,7 @@ class Product extends Model
      *
      * @return string
      */
-    private function resolveSlug(string $target = 'insert', Request $request = null): string
+    private function resolveSlug(string $target = 'insert', ?Request $request = null): string
     {
         $slug = null;
 
