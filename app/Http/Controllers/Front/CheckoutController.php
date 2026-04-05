@@ -193,6 +193,10 @@ class CheckoutController extends Controller
         }
 
         if ($order->finish($request)) {
+            if ($order->getData()) {
+                CheckoutSession::setOrder($order->getData());
+            }
+
             return redirect()->route('checkout.success');
         }
 
