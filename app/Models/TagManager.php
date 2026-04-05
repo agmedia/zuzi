@@ -4,9 +4,9 @@ namespace App\Models;
 
 use App\Helpers\Helper;
 use App\Models\Back\Orders\Order;
+use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\Catalog\Product;
 use Darryldecode\Cart\CartCollection;
-use function Livewire\str;
 
 /**
  * Class Sitemap
@@ -27,7 +27,7 @@ class TagManager
         $tax      = 0;
 
         foreach ($order->products as $product) {
-            $products[] = static::getGoogleProductDataLayer($product->real);
+            $products[] = static::getGoogleOrderProductDataLayer($product);
         }
 
         foreach ($order->totals()->get() as $total) {
@@ -45,9 +45,9 @@ class TagManager
             'ecommerce' => [
                 'transaction_id' => (string) $order->id,
                 'affiliation'    => 'Zuzi webshop',
-                'value'          => number_format((float) $order->total, 2),
-                'tax'            => number_format((float) $tax, 2),
-                'shipping'       => number_format((float) $shipping, 2),
+                'value'          => static::normalizeGoogleNumber($order->total),
+                'tax'            => static::normalizeGoogleNumber($tax),
+                'shipping'       => static::normalizeGoogleNumber($shipping),
                 'currency'       => 'EUR',
                 'items'          => $products
             ],
@@ -86,6 +86,30 @@ class TagManager
 
 
     /**
+     * Build purchase payload from the stored order line, not the current catalog state.
+     */
+    public static function getGoogleOrderProductDataLayer(OrderProduct $product): array
+    {
+        $realProduct = $product->real;
+        $discount    = max(
+            static::normalizeInputNumber($product->org_price) - static::normalizeInputNumber($product->price),
+            0
+        );
+
+        return [
+            'item_id'        => (string) ($realProduct ? $realProduct->sku : $product->product_id),
+            'item_name'      => $product->name,
+            'price'          => static::normalizeGoogleNumber($product->price),
+            'currency'       => 'EUR',
+            'discount'       => static::normalizeGoogleNumber($discount),
+            'item_category'  => $realProduct && $realProduct->category() ? $realProduct->category()->title : '',
+            'item_category2' => $realProduct && $realProduct->subcategory() ? $realProduct->subcategory()->title : '',
+            'quantity'       => (int) $product->quantity,
+        ];
+    }
+
+
+    /**
      * @param CartCollection $cart_collection
      *
      * @return array
@@ -95,10 +119,37 @@ class TagManager
         $items = [];
 
         foreach ($cart_collection['items'] as $item) {
-            $items[] = $item->associatedModel->dataLayer;
+            $googleItem = $item->associatedModel->dataLayer;
+            $googleItem['quantity'] = (int) $item->quantity;
+
+            $items[] = $googleItem;
         }
 
         return $items;
+    }
+
+
+    private static function normalizeGoogleNumber($value): float
+    {
+        return round(static::normalizeInputNumber($value), 2);
+    }
+
+
+    private static function normalizeInputNumber($value): float
+    {
+        if (is_string($value)) {
+            $value = trim($value);
+
+            if (str_contains($value, ',') && str_contains($value, '.')) {
+                $value = strrpos($value, ',') > strrpos($value, '.')
+                    ? str_replace(',', '.', str_replace('.', '', $value))
+                    : str_replace(',', '', $value);
+            } elseif (str_contains($value, ',')) {
+                $value = str_replace(',', '.', $value);
+            }
+        }
+
+        return (float) $value;
     }
 
 }

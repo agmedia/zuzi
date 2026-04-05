@@ -61,7 +61,7 @@ class AgService {
             window.dataLayer.push({
                 'event': 'add_to_cart',
                 'ecommerce': {
-                    'items': [ product.dataLayer ]
+                    'items': [ { ...product.dataLayer, quantity: Number(item.quantity) || 1 } ]
                 }
             });
 
