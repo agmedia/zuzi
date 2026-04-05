@@ -23,7 +23,7 @@
                 <div class="pt-3  px-md-5 text-center text-xl-start   px-2 mb-3 " >
                     <div class="d-xl-flex justify-content-between align-items-center px-4  mx-auto" style="max-width: 1226px;">
                         <div class=" py-sm-3 pb-0 me-xl-4 mx-auto mx-xl-0" style="max-width: 550px;">
-                            <span style="position: static; background: rgb(229, 0, 119); color: rgb(255, 255, 255);" class="badge rounded-pill badge-shadow fs-md">Rođendanska akcija!</span>
+                            <span class="badge bg-primary  mb-1 fs-md">Rođendanska akcija!</span>
                             <h4 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h4>
 
                             <p class="text-dark  ">{{ $widget['subtitle'] }}</p>
