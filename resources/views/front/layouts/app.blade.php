@@ -187,6 +187,21 @@
             window.cookieAnalyticsAllowed = false;
             window.cookieMarketingAllowed = false;
             window.canTrackAnalytics = () => false;
+
+            function getStoredCookieConsent() {
+                const match = document.cookie.match(/(?:^|;\s*)cc_cookie=([^;]+)/);
+
+                if (!match) {
+                    return null;
+                }
+
+                try {
+                    return JSON.parse(decodeURIComponent(match[1]));
+                } catch (error) {
+                    return null;
+                }
+            }
+
             window.updateGoogleConsentFromCookie = function (analyticsGranted, marketingGranted) {
                 window.cookieAnalyticsAllowed = analyticsGranted === true;
                 window.cookieMarketingAllowed = marketingGranted === true;
@@ -204,6 +219,15 @@
                 ad_user_data: 'denied',
                 ad_personalization: 'denied'
             });
+
+            const storedConsent = getStoredCookieConsent();
+
+            if (storedConsent && Array.isArray(storedConsent.categories)) {
+                window.updateGoogleConsentFromCookie(
+                    storedConsent.categories.includes('analytics'),
+                    storedConsent.categories.includes('marketing')
+                );
+            }
         </script>
 
         @yield('google_data_layer')
