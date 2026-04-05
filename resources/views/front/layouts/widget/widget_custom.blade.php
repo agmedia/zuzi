@@ -24,9 +24,9 @@
                     <div class="d-xl-flex justify-content-between align-items-center px-4  mx-auto" style="max-width: 1226px;">
                         <div class=" py-sm-3 pb-0 me-xl-4 mx-auto mx-xl-0" style="max-width: 550px;">
 
-                            <h4 class="h3 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h4>
+                            <h4 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h4>
 
-                            <p class="text-dark d-none d-sm-block fs-md">{{ $widget['subtitle'] }}</p>
+                            <p class="text-dark  ">{{ $widget['subtitle'] }}</p>
                             <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2 slider-focus-btn" href="{{ url($widget['url']) }}" role="button">
 
                                          Opširnije
