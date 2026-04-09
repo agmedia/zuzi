@@ -210,55 +210,10 @@
                 gtag('set', 'allow_ad_personalization_signals', marketingAllowed);
             };
 
-            window.loadMetaPixel = function () {
-                if (window.__metaPixelInitialized === true) {
-                    return;
-                }
-
-                window.__metaPixelInitialized = true;
-
-                !function(f,b,e,v,n,t,s)
-                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-                    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                    n.queue=[];t=b.createElement(e);t.async=!0;
-                    t.src=v;s=b.getElementsByTagName(e)[0];
-                    s.parentNode.insertBefore(t,s)}(window, document,'script',
-                    'https://connect.facebook.net/en_US/fbevents.js');
-
-                fbq('init', '1118812093430338');
-            };
-
-            window.updateMetaPixelConsent = function (marketingGranted) {
-                if (marketingGranted !== true) {
-                    if (typeof window.fbq === 'function') {
-                        fbq('consent', 'revoke');
-                    }
-
-                    return;
-                }
-
-                window.loadMetaPixel();
-
-                if (typeof window.fbq !== 'function') {
-                    return;
-                }
-
-                fbq('consent', 'grant');
-
-                if (window.__metaPixelPageViewTracked === true) {
-                    return;
-                }
-
-                window.__metaPixelPageViewTracked = true;
-                fbq('track', 'PageView');
-            };
-
             window.updateGoogleConsentFromCookie = function (analyticsGranted, marketingGranted) {
                 window.cookieAnalyticsAllowed = analyticsGranted === true;
                 window.cookieMarketingAllowed = marketingGranted === true;
                 window.applyGooglePrivacySettings(marketingGranted);
-                window.updateMetaPixelConsent(marketingGranted);
 
                 gtag('consent', 'update', {
                     analytics_storage: analyticsGranted ? 'granted' : 'denied',
