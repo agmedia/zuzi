@@ -249,7 +249,7 @@
                         @endif
 
                         @if ($actionLandingBody)
-                            <p class="birthday-landing__body mb-0">{{ $actionLandingBody }}</p>
+                            <p class="birthday-landing__body mb-2">{{ $actionLandingBody }}</p>
 
                             <p class="birthday-landing__body mb-0">⏳ Akcija vrijedi samo do 15.4.<br>
                                 📦 BOX NOW dostava samo 0.99 EUR</p>
