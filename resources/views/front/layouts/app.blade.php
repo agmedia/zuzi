@@ -202,9 +202,63 @@
                 }
             }
 
+            window.applyGooglePrivacySettings = function (marketingGranted) {
+                const marketingAllowed = marketingGranted === true;
+
+                gtag('set', 'ads_data_redaction', ! marketingAllowed);
+                gtag('set', 'allow_google_signals', marketingAllowed);
+                gtag('set', 'allow_ad_personalization_signals', marketingAllowed);
+            };
+
+            window.loadMetaPixel = function () {
+                if (window.__metaPixelInitialized === true) {
+                    return;
+                }
+
+                window.__metaPixelInitialized = true;
+
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                    n.queue=[];t=b.createElement(e);t.async=!0;
+                    t.src=v;s=b.getElementsByTagName(e)[0];
+                    s.parentNode.insertBefore(t,s)}(window, document,'script',
+                    'https://connect.facebook.net/en_US/fbevents.js');
+
+                fbq('init', '1118812093430338');
+            };
+
+            window.updateMetaPixelConsent = function (marketingGranted) {
+                if (marketingGranted !== true) {
+                    if (typeof window.fbq === 'function') {
+                        fbq('consent', 'revoke');
+                    }
+
+                    return;
+                }
+
+                window.loadMetaPixel();
+
+                if (typeof window.fbq !== 'function') {
+                    return;
+                }
+
+                fbq('consent', 'grant');
+
+                if (window.__metaPixelPageViewTracked === true) {
+                    return;
+                }
+
+                window.__metaPixelPageViewTracked = true;
+                fbq('track', 'PageView');
+            };
+
             window.updateGoogleConsentFromCookie = function (analyticsGranted, marketingGranted) {
                 window.cookieAnalyticsAllowed = analyticsGranted === true;
                 window.cookieMarketingAllowed = marketingGranted === true;
+                window.applyGooglePrivacySettings(marketingGranted);
+                window.updateMetaPixelConsent(marketingGranted);
 
                 gtag('consent', 'update', {
                     analytics_storage: analyticsGranted ? 'granted' : 'denied',
@@ -217,8 +271,10 @@
                 analytics_storage: 'denied',
                 ad_storage: 'denied',
                 ad_user_data: 'denied',
-                ad_personalization: 'denied'
+                ad_personalization: 'denied',
+                wait_for_update: 500
             });
+            window.applyGooglePrivacySettings(false);
 
             const storedConsent = getStoredCookieConsent();
 
@@ -240,23 +296,6 @@
             })(window,document,'script','dataLayer','GTM-M6Q5GRCN');</script>
         <!-- End Google Tag Manager -->
         <!-- Google Tag Manager -->
-        <!-- Meta Pixel Code -->
-        <script>
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                n.queue=[];t=b.createElement(e);t.async=!0;
-                t.src=v;s=b.getElementsByTagName(e)[0];
-                s.parentNode.insertBefore(t,s)}(window, document,'script',
-                'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '1118812093430338');
-            fbq('track', 'PageView');
-        </script>
-        <noscript><img height="1" width="1" style="display:none"
-                       src="https://www.facebook.com/tr?id=1118812093430338&ev=PageView&noscript=1"
-            /></noscript>
-        <!-- End Meta Pixel Code -->
 
         <!-- Global site tag (gtag.js) - Google Analytics -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-WWPNJL6JD5"></script>
@@ -265,7 +304,10 @@
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
-            gtag('config', 'G-WWPNJL6JD5');
+            gtag('config', 'G-WWPNJL6JD5', {
+                allow_google_signals: window.cookieMarketingAllowed === true,
+                allow_ad_personalization_signals: window.cookieMarketingAllowed === true
+            });
         </script>
 
 
