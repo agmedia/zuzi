@@ -22,6 +22,18 @@ class TagManager
      */
     public static function getGoogleSuccessDataLayer(Order $order)
     {
+        return [
+            'event'     => 'purchase',
+            'ecommerce' => static::getGooglePurchaseEventParams($order),
+        ];
+    }
+
+
+    /**
+     * Shared purchase params for browser and server-side GA4 events.
+     */
+    public static function getGooglePurchaseEventParams(Order $order): array
+    {
         $products = [];
         $shipping = 0;
         $tax      = 0;
@@ -40,20 +52,15 @@ class TagManager
             }
         }
 
-        $data = [
-            'event'     => 'purchase',
-            'ecommerce' => [
-                'transaction_id' => (string) $order->id,
-                'affiliation'    => 'Zuzi webshop',
-                'value'          => static::normalizeGoogleNumber($order->total),
-                'tax'            => static::normalizeGoogleNumber($tax),
-                'shipping'       => static::normalizeGoogleNumber($shipping),
-                'currency'       => 'EUR',
-                'items'          => $products
-            ],
+        return [
+            'transaction_id' => (string) $order->id,
+            'affiliation'    => 'Zuzi webshop',
+            'value'          => static::normalizeGoogleNumber($order->total),
+            'tax'            => static::normalizeGoogleNumber($tax),
+            'shipping'       => static::normalizeGoogleNumber($shipping),
+            'currency'       => 'EUR',
+            'items'          => $products
         ];
-
-        return $data;
     }
 
 

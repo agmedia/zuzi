@@ -47,6 +47,11 @@ return [
         'server_prefix' => env('MAILCHIMP_SERVER_PREFIX'),
     ],
 
+    'google_analytics' => [
+        'measurement_id'         => env('GOOGLE_ANALYTICS_MEASUREMENT_ID', 'G-WWPNJL6JD5'),
+        'measurement_api_secret' => env('GOOGLE_ANALYTICS_MEASUREMENT_API_SECRET'),
+    ],
+
     'wolt' => [
         'url'         => env('WOLT_API_URL', 'https://daas-public-api.wolt.com'),
         'api_key'     => env('WOLT_API_KEY'),

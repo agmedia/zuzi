@@ -13,6 +13,7 @@ use App\Models\Front\Checkout\Order;
 use App\Models\Back\Orders\Order as AdminOrderModel;
 use App\Models\TagManager;
 use App\Models\Front\Loyalty;
+use App\Services\GoogleAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
@@ -195,6 +196,8 @@ class CheckoutController extends Controller
         if ($order->finish($request)) {
             if ($order->getData()) {
                 CheckoutSession::setOrder($order->getData());
+
+                app(GoogleAnalyticsService::class)->dispatchPurchaseFromRequest($order->getData(), $request);
             }
 
             return redirect()->route('checkout.success');
@@ -218,6 +221,8 @@ class CheckoutController extends Controller
         $order = OrderHelper::get($data['order']['id']);
 
         if ($order->isValid()) {
+            app(GoogleAnalyticsService::class)->dispatchPurchaseFromRequest($order->getOrder(), $request);
+
             $order->sendEmails()
                 ->decreaseCartItems(false)
                 ->addLoyaltyPoints()

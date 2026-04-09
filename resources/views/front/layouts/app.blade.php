@@ -253,13 +253,13 @@
         <!-- Google Tag Manager -->
 
         <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-WWPNJL6JD5"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.google_analytics.measurement_id') }}"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
-            gtag('config', 'G-WWPNJL6JD5', {
+            gtag('config', '{{ config('services.google_analytics.measurement_id') }}', {
                 allow_google_signals: window.cookieMarketingAllowed === true,
                 allow_ad_personalization_signals: window.cookieMarketingAllowed === true
             });
