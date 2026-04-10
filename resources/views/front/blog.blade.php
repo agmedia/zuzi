@@ -67,6 +67,7 @@
 
             </div>
 
+            {{ $blogs->onEachSide(1)->links() }}
 
 
     </div>
@@ -106,7 +107,7 @@
                     \App\Models\Seo::canonical(request())
                 ),
                 \App\Helpers\Metatags::itemListSchema(
-                    $blogs->map(function ($item) {
+                    $blogs->getCollection()->map(function ($item) {
                         return [
                             'name' => $item->title,
                             'url' => route('catalog.route.blog', ['blog' => $item]),
