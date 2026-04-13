@@ -149,8 +149,8 @@ class CartController extends Controller
             'cart' => $response['cart'] ?? $this->cart->get(),
             'message' => $response['message'] ?? (
                 (bool) ($response['success'] ?? false)
-                ? 'Kupon je uspješno dodan u košaricu.'
-                : 'Nažalost nema kupona pod tim kodom.'
+                ? 'Kod je uspješno primijenjen.'
+                : 'Nažalost, taj kod nije valjan.'
             ),
         ]);
     }

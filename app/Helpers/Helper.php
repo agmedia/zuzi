@@ -619,7 +619,7 @@ class Helper
             $prods->whereIn('id', $data['list']);
         }
 
-        return $prods->with(['author', 'action']);
+        return $prods->with(['author', 'action'])->withReviewSummary();
     }
 
 
@@ -700,7 +700,8 @@ class Helper
                         ->orderBy('price', 'desc')
                         ->orderBy('updated_at', 'desc')
                         ->limit(12)
-                        ->with(['author', 'action']);
+                        ->with(['author', 'action'])
+                        ->withReviewSummary();
     }
 
 

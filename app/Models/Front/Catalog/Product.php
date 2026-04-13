@@ -219,6 +219,15 @@ class Product extends Model
 
 
     /**
+     * Load review aggregates used in product cards and sliders.
+     */
+    public function scopeWithReviewSummary(Builder $query): Builder
+    {
+        return $query->withCount('reviews')->withAvg('reviews', 'stars');
+    }
+
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function action()

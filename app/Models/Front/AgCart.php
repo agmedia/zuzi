@@ -242,6 +242,7 @@ class AgCart extends Model
             ];
         }
 
+        $previousCoupon = Helper::normalizeCoupon($this->coupon);
         $coupon = Helper::normalizeCoupon($coupon);
 
         if ($coupon === '') {
@@ -265,6 +266,20 @@ class AgCart extends Model
         $success = Helper::couponEquals(Helper::isCouponUsed($this->cart), $coupon);
 
         if ( ! $success) {
+            if ($previousCoupon !== '' && ! Helper::couponEquals($previousCoupon, $coupon)) {
+                session([$this->session_key . '_coupon' => $previousCoupon]);
+                $this->coupon = $previousCoupon;
+                $this->refreshCouponAwareItems();
+                $cart = $this->get();
+
+                return [
+                    'success' => false,
+                    'coupon' => $this->coupon,
+                    'cart' => $cart,
+                    'message' => 'Uneseni kod nije valjan. Prethodno primijenjeni kod ostaje aktivan.',
+                ];
+            }
+
             session()->forget($this->session_key . '_coupon');
             $this->coupon = '';
             $this->refreshCouponAwareItems();

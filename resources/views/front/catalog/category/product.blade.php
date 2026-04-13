@@ -1,4 +1,8 @@
 <div class="article px-0 mb-2 px-1" >
+    @php
+        $reviewsCount = (int) ($product->reviews_count ?? 0);
+        $reviewsAverage = $reviewsCount ? round((float) ($product->reviews_avg_stars ?? 0), 1) : 0;
+    @endphp
 
     <div class="card product-card shadow pb-2 position-relative">
         <div style="position:absolute; top:.75rem; left:.75rem; right:.75rem; z-index:5; display:flex; justify-content:space-between; align-items:flex-start;">
@@ -30,6 +34,21 @@
             </div>
 
             <h3 class="product-title fs-sm text-truncate"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
+
+            @if ($reviewsCount)
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <div class="star-rating">
+                        @for ($i = 0; $i < 5; $i++)
+                            @if (floor($reviewsAverage) - $i >= 1)
+                                <i class="star-rating-icon ci-star-filled active"></i>
+                            @else
+                                <i class="star-rating-icon ci-star"></i>
+                            @endif
+                        @endfor
+                    </div>
+                    <span class="fs-xs text-muted">{{ number_format($reviewsAverage, 1) }}/5</span>
+                </div>
+            @endif
 
             @if ($product->main_price > $product->main_special)
                 <div class="product-price"><small><span class="text-muted">NC30: <s>{{ $product->main_price_text }}</s>  @if($product->secondary_price_text){{ $product->secondary_price_text }} @endif</span></small>

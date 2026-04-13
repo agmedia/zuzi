@@ -69,34 +69,40 @@
             <div class="py-2 px-xl-2" v-cloak>
                 <button
                     type="button"
-                    class="btn btn-link text-decoration-none d-flex w-100 align-items-center justify-content-between px-0"
+                    class="coupon-toggle btn btn-link text-decoration-none w-100 px-0"
                     @click="toggleCouponPanel"
                     :aria-expanded="showCouponPanel ? 'true' : 'false'"
                 >
-                    <span class="text-start">
-                        <strong class="d-block text-dark">Imate kod za popust?</strong>
-                        <small class="text-muted">{{ hasActiveCoupon ? 'Kod je spremljen u košarici.' : 'Otvorite polje samo ako želite primijeniti kupon.' }}</small>
+                    <span class="coupon-toggle__content text-start">
+                        <strong class="d-block text-dark">Imate kod?</strong>
+                        <small class="text-muted">{{ hasActiveCoupon ? 'Kod je spremljen u košarici. Novi unos zamijenit će postojeći.' : 'Kupon ili poklon-bon.' }}</small>
                     </span>
-                    <span class="text-primary">
+                    <span class="coupon-toggle__action text-primary">
                         {{ showCouponPanel ? 'Sakrij' : 'Otvori' }}
                     </span>
                 </button>
 
-                <div v-show="showCouponPanel" class="form-group mt-3">
-                    <label class="form-label">Kod za popust</label>
-                    <div class="input-group">
-                        <input
-                            type="text"
-                            class="form-control"
-                            v-model="coupon"
-                            placeholder="Upišite kod ovdje..."
-                            autocomplete="off"
-                            @keyup.enter="setCoupon"
-                        >
-                        <div class="input-group-append">
-                            <button type="button" v-on:click="setCoupon" class="btn btn-outline-primary btn-shadow" :disabled="couponSubmitting">Primijeni</button>
+                <div v-show="showCouponPanel" class="mt-3">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Kod za popust ili poklon-bon</label>
+                        <div class="input-group">
+                            <input
+                                type="text"
+                                class="form-control"
+                                v-model="codeInput"
+                                placeholder="Upišite kupon ili poklon-bon kod..."
+                                autocomplete="off"
+                                @keyup.enter="setCoupon"
+                            >
+                            <div class="input-group-append">
+                                <button type="button" v-on:click="setCoupon" class="btn btn-outline-primary btn-shadow" :disabled="couponSubmitting">Primijeni</button>
+                            </div>
                         </div>
                     </div>
+
+                    <p class="small text-muted mb-0 mt-2">
+                        Moguće je primijeniti jedan kod po narudžbi. Novi unos zamjenjuje postojeći.
+                    </p>
 
                     <p v-if="hasActiveCoupon" class="small text-success mb-0 mt-2">
                         Aktivan kod: {{ coupon }}
@@ -146,6 +152,7 @@ export default {
             mobile: false,
             show_delete_btn: true,
             coupon: '',
+            codeInput: '',
             couponSubmitting: false,
             showCouponPanel: false,
             has_loyalty: false,
@@ -236,23 +243,36 @@ export default {
          *
          */
         setCoupon() {
-            let normalizedCoupon = String(this.coupon || '').trim().toUpperCase();
-
-            this.coupon = normalizedCoupon;
+            let normalizedCoupon = String(this.codeInput || '').trim().toUpperCase();
 
             if (this.couponSubmitting) {
-                return;
+                return Promise.resolve(false);
             }
 
             if ( ! normalizedCoupon) {
-                this.checkCoupon();
-                return;
+                this.$store.state.service.returnError('Upišite kod za popust ili poklon-bon.');
+                return Promise.resolve(false);
             }
 
             this.couponSubmitting = true;
-            this.checkCoupon().finally(() => {
-                this.couponSubmitting = false;
-            });
+
+            return this.checkCoupon(normalizedCoupon)
+                .then((response) => {
+                    this.coupon = String(this.$store.state.cart.coupon || '').trim();
+
+                    if (response && response.success) {
+                        if (this.coupon === normalizedCoupon) {
+                            this.codeInput = '';
+                        }
+
+                        this.showCouponPanel = true;
+                    }
+
+                    return response;
+                })
+                .finally(() => {
+                    this.couponSubmitting = false;
+                });
         },
 
         toggleCouponPanel() {
@@ -277,8 +297,8 @@ export default {
         /**
          *
          */
-        checkCoupon() {
-            return this.$store.dispatch('checkCoupon', this.coupon);
+        checkCoupon(coupon = this.coupon) {
+            return this.$store.dispatch('checkCoupon', coupon);
         },
 
 
@@ -314,5 +334,20 @@ export default {
     padding: 1rem !important;
     vertical-align: top;
     border-top: 1px solid #dee2e6;
+}
+.coupon-toggle {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.coupon-toggle__content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.coupon-toggle__action {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding-top: 0.15rem;
 }
 </style>

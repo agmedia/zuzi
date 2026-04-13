@@ -121,6 +121,7 @@ class ProductRecommendationService
             ->hasStock()
             ->hasImage()
             ->with(['author', 'action'])
+            ->withReviewSummary()
             ->whereNotIn('id', $excludedIds)
             ->where(function ($query) {
                 $query->whereBetween('price', [10, 15])
@@ -229,6 +230,7 @@ class ProductRecommendationService
             ->hasStock()
             ->hasImage()
             ->with(['author', 'action'])
+            ->withReviewSummary()
             ->whereIn('id', $candidateIds)
             ->get()
             ->filter(fn (Product $product) => $this->matchesRecommendationPrice($product))

@@ -2703,6 +2703,12 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2720,6 +2726,7 @@ __webpack_require__.r(__webpack_exports__);
       mobile: false,
       show_delete_btn: true,
       coupon: '',
+      codeInput: '',
       couponSubmitting: false,
       showCouponPanel: false,
       has_loyalty: false,
@@ -2804,17 +2811,25 @@ __webpack_require__.r(__webpack_exports__);
      */
     setCoupon: function setCoupon() {
       var _this = this;
-      var normalizedCoupon = String(this.coupon || '').trim().toUpperCase();
-      this.coupon = normalizedCoupon;
+      var normalizedCoupon = String(this.codeInput || '').trim().toUpperCase();
       if (this.couponSubmitting) {
-        return;
+        return Promise.resolve(false);
       }
       if (!normalizedCoupon) {
-        this.checkCoupon();
-        return;
+        this.$store.state.service.returnError('Upišite kod za popust ili poklon-bon.');
+        return Promise.resolve(false);
       }
       this.couponSubmitting = true;
-      this.checkCoupon()["finally"](function () {
+      return this.checkCoupon(normalizedCoupon).then(function (response) {
+        _this.coupon = String(_this.$store.state.cart.coupon || '').trim();
+        if (response && response.success) {
+          if (_this.coupon === normalizedCoupon) {
+            _this.codeInput = '';
+          }
+          _this.showCouponPanel = true;
+        }
+        return response;
+      })["finally"](function () {
         _this.couponSubmitting = false;
       });
     },
@@ -2837,7 +2852,8 @@ __webpack_require__.r(__webpack_exports__);
      *
      */
     checkCoupon: function checkCoupon() {
-      return this.$store.dispatch('checkCoupon', this.coupon);
+      var coupon = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.coupon;
+      return this.$store.dispatch('checkCoupon', coupon);
     },
     /**
      *
@@ -4468,9 +4484,9 @@ var messages = {
   cartAdd: 'Proizvod dodan u košaricu.',
   cartUpdate: 'Količina proizvoda je promjenjena',
   cartRemove: 'Proizvod maknut iz košarice.',
-  couponSuccess: 'Kupon je uspješno dodan u košaricu.',
-  couponError: 'Nažalost nema kupona pod tim kodom.',
-  couponEmpty: 'Upišite kod za popust.',
+  couponSuccess: 'Kod je uspješno primijenjen.',
+  couponError: 'Nažalost, taj kod nije valjan.',
+  couponEmpty: 'Upišite kod za popust ili poklon-bon.',
   loyaltySuccess: 'Loyalty popust je uspješno primijenjen.',
   loyaltyRemoved: 'Loyalty popust je uklonjen.',
   loyaltyError: 'Loyalty popust nije moguće primijeniti.'
@@ -5064,7 +5080,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.coupon-toggle {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    gap: 1rem;\n}\n.coupon-toggle__content {\n    flex: 1 1 auto;\n    min-width: 0;\n}\n.coupon-toggle__action {\n    flex: 0 0 auto;\n    white-space: nowrap;\n    padding-top: 0.15rem;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -7776,7 +7792,7 @@ var render = function() {
                 "button",
                 {
                   staticClass:
-                    "btn btn-link text-decoration-none d-flex w-100 align-items-center justify-content-between px-0",
+                    "coupon-toggle btn btn-link text-decoration-none w-100 px-0",
                   attrs: {
                     type: "button",
                     "aria-expanded": _vm.showCouponPanel ? "true" : "false"
@@ -7784,29 +7800,37 @@ var render = function() {
                   on: { click: _vm.toggleCouponPanel }
                 },
                 [
-                  _c("span", { staticClass: "text-start" }, [
-                    _c("strong", { staticClass: "d-block text-dark" }, [
-                      _vm._v("Imate kod za popust?")
-                    ]),
-                    _vm._v(" "),
-                    _c("small", { staticClass: "text-muted" }, [
-                      _vm._v(
-                        _vm._s(
-                          _vm.hasActiveCoupon
-                            ? "Kod je spremljen u košarici."
-                            : "Otvorite polje samo ako želite primijeniti kupon."
+                  _c(
+                    "span",
+                    { staticClass: "coupon-toggle__content text-start" },
+                    [
+                      _c("strong", { staticClass: "d-block text-dark" }, [
+                        _vm._v("Imate kod?")
+                      ]),
+                      _vm._v(" "),
+                      _c("small", { staticClass: "text-muted" }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.hasActiveCoupon
+                              ? "Kod je spremljen u košarici. Novi unos zamijenit će postojeći."
+                              : "Kupon ili poklon-bon."
+                          )
                         )
-                      )
-                    ])
-                  ]),
+                      ])
+                    ]
+                  ),
                   _vm._v(" "),
-                  _c("span", { staticClass: "text-primary" }, [
-                    _vm._v(
-                      "\n                    " +
-                        _vm._s(_vm.showCouponPanel ? "Sakrij" : "Otvori") +
-                        "\n                "
-                    )
-                  ])
+                  _c(
+                    "span",
+                    { staticClass: "coupon-toggle__action text-primary" },
+                    [
+                      _vm._v(
+                        "\n                    " +
+                          _vm._s(_vm.showCouponPanel ? "Sakrij" : "Otvori") +
+                          "\n                "
+                      )
+                    ]
+                  )
                 ]
               ),
               _vm._v(" "),
@@ -7821,69 +7845,77 @@ var render = function() {
                       expression: "showCouponPanel"
                     }
                   ],
-                  staticClass: "form-group mt-3"
+                  staticClass: "mt-3"
                 },
                 [
-                  _c("label", { staticClass: "form-label" }, [
-                    _vm._v("Kod za popust")
+                  _c("div", { staticClass: "form-group mb-3" }, [
+                    _c("label", { staticClass: "form-label" }, [
+                      _vm._v("Kod za popust ili poklon-bon")
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "input-group" }, [
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.codeInput,
+                            expression: "codeInput"
+                          }
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "text",
+                          placeholder: "Upišite kupon ili poklon-bon kod...",
+                          autocomplete: "off"
+                        },
+                        domProps: { value: _vm.codeInput },
+                        on: {
+                          keyup: function($event) {
+                            if (
+                              !$event.type.indexOf("key") &&
+                              _vm._k(
+                                $event.keyCode,
+                                "enter",
+                                13,
+                                $event.key,
+                                "Enter"
+                              )
+                            ) {
+                              return null
+                            }
+                            return _vm.setCoupon.apply(null, arguments)
+                          },
+                          input: function($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.codeInput = $event.target.value
+                          }
+                        }
+                      }),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "input-group-append" }, [
+                        _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-outline-primary btn-shadow",
+                            attrs: {
+                              type: "button",
+                              disabled: _vm.couponSubmitting
+                            },
+                            on: { click: _vm.setCoupon }
+                          },
+                          [_vm._v("Primijeni")]
+                        )
+                      ])
+                    ])
                   ]),
                   _vm._v(" "),
-                  _c("div", { staticClass: "input-group" }, [
-                    _c("input", {
-                      directives: [
-                        {
-                          name: "model",
-                          rawName: "v-model",
-                          value: _vm.coupon,
-                          expression: "coupon"
-                        }
-                      ],
-                      staticClass: "form-control",
-                      attrs: {
-                        type: "text",
-                        placeholder: "Upišite kod ovdje...",
-                        autocomplete: "off"
-                      },
-                      domProps: { value: _vm.coupon },
-                      on: {
-                        keyup: function($event) {
-                          if (
-                            !$event.type.indexOf("key") &&
-                            _vm._k(
-                              $event.keyCode,
-                              "enter",
-                              13,
-                              $event.key,
-                              "Enter"
-                            )
-                          ) {
-                            return null
-                          }
-                          return _vm.setCoupon.apply(null, arguments)
-                        },
-                        input: function($event) {
-                          if ($event.target.composing) {
-                            return
-                          }
-                          _vm.coupon = $event.target.value
-                        }
-                      }
-                    }),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "input-group-append" }, [
-                      _c(
-                        "button",
-                        {
-                          staticClass: "btn btn-outline-primary btn-shadow",
-                          attrs: {
-                            type: "button",
-                            disabled: _vm.couponSubmitting
-                          },
-                          on: { click: _vm.setCoupon }
-                        },
-                        [_vm._v("Primijeni")]
-                      )
-                    ])
+                  _c("p", { staticClass: "small text-muted mb-0 mt-2" }, [
+                    _vm._v(
+                      "\n                    Moguće je primijeniti jedan kod po narudžbi. Novi unos zamjenjuje postojeći.\n                "
+                    )
                   ]),
                   _vm._v(" "),
                   _vm.hasActiveCoupon
