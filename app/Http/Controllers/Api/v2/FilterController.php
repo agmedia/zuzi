@@ -31,7 +31,7 @@ class FilterController extends Controller
         $response = [];
         $params = $request->input('params');
         $is_actions_page = ($params['group'] ?? null) === 'snizenja';
-        $cacheKeyPrefix = 'relative-url-v1.';
+        $cacheKeyPrefix = 'relative-url-v2.';
 
         // Ako je normal kategorija
         if (($params['group'] ?? null) && ! $is_actions_page) {
@@ -39,10 +39,18 @@ class FilterController extends Controller
                 $response = Category::query()
                     ->active()
                     ->topList($params['group'])
+                    ->where(function (Builder $query) {
+                        $query->whereHas('products')
+                            ->orWhereHas('subcategories', function (Builder $subcategories) {
+                                $subcategories->active()->whereHas('products');
+                            });
+                    })
                     ->sortByName()
                     ->select('id', 'title', 'slug', 'group')
                     ->with(['subcategories' => function ($query) {
-                        $query->select('id', 'parent_id', 'title', 'slug', 'group');
+                        $query->active()
+                            ->whereHas('products')
+                            ->select('id', 'parent_id', 'title', 'slug', 'group');
                     }])
                     ->get()
                     ->toArray();
