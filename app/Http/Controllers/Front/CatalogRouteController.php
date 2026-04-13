@@ -65,6 +65,7 @@ class CatalogRouteController extends Controller
 
             $seo = Seo::getProductData($prod);
             $gdl = TagManager::getGoogleProductDataLayer($prod);
+            $reviews = $prod->reviews()->get();
 
             $prod->kat = CategoryProducts::where('product_id', $prod->id)->where('category_id', 109)->first();
 
@@ -127,7 +128,7 @@ class CatalogRouteController extends Controller
             }
 
 
-            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme','shipping_methods','payment_methods', 'gdl', 'authorProducts', 'publisherProducts', 'relatedProducts'));
+            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme', 'shipping_methods', 'payment_methods', 'gdl', 'reviews', 'authorProducts', 'publisherProducts', 'relatedProducts'));
         }
 
         // If only group...

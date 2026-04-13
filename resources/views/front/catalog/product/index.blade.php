@@ -10,6 +10,10 @@
     $relatedHeading = $subcat ? 'Slične knjige iz kategorije ' . $subcat->title : ($cat ? 'Slične knjige iz kategorije ' . $cat->title : 'Možda vas zanima');
     $hasKnownPublisher = $prod->publisher
         && \Illuminate\Support\Str::lower(trim((string) $prod->publisher->title)) !== 'nepoznati izdavač';
+    $reviews = $reviews ?? collect();
+    $reviewsCount = $reviews->count();
+    $reviewsAverage = $reviewsCount ? round((float) $reviews->avg('stars'), 1) : 0;
+    $hasReviewErrors = $errors->has('name') || $errors->has('email') || $errors->has('stars') || $errors->has('message');
     $productShelfCarouselOptions = [
         'items' => 2,
         'gutter' => 16,
@@ -163,6 +167,26 @@
 
 
    <h1 class="h3">{{ $prod->name }}</h1>
+
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+            <a id="openReview" href="#reviews" class="d-inline-flex align-items-center text-decoration-none">
+                <div class="star-rating me-2">
+                    @for ($i = 0; $i < 5; $i++)
+                        @if (floor($reviewsAverage) - $i >= 1)
+                            <i class="star-rating-icon ci-star-filled active"></i>
+                        @else
+                            <i class="star-rating-icon ci-star"></i>
+                        @endif
+                    @endfor
+                </div>
+
+                @if ($reviewsCount)
+                    <span class="fs-sm text-body">{{ number_format($reviewsAverage, 1) }}/5 · {{ $reviewsCount }} {{ $reviewsCount === 1 ? 'komentar' : 'komentara' }}</span>
+                @else
+                    <span class="fs-sm text-body">Još nema komentara, budite prvi.</span>
+                @endif
+            </a>
+        </div>
 
        <div class="mb-1">
            @if ($prod->main_price > $prod->main_special)
@@ -330,7 +354,7 @@
 <div class="bg-light px-2 mb-3 shadow rounded-3">
 <!-- Tabs-->
 <ul class="nav nav-tabs" role="tablist">
-   <li class="nav-item"><a class="nav-link py-4 px-sm-4 active" href="#specs" data-bs-toggle="tab" role="tab"><span>Opis</span> </a></li>
+   <li class="nav-item"><a class="nav-link py-4 px-sm-4 active" href="#specs" data-bs-toggle="tab" role="tab"><span>Opis i komentari</span> </a></li>
 
 </ul>
 <div class="px-4 pt-lg-3 pb-3 mb-5">
@@ -422,6 +446,137 @@
 
                </div>
            </div>
+
+           <hr class="my-4">
+
+           <section id="reviews" class="pt-2">
+               <div class="row pt-2 pb-3">
+                   <div class="col-lg-4 col-md-5 mb-3">
+                       <h3 class="h4 mb-1">{{ $reviewsCount }} {{ $reviewsCount === 1 ? 'komentar' : 'komentara' }}</h3>
+
+                       @if ($reviewsCount)
+                           <div class="star-rating me-2">
+                               @for ($i = 0; $i < 5; $i++)
+                                   @if (floor($reviewsAverage) - $i >= 1)
+                                       <i class="ci-star-filled fs-sm text-accent me-1"></i>
+                                   @else
+                                       <i class="ci-star fs-sm text-muted me-1"></i>
+                                   @endif
+                               @endfor
+                           </div>
+                           <span class="d-inline-block align-middle">{{ number_format($reviewsAverage, 1) }} prosječna ocjena</span>
+                       @else
+                           <p class="text-muted mb-0">Podijelite svoje iskustvo s ovom knjigom i pomozite drugim kupcima.</p>
+                       @endif
+                   </div>
+
+                   <div class="col-lg-8 col-md-7">
+                       @for ($i = 5; $i > 0; $i--)
+                           <div class="d-flex align-items-center mb-2">
+                               <div class="text-nowrap me-3"><span class="d-inline-block align-middle text-muted">{{ $i }}</span><i class="ci-star-filled fs-xs ms-1"></i></div>
+                               <div class="w-100">
+                                   <div class="progress" style="height: 4px;">
+                                       <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $prod->percentreviews($reviews->where('stars', $i)->count(), $reviewsCount) }}%;" aria-valuenow="{{ $prod->percentreviews($reviews->where('stars', $i)->count(), $reviewsCount) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                   </div>
+                               </div>
+                               <span class="text-muted ms-3">{{ $reviews->where('stars', $i)->count() }}</span>
+                           </div>
+                       @endfor
+                   </div>
+               </div>
+
+               <hr class="mt-4 mb-3">
+
+               <div class="row py-4">
+                   <div class="col-md-7">
+                       @if($reviewsCount)
+                           @foreach($reviews as $review)
+                               <div class="product-review pb-4 mb-4 border-bottom">
+                                   <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+                                       <div class="d-flex align-items-center me-4 pe-2">
+                                           <div>
+                                               <h4 class="fs-sm mb-0">{{ trim($review->fname . ' ' . $review->lname) ?: $review->fname }}</h4>
+                                               <span class="fs-ms fw-light text-muted">{{ \Carbon\Carbon::make($review->created_at)->locale('hr')->format('d.m.Y.') }}</span>
+                                           </div>
+                                       </div>
+
+                                       <div class="star-rating" style="vertical-align: top !important;">
+                                           @for ($i = 0; $i < 5; $i++)
+                                               @if (floor($review->stars) - $i >= 1)
+                                                   <i class="star-rating-icon ci-star-filled active"></i>
+                                               @else
+                                                   <i class="star-rating-icon ci-star"></i>
+                                               @endif
+                                           @endfor
+                                       </div>
+                                   </div>
+
+                                   <p class="fs-md mb-2">{{ $review->message }}</p>
+                               </div>
+                           @endforeach
+                       @else
+                           <p class="mb-0">Trenutno nema komentara za ovaj naslov.</p>
+                       @endif
+                   </div>
+
+                   <div class="col-md-5 mt-4 mt-md-0">
+                       <div class="bg-secondary py-grid-gutter px-grid-gutter rounded-3">
+                           <h3 class="h4 pb-2">Napišite komentar</h3>
+
+                           <form class="needs-validation" method="post" action="{{ route('komentar.proizvoda') }}" novalidate>
+                               @csrf
+
+                               <div class="mb-3">
+                                   <label class="form-label" for="review-name">Vaše ime <span class="text-danger">*</span></label>
+                                   <input class="form-control" type="text" required id="review-name" name="name" value="{{ old('name', optional(auth()->user())->name) }}">
+                                   @error('name')
+                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                   @enderror
+                                   <div class="invalid-feedback">Upišite ime.</div>
+                               </div>
+
+                               <div class="mb-3">
+                                   <label class="form-label" for="review-email">Email <span class="text-danger">*</span></label>
+                                   <input class="form-control" type="email" required id="review-email" name="email" value="{{ old('email', optional(auth()->user())->email) }}">
+                                   @error('email')
+                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                   @enderror
+                                   <div class="invalid-feedback">Upišite ispravan email.</div>
+                               </div>
+
+                               <div class="mb-3">
+                                   <label class="form-label" for="review-stars">Ocjena <span class="text-danger">*</span></label>
+                                   <select class="form-select" required id="review-stars" name="stars">
+                                       <option value="">Odaberite ocjenu</option>
+                                       @for ($i = 5; $i >= 1; $i--)
+                                           <option value="{{ $i }}" @selected(old('stars') == $i)>{{ $i }} / 5</option>
+                                       @endfor
+                                   </select>
+                                   @error('stars')
+                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                   @enderror
+                                   <div class="invalid-feedback">Odaberite ocjenu.</div>
+                               </div>
+
+                               <div class="mb-3">
+                                   <label class="form-label" for="review-message">Komentar <span class="text-danger">*</span></label>
+                                   <textarea class="form-control" rows="6" required id="review-message" name="message">{{ old('message') }}</textarea>
+                                   @error('message')
+                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                   @enderror
+                                   <div class="invalid-feedback">Upišite komentar.</div>
+                               </div>
+
+                               <input type="hidden" name="lang" value="{{ app()->getLocale() }}">
+                               <input type="hidden" name="product_id" value="{{ $prod->id }}">
+                               <input type="hidden" name="recaptcha" id="recaptcha_review">
+
+                               <button class="btn btn-primary btn-shadow d-block w-100" type="submit">Pošalji komentar</button>
+                           </form>
+                       </div>
+                   </div>
+               </div>
+           </section>
        </div>
        <!-- Reviews tab-->
 
@@ -488,19 +643,61 @@
 {!! collect($crumbs)->toJson() !!}
 </script>
 <script type="application/ld+json">
-{!! collect(\App\Helpers\Metatags::productSchema($prod))->toJson() !!}
+{!! collect(\App\Helpers\Metatags::productSchema($prod, $reviews))->toJson() !!}
 </script>
 <script type="application/ld+json">
 {!! collect($bookscheme)->toJson() !!}
 </script>
 <script type='text/javascript' src='https://platform-api.sharethis.com/js/sharethis.js#property=6134a372eae16400120a5035&product=sop' async='async'></script>
+<script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.sitekey') }}"></script>
 
 <script>
-$('#openReview').on('click', function() {
-$('.nav-tabs a[href="#reviews"]').tab('show');
-//  document.getElementById("tabs_widget").scrollIntoView();
-});
+    function scrollToReviewsSection() {
+        const reviewsSection = document.getElementById('reviews');
+
+        if (reviewsSection) {
+            reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    $('#openReview').on('click', function(e) {
+        e.preventDefault();
+        scrollToReviewsSection();
+    });
+
+    @if ($hasReviewErrors || session('review_submitted'))
+        $(function() {
+            scrollToReviewsSection();
+        });
+    @endif
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const reviewForm = document.querySelector('form[action="{{ route('komentar.proizvoda') }}"]');
+        const reviewTokenInput = document.getElementById('recaptcha_review');
+
+        if (!reviewForm || !reviewTokenInput || typeof grecaptcha === 'undefined') {
+            return;
+        }
+
+        reviewForm.addEventListener('submit', (event) => {
+            if (reviewForm.dataset.recaptchaReady === '1') {
+                reviewForm.dataset.recaptchaReady = '0';
+                return;
+            }
+
+            event.preventDefault();
+
+            grecaptcha.ready(() => {
+                grecaptcha.execute('{{ config('services.recaptcha.sitekey') }}', { action: 'product_review' })
+                    .then((token) => {
+                        reviewTokenInput.value = token;
+                        reviewForm.dataset.recaptchaReady = '1';
+                        reviewForm.submit();
+                    });
+            });
+        });
+    });
 </script>
 @include('front.layouts.modals.wishlist-email')
-@include('front.layouts.partials.recaptcha-js')
 @endpush

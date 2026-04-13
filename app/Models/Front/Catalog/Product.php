@@ -4,6 +4,7 @@ namespace App\Models\Front\Catalog;
 
 use App\Helpers\Helper;
 use App\Helpers\Currency;
+use App\Models\Back\Marketing\Review;
 use App\Models\Back\Catalog\Product\ProductAction;
 use App\Models\Back\Settings\Settings;
 use Carbon\Carbon;
@@ -206,6 +207,18 @@ class Product extends Model
 
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'product_id')
+            ->where('status', 1)
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at');
+    }
+
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function action()
@@ -345,6 +358,22 @@ class Product extends Model
     public function tax(int $id)
     {
         return Settings::get('tax', 'list')->where('id', $id)->first();
+    }
+
+
+    /**
+     * @param int $ratingCount
+     * @param int $total
+     *
+     * @return float|int
+     */
+    public function percentreviews(int $ratingCount, int $total)
+    {
+        if ($total) {
+            return round(($ratingCount / $total) * 100, 2);
+        }
+
+        return 0;
     }
 
 

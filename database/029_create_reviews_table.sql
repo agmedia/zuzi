@@ -1,0 +1,21 @@
+CREATE TABLE `reviews` (
+    `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    `product_id` bigint(20) unsigned NOT NULL,
+    `order_id` bigint(20) unsigned NOT NULL DEFAULT '0',
+    `user_id` bigint(20) unsigned NOT NULL DEFAULT '0',
+    `lang` varchar(2) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'hr',
+    `fname` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `lname` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `email` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `avatar` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `message` text COLLATE utf8mb4_unicode_ci NOT NULL,
+    `stars` decimal(4,2) DEFAULT NULL,
+    `sort_order` int(10) unsigned NOT NULL DEFAULT '0',
+    `featured` tinyint(1) NOT NULL DEFAULT '0',
+    `status` tinyint(1) NOT NULL DEFAULT '1',
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `reviews_product_id_index` (`product_id`),
+    KEY `reviews_status_index` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

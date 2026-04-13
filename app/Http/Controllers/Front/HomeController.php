@@ -9,6 +9,7 @@ use App\Helpers\Recaptcha;
 use App\Http\Controllers\Controller;
 use App\Imports\ProductImport;
 use App\Mail\ContactFormMessage;
+use App\Models\Back\Marketing\Review;
 use App\Models\Back\Marketing\Wishlist;
 use App\Models\Front\Loyalty;
 use App\Models\Front\Page;
@@ -82,6 +83,50 @@ class HomeController extends Controller
         }
 
         return back()->with(['error' => 'Wishlist Greška! Molimo vas kontaktirajte administratora!']);
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function sendProductComment(Request $request)
+    {
+        $recaptcha = (new Recaptcha())->check($request->toArray());
+
+        if (! $recaptcha || ! $recaptcha->ok()) {
+            return back()
+                ->withInput()
+                ->with([
+                    'error'            => 'ReCaptcha provjera nije uspjela. Pokušajte ponovno.',
+                    'review_submitted' => true,
+                ]);
+        }
+
+        $review = new Review();
+
+        $createdReview = $review->validateRequest($request)->create();
+
+        if ($createdReview) {
+            $points = (int) config('settings.loyalty.product_review', 0);
+
+            if ($points > 0) {
+                Loyalty::addPoints($points, (int) $request->input('product_id'), 'product_review', '');
+            }
+
+            return back()->with([
+                'success'          => 'Komentar je uspješno poslan. Hvala vam!',
+                'review_submitted' => true,
+            ]);
+        }
+
+        return back()
+            ->withInput()
+            ->with([
+                'error'            => 'Dogodila se greška prilikom spremanja komentara.',
+                'review_submitted' => true,
+            ]);
     }
 
 
