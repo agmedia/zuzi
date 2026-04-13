@@ -12,6 +12,7 @@ use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
 use Darryldecode\Cart\CartCondition;
+use Illuminate\Cache\TaggableStore;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -736,11 +737,11 @@ class Helper
      */
     public static function resolveCache(string $tag): ?object
     {
-        if (env('APP_ENV') == 'local') {
-            return Cache::getFacadeRoot();
+        if (self::supportsCacheTags()) {
+            return Cache::tags([$tag]);
         }
 
-        return Cache::tags([$tag]);
+        return self::cacheFallback($tag);
     }
 
 
@@ -752,11 +753,53 @@ class Helper
      */
     public static function flushCache(string $tag, string $key)
     {
-        if (env('APP_ENV') == 'local') {
-            return Cache::getFacadeRoot();
+        if (self::supportsCacheTags()) {
+            return Cache::tags([$tag])->forget($key);
         }
 
-        return Cache::tags([$tag])->forget($key);
+        return self::cacheFallback($tag)->forget($key);
+    }
+
+
+    private static function supportsCacheTags(): bool
+    {
+        return Cache::getStore() instanceof TaggableStore;
+    }
+
+
+    private static function cacheFallback(string $tag): object
+    {
+        return new class(Cache::getFacadeRoot(), $tag) {
+            public function __construct(
+                private object $cache,
+                private string $tag
+            ) {
+            }
+
+            public function remember(string $key, $ttl, \Closure $callback)
+            {
+                return $this->cache->remember($this->prefix($key), $ttl, $callback);
+            }
+
+            public function forget(string $key)
+            {
+                return $this->cache->forget($this->prefix($key));
+            }
+
+            public function __call(string $method, array $arguments)
+            {
+                if (isset($arguments[0]) && is_string($arguments[0])) {
+                    $arguments[0] = $this->prefix($arguments[0]);
+                }
+
+                return $this->cache->{$method}(...$arguments);
+            }
+
+            private function prefix(string $key): string
+            {
+                return $this->tag . ':' . $key;
+            }
+        };
     }
 
 

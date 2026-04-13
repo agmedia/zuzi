@@ -1,6 +1,36 @@
 @extends('front.layouts.app')
 @section('title', \App\Models\Seo::appendBrand('Kosarica'))
 @section('description', \App\Models\Seo::description(null, 'Pregled artikala u kosarici na ' . \App\Models\Seo::brand() . '.'))
+@php
+    $cartRecommendationCarouselOptions = [
+        'items' => 2,
+        'gutter' => 16,
+        'controls' => true,
+        'nav' => true,
+        'autoHeight' => false,
+        'mouseDrag' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['items' => 2, 'controls' => true, 'nav' => true],
+            480 => ['items' => 2, 'controls' => true, 'nav' => true],
+            720 => ['items' => 3],
+            1140 => ['items' => 4],
+        ],
+    ];
+@endphp
+
+@push('css_after')
+    <style>
+        .cart-recommendations-carousel .tns-ovh,
+        .cart-recommendations-carousel .tns-item,
+        .cart-recommendations-carousel .tns-carousel-inner {
+            touch-action: pan-y pinch-zoom;
+        }
+    </style>
+@endpush
 
 @if (isset($gdl))
     @section('google_data_layer')
@@ -70,6 +100,27 @@
             <div class="card px-3">
             <cart-view continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}" checkouturl="{{ route('naplata') }}" freeship="{{ config('settings.free_shipping') }}"></cart-view>
             </div>
+
+            @if(isset($cartRecommendations) && $cartRecommendations->count())
+                <section class="mt-4 pt-2">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Dodajte još jednu knjigu uz ovu narudžbu</h2>
+                            <p class="text-muted mb-0">Naslovi od 10 do 15 € koje kupci rado dodaju prije završetka kupnje.</p>
+                        </div>
+                    </div>
+
+                    <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 cart-recommendations-carousel">
+                        <div class="tns-carousel-inner" data-carousel-options='@json($cartRecommendationCarouselOptions)'>
+                            @foreach ($cartRecommendations as $product)
+                                <div>
+                                    @include('front.catalog.category.product', ['product' => $product])
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </section>
+            @endif
 
         </section>
         <!-- Sidebar-->
