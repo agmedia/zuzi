@@ -453,7 +453,7 @@
 
 
 <!-- Main theme script-->
-<script src="{{ asset('js/cart.js?v=2.9.9') }}"></script>
+<script src="{{ asset('js/cart.js') }}?v={{ filemtime(public_path('js/cart.js')) }}"></script>
 
 <script src="{{ asset('js/theme.min.js') }}"></script>
 
