@@ -9,18 +9,16 @@ use App\Mail\OrderReceived;
 use App\Mail\OrderSent;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\AgCart;
-use App\Models\Front\Catalog\CategoryProducts;
-use App\Models\Front\Catalog\Product;
 use App\Models\Front\Checkout\Order;
 use App\Models\Back\Orders\Order as AdminOrderModel;
 use App\Models\TagManager;
 use App\Models\Front\Loyalty;
 use App\Services\GoogleAnalyticsService;
+use App\Services\ProductRecommendationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Collection;
 use App\Services\WoltDrive\WoltZoneService;
 
 class CheckoutController extends Controller
@@ -35,7 +33,8 @@ class CheckoutController extends Controller
     {
         $cart = $this->shoppingCart()->get();
         $gdl = TagManager::getGoogleCartDataLayer($cart);
-        $cartRecommendations = $this->getCartRecommendations(collect($cart['items'] ?? []));
+        $cartRecommendations = app(ProductRecommendationService::class)
+            ->forCartItems(collect($cart['items'] ?? []));
 
         return view('front.checkout.cart', compact('gdl', 'cartRecommendations'));
     }
@@ -270,149 +269,6 @@ class CheckoutController extends Controller
         }
 
         return new AgCart(config('session.cart'));
-    }
-
-
-    /**
-     * Build a short recommendation shelf for the cart using similar products
-     * that currently resolve to the 10-15 EUR range.
-     */
-    private function getCartRecommendations(Collection $cart_items, int $limit = 10): Collection
-    {
-        if ($cart_items->isEmpty()) {
-            return collect();
-        }
-
-        $cart_product_ids = $cart_items->map(fn ($item) => (int) data_get($item, 'id'))
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($cart_product_ids->isEmpty()) {
-            return collect();
-        }
-
-        $author_ids = $cart_items->map(fn ($item) => (int) data_get($item, 'associatedModel.author_id'))
-            ->filter()
-            ->unique()
-            ->values();
-
-        $publisher_ids = $cart_items->map(fn ($item) => (int) data_get($item, 'associatedModel.publisher_id'))
-            ->filter()
-            ->unique()
-            ->values();
-
-        $category_ids = CategoryProducts::query()
-            ->whereIn('product_id', $cart_product_ids)
-            ->pluck('category_id')
-            ->map(fn ($id) => (int) $id)
-            ->filter()
-            ->unique()
-            ->values();
-
-        $candidate_ids = collect();
-
-        if ($author_ids->isNotEmpty()) {
-            $candidate_ids = $candidate_ids->concat(
-                Product::query()
-                    ->active()
-                    ->hasStock()
-                    ->hasImage()
-                    ->whereNotIn('id', $cart_product_ids)
-                    ->whereIn('author_id', $author_ids)
-                    ->inRandomOrder()
-                    ->limit($limit * 3)
-                    ->pluck('id')
-            );
-        }
-
-        if ($category_ids->isNotEmpty()) {
-            $candidate_ids = $candidate_ids->concat(
-                CategoryProducts::query()
-                    ->select('product_id')
-                    ->whereIn('category_id', $category_ids)
-                    ->whereNotIn('product_id', $cart_product_ids)
-                    ->groupBy('product_id')
-                    ->inRandomOrder()
-                    ->limit($limit * 4)
-                    ->pluck('product_id')
-            );
-        }
-
-        if ($publisher_ids->isNotEmpty()) {
-            $candidate_ids = $candidate_ids->concat(
-                Product::query()
-                    ->active()
-                    ->hasStock()
-                    ->hasImage()
-                    ->whereNotIn('id', $cart_product_ids)
-                    ->whereIn('publisher_id', $publisher_ids)
-                    ->inRandomOrder()
-                    ->limit($limit * 2)
-                    ->pluck('id')
-            );
-        }
-
-        $recommendations = $this->resolveRecommendationProducts(
-            $candidate_ids->map(fn ($id) => (int) $id)->filter()->unique()->values(),
-            $limit
-        );
-
-        if ($recommendations->count() >= $limit) {
-            return $recommendations;
-        }
-
-        $excluded_ids = $cart_product_ids
-            ->merge($recommendations->pluck('id'))
-            ->unique()
-            ->values();
-
-        $fallback = Product::query()
-            ->active()
-            ->hasStock()
-            ->hasImage()
-            ->with(['author', 'action'])
-            ->whereNotIn('id', $excluded_ids)
-            ->where(function ($query) {
-                $query->whereBetween('price', [10, 15])
-                    ->orWhereBetween('special', [10, 15]);
-            })
-            ->inRandomOrder()
-            ->limit($limit * 3)
-            ->get()
-            ->filter(fn (Product $product) => $this->matchesRecommendationPrice($product))
-            ->take($limit - $recommendations->count())
-            ->values();
-
-        return $recommendations->concat($fallback)->take($limit)->values();
-    }
-
-
-    private function resolveRecommendationProducts(Collection $candidate_ids, int $limit): Collection
-    {
-        if ($candidate_ids->isEmpty()) {
-            return collect();
-        }
-
-        return Product::query()
-            ->active()
-            ->hasStock()
-            ->hasImage()
-            ->with(['author', 'action'])
-            ->whereIn('id', $candidate_ids)
-            ->get()
-            ->filter(fn (Product $product) => $this->matchesRecommendationPrice($product))
-            ->sortBy(fn (Product $product) => $candidate_ids->search($product->id))
-            ->take($limit)
-            ->values();
-    }
-
-
-    private function matchesRecommendationPrice(Product $product): bool
-    {
-        $resolved_price = (float) $product->special();
-
-        return $resolved_price >= 10.0 && $resolved_price <= 15.0;
     }
 
 

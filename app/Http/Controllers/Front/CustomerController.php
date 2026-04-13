@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Front;
 use App\Helpers\Country;
 use App\Helpers\Session\CheckoutSession;
 use App\Http\Controllers\Controller;
+use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
 use App\Models\Front\Loyalty;
+use App\Services\ProductRecommendationService;
 use App\Models\User;
 use App\Models\UserAffiliate;
 use Illuminate\Http\Request;
@@ -41,16 +43,31 @@ class CustomerController extends Controller
     public function orders(Request $request)
     {
         $user   = auth()->user();
-        $orders = Order::query()
-            ->with(['products.product', 'products.real', 'totals'])
+        $orderQuery = Order::query()
             ->where(function ($query) use ($user) {
                 $query->where('user_id', $user->id)
                     ->orWhere('payment_email', $user->email);
-            })
+            });
+
+        $orders = (clone $orderQuery)
+            ->with(['products.product', 'products.real', 'totals'])
             ->latest('created_at')
             ->paginate(config('settings.pagination.front'));
 
-        return view('front.customer.moje-narudzbe', compact('user', 'orders'));
+        $purchasedProductIds = OrderProduct::query()
+            ->whereIn('order_id', (clone $orderQuery)
+                ->whereNotIn('order_status_id', [5, 7, 8])
+                ->select('id'))
+            ->pluck('product_id')
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $purchaseRecommendations = app(ProductRecommendationService::class)
+            ->forProductIds($purchasedProductIds);
+
+        return view('front.customer.moje-narudzbe', compact('user', 'orders', 'purchaseRecommendations'));
     }
 
 

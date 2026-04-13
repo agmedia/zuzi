@@ -64,9 +64,23 @@
 
         <div class="rounded-3 p-4 mt-3" v-if="route == 'kosarica' || route == 'naplata'" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2" v-cloak>
-                <div class="form-group">
+                <button
+                    type="button"
+                    class="btn btn-link text-decoration-none d-flex w-100 align-items-center justify-content-between px-0"
+                    @click="toggleCouponPanel"
+                    :aria-expanded="showCouponPanel ? 'true' : 'false'"
+                >
+                    <span class="text-start">
+                        <strong class="d-block text-dark">Imate kod za popust?</strong>
+                        <small class="text-muted">{{ hasActiveCoupon ? 'Kod je spremljen u košarici.' : 'Otvorite polje samo ako želite primijeniti kupon.' }}</small>
+                    </span>
+                    <span class="text-primary">
+                        {{ showCouponPanel ? 'Sakrij' : 'Otvori' }}
+                    </span>
+                </button>
 
-                    <label class="form-label">Imate li kod za popust?</label>
+                <div v-show="showCouponPanel" class="form-group mt-3">
+                    <label class="form-label">Kod za popust</label>
                     <div class="input-group">
                         <input
                             type="text"
@@ -77,9 +91,13 @@
                             @keyup.enter="setCoupon"
                         >
                         <div class="input-group-append">
-                            <button type="button" v-on:click="setCoupon" class="btn btn-outline-primary btn-shadow" :disabled="couponSubmitting">Dodaj</button>
+                            <button type="button" v-on:click="setCoupon" class="btn btn-outline-primary btn-shadow" :disabled="couponSubmitting">Primijeni</button>
                         </div>
                     </div>
+
+                    <p v-if="hasActiveCoupon" class="small text-success mb-0 mt-2">
+                        Aktivan kod: {{ coupon }}
+                    </p>
                 </div>
             </div>
         </div>
@@ -126,9 +144,15 @@ export default {
             show_delete_btn: true,
             coupon: '',
             couponSubmitting: false,
+            showCouponPanel: false,
             has_loyalty: false,
             selected_loyalty: 0,
             tax: 0,
+        }
+    },
+    computed: {
+        hasActiveCoupon() {
+            return String(this.coupon || '').trim() !== '' && String(this.coupon || '').trim() !== 'null';
         }
     },
     mounted() {
@@ -181,6 +205,7 @@ export default {
             // Check coupon
             if (cart && cart.coupon != '' && cart.coupon != 'null') {
                 this.coupon = cart.coupon;
+                this.showCouponPanel = true;
             }
 
             // Check loyalty
@@ -214,6 +239,10 @@ export default {
             this.checkCoupon().finally(() => {
                 this.couponSubmitting = false;
             });
+        },
+
+        toggleCouponPanel() {
+            this.showCouponPanel = ! this.showCouponPanel;
         },
 
         setLoyalty() {

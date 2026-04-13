@@ -105,8 +105,8 @@
                 <section class="mt-4 pt-2">
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                         <div>
-                            <h2 class="h4 mb-1">Dodajte još jednu knjigu uz ovu narudžbu</h2>
-                            <p class="text-muted mb-0">Naslovi od 10 do 15 € koje kupci rado dodaju prije završetka kupnje.</p>
+                            <h2 class="h4 mb-1">S obzirom na vašu košaricu, preporučujemo</h2>
+                            <p class="text-muted mb-0">Odabrali smo slične naslove od 10 do 15 € koje kupci često dodaju prije završetka kupnje.</p>
                         </div>
                     </div>
 

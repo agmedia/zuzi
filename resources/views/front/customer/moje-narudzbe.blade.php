@@ -1,6 +1,36 @@
 @extends('front.layouts.app')
 @section('title', \App\Models\Seo::appendBrand('Moje narudzbe'))
 @section('description', \App\Models\Seo::description(null, 'Pregled prethodnih narudzbi na korisnickom racunu ' . \App\Models\Seo::brand() . '.'))
+@php
+    $purchaseRecommendationCarouselOptions = [
+        'items' => 2,
+        'gutter' => 16,
+        'controls' => true,
+        'nav' => true,
+        'autoHeight' => false,
+        'mouseDrag' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['items' => 2, 'controls' => true, 'nav' => true],
+            480 => ['items' => 2, 'controls' => true, 'nav' => true],
+            720 => ['items' => 3],
+            1140 => ['items' => 4],
+        ],
+    ];
+@endphp
+
+@push('css_after')
+    <style>
+        .purchase-recommendations-carousel .tns-ovh,
+        .purchase-recommendations-carousel .tns-item,
+        .purchase-recommendations-carousel .tns-carousel-inner {
+            touch-action: pan-y pinch-zoom;
+        }
+    </style>
+@endpush
 
 @section('content')
 
@@ -110,6 +140,27 @@
                 </div>
 
                 {{ $orders->links() }}
+
+                @if(isset($purchaseRecommendations) && $purchaseRecommendations->count())
+                    <section class="mt-4 pt-2">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                            <div>
+                                <h2 class="h4 mb-1">S obzirom na vaše prethodne kupnje, preporučujemo</h2>
+                                <p class="text-muted mb-0">Odabrali smo slične naslove koje bi vas mogli zanimati na temelju knjiga koje ste već kupovali.</p>
+                            </div>
+                        </div>
+
+                        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 purchase-recommendations-carousel">
+                            <div class="tns-carousel-inner" data-carousel-options='@json($purchaseRecommendationCarouselOptions)'>
+                                @foreach ($purchaseRecommendations as $product)
+                                    <div>
+                                        @include('front.catalog.category.product', ['product' => $product])
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </section>
+                @endif
 
             </section>
         </div>
