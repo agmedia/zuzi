@@ -14,6 +14,7 @@ use XMLWriter;
 class Njuskalo
 {
     private const DEFAULT_CACHE_TTL = 21600;
+    private const DEFAULT_MAX_ITEMS = 50000;
     private const EXPORT_PATH = 'app/feeds/njuskalo.xml';
 
     /**
@@ -26,9 +27,17 @@ class Njuskalo
      * @param int $chunkSize Primarni ključ batch veličina za lazyById
      * @return \Generator<array<string,mixed>>
      */
-    public function items(int $chunkSize = 500): \Generator
+    public function items(int $chunkSize = 500, ?int $limit = null): \Generator
     {
-        foreach ($this->baseQuery()->lazyById($chunkSize) as $product) {
+        $processed = 0;
+        $limit ??= $this->maxItems();
+
+        foreach ($this->baseQuery()->lazyByIdDesc($chunkSize) as $product) {
+            if ($processed >= $limit) {
+                break;
+            }
+
+            $processed++;
             yield $this->transform($product);
         }
     }
@@ -81,7 +90,7 @@ class Njuskalo
             ->where('status', 1)
             ->whereNotIn('sku', config('settings.njuskalo.forbidden'))
             ->where('price', '!=', 0)
-            ->where('quantity', '!=', 0)
+            ->where('quantity', 1)
             ->select([
                 'id', 'name', 'description', 'quantity', 'status', 'price',
                 'image', 'pages', 'dimensions', 'origin', 'url', 'letter',
@@ -152,7 +161,14 @@ class Njuskalo
 
     private function isFresh(string $path, int $ttl): bool
     {
-        return File::exists($path) && (time() - File::lastModified($path)) < max(0, $ttl);
+        if (! File::exists($path)) {
+            return false;
+        }
+
+        $lastModified = File::lastModified($path);
+
+        return (time() - $lastModified) < max(0, $ttl)
+            && $lastModified >= $this->sourceModifiedAt();
     }
 
     private function writeExport(string $path): void
@@ -256,5 +272,20 @@ class Njuskalo
         $value = (string) $value;
 
         return preg_replace('/[^\x09\x0A\x0D\x20-\x{D7FF}\x{E000}-\x{FFFD}]/u', '', $value) ?? '';
+    }
+
+    private function maxItems(): int
+    {
+        return max(1, (int) config('settings.njuskalo.max_items', self::DEFAULT_MAX_ITEMS));
+    }
+
+    private function sourceModifiedAt(): int
+    {
+        $paths = [
+            __FILE__,
+            config_path('settings.php'),
+        ];
+
+        return max(array_map(static fn (string $path): int => is_file($path) ? (int) filemtime($path) : 0, $paths));
     }
 }

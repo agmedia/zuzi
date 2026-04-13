@@ -168,6 +168,7 @@ return [
         'user_id' => '968815',
         'cache_ttl' => (int) env('NJUSKALO_XML_CACHE_TTL', 21600),
         'http_cache_ttl' => (int) env('NJUSKALO_XML_HTTP_CACHE_TTL', 3600),
+        'max_items' => (int) env('NJUSKALO_XML_MAX_ITEMS', 50000),
         'forbidden' => ['8754', '17126','106904', '139897','167311', '9788652108374','7862726778827'],
         'sync' => [
             'fantasy' => 15360, //*
