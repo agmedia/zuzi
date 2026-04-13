@@ -252,10 +252,12 @@ class CatalogFilter extends Component
      */
     private function getBaseIDs()
     {
+        $cacheKeyPrefix = 'category_list.relative-url-v1.';
+
         if ($this->group) {
             if ( ! $this->category && ! $this->subcategory) {
                 $response = [];
-                $categories = Cache::remember('category_list.' . $this->group, config('cache.life'), function () {
+                $categories = Cache::remember($cacheKeyPrefix . $this->group, config('cache.life'), function () {
                     return Category::where('group', $this->group)->where('parent_id', 0)->sortByName()->with('subcategories')->withCount('products')->get()->toArray();
                 });
 
@@ -264,7 +266,7 @@ class CatalogFilter extends Component
                         'id' => $category['id'],
                         'title' => $category['title'],
                         'count' => $category['products_count'],
-                        'url' => route('catalog.route', ['group' => Str::slug($category['group']), 'cat' => $category['slug']])
+                        'url' => route('catalog.route', ['group' => Str::slug($category['group']), 'cat' => $category['slug']], false)
                     ];
                 }
 
@@ -273,7 +275,7 @@ class CatalogFilter extends Component
 
             //
             if ($this->category && ! $this->subcategory) {
-                $item = Cache::remember('category_list.' . $this->category->id, config('cache.life'), function () {
+                $item = Cache::remember($cacheKeyPrefix . $this->category->id, config('cache.life'), function () {
                     return Category::where('parent_id', $this->category->id)->sortByName()->with('subcategories')->withCount('products')->get()->toArray();
                 });
 
@@ -285,7 +287,7 @@ class CatalogFilter extends Component
                             'id' => $category['id'],
                             'title' => $category['title'],
                             'count' => $category['products_count'],
-                            'url' => route('catalog.route', ['group' => Str::slug($category['group']), 'cat' => $this->category['slug'], 'subcat' => $category['slug']])
+                            'url' => route('catalog.route', ['group' => Str::slug($category['group']), 'cat' => $this->category['slug'], 'subcat' => $category['slug']], false)
                         ];
                     }
 

@@ -244,7 +244,7 @@ class AuthorFilter extends Component
                 'id' => $category['id'],
                 'title' => $category['title'],
                 'count' => $category['products_count'],
-                'url' => route('catalog.route.' . $target, [$target => $this->{$model}, 'cat' => ($category->parent ?: $category), 'subcat' => ($category->parent ? $category : $category->parent)])
+                'url' => route('catalog.route.' . $target, [$target => $this->{$model}, 'cat' => ($category->parent ?: $category), 'subcat' => ($category->parent ? $category : $category->parent)], false)
             ];
         }
 

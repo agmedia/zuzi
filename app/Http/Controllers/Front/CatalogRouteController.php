@@ -395,9 +395,9 @@ class CatalogRouteController extends Controller
                 $slug = $c->slug ?: $c->id;
 
                 if ($group === 'snizenja') {
-                    $path = route('catalog.route.actions', ['cat' => $slug]);
+                    $path = route('catalog.route.actions', ['cat' => $slug], false);
                 } else {
-                    $path = route('catalog.route', ['group' => $group, 'cat' => $slug]);
+                    $path = route('catalog.route', ['group' => $group, 'cat' => $slug], false);
                 }
 
                 return [

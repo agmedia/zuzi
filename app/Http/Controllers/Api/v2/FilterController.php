@@ -31,10 +31,11 @@ class FilterController extends Controller
         $response = [];
         $params = $request->input('params');
         $is_actions_page = ($params['group'] ?? null) === 'snizenja';
+        $cacheKeyPrefix = 'relative-url-v1.';
 
         // Ako je normal kategorija
         if (($params['group'] ?? null) && ! $is_actions_page) {
-            $response = Helper::resolveCache('categories')->remember($params['group'], config('cache.life'), function () use ($params) {
+            $response = Helper::resolveCache('categories')->remember($cacheKeyPrefix . $params['group'], config('cache.life'), function () use ($params) {
                 $response = Category::query()
                     ->active()
                     ->topList($params['group'])
@@ -124,27 +125,27 @@ class FilterController extends Controller
                 'author' => $target,
                 'cat' => $parent_slug ?: $category['slug'],
                 'subcat' => $parent_slug ? $category['slug'] : null
-            ]);
+            ], false);
 
         } elseif ($type == 'publisher') {
             return route('catalog.route.publisher', [
                 'publisher' => $target,
                 'cat' => $parent_slug ?: $category['slug'],
                 'subcat' => $parent_slug ? $category['slug'] : null
-            ]);
+            ], false);
 
         } elseif ($type == 'actions') {
             return route('catalog.route.actions', [
                 'cat' => $parent_slug ?: $category['slug'],
                 'subcat' => $parent_slug ? $category['slug'] : null
-            ]);
+            ], false);
 
         } else {
             return route('catalog.route', [
                 'group' => Str::slug($category['group']),
                 'cat' => $parent_slug ?: $category['slug'],
                 'subcat' => $parent_slug ? $category['slug'] : null
-            ]);
+            ], false);
         }
     }
 

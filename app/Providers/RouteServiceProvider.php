@@ -61,8 +61,11 @@ class RouteServiceProvider extends ServiceProvider
     protected function removeIndexPHPFromURL()
     {
         if (config('app.env') == 'production') {
-            if ( ! Str::contains(request()->fullUrl(), 'https://www.')) {
-                $url = str_replace('https://', 'https://www.', request()->fullUrl());
+            $canonicalUrl = rtrim((string) config('app.url'), '/');
+            $currentHost = rtrim(request()->getSchemeAndHttpHost(), '/');
+
+            if ($canonicalUrl && $currentHost !== $canonicalUrl) {
+                $url = $canonicalUrl . request()->getRequestUri();
 
                 if (strlen($url) > 0) {
                     header("Location: $url", true, 301);
