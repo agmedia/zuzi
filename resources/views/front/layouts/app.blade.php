@@ -475,30 +475,84 @@
 </script>
 
 <script>
-    const myModal = document.getElementById('signin-modal')
+    const signinModal = document.getElementById('signin-modal');
+    const recaptchaSiteKey = @json(config('services.recaptcha.sitekey'));
+    let recaptchaLoader = null;
 
-    myModal.addEventListener('show.bs.modal', (ev) => {
-        let invoker = ev.relatedTarget
-        let selected_tab = invoker.getAttribute("data-tab-id")
-        const tab_btn = document.querySelector('#' + selected_tab)
-        const tab = new bootstrap.Tab(tab_btn)
-        tab.show()
+    function loadRecaptchaScript() {
+        if (!recaptchaSiteKey) {
+            return Promise.resolve(null);
+        }
 
-        let head = document.getElementsByTagName('head')[0];
-        let script = document.createElement('script');
-        script.src = 'https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.sitekey') }}';
-        head.appendChild(script);
+        if (window.grecaptcha && typeof window.grecaptcha.ready === 'function') {
+            return Promise.resolve(window.grecaptcha);
+        }
 
-        setInterval(() => {
-            grecaptcha.ready(function() {
-                grecaptcha.execute('{{ config('services.recaptcha.sitekey') }}', {action: 'register'}).then(function(token) {
-                    if (token) {
-                        document.getElementById('recaptcha').value = token;
-                    }
-                });
+        if (recaptchaLoader) {
+            return recaptchaLoader;
+        }
+
+        recaptchaLoader = new Promise((resolve, reject) => {
+            const existingScript = document.querySelector('script[data-recaptcha-script="signin"]');
+
+            if (existingScript) {
+                existingScript.addEventListener('load', () => resolve(window.grecaptcha), { once: true });
+                existingScript.addEventListener('error', reject, { once: true });
+
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(recaptchaSiteKey)}`;
+            script.async = true;
+            script.defer = true;
+            script.dataset.recaptchaScript = 'signin';
+            script.onload = () => resolve(window.grecaptcha);
+            script.onerror = reject;
+
+            document.head.appendChild(script);
+        });
+
+        return recaptchaLoader;
+    }
+
+    function refreshSigninRecaptchaToken() {
+        const tokenInput = document.getElementById('recaptcha');
+
+        if (!tokenInput || !window.grecaptcha || !recaptchaSiteKey) {
+            return;
+        }
+
+        window.grecaptcha.ready(function() {
+            window.grecaptcha.execute(recaptchaSiteKey, { action: 'register' }).then(function(token) {
+                if (token) {
+                    tokenInput.value = token;
+                }
             });
-        }, 270);
-    })
+        });
+    }
+
+    if (signinModal) {
+        signinModal.addEventListener('show.bs.modal', (ev) => {
+            const invoker = ev.relatedTarget;
+            const selectedTab = invoker ? invoker.getAttribute('data-tab-id') : null;
+
+            if (selectedTab) {
+                const tabButton = document.querySelector(`#${selectedTab}`);
+
+                if (tabButton) {
+                    const tab = new bootstrap.Tab(tabButton);
+                    tab.show();
+                }
+            }
+
+            loadRecaptchaScript()
+                .then(() => {
+                    refreshSigninRecaptchaToken();
+                })
+                .catch(() => {});
+        });
+    }
 </script>
 
 <script type="text/javascript" src="//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js"></script>

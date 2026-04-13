@@ -216,7 +216,7 @@
 
                 @if ($cat && ! $subcat && ! $isActionListing)
 
-                    @if ($cat->subcategories()->count())
+                    @if ($cat->subcategories->isNotEmpty())
                         <section class="py-2 mb-0">
                             <div class="row  ">
                                 <div class="col-lg-12   py-1 ">
@@ -285,7 +285,7 @@
 
             @if ($cat && ! $subcat && $isActionListing)
 
-                @if ($cat->subcategories()->count())
+                @if ($cat->subcategories->isNotEmpty())
                     <section class="py-2 mb-3">
                         <div class="row">
                             <div class="col-lg-12 py-1">

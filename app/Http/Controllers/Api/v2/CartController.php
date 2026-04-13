@@ -79,7 +79,7 @@ class CartController extends Controller
     {
         $response = $this->cart->check($request);
 
-        $this->cart->resolveDB();
+        $this->cart->resolveDB($response['cart'] ?? null);
 
         return response()->json($response);
     }
@@ -147,9 +147,11 @@ class CartController extends Controller
             'success' => (bool) ($response['success'] ?? false),
             'coupon' => (string) ($response['coupon'] ?? ''),
             'cart' => $response['cart'] ?? $this->cart->get(),
-            'message' => (bool) ($response['success'] ?? false)
+            'message' => $response['message'] ?? (
+                (bool) ($response['success'] ?? false)
                 ? 'Kupon je uspješno dodan u košaricu.'
-                : 'Nažalost nema kupona pod tim kodom.',
+                : 'Nažalost nema kupona pod tim kodom.'
+            ),
         ]);
     }
 

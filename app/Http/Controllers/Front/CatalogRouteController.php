@@ -59,6 +59,8 @@ class CatalogRouteController extends Controller
                 abort(404);
             }
 
+            $prod->loadMissing(['images', 'author', 'publisher', 'action']);
+
             DB::table('products')
                 ->where('id', $prod->id)
                 ->increment('viewed');
@@ -78,7 +80,10 @@ class CatalogRouteController extends Controller
             $publisherProducts = collect();
             $relatedProducts = collect();
 
-            $prod->kat = CategoryProducts::where('product_id', $prod->id)->where('category_id', 109)->first();
+            $prod->kat = CategoryProducts::query()
+                ->where('product_id', $prod->id)
+                ->where('category_id', 109)
+                ->exists();
 
             if ($prod->author_id) {
                 $authorProducts = Product::query()
@@ -145,13 +150,14 @@ class CatalogRouteController extends Controller
         }
 
         if ($cat) {
+            $cat->loadMissing('subcategories');
             $cat->count = Helper::resolveCache('cats_count')->remember($cat->id, config('cache.life'), function () use ($cat) {
                 return $cat->products()->count();
             });
             //$cat->count = $cat->products()->count();
         }
         if ($subcat) {
-            $subcat->count = Helper::resolveCache('cats_count')->remember($cat->id, config('cache.life'), function () use ($subcat) {
+            $subcat->count = Helper::resolveCache('cats_count')->remember($subcat->id, config('cache.life'), function () use ($subcat) {
                 return $subcat->products()->count();
             });
             //$subcat->products()->count();
@@ -238,7 +244,10 @@ class CatalogRouteController extends Controller
 
         $letter = null;
 
-        if ($cat) { $cat->count = $cat->products()->count(); }
+        if ($cat) {
+            $cat->loadMissing('subcategories');
+            $cat->count = $cat->products()->count();
+        }
         if ($subcat) { $subcat->count = $subcat->products()->count(); }
 
         $seo = Seo::getAuthorData($author, $cat, $subcat);
@@ -287,7 +296,10 @@ class CatalogRouteController extends Controller
 
         $letter = null;
 
-        if ($cat) { $cat->count = $cat->products()->count(); }
+        if ($cat) {
+            $cat->loadMissing('subcategories');
+            $cat->count = $cat->products()->count();
+        }
         if ($subcat) { $subcat->count = $subcat->products()->count(); }
 
         $seo = Seo::getPublisherData($publisher, $cat, $subcat);
@@ -501,6 +513,10 @@ class CatalogRouteController extends Controller
      */
     public function actions(Request $request, ?Category $cat = null, ?Category $subcat = null)
     {
+        if ($cat) {
+            $cat->loadMissing('subcategories');
+        }
+
         $ids = Product::query()
             ->active()
             ->hasStock()
