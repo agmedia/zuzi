@@ -549,7 +549,7 @@
                                    <select class="form-select" required id="review-stars" name="stars">
                                        <option value="">Odaberite ocjenu</option>
                                        @for ($i = 5; $i >= 1; $i--)
-                                           <option value="{{ $i }}" @selected(old('stars') == $i)>{{ $i }} / 5</option>
+                                           <option value="{{ $i }}" {{ (string) old('stars') === (string) $i ? 'selected' : '' }}>{{ $i }} / 5</option>
                                        @endfor
                                    </select>
                                    @error('stars')
