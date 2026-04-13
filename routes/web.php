@@ -11,6 +11,7 @@ use App\Http\Controllers\Back\DashboardController;
 use App\Http\Controllers\Back\OrderController;
 use App\Http\Controllers\Back\Marketing\ActionController;
 use App\Http\Controllers\Back\Marketing\BlogController;
+use App\Http\Controllers\Back\Marketing\ReviewController;
 use App\Http\Controllers\Back\Settings\App\CurrencyController;
 use App\Http\Controllers\Back\Settings\App\GeoZoneController;
 use App\Http\Controllers\Back\Settings\App\OrderStatusController;
@@ -133,6 +134,12 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('blog/{blog}/edit', [BlogController::class, 'edit'])->name('blogs.edit');
         Route::patch('blog/{blog}', [BlogController::class, 'update'])->name('blogs.update');
         Route::delete('blog/{blog}', [BlogController::class, 'destroy'])->name('blogs.destroy');
+
+        // KOMENTARI
+        Route::get('reviews', [ReviewController::class, 'index'])->name('reviews');
+        Route::get('review/{review}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
+        Route::patch('review/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+        Route::delete('review/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     });
 
     // KORISNICI
@@ -260,6 +267,7 @@ Route::prefix('api/v2')->group(function () {
     Route::post('/products/destroy/api', [ProductController::class, 'destroyApi'])->name('products.destroy.api');
     Route::post('/blogs/destroy/api', [BlogController::class, 'destroyApi'])->name('blogs.destroy.api');
     Route::post('/blogs/upload/image', [BlogController::class, 'uploadBlogImage'])->name('blogs.upload.image');
+    Route::post('/reviews/destroy/api', [ReviewController::class, 'destroyApi'])->name('reviews.destroy.api');
 
     // FILTER
     Route::prefix('filter')->group(function () {

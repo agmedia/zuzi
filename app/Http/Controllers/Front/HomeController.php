@@ -116,7 +116,7 @@ class HomeController extends Controller
             }
 
             return back()->with([
-                'success'          => 'Komentar je uspješno poslan. Hvala vam!',
+                'success'          => 'Komentar je uspješno poslan i bit će vidljiv nakon odobrenja.',
                 'review_submitted' => true,
             ]);
         }

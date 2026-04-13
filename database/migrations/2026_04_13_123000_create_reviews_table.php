@@ -31,7 +31,7 @@ class CreateReviewsTable extends Migration
             $table->decimal('stars', 4)->nullable();
             $table->unsignedInteger('sort_order')->default(0);
             $table->boolean('featured')->default(false);
-            $table->boolean('status')->default(true);
+            $table->boolean('status')->default(false);
             $table->timestamps();
 
             $table->index('product_id');

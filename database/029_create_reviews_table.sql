@@ -12,7 +12,7 @@ CREATE TABLE `reviews` (
     `stars` decimal(4,2) DEFAULT NULL,
     `sort_order` int(10) unsigned NOT NULL DEFAULT '0',
     `featured` tinyint(1) NOT NULL DEFAULT '0',
-    `status` tinyint(1) NOT NULL DEFAULT '1',
+    `status` tinyint(1) NOT NULL DEFAULT '0',
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),

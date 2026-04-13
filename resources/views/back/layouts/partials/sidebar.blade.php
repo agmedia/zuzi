@@ -114,6 +114,11 @@
                                 <span class="nav-main-link-name">Blog</span>
                             </a>
                         </li>
+                        <li class="nav-main-item">
+                            <a class="nav-main-link{{ request()->routeIs(['reviews', 'reviews.*']) ? ' active' : '' }}" href="{{ route('reviews') }}">
+                                <span class="nav-main-link-name">Komentari</span>
+                            </a>
+                        </li>
 
                         <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs(['wishlists', 'wishlists.*']) ? ' active' : '' }}" href="{{ route('wishlists') }}">

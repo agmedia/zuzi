@@ -2,7 +2,9 @@
 
 namespace App\Models\Back\Marketing;
 
+use App\Models\Back\Catalog\Product\Product;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -46,7 +48,7 @@ class Review extends Model
             'email'      => ['required', 'string', 'email', 'max:255'],
             'stars'      => ['required', 'integer', 'between:1,5'],
             'product_id' => ['required', 'integer', 'exists:products,id'],
-            'lang'       => ['nullable', 'string', 'max:2'],
+            'lang'       => ['required', 'string', 'max:2'],
             'message'    => ['required', 'string', 'max:1000'],
         ]);
 
@@ -72,6 +74,30 @@ class Review extends Model
 
 
     /**
+     * @return bool|self
+     */
+    public function edit()
+    {
+        $updated = $this->update($this->createModelArray('update'));
+
+        if ($updated) {
+            return $this;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * @return BelongsTo
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
+
+    /**
      * @param string $method
      *
      * @return array
@@ -81,7 +107,7 @@ class Review extends Model
         $name = preg_split('/\s+/', trim((string) $this->request->input('name')), 2) ?: [];
         $status = $this->request->has('status')
             ? (int) in_array($this->request->input('status'), ['1', 1, true, 'true', 'on'], true)
-            : 1;
+            : 0;
 
         $response = [
             'product_id' => (int) $this->request->input('product_id'),
