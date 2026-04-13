@@ -6,13 +6,14 @@ use App\Helpers\Country;
 use App\Helpers\Currency;
 use App\Helpers\Helper;
 use App\Helpers\Session\CheckoutSession;
-use App\Services\AddressDirectoryService;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\GeoZone;
 use App\Models\Front\Checkout\PaymentMethod;
 use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\TagManager;
+use App\Services\AddressDirectoryService;
+use App\Services\GiftVoucherService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -85,6 +86,8 @@ class Checkout extends Component
     public $gdl_payment = false;
 
     protected $cart = false;
+
+    public $giftVoucherOnly = false;
 
 
     public $comment = '';
@@ -164,6 +167,18 @@ class Checkout extends Component
 
         $this->checkCart();
 
+        if ($this->giftVoucherOnly && ! CheckoutSession::hasShipping()) {
+            $this->shipping = GiftVoucherService::SHIPPING_CODE;
+            CheckoutSession::setShipping($this->shipping);
+        }
+
+        if ($this->giftVoucherOnly && (! CheckoutSession::hasPayment() || ! GiftVoucherService::isAllowedPaymentCode($this->payment))) {
+            $this->payment = GiftVoucherService::firstAllowedPaymentCode() ?: '';
+            if ($this->payment) {
+                CheckoutSession::setPayment($this->payment);
+            }
+        }
+
         $this->changeStep($this->step);
     }
 
@@ -232,6 +247,11 @@ class Checkout extends Component
     public function changeStep(string $step = '')
     {
         $this->checkCart();
+
+        if ($this->giftVoucherOnly && ! $this->shipping) {
+            $this->shipping = GiftVoucherService::SHIPPING_CODE;
+            CheckoutSession::setShipping($this->shipping);
+        }
 
         if (in_array($step, ['', 'podaci']) && $this->cart) {
             $this->gdl = TagManager::getGoogleCartDataLayer($this->cart->get());
@@ -311,6 +331,15 @@ class Checkout extends Component
         CheckoutSession::forgetPayment();
         $this->payment = '';
 
+        if ($this->giftVoucherOnly) {
+            $this->shipping = GiftVoucherService::SHIPPING_CODE;
+            $this->payment = GiftVoucherService::firstAllowedPaymentCode() ?: '';
+            CheckoutSession::setShipping($this->shipping);
+            if ($this->payment) {
+                CheckoutSession::setPayment($this->payment);
+            }
+        }
+
         $this->render();
     }
 
@@ -320,6 +349,10 @@ class Checkout extends Component
      */
     public function selectShipping(string $shipping)
     {
+        if ($this->giftVoucherOnly) {
+            $shipping = GiftVoucherService::SHIPPING_CODE;
+        }
+
         $this->shipping = $shipping;
         $this->checkShipping($shipping);
         CheckoutSession::setShipping($shipping);
@@ -335,6 +368,10 @@ class Checkout extends Component
      */
     public function selectPayment(string $payment)
     {
+        if ($this->giftVoucherOnly && ! GiftVoucherService::isAllowedPaymentCode($payment)) {
+            $payment = GiftVoucherService::firstAllowedPaymentCode() ?: $payment;
+        }
+
         $this->payment = $payment;
 
         $this->checkPayment($payment);
@@ -368,11 +405,24 @@ class Checkout extends Component
             $geo->id = 1;
         }
 
+        if ($this->giftVoucherOnly && ! $this->shipping) {
+            $this->shipping = GiftVoucherService::SHIPPING_CODE;
+            CheckoutSession::setShipping($this->shipping);
+        }
+
+        if ($this->giftVoucherOnly && (! $this->payment || ! GiftVoucherService::isAllowedPaymentCode($this->payment))) {
+            $this->payment = GiftVoucherService::firstAllowedPaymentCode() ?: '';
+            if ($this->payment) {
+                CheckoutSession::setPayment($this->payment);
+            }
+        }
+
         return view('livewire.front.checkout', [
             'shippingMethods' => (new ShippingMethod())->findGeo($geo->id),
             'paymentMethods' => (new PaymentMethod())->findGeo($geo->id)->checkShipping($this->shipping)->resolve(),
             'countries' => Country::list(),
-            'cartSubtotal' => $this->cart ? (float) $this->cart->get()['subtotal'] : 0.0
+            'cartSubtotal' => $this->cart ? (float) $this->cart->get()['subtotal'] : 0.0,
+            'giftVoucherOnly' => $this->giftVoucherOnly,
         ]);
     }
 
@@ -461,6 +511,15 @@ class Checkout extends Component
      */
     private function checkShipping(string $shipping): void
     {
+        if ($shipping === GiftVoucherService::SHIPPING_CODE) {
+            $this->gdl_shipping = 'poklon bon e-mail dostava';
+            $this->view_comment = false;
+            $this->view_commentt = false;
+            $this->view_hp_paketomat = false;
+
+            return;
+        }
+
         if ($shipping == 'pickup') {
             $this->gdl_shipping = 'osobno preuzimanje';
         } else {
@@ -511,6 +570,10 @@ class Checkout extends Component
     {
         if (session()->has(config('session.cart'))) {
             $this->cart = new AgCart(session(config('session.cart')));
+            $this->giftVoucherOnly = (bool) data_get($this->cart->get(), 'gift_voucher_only', false);
+        } else {
+            $this->cart = false;
+            $this->giftVoucherOnly = false;
         }
     }
 }

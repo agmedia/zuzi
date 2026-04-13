@@ -11,6 +11,7 @@ use App\Http\Controllers\Back\DashboardController;
 use App\Http\Controllers\Back\OrderController;
 use App\Http\Controllers\Back\Marketing\ActionController;
 use App\Http\Controllers\Back\Marketing\BlogController;
+use App\Http\Controllers\Back\Marketing\GiftVoucherController as AdminGiftVoucherController;
 use App\Http\Controllers\Back\Marketing\ReviewController;
 use App\Http\Controllers\Back\Settings\App\CurrencyController;
 use App\Http\Controllers\Back\Settings\App\GeoZoneController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\Back\Widget\WidgetGroupController;
 use App\Http\Controllers\Front\CatalogRouteController;
 use App\Http\Controllers\Front\CheckoutController;
 use App\Http\Controllers\Front\CustomerController;
+use App\Http\Controllers\Front\GiftVoucherController;
 use App\Http\Controllers\Front\HomeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Back\Marketing\WishlistController;
@@ -140,6 +142,9 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('review/{review}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
         Route::patch('review/{review}', [ReviewController::class, 'update'])->name('reviews.update');
         Route::delete('review/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+        // POKLON BONOVI
+        Route::get('gift-vouchers', [AdminGiftVoucherController::class, 'index'])->name('gift.vouchers');
     });
 
     // KORISNICI
@@ -354,6 +359,9 @@ Route::get('/', [HomeController::class, 'index'])->middleware('affiliate.track')
 Route::get('/kontakt', [HomeController::class, 'contact'])->name('kontakt');
 Route::post('/kontakt/posalji', [HomeController::class, 'sendContactMessage'])->name('poruka');
 Route::get('/faq', [CatalogRouteController::class, 'faq'])->name('faq');
+Route::get('/poklon-bon', [GiftVoucherController::class, 'create'])->name('poklon.bon');
+Route::post('/poklon-bon', [GiftVoucherController::class, 'store'])->name('poklon.bon.store');
+Route::get('/savjeti-za-poklone/{recipient?}', [GiftVoucherController::class, 'guide'])->name('savjeti.za.poklone');
 
 
 Route::post('/dodaj-u-listu-zelja', [HomeController::class, 'wishlist'])->name('wishlist');

@@ -4,6 +4,7 @@ namespace App\Models\Back\Orders;
 
 use App\Helpers\Mailchimp;
 use App\Helpers\Session\CheckoutSession;
+use App\Models\GiftVoucher;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Users\Client;
 use App\User;
@@ -88,6 +89,12 @@ class Order extends Model
     public function totals()
     {
         return $this->hasMany(OrderTotal::class, 'order_id')->orderBy('sort_order');
+    }
+
+
+    public function giftVouchers()
+    {
+        return $this->hasMany(GiftVoucher::class, 'order_id')->orderByDesc('created_at');
     }
 
 

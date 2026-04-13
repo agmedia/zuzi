@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Back\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Settings\Settings;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 
 class SettingsController extends Controller
 {
@@ -21,6 +22,10 @@ class SettingsController extends Controller
 
     public function get()
     {
+        if (! Schema::hasTable('settings')) {
+            return response()->json(Settings::frontApiDefaults());
+        }
+
         $codes = ['currency', 'geo_zone', 'payment', 'shipping', 'tax'];
         $response = [];
         $settings =  Settings::whereIn('code', $codes)->get();
@@ -31,7 +36,11 @@ class SettingsController extends Controller
             }
         }
 
-        return $response;
+        if (! isset($response['currency.list'])) {
+            $response['currency.list'] = Settings::frontApiDefaults()['currency.list'];
+        }
+
+        return response()->json($response);
     }
     
 }

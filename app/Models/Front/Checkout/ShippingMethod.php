@@ -4,6 +4,7 @@ namespace App\Models\Front\Checkout;
 
 use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Settings\Settings;
+use App\Services\GiftVoucherService;
 use Illuminate\Support\Collection;
 
 /**
@@ -61,6 +62,10 @@ class ShippingMethod
      */
     public function find(string $code)
     {
+        if (GiftVoucherService::isGiftVoucherShipping($code)) {
+            return GiftVoucherService::shippingMethod();
+        }
+
         //Log::info($this->methods->where('code', $code)->first()->code);
         return $this->methods->where('code', $code)->first();
     }
@@ -73,6 +78,10 @@ class ShippingMethod
      */
     public function findGeo(int $zone): Collection
     {
+        if (GiftVoucherService::currentCartContainsOnlyGiftVoucher()) {
+            return collect([GiftVoucherService::shippingMethod()]);
+        }
+
         $methods = collect();
 
         foreach ($this->methods as $method) {
@@ -121,6 +130,10 @@ class ShippingMethod
      */
     public static function priceForTotal($shipping, float $cart_total): float
     {
+        if (GiftVoucherService::isGiftVoucherShipping(data_get($shipping, 'code'))) {
+            return 0.0;
+        }
+
         if (self::hasFreeShipping($shipping, $cart_total)) {
             return 0.0;
         }

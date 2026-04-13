@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,41 +46,55 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        $uvjeti_kupnje = Schema::hasTable('pages')
+        $hasPages = $this->safeHasTable('pages');
+        $hasProducts = $this->safeHasTable('products');
+        $hasUsers = $this->safeHasTable('users');
+        $hasCategories = $this->safeHasTable('categories');
+
+        $uvjeti_kupnje = $hasPages
             ? Page::where('subgroup', 'Uvjeti kupnje')->get()
             : collect();
         View::share('uvjeti_kupnje', $uvjeti_kupnje);
 
-        $nacini_placanja = Schema::hasTable('pages')
+        $nacini_placanja = $hasPages
             ? Page::where('subgroup', 'Načini plaćanja')->get()
             : collect();
         View::share('nacini_placanja', $nacini_placanja);
 
-        $products = Schema::hasTable('products')
+        $products = $hasProducts
             ? Product::active()->hasStock()->count()
             : 0;
         View::share('products', $products);
 
-        $users = Schema::hasTable('users')
+        $users = $hasUsers
             ? User::count()
             : 0;
         View::share('users', $users);
 
-        $knjige = Schema::hasTable('categories')
+        $knjige = $hasCategories
             ? Category::active()->topList(Helper::categoryGroupPath(true))->sortByName()->select('id', 'title', 'group', 'slug')->get()
             : collect();
         View::share('knjige', $knjige);
 
-        $kategorijefeatured = Schema::hasTable('categories')
+        $kategorijefeatured = $hasCategories
             ? Category::active()->where('image', '!=', 'media/avatars/avatar0.jpg')->sortByName()->select('id','image','title', 'group', 'slug')->get()
             : collect();
         View::share('kategorijefeatured', $kategorijefeatured);
 
-        $zemljovidi_vedute = Schema::hasTable('categories')
+        $zemljovidi_vedute = $hasCategories
             ? Category::active()->topList('Zemljovidi i vedute')->select('id', 'title', 'group', 'slug')->sortByName()->get()
             : collect();
         View::share('zemljovidi_vedute', $zemljovidi_vedute);
 
         Paginator::useBootstrap();
+    }
+
+    private function safeHasTable(string $table): bool
+    {
+        try {
+            return Schema::hasTable($table);
+        } catch (Throwable $exception) {
+            return false;
+        }
     }
 }

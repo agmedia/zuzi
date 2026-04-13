@@ -106,6 +106,42 @@
                 <!-- END Shipping Address -->
             </div>
         </div>
+
+        @if($order->giftVouchers->count())
+            <div class="block block-rounded">
+                <div class="block-header block-header-default">
+                    <h3 class="block-title">Poklon bonovi</h3>
+                </div>
+                <div class="block-content">
+                    <div class="table-responsive">
+                        <table class="table table-borderless table-striped table-vcenter font-size-sm">
+                            <thead>
+                            <tr>
+                                <th>Iznos</th>
+                                <th>Primatelj</th>
+                                <th>Pošiljatelj</th>
+                                <th>Kod</th>
+                                <th>Status</th>
+                                <th>Poruka</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($order->giftVouchers as $giftVoucher)
+                                <tr>
+                                    <td><strong>€ {{ number_format($giftVoucher->amount, 2, ',', '.') }}</strong></td>
+                                    <td>{{ $giftVoucher->recipient_name ?: '---' }}<br><small>{{ $giftVoucher->recipient_email }}</small></td>
+                                    <td>{{ $giftVoucher->sender_name ?: ($giftVoucher->buyer_name ?: '---') }}</td>
+                                    <td><code>{{ $giftVoucher->code ?: 'Još nije generiran' }}</code></td>
+                                    <td><span class="badge badge-{{ $giftVoucher->status_color }}">{{ $giftVoucher->display_status }}</span></td>
+                                    <td>{{ $giftVoucher->message ?: '---' }}</td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
         <!-- END Customer -->
 
         <!-- Log Messages -->

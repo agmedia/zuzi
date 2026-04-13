@@ -8,6 +8,7 @@ use App\Models\Back\Orders\OrderProduct;
 use App\Models\Back\Orders\OrderTotal;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\Catalog\Product;
+use App\Services\GiftVoucherService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -165,6 +166,7 @@ class Order extends Model
 
                 $this->updateProducts($order_id);
                 $this->updateTotal($order_id);
+                GiftVoucherService::syncOrderGiftVouchers($order_id, $this->order);
 
                 $this->oc_data = \App\Models\Back\Orders\Order::where('id', $order_id)->first();
             }
@@ -217,6 +219,7 @@ class Order extends Model
         if ($updated) {
             $this->updateProducts($data['id']);
             $this->updateTotal($data['id']);
+            GiftVoucherService::syncOrderGiftVouchers((int) $data['id'], $this->order);
 
             return $this->setData($data['id']);
         }
@@ -238,15 +241,20 @@ class Order extends Model
         foreach ($this->order['cart']['items'] as $item) {
             $discount = 0;
             $price    = $item->price;
+            $productId = 0;
 
-            if ($this->checkSpecial($item->associatedModel)) {
+            if (! GiftVoucherService::isGiftVoucherItem($item)) {
+                $productId = (int) $item->id;
+            }
+
+            if (! GiftVoucherService::isGiftVoucherItem($item) && $this->checkSpecial($item->associatedModel)) {
                 $price    = floatval($item->associatedModel->special);
                 $discount = Helper::calculateDiscount($item->price, $price);
             }
 
             OrderProduct::insert([
                 'order_id'   => $order_id,
-                'product_id' => $item->id,
+                'product_id' => $productId,
                 'name'       => $item->name,
                 'quantity'   => $item->quantity,
                 'org_price'  => $item->price,

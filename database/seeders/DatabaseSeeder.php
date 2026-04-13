@@ -17,11 +17,6 @@ class DatabaseSeeder extends Seeder
         // Un Guard model
         Model::unguard();
 
-        $this->command->call('migrate:fresh');
-
-        $this->command->info('Refreshing database...');
-        $this->command->comment('Refreshed!');
-
         $this->call(UserSedder::class);
         $this->command->line('Users created!');
 

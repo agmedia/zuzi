@@ -1,9 +1,14 @@
 <template>
     <div>
 
-        <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="$store.state.cart.total < freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Još  {{ $store.state.service.formatMainPrice(freeship - $store.state.cart.total) }} <span v-if="$store.state.cart.secondary_price">({{ $store.state.service.formatSecondaryPrice(freeship - $store.state.cart.total) }})</span> do besplatne dostave!</div></div>
+        <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="!hasGiftVoucher && $store.state.cart.total < freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Još  {{ $store.state.service.formatMainPrice(freeship - $store.state.cart.total) }} <span v-if="$store.state.cart.secondary_price">({{ $store.state.service.formatSecondaryPrice(freeship - $store.state.cart.total) }})</span> do besplatne dostave!</div></div>
 
-        <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="$store.state.cart.total > freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Ostvarili ste pravo na besplatnu dostavu!</div></div>
+        <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="!hasGiftVoucher && $store.state.cart.total > freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Ostvarili ste pravo na besplatnu dostavu!</div></div>
+
+        <div role="alert" class="mt-3 alert alert-warning d-flex fs-sm" v-if="hasGiftVoucher">
+            <div class="alert-icon"><i class="ci-card"></i></div>
+            <div>Poklon bon kupuje se zasebno i moguće ga je platiti isključivo karticom.</div>
+        </div>
 
         <div class="d-block pt-3 pb-2 mt-1 text-center text-sm-start">
             <h2 class="h6 text-primary  mb-0">Artikli</h2>
@@ -33,11 +38,17 @@
                     <div class="fs-sm text-dark pt-2" v-if="item.associatedModel.secondary_price">
                         {{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}
                     </div>
+
+                    <div v-if="isGiftVoucher(item)" class="fs-sm text-muted pt-2">
+                        <div>Primatelj: {{ giftVoucherData(item).recipient_name || '---' }}</div>
+                        <div>E-mail: {{ giftVoucherData(item).recipient_email }}</div>
+                        <div v-if="giftVoucherData(item).sender_name">Od: {{ giftVoucherData(item).sender_name }}</div>
+                    </div>
                 </div>
             </div>
             <div class="pt-2 pt-sm-0 ps-sm-3 mx-auto mx-sm-0 text-center text-sm-start" style="max-width: 9rem;">
                 <label class="form-label">Količina: {{item.quantity}}</label>
-                <input class="form-control" type="number" v-model="item.quantity" min="1" :max="item.associatedModel.quantity" @click.prevent="updateCart(item)">
+                <input class="form-control" type="number" v-model="item.quantity" min="1" :max="item.associatedModel.quantity" :disabled="isGiftVoucher(item)" @click.prevent="updateCart(item)">
                 <button class="btn btn-link px-0 text-danger" type="button" @click.prevent="removeFromCart(item)"><i class="ci-close-circle me-2"></i><span class="fs-sm">Ukloni</span></button>
             </div>
         </div>
@@ -65,6 +76,11 @@
                 show_buttons: true,
             }
         },
+        computed: {
+            hasGiftVoucher() {
+                return !!this.$store.state.cart.has_gift_voucher;
+            }
+        },
         mounted() {
             if (window.innerWidth < 800) {
                 this.mobile = true;
@@ -81,6 +97,13 @@
         },
 
         methods: {
+            isGiftVoucher(item) {
+                return item?.attributes?.item_type === 'gift_voucher';
+            },
+
+            giftVoucherData(item) {
+                return item?.attributes?.gift_voucher || {};
+            },
 
             /**
              *

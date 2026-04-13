@@ -10,10 +10,13 @@ use App\Mail\OrderSent;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
+use App\Models\Front\Checkout\PaymentMethod;
+use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\Back\Orders\Order as AdminOrderModel;
 use App\Models\TagManager;
 use App\Models\Front\Loyalty;
 use App\Services\GoogleAnalyticsService;
+use App\Services\GiftVoucherService;
 use App\Services\ProductRecommendationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -75,6 +78,22 @@ class CheckoutController extends Controller
             }
 
             return redirect()->route('naplata', ['step' => 'podaci']);
+        }
+
+        $cart = $this->shoppingCart()->get();
+
+        if (GiftVoucherService::cartContainsGiftVoucher($cart)) {
+            if (! GiftVoucherService::isGiftVoucherShipping($this->shippingCode($data['shipping']))) {
+                return redirect()
+                    ->route('naplata', ['step' => 'dostava'])
+                    ->withErrors(['shipping' => 'Poklon bon se šalje isključivo e-mailom primatelju.']);
+            }
+
+            if (! GiftVoucherService::isAllowedPaymentCode((string) $data['payment'])) {
+                return redirect()
+                    ->route('naplata', ['step' => 'placanje'])
+                    ->withErrors(['shipping' => 'Poklon bon je moguće platiti isključivo karticom.']);
+            }
         }
 
         /**
@@ -227,6 +246,8 @@ class CheckoutController extends Controller
         if ($order->isValid()) {
             app(GoogleAnalyticsService::class)->dispatchPurchaseFromRequest($order->getOrder(), $request);
 
+            GiftVoucherService::fulfillOrder($order->getOrder());
+
             $order->sendEmails()
                 ->decreaseCartItems(false)
                 ->addLoyaltyPoints()
@@ -298,15 +319,18 @@ class CheckoutController extends Controller
      */
     private function collectData(array $data, int $order_status_id): array
     {
-        $shipping = Settings::getList('shipping')->where('code', $this->shippingCode($data['shipping']))->first();
-        $payment  = Settings::getList('payment')->where('code', $data['payment'])->first();
+        $cart = $this->shoppingCart()->get();
+        $shipping = (new ShippingMethod())->find($this->shippingCode($data['shipping']));
+        $payment  = (new PaymentMethod())->find((string) $data['payment']);
 
         $response                    = [];
         $response['address']         = $data['address'];
         $response['shipping']        = $shipping;
-        $response['comment']         = isset($data['comment']) ? $data['comment'] : '';
+        $response['comment']         = GiftVoucherService::cartContainsGiftVoucher($cart)
+            ? GiftVoucherService::buildOrderComment($cart)
+            : (isset($data['comment']) ? $data['comment'] : '');
         $response['payment']         = $payment;
-        $response['cart']            = $this->shoppingCart()->get();
+        $response['cart']            = $cart;
         $response['order_status_id'] = $order_status_id;
 
         return $response;

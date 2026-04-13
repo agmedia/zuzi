@@ -16,6 +16,7 @@ use App\Models\Front\Checkout\Shipping\Gls;
 use App\Models\Front\Checkout\Shipping\Glsstari;
 use App\Models\Front\Checkout\Shipping\HP;
 use App\Models\Front\Loyalty;
+use App\Services\GiftVoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -164,6 +165,20 @@ class OrderController extends Controller
                     Loyalty::cancelPoints($order_id);
                 }
 
+                if (in_array($selectedStatus, [config('settings.order.status.paid'), config('settings.order.status.canceled')], true)) {
+                    $fullOrder = Order::query()->find($order_id);
+
+                    if ($fullOrder) {
+                        if ($selectedStatus == config('settings.order.status.paid')) {
+                            GiftVoucherService::fulfillOrder($fullOrder);
+                        }
+
+                        if ($selectedStatus == config('settings.order.status.canceled')) {
+                            GiftVoucherService::cancelOrder($fullOrder);
+                        }
+                    }
+                }
+
                 OrderHistory::store($order_id, new Request([
                     'status' => $selectedStatus,
                     'comment' => '',
@@ -194,12 +209,16 @@ class OrderController extends Controller
                 }
 
                 if ($selectedStatus == config('settings.order.status.paid')) {
+                    GiftVoucherService::fulfillOrder($order);
+
                     dispatch(function () use ($order) {
                         Mail::to($order->payment_email)->send(new StatusPaid($order));
                     });
                 }
 
                 if ($selectedStatus == config('settings.order.status.canceled')) {
+                    GiftVoucherService::cancelOrder($order);
+
                     dispatch(function () use ($order) {
                         Mail::to($order->payment_email)->send(new StatusCanceled($order));
                     });

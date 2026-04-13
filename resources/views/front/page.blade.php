@@ -23,17 +23,14 @@
 
       <div class="col-md-12 d-flex justify-content-between d-md-none mt-3">
 
-          <button
-              type="button"
-              class="btn btn-dark flex-fill mx-1"
-              data-bs-toggle="modal"
-              data-bs-target="#newsletterModal">
-              <i class="ci-mail"></i> Newsletter
-          </button>
+          <a href="{{ route('savjeti.za.poklone') }}"
+             class="btn btn-outline-dark flex-fill mx-1 d-flex align-items-center justify-content-center">
+              <i class="ci-gift me-2"></i>Tražiš poklon?
+          </a>
 
-          <a href="{{ route('kontakt') }}"
-             class="btn btn-primary flex-fill mx-1">
-              Kontaktirajte nas
+          <a href="{{ route('poklon.bon') }}"
+             class="btn btn-primary flex-fill mx-1 d-flex align-items-center justify-content-center">
+              <i class="ci-card me-2"></i>Poklon bon
           </a>
 
       </div>

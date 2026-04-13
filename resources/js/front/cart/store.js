@@ -214,6 +214,10 @@ class AgService {
      * @returns {string}
      */
     resolvePrice(currency_list, price, main = true) {
+        if (!Array.isArray(currency_list) || !currency_list.length) {
+            return Number(price).toFixed(2) + (main ? ' €' : '');
+        }
+
         let list = currency_list;
         let main_currency = {};
 
@@ -230,6 +234,10 @@ class AgService {
             }
 
         });
+
+        if (typeof main_currency.value === 'undefined') {
+            return Number(price).toFixed(2) + (main ? ' €' : '');
+        }
 
         let left = main_currency.symbol_left ? main_currency.symbol_left + '' : '';
         let right = main_currency.symbol_right ? '' + main_currency.symbol_right : '';
@@ -387,7 +395,12 @@ let store = {
             let state = context.state;
 
             state.service.checkCart(ids).then(response => {
+                if ( ! response || ! response.cart) {
+                    return;
+                }
+
                 state.storage.setCart(response.cart);
+                state.cart = response.cart;
 
                 if (response.message && window.location.pathname != '/uspjeh') {
                     window.ToastWarningLong.fire(response.message)

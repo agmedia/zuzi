@@ -75,6 +75,17 @@
         <div class="card p-3">
         <h2 class="h6 pt-1 pb-3 mb-3 border-bottom">Adresa dostave</h2>
 
+            @if ($giftVoucherOnly)
+                <div class="alert alert-info d-flex mb-3" role="alert">
+                    <div class="alert-icon">
+                        <i class="ci-gift"></i>
+                    </div>
+                    <div>
+                        Kupujete poklon bon. Ovdje unosite svoje podatke za račun, a kod i poruka bit će poslani e-mailom primatelju nakon uspješnog kartičnog plaćanja.
+                    </div>
+                </div>
+            @endif
+
             {{-- OVO UBACI ODMAH NAKON NASLOVA --}}
             @if ($errors->has('shipping'))
                 <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
@@ -242,6 +253,18 @@
     @if ($step == 'dostava')
         <div class="card p-3">
         <h2 class="h6 pt-1 pb-3 mb-3 ">Odaberite način dostave</h2>
+
+        @if ($giftVoucherOnly)
+            <div class="alert alert-info d-flex mb-3" role="alert">
+                <div class="alert-icon">
+                    <i class="ci-mail"></i>
+                </div>
+                <div>
+                    Poklon bon je digitalan proizvod i šalje se samo e-mailom primatelju. Fizička dostava nije dostupna za ovu narudžbu.
+                </div>
+            </div>
+        @endif
+
         <div class="table-responsive">
             <table class="table table-hover fs-sm border-top">
                 <thead>
@@ -362,6 +385,18 @@
     @if ($step == 'placanje')
         <div class="card p-3">
         <h2 class="h6 pt-1 pb-3 mb-3 ">Odaberite način plaćanja</h2>
+
+        @if ($giftVoucherOnly)
+            <div class="alert alert-warning d-flex mb-3" role="alert">
+                <div class="alert-icon">
+                    <i class="ci-card"></i>
+                </div>
+                <div>
+                    Poklon bon moguće je kupiti isključivo kartičnim plaćanjem.
+                </div>
+            </div>
+        @endif
+
         <div class="table-responsive">
             <table class="table table-hover fs-sm border-top">
                 <tbody>

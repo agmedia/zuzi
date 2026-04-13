@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\Catalog\Product;
+use App\Services\GiftVoucherService;
 use Darryldecode\Cart\CartCollection;
 
 /**
@@ -126,7 +127,25 @@ class TagManager
         $items = [];
 
         foreach ($cart_collection['items'] as $item) {
-            $googleItem = $item->associatedModel->dataLayer;
+            if (GiftVoucherService::isGiftVoucherItem($item)) {
+                $voucherData = GiftVoucherService::extractVoucherData($item);
+                $googleItem = [
+                    'item_id' => 'POKLON-BON',
+                    'item_name' => $item->name,
+                    'price' => static::normalizeGoogleNumber($item->price),
+                    'currency' => 'EUR',
+                    'discount' => 0.0,
+                    'item_category' => 'Poklon bon',
+                    'item_category2' => 'Digitalni poklon',
+                ];
+
+                if (! empty($voucherData['amount'])) {
+                    $googleItem['price'] = static::normalizeGoogleNumber($voucherData['amount']);
+                }
+            } else {
+                $googleItem = $item->associatedModel->dataLayer;
+            }
+
             $googleItem['quantity'] = (int) $item->quantity;
 
             $items[] = $googleItem;

@@ -4,6 +4,7 @@ namespace App\Models\Front\Checkout;
 
 use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Settings\Settings;
+use App\Services\GiftVoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -121,6 +122,14 @@ class PaymentMethod
             if ($method->geo_zone == $zone) {
                 $this->response_methods->put($method->code, $method);
             }
+        }
+
+        if (GiftVoucherService::currentCartContainsGiftVoucher()) {
+            $allowedCodes = GiftVoucherService::allowedPaymentCodes();
+            $this->response_methods = $this->response_methods
+                ->filter(fn ($method) => in_array($method->code, $allowedCodes, true))
+                ->values()
+                ->keyBy('code');
         }
 
         return $this;

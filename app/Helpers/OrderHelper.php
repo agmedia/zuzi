@@ -10,6 +10,7 @@ use App\Models\Back\Orders\OrderHistory;
 use App\Models\Front\Loyalty;
 use App\Models\UserAffiliate;
 use App\Models\UserDetail;
+use App\Services\GiftVoucherService;
 use App\Services\AffiliateService;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Mail;
@@ -121,6 +122,10 @@ class OrderHelper
             foreach ($this->order->products as $product) {
                 $real = $product->real;
 
+                if (! $real) {
+                    continue;
+                }
+
                 if ($real->decrease && $real->quantity >= $product->quantity ) {
                     $real->decrement('quantity', $product->quantity);
                 }
@@ -143,6 +148,10 @@ class OrderHelper
     public function addLoyaltyPoints()
     {
         if ($this->getOrder()) {
+            if ($this->order->giftVouchers()->exists()) {
+                return $this;
+            }
+
             // ako je kupac regan
             if (auth()->check()) {
                 $points = floor($this->order->total);

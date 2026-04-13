@@ -35,7 +35,14 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" aria-label="Open the menu" data-bs-target="#sideNav"><span class="navbar-toggler-icon" aria-hidden="true"></span></button><a class="navbar-tool d-flex d-lg-none" href="#searchBox" data-bs-toggle="collapse" aria-label="Search" role="button" aria-expanded="false" aria-controls="searchBox"><span class="navbar-tool-tooltip">Pretraži</span>
                     <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-search"></i></div></a>
 
-                <a href="{{ route('kontakt') }}" class="btn  btn-primary ms-1 ms-lg-0 me-n1 me-lg-2 d-none d-md-block">Kontaktirajte nas</a>
+                <div class="d-none d-md-flex align-items-center ms-1 ms-lg-0 me-n1 me-lg-2">
+                    <a href="{{ route('savjeti.za.poklone') }}" class="btn btn-outline-light me-2 d-inline-flex align-items-center">
+                        <i class="ci-gift fs-base me-2"></i>Tražiš poklon?
+                    </a>
+                    <a href="{{ route('poklon.bon') }}" class="btn btn-primary d-inline-flex align-items-center">
+                        <i class="ci-card fs-base me-2"></i>Poklon bon
+                    </a>
+                </div>
 
                 @if(auth()->user())
                     <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2" aria-label="My account" href="{{ route('login') }}" >
@@ -126,6 +133,14 @@
                                 <h3 class="accordion-header px-grid-gutter"><a class="nav-link-style d-block fs-md  py-3" href="{{ route('catalog.route.page', ['page' => $page]) }}"><span class="d-flex align-items-center">{{ $page->title }}</span></a></h3>
                             </div>
                         @endforeach
+
+                        <div class="accordion-item border-bottom">
+                            <h3 class="accordion-header px-grid-gutter"><a class="nav-link-style d-block fs-md  py-3" href="{{ route('savjeti.za.poklone') }}"><span class="d-flex align-items-center"><i class="ci-gift opacity-60 me-2"></i>Tražiš poklon?</span></a></h3>
+                        </div>
+
+                        <div class="accordion-item border-bottom">
+                            <h3 class="accordion-header px-grid-gutter"><a class="nav-link-style d-block fs-md  py-3" href="{{ route('poklon.bon') }}"><span class="d-flex align-items-center"><i class="ci-card opacity-60 me-2"></i>Poklon bon</span></a></h3>
+                        </div>
 
                         <div class="accordion-item border-bottom">
                             <h3 class="accordion-header px-grid-gutter"><a class="nav-link-style d-block fs-md  py-3" href="{{ route('kontakt') }}"><span class="d-flex align-items-center">Kontaktirajte nas</span></a></h3>

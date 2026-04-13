@@ -9,6 +9,7 @@ use App\Models\UserDetail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
 use Bouncer;
@@ -37,8 +38,10 @@ class CreateNewUser implements CreatesNewUsers
         // Recaptcha
         $recaptcha = (new Recaptcha())->check($input);
 
-        if ( ! $recaptcha->ok()) {
-            return back()->withErrors(['error' => 'ReCaptcha Error! Kontaktirajte administratora!']);
+        if ( ! $recaptcha || ! $recaptcha->ok()) {
+            throw ValidationException::withMessages([
+                'recaptcha' => 'ReCaptcha provjera nije uspjela. Pokušajte ponovno.',
+            ]);
         }
 
         $public_user = User::create([

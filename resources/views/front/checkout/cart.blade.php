@@ -62,6 +62,8 @@
 
     </section>
 
+    @include('front.layouts.partials.session')
+
 <!-- Page Title-->
 
 

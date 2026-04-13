@@ -2,6 +2,7 @@
 @extends('front.layouts.app')
 @section('title', \App\Models\Seo::appendBrand('Pregled narudzbe'))
 @section('description', \App\Models\Seo::description(null, 'Zavrsni pregled i potvrda narudzbe na ' . \App\Models\Seo::brand() . '.'))
+@php($giftVouchers = isset($data['id']) ? \App\Models\GiftVoucher::query()->where('order_id', $data['id'])->get() : collect())
 
 @push('css_after')
     @livewireStyles
@@ -105,6 +106,24 @@
                                 </li>
                             </ul>
                         </div>
+                        @if($giftVouchers->count())
+                            <div class="col-sm-12">
+                                <h4 class="h6">Poklon bon:</h4>
+                                @foreach($giftVouchers as $giftVoucher)
+                                    <ul class="list-unstyled fs-sm mb-3">
+                                        <li><span class="text-muted">Iznos:&nbsp;</span>€ {{ number_format($giftVoucher->amount, 2, ',', '.') }}</li>
+                                        <li><span class="text-muted">Primatelj:&nbsp;</span>{{ $giftVoucher->recipient_name ?: '---' }}</li>
+                                        <li><span class="text-muted">E-mail primatelja:&nbsp;</span>{{ $giftVoucher->recipient_email }}</li>
+                                        @if($giftVoucher->sender_name)
+                                            <li><span class="text-muted">Od:&nbsp;</span>{{ $giftVoucher->sender_name }}</li>
+                                        @endif
+                                        @if($giftVoucher->message)
+                                            <li><span class="text-muted">Poruka:&nbsp;</span>{{ $giftVoucher->message }}</li>
+                                        @endif
+                                    </ul>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 </div>
                 </div>

@@ -22,6 +22,9 @@
                             <h6 class="widget-product-title"><a :href="base_path + item.attributes.path">{{ item.name }}</a></h6>
                             <div class="widget-product-meta"><span class="text-primary me-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
                             <div class="widget-product-meta"><span class="text-muted me-2" v-if="item.associatedModel.secondary_price_text">{{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
+                            <div class="widget-product-meta text-muted" v-if="isGiftVoucher(item)">
+                                {{ giftVoucherData(item).recipient_email }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -62,7 +65,7 @@
             </div>
         </div>
 
-        <div class="rounded-3 p-4 mt-3" v-if="route == 'kosarica' || route == 'naplata'" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
+        <div class="rounded-3 p-4 mt-3" v-if="!hasGiftVoucher && (route == 'kosarica' || route == 'naplata')" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2" v-cloak>
                 <button
                     type="button"
@@ -102,7 +105,7 @@
             </div>
         </div>
 
-        <div class="rounded-3 p-4 mt-3" v-if="has_loyalty && route == 'kosarica' || has_loyalty && route == 'naplata'" style="border: 1px solid #dae1e7;background-color: #fff !important;">
+        <div class="rounded-3 p-4 mt-3" v-if="!hasGiftVoucher && (has_loyalty && route == 'kosarica' || has_loyalty && route == 'naplata')" style="border: 1px solid #dae1e7;background-color: #fff !important;">
             <div class="py-2 px-xl-2" v-cloak>
                 <div class="form-group mb-3">
 
@@ -153,6 +156,9 @@ export default {
     computed: {
         hasActiveCoupon() {
             return String(this.coupon || '').trim() !== '' && String(this.coupon || '').trim() !== 'null';
+        },
+        hasGiftVoucher() {
+            return !!this.$store.state.cart.has_gift_voucher;
         }
     },
     mounted() {
@@ -166,6 +172,14 @@ export default {
     },
 
     methods: {
+        isGiftVoucher(item) {
+            return item?.attributes?.item_type === 'gift_voucher';
+        },
+
+        giftVoucherData(item) {
+            return item?.attributes?.gift_voucher || {};
+        },
+
         /**
          *
          * @param item

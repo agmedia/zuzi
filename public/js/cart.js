@@ -2446,6 +2446,17 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2466,6 +2477,11 @@ __webpack_require__.r(__webpack_exports__);
       show_buttons: true
     };
   },
+  computed: {
+    hasGiftVoucher: function hasGiftVoucher() {
+      return !!this.$store.state.cart.has_gift_voucher;
+    }
+  },
   mounted: function mounted() {
     if (window.innerWidth < 800) {
       this.mobile = true;
@@ -2479,6 +2495,14 @@ __webpack_require__.r(__webpack_exports__);
     this.setCoupon();
   },
   methods: {
+    isGiftVoucher: function isGiftVoucher(item) {
+      var _item$attributes;
+      return (item === null || item === void 0 ? void 0 : (_item$attributes = item.attributes) === null || _item$attributes === void 0 ? void 0 : _item$attributes.item_type) === 'gift_voucher';
+    },
+    giftVoucherData: function giftVoucherData(item) {
+      var _item$attributes2;
+      return (item === null || item === void 0 ? void 0 : (_item$attributes2 = item.attributes) === null || _item$attributes2 === void 0 ? void 0 : _item$attributes2.gift_voucher) || {};
+    },
     /**
      *
      * @param item
@@ -2676,6 +2700,9 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2703,6 +2730,9 @@ __webpack_require__.r(__webpack_exports__);
   computed: {
     hasActiveCoupon: function hasActiveCoupon() {
       return String(this.coupon || '').trim() !== '' && String(this.coupon || '').trim() !== 'null';
+    },
+    hasGiftVoucher: function hasGiftVoucher() {
+      return !!this.$store.state.cart.has_gift_voucher;
     }
   },
   mounted: function mounted() {
@@ -2715,6 +2745,14 @@ __webpack_require__.r(__webpack_exports__);
   },
 
   methods: {
+    isGiftVoucher: function isGiftVoucher(item) {
+      var _item$attributes;
+      return (item === null || item === void 0 ? void 0 : (_item$attributes = item.attributes) === null || _item$attributes === void 0 ? void 0 : _item$attributes.item_type) === 'gift_voucher';
+    },
+    giftVoucherData: function giftVoucherData(item) {
+      var _item$attributes2;
+      return (item === null || item === void 0 ? void 0 : (_item$attributes2 = item.attributes) === null || _item$attributes2 === void 0 ? void 0 : _item$attributes2.gift_voucher) || {};
+    },
     /**
      *
      * @param item
@@ -4686,6 +4724,9 @@ var AgService = /*#__PURE__*/function () {
     key: "resolvePrice",
     value: function resolvePrice(currency_list, price) {
       var main = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      if (!Array.isArray(currency_list) || !currency_list.length) {
+        return Number(price).toFixed(2) + (main ? ' €' : '');
+      }
       var list = currency_list;
       var main_currency = {};
       list.forEach(function (item) {
@@ -4700,6 +4741,9 @@ var AgService = /*#__PURE__*/function () {
           }
         }
       });
+      if (typeof main_currency.value === 'undefined') {
+        return Number(price).toFixed(2) + (main ? ' €' : '');
+      }
       var left = main_currency.symbol_left ? main_currency.symbol_left + '' : '';
       var right = main_currency.symbol_right ? '' + main_currency.symbol_right : '';
       return left + Number(price * main_currency.value).toFixed(main_currency.decimal_places) + right;
@@ -4856,7 +4900,11 @@ var store = {
     checkCart: function checkCart(context, ids) {
       var state = context.state;
       state.service.checkCart(ids).then(function (response) {
+        if (!response || !response.cart) {
+          return;
+        }
         state.storage.setCart(response.cart);
+        state.cart = response.cart;
         if (response.message && window.location.pathname != '/uspjeh') {
           window.ToastWarningLong.fire(response.message);
           if (window.location.pathname != '/kosarica') {
@@ -6895,7 +6943,9 @@ var render = function() {
   return _c(
     "div",
     [
-      _vm.$store.state.cart.total < _vm.freeship && _vm.$store.state.cart.count
+      !_vm.hasGiftVoucher &&
+      _vm.$store.state.cart.total < _vm.freeship &&
+      _vm.$store.state.cart.count
         ? _c(
             "div",
             {
@@ -6934,7 +6984,9 @@ var render = function() {
           )
         : _vm._e(),
       _vm._v(" "),
-      _vm.$store.state.cart.total > _vm.freeship && _vm.$store.state.cart.count
+      !_vm.hasGiftVoucher &&
+      _vm.$store.state.cart.total > _vm.freeship &&
+      _vm.$store.state.cart.count
         ? _c(
             "div",
             {
@@ -6949,7 +7001,26 @@ var render = function() {
           )
         : _vm._e(),
       _vm._v(" "),
-      _vm._m(2),
+      _vm.hasGiftVoucher
+        ? _c(
+            "div",
+            {
+              staticClass: "mt-3 alert alert-warning d-flex fs-sm",
+              attrs: { role: "alert" }
+            },
+            [
+              _vm._m(2),
+              _vm._v(" "),
+              _c("div", [
+                _vm._v(
+                  "Poklon bon kupuje se zasebno i moguće ga je platiti isključivo karticom."
+                )
+              ])
+            ]
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm._m(3),
       _vm._v(" "),
       !_vm.$store.state.cart.count
         ? _c("div", { staticClass: "d-flex pt-3 pb-2 mt-1" }, [
@@ -7056,6 +7127,36 @@ var render = function() {
                             "\n                "
                         )
                       ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm.isGiftVoucher(item)
+                    ? _c("div", { staticClass: "fs-sm text-muted pt-2" }, [
+                        _c("div", [
+                          _vm._v(
+                            "Primatelj: " +
+                              _vm._s(
+                                _vm.giftVoucherData(item).recipient_name ||
+                                  "---"
+                              )
+                          )
+                        ]),
+                        _vm._v(" "),
+                        _c("div", [
+                          _vm._v(
+                            "E-mail: " +
+                              _vm._s(_vm.giftVoucherData(item).recipient_email)
+                          )
+                        ]),
+                        _vm._v(" "),
+                        _vm.giftVoucherData(item).sender_name
+                          ? _c("div", [
+                              _vm._v(
+                                "Od: " +
+                                  _vm._s(_vm.giftVoucherData(item).sender_name)
+                              )
+                            ])
+                          : _vm._e()
+                      ])
                     : _vm._e()
                 ])
               ]
@@ -7086,7 +7187,8 @@ var render = function() {
                   attrs: {
                     type: "number",
                     min: "1",
-                    max: item.associatedModel.quantity
+                    max: item.associatedModel.quantity,
+                    disabled: _vm.isGiftVoucher(item)
                   },
                   domProps: { value: item.quantity },
                   on: {
@@ -7164,6 +7266,14 @@ var staticRenderFns = [
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "alert-icon" }, [
       _c("i", { staticClass: "ci-gift" })
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "alert-icon" }, [
+      _c("i", { staticClass: "ci-card" })
     ])
   },
   function() {
@@ -7346,7 +7456,26 @@ var render = function() {
                             _c("span", { staticClass: "text-muted" }, [
                               _vm._v("x " + _vm._s(item.quantity))
                             ])
-                          ])
+                          ]),
+                          _vm._v(" "),
+                          _vm.isGiftVoucher(item)
+                            ? _c(
+                                "div",
+                                {
+                                  staticClass: "widget-product-meta text-muted"
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                            " +
+                                      _vm._s(
+                                        _vm.giftVoucherData(item)
+                                          .recipient_email
+                                      ) +
+                                      "\n                        "
+                                  )
+                                ]
+                              )
+                            : _vm._e()
                         ])
                       ]
                     )
@@ -7631,7 +7760,7 @@ var render = function() {
         )
       : _vm._e(),
     _vm._v(" "),
-    _vm.route == "kosarica" || _vm.route == "naplata"
+    !_vm.hasGiftVoucher && (_vm.route == "kosarica" || _vm.route == "naplata")
       ? _c(
           "div",
           {
@@ -7773,8 +7902,9 @@ var render = function() {
         )
       : _vm._e(),
     _vm._v(" "),
-    (_vm.has_loyalty && _vm.route == "kosarica") ||
-    (_vm.has_loyalty && _vm.route == "naplata")
+    !_vm.hasGiftVoucher &&
+    ((_vm.has_loyalty && _vm.route == "kosarica") ||
+      (_vm.has_loyalty && _vm.route == "naplata"))
       ? _c(
           "div",
           {

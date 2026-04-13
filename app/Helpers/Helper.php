@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use phpDocumentor\Reflection\Types\False_;
@@ -904,6 +905,11 @@ class Helper
     public static function hasCouponCartConditions($cart, string $coupon = '')
     {
         $condition = false;
+
+        if (! Schema::hasTable('product_actions')) {
+            return false;
+        }
+
         $actions   = Action::query()->where('group', 'total')->get();
 
         if ($actions->count()) {

@@ -73,7 +73,7 @@ class HomeController extends Controller
 
         // recaptcha verifikacija – moraš imati site & secret key postavljen
         $recaptcha = (new Recaptcha())->check($request->toArray());
-        if (! $recaptcha->ok()) {
+        if (! $recaptcha || ! $recaptcha->ok()) {
             return back()->withErrors(['error' => 'ReCaptcha Error! Kontaktirajte administratora!'])
                 ->withInput();
         }
@@ -158,7 +158,7 @@ class HomeController extends Controller
         // Recaptcha
         $recaptcha = (new Recaptcha())->check($request->toArray());
 
-        if ( ! $recaptcha->ok()) {
+        if ( ! $recaptcha || ! $recaptcha->ok()) {
             return back()->withErrors(['error' => 'ReCaptcha Error! Kontaktirajte administratora!']);
         }
 
@@ -177,7 +177,7 @@ class HomeController extends Controller
      */
     public function imageCache(Request $request)
     {
-        $src = $request->input('src');
+        $src = $this->resolveReadableImageSource($request->input('src'));
 
         $cacheimage = Image::cache(function($image) use ($src) {
             $image->make($src);
@@ -194,29 +194,73 @@ class HomeController extends Controller
      */
     public function thumbCache(Request $request)
     {
-        if ( ! $request->has('src')) {
-            return asset('media/img/knjiga-detalj.jpg');
-        }
+        $src = $this->resolveReadableImageSource($request->input('src'));
+        [$width, $height] = $this->resolveThumbDimensions($request->input('size'));
 
-        $cacheimage = Image::cache(function($image) use ($request) {
-            $width = 250;
-            $height = 300;
-
-            if ($request->has('size')) {
-                if (strpos($request->input('size'), 'x') !== false) {
-                    $size = explode('x', $request->input('size'));
-                    $width = $size[0];
-                    $height = $size[1];
-                }
-            } else {
-                $width = $request->input('size');
-            }
-
-            $image->make($request->input('src'))->resize($width, $height);
+        $cacheimage = Image::cache(function($image) use ($src, $width, $height) {
+            $image->make($src)->resize($width, $height);
 
         }, config('imagecache.lifetime'));
 
         return Image::make($cacheimage)->response();
+    }
+
+
+    private function resolveReadableImageSource(?string $src): string
+    {
+        $fallback = public_path('media/img/knjiga-detalj.jpg');
+
+        if (blank($src)) {
+            return $fallback;
+        }
+
+        $path = $this->normalizeImagePath($src);
+
+        if ($path && is_file($path)) {
+            return $path;
+        }
+
+        return $fallback;
+    }
+
+
+    private function normalizeImagePath(string $src): ?string
+    {
+        if (filter_var($src, FILTER_VALIDATE_URL)) {
+            $src = parse_url($src, PHP_URL_PATH) ?: '';
+        }
+
+        $clean = trim($src);
+
+        if ($clean === '') {
+            return null;
+        }
+
+        return public_path(ltrim($clean, '/'));
+    }
+
+
+    private function resolveThumbDimensions($size): array
+    {
+        $width = 250;
+        $height = 300;
+
+        if (blank($size)) {
+            return [$width, $height];
+        }
+
+        $size = trim((string) $size);
+
+        if (strpos($size, 'x') !== false) {
+            [$requestedWidth, $requestedHeight] = array_pad(explode('x', $size, 2), 2, null);
+
+            $width = max((int) $requestedWidth, 1);
+            $height = max((int) $requestedHeight, 1);
+
+            return [$width, $height];
+        }
+
+        return [max((int) $size, 1), $height];
     }
 
 
