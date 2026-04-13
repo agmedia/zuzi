@@ -3,6 +3,7 @@
 namespace App\Models\Back\Catalog\Product;
 
 use App\Helpers\Helper;
+use App\Helpers\Njuskalo;
 use App\Helpers\ProductHelper;
 use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Category;
@@ -25,6 +26,17 @@ class Product extends Model
 {
 
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::saved(function () {
+            Njuskalo::clearExport();
+        });
+
+        static::deleted(function () {
+            Njuskalo::clearExport();
+        });
+    }
 
     /**
      * @var string

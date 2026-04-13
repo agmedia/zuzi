@@ -4,7 +4,8 @@ namespace App\Helpers;
 
 use App\Models\Back\Catalog\Product\Product;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
+use XMLWriter;
 
 /**
  * Generira stavke za Njuškalo feed uz minimalan memory footprint.
@@ -12,6 +13,9 @@ use Illuminate\Support\Str;
  */
 class Njuskalo
 {
+    private const DEFAULT_CACHE_TTL = 21600;
+    private const EXPORT_PATH = 'app/feeds/njuskalo.xml';
+
     /**
      * Vraća Generator sa transformiranim stavkama.
      * Primjer upotrebe u kontroleru:
@@ -26,6 +30,45 @@ class Njuskalo
     {
         foreach ($this->baseQuery()->lazyById($chunkSize) as $product) {
             yield $this->transform($product);
+        }
+    }
+
+    /**
+     * Osigurava da na disku postoji svjez XML export i vraca njegovu putanju.
+     */
+    public function ensureExport(?int $ttl = null): string
+    {
+        $ttl ??= (int) config('settings.njuskalo.cache_ttl', self::DEFAULT_CACHE_TTL);
+        $path = static::exportPath();
+
+        if ($this->isFresh($path, $ttl)) {
+            return $path;
+        }
+
+        try {
+            $this->writeExport($path);
+        } catch (\Throwable $e) {
+            report($e);
+
+            if (! File::exists($path)) {
+                throw $e;
+            }
+        }
+
+        return $path;
+    }
+
+    public static function exportPath(): string
+    {
+        return storage_path(self::EXPORT_PATH);
+    }
+
+    public static function clearExport(): void
+    {
+        $path = static::exportPath();
+
+        if (File::exists($path)) {
+            File::delete($path);
         }
     }
 
@@ -105,5 +148,113 @@ class Njuskalo
         }
 
         return implode('', $parts);
+    }
+
+    private function isFresh(string $path, int $ttl): bool
+    {
+        return File::exists($path) && (time() - File::lastModified($path)) < max(0, $ttl);
+    }
+
+    private function writeExport(string $path): void
+    {
+        $directory = dirname($path);
+
+        if (! File::isDirectory($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        $tempPath = tempnam($directory, 'njuskalo-');
+
+        if ($tempPath === false) {
+            throw new \RuntimeException('Unable to create Njuskalo XML temp file.');
+        }
+
+        try {
+            $xml = new XMLWriter();
+
+            if (! $xml->openUri($tempPath)) {
+                throw new \RuntimeException('Unable to open Njuskalo XML temp file.');
+            }
+
+            $xml->startDocument('1.0', 'UTF-8');
+            $xml->startElement('ad_list');
+
+            foreach ($this->items() as $item) {
+                $this->writeItem($xml, $item);
+            }
+
+            $xml->endElement();
+            $xml->endDocument();
+            $xml->flush();
+
+            if (! @rename($tempPath, $path)) {
+                File::move($tempPath, $path);
+            }
+
+            $tempPath = null;
+        } finally {
+            if ($tempPath && File::exists($tempPath)) {
+                File::delete($tempPath);
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $item
+     */
+    private function writeItem(XMLWriter $xml, array $item): void
+    {
+        $xml->startElement('ad_item');
+        $xml->writeAttribute('class', 'ad_simple');
+
+        $xml->writeElement('user_id', (string) config('settings.njuskalo.user_id'));
+        $xml->writeElement('original_id', (string) $item['id']);
+        $xml->writeElement('category_id', (string) $item['group']);
+        $xml->writeElement('title', $this->sanitizeXmlText($item['name'] ?? ''));
+        $xml->writeElement('currency_id', '2');
+        $xml->writeElement('price', (string) $item['price']);
+        $xml->writeElement('description', $this->sanitizeXmlText($item['description'] ?? ''));
+        $xml->writeElement('conditionId', '20');
+
+        $xml->startElement('phone_list');
+        $xml->startElement('phone');
+        $xml->writeElement('calling_code', '385');
+        $xml->writeElement('area_code', '91');
+        $xml->writeElement('phone_number', '7627441');
+        $xml->endElement();
+        $xml->endElement();
+
+        $xml->writeElement('youtubeUrl', '');
+        $xml->writeElement('location_id', '2803');
+        $xml->writeElement('gmap_lng', '45.802118274402126');
+        $xml->writeElement('gmap_lat', '15.890055457671485');
+        $xml->writeElement('isOnlinePaymentEnabled', '1');
+
+        $xml->startElement('availableParcelShops');
+        $xml->writeElement('item', 'boxNow');
+        $xml->endElement();
+
+        $xml->writeElement('deliveryPackageWeight', '1');
+
+        $xml->startElement('biddingOptions');
+        $xml->writeElement('item', 'buyNow');
+        $xml->writeElement('item', 'bidding');
+        $xml->endElement();
+
+        $xml->writeElement('videoCallOption', '0');
+        $xml->writeElement('webshopLink', url((string) $item['slug']));
+
+        $xml->startElement('image_list');
+        $xml->writeElement('image', (string) $item['image']);
+        $xml->endElement();
+
+        $xml->endElement();
+    }
+
+    private function sanitizeXmlText(mixed $value): string
+    {
+        $value = (string) $value;
+
+        return preg_replace('/[^\x09\x0A\x0D\x20-\x{D7FF}\x{E000}-\x{FFFD}]/u', '', $value) ?? '';
     }
 }

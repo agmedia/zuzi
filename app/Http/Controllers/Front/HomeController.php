@@ -317,12 +317,24 @@ class HomeController extends Controller
     public function njuskaloXML(Request $request)
     {
         $njuskalo = new Njuskalo();
+        $path = $njuskalo->ensureExport();
+        $ttl = (int) config('settings.njuskalo.http_cache_ttl', 3600);
 
+        $response = response()->file($path, [
+            'Content-Type' => 'text/xml; charset=UTF-8',
+        ]);
 
+        $response->setPublic();
+        $response->setMaxAge($ttl);
+        $response->setSharedMaxAge($ttl);
+        $response->setAutoLastModified();
+        $response->setAutoEtag();
 
-        return response()->view('front.layouts.partials.njuskalo', [
-            'items' => $njuskalo->items()
-        ])->header('Content-Type', 'text/xml');
+        if ($response->isNotModified($request)) {
+            return $response;
+        }
+
+        return $response;
     }
 
     /**

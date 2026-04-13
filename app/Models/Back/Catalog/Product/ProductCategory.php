@@ -2,6 +2,7 @@
 
 namespace App\Models\Back\Catalog\Product;
 
+use App\Helpers\Njuskalo;
 use App\Models\Back\Catalog\Category;
 use Illuminate\Database\Eloquent\Model;
 
@@ -49,6 +50,8 @@ class ProductCategory extends Model
                 ]);
             }
         }
+
+        Njuskalo::clearExport();
 
         return $created;
     }
