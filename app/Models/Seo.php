@@ -315,7 +315,10 @@ class Seo
     {
         return [
             'title'       => static::appendBrand($page->meta_title ?: $page->title),
-            'description' => static::descriptionFromContent([$page->short_description ?? null, $page->description ?? null], $page->title),
+            'description' => static::description(
+                $page->meta_description,
+                static::descriptionFromContent([$page->short_description ?? null, $page->description ?? null], $page->title)
+            ),
         ];
     }
 

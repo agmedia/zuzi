@@ -1,10 +1,10 @@
 @extends('front.layouts.app')
 @php($pageSeo = \App\Models\Seo::getPageData($page))
 @if (request()->routeIs(['index']))
-    @section('title', \App\Models\Seo::defaultTitle())
-    @section('description', \App\Models\Seo::defaultDescription())
-    @section('seo_image', \App\Models\Seo::defaultImage())
-    @section('seo_image_alt', \App\Models\Seo::defaultTitle())
+    @section('title', $pageSeo['title'])
+    @section('description', $pageSeo['description'])
+    @section('seo_image', ! empty($page->image) ? \App\Models\Seo::image($page->image) : \App\Models\Seo::defaultImage())
+    @section('seo_image_alt', $page->title ?: $pageSeo['title'])
     @section('seo_updated_time', optional($page->updated_at)->toAtomString())
 @else
     @section('title', $pageSeo['title'])
@@ -49,7 +49,7 @@
                       </span>
                   </div>
                   <small class="d-block mb-0">
-                      <strong>Broj 1 online knjižara u Hrvatskoj</strong> s više od
+                      <strong>Broj 1 online Knjižara i Antikvarijat u Hrvatskoj</strong> s više od
                       <strong>84.000 artikala</strong>. BOX NOW dostava za samo <strong>0,99 €</strong>.
                   </small>
               </div>
