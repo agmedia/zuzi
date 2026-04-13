@@ -16,6 +16,76 @@
     @section('seo_updated_time', optional($page->updated_at)->toAtomString())
 @endif
 
+@push('css_after')
+    <style>
+        .home-promo-alert {
+            gap: 0;
+            padding: 0;
+            overflow: hidden;
+            border-color: #ffd0e2;
+            background: #fff;
+        }
+
+        .home-promo-icon {
+            display: inline-flex;
+            flex: 0 0 4.4rem;
+            align-items: center;
+            justify-content: center;
+            align-self: stretch;
+            min-height: 100%;
+            background: linear-gradient(180deg, #ffe9f3 0%, #ffdbe9 100%);
+        }
+
+        .home-promo-icon-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 10px rgba(233, 30, 99, 0.14);
+        }
+
+        .home-promo-copy {
+            padding: 0.8rem 0.95rem;
+            color: #e50077;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .home-promo-copy strong {
+            color: #e50077;
+        }
+
+        @media (max-width: 575.98px) {
+            .home-promo-alert {
+                align-items: stretch !important;
+            }
+
+            .home-promo-icon {
+                flex-basis: 3.35rem;
+            }
+
+            .home-promo-icon-badge {
+                width: 1.65rem;
+                height: 1.65rem;
+            }
+
+            .home-promo-icon-badge svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            .home-promo-copy {
+                padding: 0.65rem 0.8rem;
+                font-size: 0.88rem;
+                line-height: 1.35;
+            }
+        }
+    </style>
+@endpush
+
 @section('content')
 
     @if (request()->routeIs(['index']))
@@ -35,12 +105,11 @@
 
       </div>
 
-      <div class="d-flex row justify-content-between mt-2">
+      <div class="row justify-content-between mt-2">
           <div class="col-md-12">
-              <div role="alert" class="alert alert-info d-flex align-items-center mb-1">
-                  <div class="alert-icon">
-                      <span class="d-inline-flex align-items-center justify-content-center rounded-circle"
-                            style="width: 2rem; height: 2rem; background: rgba(255,255,255,.72); box-shadow: 0 2px 8px rgba(0,0,0,.08);">
+              <div role="alert" class="alert alert-info d-flex align-items-stretch mb-1 home-promo-alert">
+                  <div class="home-promo-icon">
+                      <span class="home-promo-icon-badge">
                           <svg aria-hidden="true" viewBox="0 0 640 512" width="20" height="20" fill="currentColor"
                                xmlns="http://www.w3.org/2000/svg"
                                style="display: block; color: #e91e63; filter: drop-shadow(0 1px 2px rgba(233, 30, 99, .18));">
@@ -48,8 +117,8 @@
                           </svg>
                       </span>
                   </div>
-                  <small class="d-block mb-0">
-                      <strong>Broj 1 online Knjižara i Antikvarijat u Hrvatskoj</strong> s više od
+                  <small class="d-block mb-0 home-promo-copy">
+                      <strong>Broj 1 online knjižara i antikvarijat u Hrvatskoj</strong> s više od
                       <strong>84.000 artikala</strong>. BOX NOW dostava za samo <strong>0,99 €</strong>.
                   </small>
               </div>
