@@ -477,6 +477,7 @@
 <script>
     const signinModal = document.getElementById('signin-modal');
     const recaptchaSiteKey = @json(config('services.recaptcha.sitekey'));
+    const shouldOpenSigninModal = @json((bool) session('auth_status'));
     let recaptchaLoader = null;
 
     function loadRecaptchaScript() {
@@ -532,10 +533,21 @@
         });
     }
 
+    function showSigninModal(selectedTab = 'pills-signin-tab') {
+        if (!signinModal) {
+            return;
+        }
+
+        signinModal.dataset.initialTabId = selectedTab;
+        bootstrap.Modal.getOrCreateInstance(signinModal).show();
+    }
+
     if (signinModal) {
         signinModal.addEventListener('show.bs.modal', (ev) => {
             const invoker = ev.relatedTarget;
-            const selectedTab = invoker ? invoker.getAttribute('data-tab-id') : null;
+            const selectedTab = invoker
+                ? invoker.getAttribute('data-tab-id')
+                : signinModal.dataset.initialTabId;
 
             if (selectedTab) {
                 const tabButton = document.querySelector(`#${selectedTab}`);
@@ -546,12 +558,26 @@
                 }
             }
 
+            delete signinModal.dataset.initialTabId;
+
             loadRecaptchaScript()
                 .then(() => {
                     refreshSigninRecaptchaToken();
                 })
                 .catch(() => {});
         });
+
+        const url = new URL(window.location.href);
+        const requestedAuthTab = url.searchParams.get('auth');
+
+        if (requestedAuthTab === 'signin' || requestedAuthTab === 'signup' || shouldOpenSigninModal) {
+            showSigninModal(requestedAuthTab === 'signup' ? 'pills-signup-tab' : 'pills-signin-tab');
+
+            if (requestedAuthTab) {
+                url.searchParams.delete('auth');
+                window.history.replaceState({}, document.title, url.toString());
+            }
+        }
     }
 </script>
 

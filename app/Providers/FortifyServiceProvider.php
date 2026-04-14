@@ -6,8 +6,10 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
@@ -35,6 +37,29 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+        ResetPassword::createUrlUsing(function ($user, string $token) {
+            return route('reset.password.get', [
+                'token' => $token,
+                'email' => $user->getEmailForPasswordReset(),
+            ]);
+        });
+
+        ResetPassword::toMailUsing(function ($user, string $token) {
+            $resetUrl = route('reset.password.get', [
+                'token' => $token,
+                'email' => $user->getEmailForPasswordReset(),
+            ]);
+
+            return (new MailMessage)
+                ->subject('Reset lozinke')
+                ->greeting('Pozdrav!')
+                ->line('Zaprimili smo zahtjev za reset lozinke za vaš korisnički račun.')
+                ->action('Resetiraj lozinku', $resetUrl)
+                ->line('Ovaj link vrijedi '.config('auth.passwords.'.config('auth.defaults.passwords').'.expire').' minuta.')
+                ->line('Ako niste vi zatražili reset lozinke, slobodno ignorirajte ovu poruku.')
+                ->salutation('ZUZI Shop');
+        });
 
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->email.$request->ip());

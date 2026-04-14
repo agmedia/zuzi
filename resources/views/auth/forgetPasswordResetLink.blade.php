@@ -18,7 +18,15 @@
                                 <p class="text-uppercase font-w700 font-size-sm text-muted">Reset lozinke</p>
                             </div>
 
-                            <x-jet-validation-errors class="mb-4" />
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0 ps-3">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
 
                             <form method="POST" action="{{ route('reset.password.post') }}">
                                 @csrf
@@ -26,23 +34,23 @@
                                 <input type="hidden" name="token" value="{{ $token }}">
 
                                 <div class="block">
-                                    <x-jet-label for="email" value="{{ __('Email') }}" />
-                                    <x-jet-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
+                                    <x-jet-label for="email" value="Email adresa" />
+                                    <x-jet-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $email ?? request('email'))" required autofocus />
                                 </div>
 
                                 <div class="mt-4">
-                                    <x-jet-label for="password" value="{{ __('Password') }}" />
+                                    <x-jet-label for="password" value="Nova lozinka" />
                                     <x-jet-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
                                 </div>
 
                                 <div class="mt-4">
-                                    <x-jet-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
+                                    <x-jet-label for="password_confirmation" value="Potvrda lozinke" />
                                     <x-jet-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
                                 </div>
 
                                 <div class="flex items-center justify-end mt-4">
                                     <x-jet-button>
-                                        {{ __('Reset Password') }}
+                                        Spremi novu lozinku
                                     </x-jet-button>
                                 </div>
                             </form>

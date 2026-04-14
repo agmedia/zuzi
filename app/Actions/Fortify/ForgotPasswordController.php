@@ -3,98 +3,84 @@
 namespace App\Actions\Fortify;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Bouncer;
-use Carbon\Carbon;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ForgotPasswordController extends Controller
 {
+    use PasswordValidationRules;
 
-    /**
-     * Write code on Method
-     *
-     * @return response()
-     */
     public function showForgetPasswordForm()
     {
         return view('auth.forgetPassword');
     }
 
-
-    /**
-     * Write code on Method
-     *
-     * @return response()
-     */
     public function submitForgetPasswordForm(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users',
+            'email' => ['required', 'string', 'email'],
         ]);
 
-        $token = Str::random(64);
+        $status = Password::sendResetLink($request->only('email'));
 
-        DB::table('password_resets')->insert([
-            'email'      => $request->email,
-            'token'      => $token,
-            'created_at' => Carbon::now()
-        ]);
-
-        Mail::send('emails.forget-password', ['token' => $token], function ($message) use ($request) {
-            $message->to($request->email);
-            $message->subject('Reset Password');
-        });
+        if ($status !== Password::RESET_LINK_SENT) {
+            throw ValidationException::withMessages([
+                'email' => [$this->passwordBrokerMessage($status)],
+            ]);
+        }
 
         return back()->with('status', 'Poslali smo vam link za resetiranje lozinke na navedeni email!');
     }
 
-
-    /**
-     * Write code on Method
-     *
-     * @return response()
-     */
     public function showResetPasswordForm($token)
     {
-        return view('auth.forgetPasswordResetLink', ['token' => $token]);
+        return view('auth.forgetPasswordResetLink', [
+            'token' => $token,
+            'email' => request('email'),
+        ]);
     }
 
-
-    /**
-     * Write code on Method
-     *
-     * @return response()
-     */
     public function submitResetPasswordForm(Request $request)
     {
         $request->validate([
-            'email'                 => 'required|email|exists:users',
-            'password'              => 'required|string|min:6|confirmed',
-            'password_confirmation' => 'required'
+            'token' => ['required', 'string'],
+            'email' => ['required', 'string', 'email'],
+            'password' => $this->passwordRules(),
         ]);
 
-        $updatePassword = DB::table('password_resets')
-                            ->where([
-                                'email' => $request->email,
-                                'token' => $request->token
-                            ])
-                            ->first();
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user) use ($request) {
+                app(ResetUserPassword::class)->reset($user, $request->only('password', 'password_confirmation'));
 
-        if ( ! $updatePassword) {
-            return back()->withInput()->with('error', 'Neodgovarajući token!');
+                $user->setRememberToken(Str::random(60));
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            throw ValidationException::withMessages([
+                'email' => [$this->passwordBrokerMessage($status)],
+            ]);
         }
 
-        $user = User::where('email', $request->email)
-                    ->update(['password' => Hash::make($request->password)]);
+        return redirect()
+            ->route('index', ['auth' => 'signin'])
+            ->with('auth_status', 'Lozinka je uspješno promijenjena. Prijavite se novom lozinkom.');
+    }
 
-        DB::table('password_resets')->where(['email' => $request->email])->delete();
-
-        return redirect('/login')->with('status', 'Vaša lozinka je promijenjena!');
+    private function passwordBrokerMessage(string $status): string
+    {
+        return match ($status) {
+            Password::INVALID_USER => 'Ne postoji korisnik s tom email adresom.',
+            Password::INVALID_TOKEN => 'Link za reset lozinke nije valjan ili je istekao.',
+            Password::RESET_THROTTLED => 'Zahtjev je već poslan. Pričekajte malo prije novog pokušaja.',
+            default => 'Dogodila se greška prilikom obrade zahtjeva za reset lozinke.',
+        };
     }
 }

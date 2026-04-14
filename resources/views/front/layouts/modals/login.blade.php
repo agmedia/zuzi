@@ -11,6 +11,11 @@
             <div class="modal-body tab-content py-4"  >
                 <form method="POST" class="needs-validation tab-pane fade show active" action="{{ route('login') }}" autocomplete="off" novalidate id="signin-tab" aria-controls="pills-signin">
                     @csrf
+                    @if (session('auth_status'))
+                        <div class="alert alert-success py-2 px-3 mb-3" role="alert">
+                            {{ session('auth_status') }}
+                        </div>
+                    @endif
                     <div class="mb-3">
                         <label class="form-label" for="si-email">Email adresa</label>
                         <input class="form-control" type="email" id="si-email" name="email" placeholder="" required>
@@ -27,9 +32,10 @@
                     </div>
                     <div class="mb-3 d-flex flex-wrap justify-content-between">
                         <div class="form-check mb-2 ps-0">
-                            <x-jet-checkbox id="remember_me" name="remember" />
+                            <x-jet-checkbox id="si-remember" name="remember" />
                             <label class="form-check-label" for="si-remember">Zapamti me</label>
-                        </div><!--<a class="fs-sm" href="#">Zaboravljena lozinka</a>-->
+                        </div>
+                        <a class="fs-sm" href="{{ route('forget.password.get') }}">Zaboravljena lozinka?</a>
                     </div>
                     <button class="btn btn-primary btn-shadow d-block w-100" type="submit">Prijavi se</button>
                 </form>
@@ -113,5 +119,4 @@
         </div>
     </div>
 </div>
-
 
