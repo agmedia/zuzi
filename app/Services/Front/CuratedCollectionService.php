@@ -31,17 +31,23 @@ class CuratedCollectionService
      */
     public function homepageWidgetData(): array
     {
-        $collections = collect([
-            $this->resolveCollection('knjige-do-5-eura'),
-            $this->resolveCollection('knjige-od-5-do-10-eura'),
-            $this->resolveCollection('najpopularnije-ovaj-mjesec'),
-            $this->resolveCollection('verdens-100-klasici'),
-        ])->filter()->values();
+        return Cache::remember(
+            $this->cacheKey('homepage-widget'),
+            now()->addMinutes(30),
+            function () {
+                $collections = collect([
+                    $this->resolveHomepageCollection('knjige-do-5-eura'),
+                    $this->resolveHomepageCollection('knjige-od-5-do-10-eura'),
+                    $this->resolveHomepageCollection('najpopularnije-ovaj-mjesec'),
+                    $this->resolveHomepageCollection('verdens-100-klasici'),
+                ])->filter()->values();
 
-        return [
-            'collections' => $collections->all(),
-            'featured_products' => $this->resolveFeaturedProducts(),
-        ];
+                return [
+                    'collections' => $collections->all(),
+                    'featured_products' => $this->resolveFeaturedProducts(),
+                ];
+            }
+        );
     }
 
 
@@ -77,6 +83,28 @@ class CuratedCollectionService
 
 
     /**
+     * @return array<string, mixed>|null
+     */
+    private function resolveHomepageCollection(string $slug): ?array
+    {
+        $collection = $this->resolveCollection($slug);
+
+        if (! $collection) {
+            return null;
+        }
+
+        unset(
+            $collection['ids_json'],
+            $collection['preserve_order'],
+            $collection['default_sort'],
+            $collection['meta_pill']
+        );
+
+        return $collection;
+    }
+
+
+    /**
      * @return array<string, array<string, mixed>>
      */
     private function definitions(): array
@@ -86,6 +114,7 @@ class CuratedCollectionService
                 'type' => 'price',
                 'eyebrow' => 'Brzi ulov',
                 'badge' => 'Do 5 €',
+                'home_count_label' => 'Povoljni ulovi',
                 'title' => 'Uhvati knjige do 5 €',
                 'description' => 'Mali iznos, brz klik i osjećaj da ste odlično prošli.',
                 'lead' => 'Najpovoljniji naslovi koji se uzimaju odmah.',
@@ -103,6 +132,7 @@ class CuratedCollectionService
                 'type' => 'price',
                 'eyebrow' => 'Top vrijednost',
                 'badge' => 'Od 5 do 10 €',
+                'home_count_label' => 'Top raspon',
                 'title' => 'Najbolji ulovi od 5 do 10 €',
                 'description' => 'Savršen raspon za još bolji ulov bez teške odluke na checkoutu.',
                 'lead' => 'Pogodi cijenu koja najlakše pretvara pregled u kupnju.',
@@ -121,6 +151,7 @@ class CuratedCollectionService
                 'metric' => 'orders',
                 'eyebrow' => 'Kupci biraju',
                 'badge' => 'Hit izbor',
+                'home_count_label' => 'Ovaj mjesec',
                 'title' => 'Kupci ovo biraju prvi',
                 'description' => 'Klikni i pregledaj najtraženije naslove mjeseca na jednom mjestu',
                 'lead' => 'Ovdje su knjige koje kupci sada najviše love.',
@@ -137,6 +168,7 @@ class CuratedCollectionService
                 'source' => 'verdens_100',
                 'eyebrow' => 'Bezvremenski izbor',
                 'badge' => 'Klasici',
+                'home_count_label' => 'Zuzi odabir',
                 'title' => 'Klasici koje vrijedi imati na polici',
                 'description' => 'Domaći velikani i bezvremenski hitovi koje čitatelji stalno traže.',
                 'lead' => 'Kreni od knjiga koje se vraćaju na velike liste, lektire i osobne police za cijeli život.',
@@ -242,54 +274,60 @@ class CuratedCollectionService
      */
     private function resolveFeaturedProducts(): Collection
     {
-        $rankedProducts = $this->resolveMonthlyRanking('quantity')->take(5)->values();
+        return Cache::remember(
+            $this->cacheKey('featured-products'),
+            now()->addMinutes(30),
+            function () {
+                $rankedProducts = $this->resolveMonthlyRanking('quantity')->take(5)->values();
 
-        if ($rankedProducts->isEmpty()) {
-            return Product::query()
-                ->active()
-                ->hasStock()
-                ->hasImage()
-                ->where(function ($query) {
-                    foreach (self::EXCLUDED_TITLE_PATTERNS as $pattern) {
-                        $query->where('name', 'not like', $pattern);
-                    }
-                })
-                ->with(['action'])
-                ->popular(5)
-                ->get()
-                ->map(function (Product $product, int $index) {
-                    return [
-                        'position' => $index + 1,
-                        'product' => $product,
-                    ];
-                })
-                ->values();
-        }
-
-        $products = Product::query()
-            ->active()
-            ->hasStock()
-            ->hasImage()
-            ->with(['action'])
-            ->whereIn('id', $rankedProducts->pluck('product_id'))
-            ->get()
-            ->keyBy('id');
-
-        return $rankedProducts
-            ->map(function (array $rankedProduct, int $index) use ($products) {
-                $product = $products->get($rankedProduct['product_id']);
-
-                if (! $product) {
-                    return null;
+                if ($rankedProducts->isEmpty()) {
+                    return Product::query()
+                        ->active()
+                        ->hasStock()
+                        ->hasImage()
+                        ->where(function ($query) {
+                            foreach (self::EXCLUDED_TITLE_PATTERNS as $pattern) {
+                                $query->where('name', 'not like', $pattern);
+                            }
+                        })
+                        ->with(['action'])
+                        ->popular(5)
+                        ->get()
+                        ->map(function (Product $product, int $index) {
+                            return [
+                                'position' => $index + 1,
+                                'product' => $product,
+                            ];
+                        })
+                        ->values();
                 }
 
-                return [
-                    'position' => $index + 1,
-                    'product' => $product,
-                ];
-            })
-            ->filter()
-            ->values();
+                $products = Product::query()
+                    ->active()
+                    ->hasStock()
+                    ->hasImage()
+                    ->with(['action'])
+                    ->whereIn('id', $rankedProducts->pluck('product_id'))
+                    ->get()
+                    ->keyBy('id');
+
+                return $rankedProducts
+                    ->map(function (array $rankedProduct, int $index) use ($products) {
+                        $product = $products->get($rankedProduct['product_id']);
+
+                        if (! $product) {
+                            return null;
+                        }
+
+                        return [
+                            'position' => $index + 1,
+                            'product' => $product,
+                        ];
+                    })
+                    ->filter()
+                    ->values();
+            }
+        );
     }
 
 
@@ -583,6 +621,6 @@ class CuratedCollectionService
 
     private function cacheKey(string $suffix): string
     {
-        return 'curated-collections.v4.' . now()->format('Y-m') . '.' . $suffix;
+        return 'curated-collections.v5.' . now()->format('Y-m') . '.' . $suffix;
     }
 }
