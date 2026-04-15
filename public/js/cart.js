@@ -3869,6 +3869,18 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     subcat: String,
     author: String,
     publisher: String,
+    priceMin: {
+      type: [String, Number],
+      "default": ''
+    },
+    priceMax: {
+      type: [String, Number],
+      "default": ''
+    },
+    preserveOrder: {
+      type: [Boolean, String],
+      "default": false
+    },
     defaultSort: {
       type: String,
       "default": ''
@@ -4180,6 +4192,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         binding: this.binding,
         letter: this.letter,
         sort: this.sorting,
+        price_min: this.priceMin,
+        price_max: this.priceMax,
+        preserve_order: this.preserveOrder ? 1 : '',
         pojam: this.search_query
       };
       if (this.author != '') {

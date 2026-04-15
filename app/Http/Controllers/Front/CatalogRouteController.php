@@ -18,6 +18,7 @@ use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
 use App\Models\Seo;
 use App\Models\TagManager;
+use App\Services\Front\CuratedCollectionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -537,6 +538,23 @@ class CatalogRouteController extends Controller
         $crumbs = null;
 
         return view('front.catalog.category.index', compact('group', 'cat', 'subcat', 'ids', 'crumbs', 'actionLanding'));
+    }
+
+
+    /**
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
+    public function curated(string $collection, CuratedCollectionService $curatedCollectionService)
+    {
+        $collectionData = $curatedCollectionService->resolveCollection($collection);
+
+        if (! $collectionData) {
+            abort(404);
+        }
+
+        return view('front.catalog.curated', [
+            'collection' => $collectionData,
+        ]);
     }
 
 

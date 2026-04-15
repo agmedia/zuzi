@@ -14,6 +14,7 @@ use App\Models\Back\Marketing\Wishlist;
 use App\Models\Front\Loyalty;
 use App\Models\Front\Page;
 use App\Models\Sitemap;
+use App\Services\Front\CuratedCollectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
@@ -30,20 +31,27 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, CuratedCollectionService $curatedCollectionService)
     {
         $page = Cache::remember('page.homepage', config('cache.life'), function () {
             return Page::where('slug', 'homepage')->first();
         });
 
-        // ✅ Proslijedi short_description kao kontekst u Helper
+        $homeSalesWidget = view('front.layouts.partials.home-sales-widget', $curatedCollectionService->homepageWidgetData())->render();
+        $description = (string) ($page->description ?? '');
+
+        if (str_contains($description, '++slider-index++')) {
+            $description = preg_replace('/\+\+slider-index\+\+/', '++slider-index++<!--home-sales-widget-->', $description, 1) ?: $description;
+        } else {
+            $description = '<!--home-sales-widget-->' . $description;
+        }
+
         $page->description = \App\Helpers\Helper::setDescription(
-            $page->description ?? '',
+            $description,
             ['short_description' => $page->short_description ?? '']
         );
 
-
-
+        $page->description = str_replace('<!--home-sales-widget-->', $homeSalesWidget, $page->description);
 
         return view('front.page', compact('page'));
     }

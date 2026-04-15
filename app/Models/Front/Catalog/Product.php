@@ -530,9 +530,10 @@ class Product extends Model
      *
      * @return Builder
      */
-    public function filter(Request $request, Collection $ids = null): Builder
+    public function filter(Request $request, ?Collection $ids = null): Builder
     {
         $query = $this->newQuery();
+        $orderedIds = collect();
 
         $query->active()->hasStock();
 
@@ -541,8 +542,14 @@ class Product extends Model
         }
 
         if ($request->has('ids') && $request->input('ids') != '') {
-            $_ids = explode(',', substr($request->input('ids'), 1, -1));
-            $query->whereIn('id', collect($_ids)->unique());
+            $orderedIds = collect(explode(',', trim((string) $request->input('ids'), '[]')))
+                ->map(function ($id) {
+                    return (int) trim((string) $id);
+                })
+                ->filter()
+                ->values();
+
+            $query->whereIn('id', $orderedIds->unique());
         }
 
         if ($request->has('group')) {
@@ -629,8 +636,19 @@ class Product extends Model
             $query->where('letter', $request->input('letter'));
         }
 
+        $currentListingPriceSql = $this->currentListingPriceSql();
+
+        if ($request->filled('price_min')) {
+            $query->whereRaw($currentListingPriceSql . ' >= ?', [(float) $request->input('price_min')]);
+        }
+
+        if ($request->filled('price_max')) {
+            $query->whereRaw($currentListingPriceSql . ' <= ?', [(float) $request->input('price_max')]);
+        }
+
         $sort = $request->input('sort');
         $isActionListing = $request->input('group') === 'snizenja';
+        $preserveOrder = ! $sort && $request->boolean('preserve_order') && $orderedIds->isNotEmpty();
 
         if ($sort) {
 
@@ -657,6 +675,8 @@ class Product extends Model
             if ($sort == 'naziv_down') {
                 $query->orderBy('name', 'desc');
             }
+        } elseif ($preserveOrder) {
+            $query->orderByRaw('FIELD(id, ' . $orderedIds->implode(',') . ')');
         } elseif ($isActionListing) {
             $query->orderBy('viewed', 'desc')->orderBy('created_at', 'desc');
         } else {
@@ -664,6 +684,19 @@ class Product extends Model
         }
 
         return $query;
+    }
+
+
+    private function currentListingPriceSql(string $table = 'products'): string
+    {
+        return "CASE
+            WHEN {$table}.special IS NOT NULL
+                AND {$table}.special != ''
+                AND ({$table}.special_from IS NULL OR DATE({$table}.special_from) <= CURDATE())
+                AND ({$table}.special_to IS NULL OR DATE({$table}.special_to) >= CURDATE())
+            THEN {$table}.special
+            ELSE {$table}.price
+        END";
     }
 
 

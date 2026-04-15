@@ -82,7 +82,7 @@ class FilterController extends Controller
      *
      * @return array
      */
-    private function resolveCategoryArray($categories, string $type, $target = null, string $parent_slug = null): array
+    private function resolveCategoryArray($categories, string $type, $target = null, ?string $parent_slug = null): array
     {
         $response = [];
 
@@ -126,7 +126,7 @@ class FilterController extends Controller
      *
      * @return string
      */
-    private function resolveCategoryUrl($category, string $type, $target, string $parent_slug = null): string
+    private function resolveCategoryUrl($category, string $type, $target, ?string $parent_slug = null): string
     {
         if ($type == 'author') {
             return route('catalog.route.author', [
@@ -173,7 +173,7 @@ class FilterController extends Controller
         $cache_string = '';
         $request_data = $this->buildProductRequestData($params);
 
-        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'sort'] as $key) {
+        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'sort', 'price_min', 'price_max', 'preserve_order'] as $key) {
             if (isset($params[$key]) && $params[$key] !== '') {
                 $cache_string .= $key . '=' . $params[$key];
             }
@@ -334,7 +334,7 @@ class FilterController extends Controller
     {
         $request_data = [];
 
-        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'sort'] as $key) {
+        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'sort', 'price_min', 'price_max', 'preserve_order'] as $key) {
             if (in_array($key, $except, true)) {
                 continue;
             }
@@ -496,6 +496,9 @@ class FilterController extends Controller
             'condition' => (string) ($params['condition'] ?? ''),
             'binding' => (string) ($params['binding'] ?? ''),
             'letter' => (string) ($params['letter'] ?? ''),
+            'price_min' => (string) ($params['price_min'] ?? ''),
+            'price_max' => (string) ($params['price_max'] ?? ''),
+            'preserve_order' => (string) ($params['preserve_order'] ?? ''),
         ];
     }
 
