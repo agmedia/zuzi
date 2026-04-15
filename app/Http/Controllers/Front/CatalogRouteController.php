@@ -605,13 +605,13 @@ class CatalogRouteController extends Controller
         $actions = $this->resolveActiveActionLandingActions();
 
         return [
-            'title' => '7 godina ljubavi prema knjigama 💖',
-            'lead' => 'Zuzi knjižara slavi rođendan, a ti biraš poklon!',
-            'body' => 'Iskoristi rođendanske popuste i pronađi nove naslove, antikvarne dragulje i omiljene knjiške ulove po posebnim cijenama.',
+            'title' => 'Knjige na popustu 💖',
+            'lead' => '',
+            'body' => 'Iskoristi  popuste i pronađi nove naslove, antikvarne dragulje i omiljene knjiške ulove po posebnim cijenama.',
             'seo_title' => \App\Models\Seo::appendBrand('7 godina ljubavi prema knjigama 💖'),
             'seo_description' => \App\Models\Seo::description(
                 null,
-                'Zuzi knjižara slavi rođendan, a ti biraš poklon! Iskoristi rođendanske popuste i pronađi nove naslove, antikvarne dragulje i omiljene knjiške ulove po posebnim cijenama.'
+                'Iskoristi  popuste i pronađi nove naslove, antikvarne dragulje i omiljene knjiške ulove po posebnim cijenama.'
             ),
             'landing_url' => route('catalog.route.actions'),
             'promotion_start' => optional(

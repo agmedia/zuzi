@@ -241,7 +241,7 @@
             @if ($isActionListing && $actionLandingTitle)
                 <section class="birthday-landing mb-4">
                     <div class="birthday-landing__panel">
-                        <p class="birthday-landing__eyebrow">Rođendanska akcija</p>
+                        <p class="birthday-landing__eyebrow">AKCIJSKA PONUDA</p>
                         <h1 class="birthday-landing__title mb-3">{{ $actionLandingTitle }}</h1>
 
                         @if ($actionLandingLead)
@@ -251,8 +251,7 @@
                         @if ($actionLandingBody)
                             <p class="birthday-landing__body mb-2">{{ $actionLandingBody }}</p>
 
-                            <p class="birthday-landing__body mb-0">⏳ Akcija vrijedi samo do 15.4.<br>
-                                📦 BOX NOW dostava samo 0.99€</p>
+
                         @endif
 
                         @if ($actionLandingCurrentTitle)
