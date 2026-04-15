@@ -436,6 +436,10 @@
     .tns-carousel .tns-carousel-inner {
         touch-action: pan-y pinch-zoom;
     }
+
+    .widget-card-carousel .tns-item {
+        padding: 0.35rem 0.35rem 0.75rem;
+    }
 </style>
 <!-- Vendor scrits: js libraries and plugins-->
 

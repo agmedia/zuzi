@@ -41,7 +41,7 @@
         @endif
 
     </div>
-    <div class="tns-carousel widget-touch-carousel">
+    <div class="tns-carousel widget-touch-carousel widget-card-carousel">
         <div class="tns-carousel-inner" data-carousel-options='@json($productWidgetCarouselOptions)'>
             @foreach ($products as $product)
                 <!-- Product-->

@@ -39,19 +39,26 @@ class CheckUsersBirthday extends Command
      */
     public function handle(): int
     {
-        $users = UserDetail::query()->whereDate('birthday', now()->isToday())->get();
+        $users = UserDetail::query()
+            ->whereMonth('birthday', now()->month)
+            ->whereDay('birthday', now()->day)
+            ->get();
 
         foreach ($users as $user) {
-            $received_birthday_points = Loyalty::query()->where('user_id', $user->id)
-                                                        ->where('reference', 'birthday')
-                                                        ->where('target', now()->year)
-                                                        ->first();
+            $received_birthday_points = Loyalty::query()
+                ->where('user_id', $user->user_id)
+                ->where('reference', 'birthday')
+                ->where('target', (string) now()->year);
 
             if ( ! $received_birthday_points->exists()) {
-                Loyalty::addPoints(config('settings.loyalty.birthday_points'), 0, 'birthday', '', $user->id);
+                $birthday_points = intval(data_get((array) config('settings.loyalty', []), 'birthday_points', 100));
+
+                if ($birthday_points > 0) {
+                    Loyalty::addPoints($birthday_points, 0, 'birthday', '', $user->user_id);
+                }
             }
         }
 
-        return 1;
+        return self::SUCCESS;
     }
 }

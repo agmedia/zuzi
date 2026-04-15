@@ -332,6 +332,9 @@ class AgCart extends Model
         }
 
         $this->cart->clear();
+        session()->forget([$this->session_key . '_coupon', $this->session_key . '_loyalty']);
+        $this->coupon = '';
+        $this->loyalty = '';
 
         Helper::flushCache('cart', $this->cart_id);
 

@@ -244,13 +244,15 @@ class CheckoutController extends Controller
         $order = OrderHelper::get($data['order']['id']);
 
         if ($order->isValid()) {
+            $selected_loyalty = intval(session(config('session.cart') . '_loyalty', 0));
+
             app(GoogleAnalyticsService::class)->dispatchPurchaseFromRequest($order->getOrder(), $request);
 
             GiftVoucherService::fulfillOrder($order->getOrder());
 
             $order->sendEmails()
                 ->decreaseCartItems(false)
-                ->addLoyaltyPoints()
+                ->addLoyaltyPoints($selected_loyalty)
                 // ->addCustomerToMailchimp()
                 ->forgetCheckoutCache();
 

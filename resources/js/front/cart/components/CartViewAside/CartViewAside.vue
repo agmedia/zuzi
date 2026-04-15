@@ -315,7 +315,7 @@ export default {
         checkLoyalty() {
             let cart = this.$store.state.storage.getCart();
 
-            if (cart.has_loyalty > 100) {
+            if (cart.has_loyalty > 0) {
                 this.has_loyalty = true;
             }
         }

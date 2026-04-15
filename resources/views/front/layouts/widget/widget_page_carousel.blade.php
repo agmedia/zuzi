@@ -61,7 +61,7 @@
     </div>
 
     @if ($data['tablename'] == 'category')
-        <div class="tns-carousel widget-touch-carousel">
+        <div class="tns-carousel widget-touch-carousel widget-card-carousel">
             <div class="tns-carousel-inner" data-carousel-options='@json($categoryWidgetCarouselOptions)'>
                 @foreach ($data['items'] as $item)
                     <!-- Product-->
@@ -87,7 +87,7 @@
 
     @elseif ($data['tablename'] == 'reviews')
 
-        <div class="tns-carousel widget-touch-carousel">
+        <div class="tns-carousel widget-touch-carousel widget-card-carousel">
             <div class="tns-carousel-inner" data-carousel-options='@json($reviewWidgetCarouselOptions)'>
                 @foreach ($data['items'] as $review)
 
@@ -123,7 +123,7 @@
         </div>
 
     @else
-        <div class="tns-carousel pb-5 widget-touch-carousel">
+        <div class="tns-carousel pb-5 widget-touch-carousel widget-card-carousel">
             <div class="tns-carousel-inner" data-carousel-options='@json($blogWidgetCarouselOptions)'>
                 @foreach ($data['items'] as $item)
 

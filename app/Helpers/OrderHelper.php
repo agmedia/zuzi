@@ -145,16 +145,35 @@ class OrderHelper
     /**
      * @return $this
      */
-    public function addLoyaltyPoints()
+    public function addLoyaltyPoints(?int $selected_loyalty = null)
     {
         if ($this->getOrder()) {
             if ($this->order->giftVouchers()->exists()) {
                 return $this;
             }
 
+            if (Loyalty::query()->where('reference_id', $this->order_id)->exists()) {
+                return $this;
+            }
+
             // ako je kupac regan
             if (auth()->check()) {
-                $points = floor($this->order->total);
+                $selected_loyalty = is_null($selected_loyalty)
+                    ? $this->resolveSelectedLoyalty()
+                    : max(0, intval($selected_loyalty));
+                $loyalty_config = (array) config('settings.loyalty', []);
+                $points_per_euro = max(0, floatval(data_get($loyalty_config, 'points_per_euro', 1)));
+                $points = intval(floor(floatval($this->order->total) * $points_per_euro));
+
+                if ($selected_loyalty > 0 && Loyalty::calculateLoyalty($selected_loyalty) > 0) {
+                    Loyalty::removePoints(
+                        $selected_loyalty,
+                        $this->order_id,
+                        'order',
+                        auth()->id(),
+                        'Loyalty discount redemption.'
+                    );
+                }
 
                 // Dobiva bodove za narudžbu, default.
                 Loyalty::addPoints($points, $this->order_id, 'order', '', auth()->id());
@@ -162,7 +181,7 @@ class OrderHelper
                 // Provjerava ima li više narudžbi ovaj mjesec za dodatne bodove.
                 $orders = Order::query()->where('user_id', auth()->id())->whereDate('created_at', '>=', now()->subMonth())->count();
 
-                foreach (config('settings.loyalty.rewards.orders_per_month') as $number_of_orders => $reward_points) {
+                foreach ((array) config('settings.loyalty.rewards.orders_per_month', []) as $number_of_orders => $reward_points) {
                     if ($orders >= $number_of_orders) {
                         Loyalty::addPoints($reward_points, $this->order_id, 'order', $number_of_orders . ' Multiple orders reward.', auth()->id());
 
@@ -171,10 +190,17 @@ class OrderHelper
                 }
 
                 // Provjerava je li ovo prva narudžba
-                $orders = Order::query()->where('user_id', auth()->id())->count();
+                $has_previous_orders = Order::query()
+                    ->where('user_id', auth()->id())
+                    ->where('id', '!=', $this->order_id)
+                    ->exists();
 
-                if ( ! $orders) {
-                    Loyalty::addPoints(config('settings.loyalty.first_order_points'), $this->order_id, 'order', 'First order reward.', auth()->id());
+                if ( ! $has_previous_orders) {
+                    $first_order_points = intval(data_get($loyalty_config, 'first_order_points', 50));
+
+                    if ($first_order_points > 0) {
+                        Loyalty::addPoints($first_order_points, $this->order_id, 'order', 'First order reward.', auth()->id());
+                    }
                 }
             }
 
@@ -202,14 +228,16 @@ class OrderHelper
                             'active' => 1
                         ]);
 
-                        $referal_points = config('settings.loyalty.affiliate_points');
+                        $referal_points = intval(data_get((array) config('settings.loyalty', []), 'affiliate_points', 50));
                         $order_id = $this->getOrder()->id;
 
-                        Loyalty::addPoints($referal_points, $order_id, 'affiliate_referral', 'Referral reward points', $user_details->user_id);
+                        if ($referal_points > 0) {
+                            Loyalty::addPoints($referal_points, $order_id, 'affiliate_referral', 'Referral reward points', $user_details->user_id);
 
-                        // Award points to referred customer
-                        if (auth()->check()) {
-                            Loyalty::addPoints($referal_points, $order_id, 'order', 'Welcome referral points', auth()->user()->id);
+                            // Award points to referred customer
+                            if (auth()->check()) {
+                                Loyalty::addPoints($referal_points, $order_id, 'order', 'Welcome referral points', auth()->user()->id);
+                            }
                         }
                     }
                 }
@@ -219,6 +247,43 @@ class OrderHelper
         }
 
         return $this;
+    }
+
+
+    private function resolveSelectedLoyalty(): int
+    {
+        $selected_loyalty = $this->resolveSelectedLoyaltyFromOrder();
+
+        if ($selected_loyalty > 0) {
+            return $selected_loyalty;
+        }
+
+        return intval(session(config('session.cart') . '_loyalty', 0));
+    }
+
+
+    private function resolveSelectedLoyaltyFromOrder(): int
+    {
+        if (! $this->order || ! method_exists($this->order, 'totals')) {
+            return 0;
+        }
+
+        $loyalty_discount = abs(floatval($this->order->totals()
+            ->where('code', 'special')
+            ->where('title', 'Loyalty')
+            ->value('value')));
+
+        if (! $loyalty_discount) {
+            return 0;
+        }
+
+        foreach ((array) config('settings.loyalty.orders_discount', []) as $threshold => $discount) {
+            if (abs(floatval($discount) - $loyalty_discount) < 0.00001) {
+                return intval($threshold);
+            }
+        }
+
+        return 0;
     }
 
 
