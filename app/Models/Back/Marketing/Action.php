@@ -165,6 +165,50 @@ class Action extends Model
             ]);
     }
 
+    public function remove(): bool
+    {
+        $action_id = (int) $this->id;
+        $group = (string) $this->group;
+        $affected_product_ids = Product::query()
+            ->where('action_id', $action_id)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values();
+
+        return (bool) DB::transaction(function () use ($action_id, $group, $affected_product_ids) {
+            $deleted = $this->delete();
+
+            if (! $deleted) {
+                return false;
+            }
+
+            if ($affected_product_ids->isEmpty()) {
+                return true;
+            }
+
+            if ($group === 'category') {
+                foreach ($affected_product_ids as $product_id) {
+                    self::syncCategoryActionForProduct((int) $product_id);
+                }
+
+                return true;
+            }
+
+            Product::query()
+                ->whereIn('id', $affected_product_ids)
+                ->update([
+                    'action_id' => 0,
+                    'special' => null,
+                    'special_from' => null,
+                    'special_to' => null,
+                    'special_lock' => 0,
+                ]);
+
+            return true;
+        });
+    }
+
     /*******************************************************************************
      *                                Copyright : AG media                           *
      *                              email: filip@agmedia.hr                         *
@@ -424,9 +468,11 @@ class Action extends Model
         }
 
         $currentAction = null;
+        $has_stale_action_reference = (bool) $product->action_id;
 
         if ($product->action_id) {
             $currentAction = self::query()->find($product->action_id, ['id', 'group']);
+            $has_stale_action_reference = $currentAction === null;
         }
 
         $category_ids = ProductCategory::query()
@@ -450,6 +496,10 @@ class Action extends Model
         }
 
         if (! $best_action) {
+            if ($has_stale_action_reference) {
+                self::clearCategoryActionFromProduct($product_id);
+            }
+
             return;
         }
 

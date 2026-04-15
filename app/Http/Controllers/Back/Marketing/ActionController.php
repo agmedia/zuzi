@@ -127,8 +127,7 @@ class ActionController extends Controller
      */
     public function destroy(Request $request, Action $action)
     {
-        $action->deleteProductActions();
-        $destroyed = $action->delete();
+        $destroyed = $action->remove();
 
         if ($destroyed) {
             return redirect()->route('actions')->with(['success' => 'Akcija je uspjšeno izbrisana!']);
@@ -148,14 +147,17 @@ class ActionController extends Controller
     public function destroyApi(Request $request)
     {
         if ($request->has('id')) {
-            $action    = Action::query()->find($request->input('id'));
-            $destroyed = $action->delete();
+            $action = Action::query()->find($request->input('id'));
+
+            if (! $action) {
+                return response()->json(['error' => 300]);
+            }
+
+            $destroyed = $action->remove();
 
             Log::info($destroyed);
 
             if ($destroyed) {
-                $action->deleteProductActions($request->input('id'));
-
                 return response()->json(['success' => 200]);
             }
         }
