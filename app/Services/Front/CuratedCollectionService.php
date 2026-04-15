@@ -7,6 +7,7 @@ use App\Models\Seo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class CuratedCollectionService
@@ -25,6 +26,12 @@ class CuratedCollectionService
         'za najmladje',
         'za najmlađe',
     ];
+    private const HOMEPAGE_SNAPSHOT_FILE = 'app/curated-homepage-widget.json';
+
+    /**
+     * @var array<string, mixed>|null
+     */
+    private ?array $homepageSnapshot = null;
 
     /**
      * @return array<string, mixed>
@@ -87,20 +94,21 @@ class CuratedCollectionService
      */
     private function resolveHomepageCollection(string $slug): ?array
     {
-        $collection = $this->resolveCollection($slug);
+        $definitions = $this->definitions();
 
-        if (! $collection) {
+        if (! isset($definitions[$slug])) {
             return null;
         }
 
-        unset(
-            $collection['ids_json'],
-            $collection['preserve_order'],
-            $collection['default_sort'],
-            $collection['meta_pill']
-        );
+        $definition = $definitions[$slug];
+        $snapshot = $this->homepageSnapshotCollection($slug);
 
-        return $collection;
+        return array_merge($definition, [
+            'slug' => $slug,
+            'url' => route('catalog.route.curated', ['collection' => $slug]),
+            'count' => data_get($snapshot, 'count'),
+            'count_label' => data_get($snapshot, 'count_label', $definition['home_count_label'] ?? ''),
+        ]);
     }
 
 
@@ -214,7 +222,7 @@ class CuratedCollectionService
             ->whereRaw($priceSql . ' <= ?', [$definition['price_max']])
             ->count();
 
-        return array_merge($definition, [
+        $collection = array_merge($definition, [
             'slug' => $slug,
             'url' => route('catalog.route.curated', ['collection' => $slug]),
             'count' => $count,
@@ -223,6 +231,10 @@ class CuratedCollectionService
             'preserve_order' => false,
             'meta_pill' => 'Raspon se računa prema trenutačnoj prodajnoj cijeni.',
         ]);
+
+        $this->persistHomepageSnapshotCollection($slug, $count);
+
+        return $collection;
     }
 
 
@@ -234,17 +246,22 @@ class CuratedCollectionService
     {
         $rows = $this->resolveMonthlyRanking($definition['metric']);
         $ids = $rows->pluck('product_id')->values();
+        $count = $ids->count();
 
-        return array_merge($definition, [
+        $collection = array_merge($definition, [
             'slug' => $slug,
             'url' => route('catalog.route.curated', ['collection' => $slug]),
-            'count' => $ids->count(),
-            'count_label' => $this->formatCountLabel($ids->count()),
+            'count' => $count,
+            'count_label' => $this->formatCountLabel($count),
             'ids_json' => $ids->toJson(),
             'preserve_order' => true,
             'default_sort' => '',
             'meta_pill' => $definition['metric_note'] ?? 'Ažurira se prema rezultatima tekućeg mjeseca.',
         ]);
+
+        $this->persistHomepageSnapshotCollection($slug, $count);
+
+        return $collection;
     }
 
 
@@ -255,17 +272,22 @@ class CuratedCollectionService
     private function buildCanonicalCollection(string $slug, array $definition): array
     {
         $ids = $this->resolveCanonicalProductIds($definition['source'] ?? '')->values();
+        $count = $ids->count();
 
-        return array_merge($definition, [
+        $collection = array_merge($definition, [
             'slug' => $slug,
             'url' => route('catalog.route.curated', ['collection' => $slug]),
-            'count' => $ids->count(),
-            'count_label' => $this->formatCountLabel($ids->count()),
+            'count' => $count,
+            'count_label' => $this->formatCountLabel($count),
             'ids_json' => $ids->toJson(),
             'preserve_order' => true,
             'default_sort' => '',
             'meta_pill' => $definition['metric_note'] ?? 'Prikazujemo dostupne naslove iz odabranog kanona.',
         ]);
+
+        $this->persistHomepageSnapshotCollection($slug, $count);
+
+        return $collection;
     }
 
 
@@ -597,6 +619,54 @@ class CuratedCollectionService
         $value = preg_replace('/[^a-z0-9]+/', ' ', $value) ?? '';
 
         return trim($value);
+    }
+
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function homepageSnapshotCollection(string $slug): array
+    {
+        return data_get($this->homepageSnapshot(), 'collections.' . $slug, []);
+    }
+
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function homepageSnapshot(): array
+    {
+        if ($this->homepageSnapshot !== null) {
+            return $this->homepageSnapshot;
+        }
+
+        $path = storage_path(self::HOMEPAGE_SNAPSHOT_FILE);
+
+        if (! File::exists($path)) {
+            return $this->homepageSnapshot = [];
+        }
+
+        $decoded = json_decode((string) File::get($path), true);
+
+        return $this->homepageSnapshot = is_array($decoded) ? $decoded : [];
+    }
+
+
+    private function persistHomepageSnapshotCollection(string $slug, int $count): void
+    {
+        $snapshot = $this->homepageSnapshot();
+        $snapshot['collections'][$slug] = [
+            'count' => $count,
+            'count_label' => $this->formatCountLabel($count),
+            'updated_at' => now()->toAtomString(),
+        ];
+        $snapshot['updated_at'] = now()->toAtomString();
+
+        $path = storage_path(self::HOMEPAGE_SNAPSHOT_FILE);
+        File::ensureDirectoryExists(dirname($path));
+        File::put($path, json_encode($snapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        $this->homepageSnapshot = $snapshot;
     }
 
 

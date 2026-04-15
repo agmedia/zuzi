@@ -18,6 +18,7 @@ use App\Services\Front\CuratedCollectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Intervention\Image\Facades\Image;
@@ -26,6 +27,8 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class HomeController extends Controller
 {
+    private const HOMEPAGE_DESCRIPTION_SNAPSHOT_FILE = 'app/homepage-description-snapshot.json';
+
     /**
      * Display a listing of the resource.
      *
@@ -38,20 +41,11 @@ class HomeController extends Controller
         });
 
         $homeSalesWidget = view('front.layouts.partials.home-sales-widget', $curatedCollectionService->homepageWidgetData())->render();
-        $description = (string) ($page->description ?? '');
-
-        if (str_contains($description, '++slider-index++')) {
-            $description = preg_replace('/\+\+slider-index\+\+/', '++slider-index++<!--home-sales-widget-->', $description, 1) ?: $description;
-        } else {
-            $description = '<!--home-sales-widget-->' . $description;
-        }
-
-        $page->description = \App\Helpers\Helper::setDescription(
-            $description,
-            ['short_description' => $page->short_description ?? '']
+        $page->description = str_replace(
+            '<!--home-sales-widget-->',
+            $homeSalesWidget,
+            $this->resolveHomepageDescriptionSnapshot($page)
         );
-
-        $page->description = str_replace('<!--home-sales-widget-->', $homeSalesWidget, $page->description);
 
         return view('front.page', compact('page'));
     }
@@ -357,6 +351,48 @@ class HomeController extends Controller
         return response()->view('front.layouts.partials.xmlexport', [
             'items' => $xmlexport->getItems()
         ])->header('Content-Type', 'text/xml');
+    }
+
+
+    private function resolveHomepageDescriptionSnapshot(Page $page): string
+    {
+        $signature = sha1(implode('|', [
+            (string) $page->id,
+            (string) (optional($page->updated_at)->timestamp ?? 0),
+            md5((string) ($page->description ?? '')),
+            md5((string) ($page->short_description ?? '')),
+        ]));
+        $path = storage_path(self::HOMEPAGE_DESCRIPTION_SNAPSHOT_FILE);
+
+        if (File::exists($path)) {
+            $snapshot = json_decode((string) File::get($path), true);
+
+            if (is_array($snapshot) && data_get($snapshot, 'signature') === $signature && is_string(data_get($snapshot, 'html'))) {
+                return (string) $snapshot['html'];
+            }
+        }
+
+        $description = (string) ($page->description ?? '');
+
+        if (str_contains($description, '++slider-index++')) {
+            $description = preg_replace('/\+\+slider-index\+\+/', '++slider-index++<!--home-sales-widget-->', $description, 1) ?: $description;
+        } else {
+            $description = '<!--home-sales-widget-->' . $description;
+        }
+
+        $html = \App\Helpers\Helper::setDescription(
+            $description,
+            ['short_description' => $page->short_description ?? '']
+        );
+
+        File::ensureDirectoryExists(dirname($path));
+        File::put($path, json_encode([
+            'signature' => $signature,
+            'html' => $html,
+            'updated_at' => now()->toAtomString(),
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        return $html;
     }
 
 }
