@@ -105,7 +105,13 @@
             <section class="col-lg-8">
                 <!-- Toolbar-->
                 <div class="d-none d-lg-flex justify-content-between align-items-center pt-lg-3 pb-4 pb-lg-5 mb-lg-3">
-                    <h6 class="fs-base text-primary mb-0">Pogledajte povijest svoji narudžbi:</h6><a class="btn btn-primary btn-sm" href="{{ route('logout') }}"><i class="ci-sign-out me-2"></i>Odjava</a>
+                    <h6 class="fs-base text-primary mb-0">Pogledajte povijest svoji narudžbi:</h6>
+                    <form action="{{ route('logout') }}" method="POST" class="mb-0">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="ci-sign-out me-2"></i>Odjava
+                        </button>
+                    </form>
                 </div>
                 <!-- Orders list-->
                 <div class="table-responsive fs-md mb-4">

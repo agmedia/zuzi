@@ -15,7 +15,13 @@
             <section class="col-lg-8">
                 <!-- Toolbar-->
                 <div class="d-none d-lg-flex justify-content-between align-items-center pt-lg-1 pb-4 pb-lg-1 mb-lg-0">
-                    <h6 class="fs-base text-primary mb-0">{{ __('front/cart.pogledajte_povijest_loyalty') }} :</h6><a class="btn btn-primary btn-sm" href="{{ route('logout') }}"><i class="ci-sign-out me-2"></i>{{ __('front/cart.odjava') }}</a>
+                    <h6 class="fs-base text-primary mb-0">{{ __('front/cart.pogledajte_povijest_loyalty') }} :</h6>
+                    <form action="{{ route('logout') }}" method="POST" class="mb-0">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="ci-sign-out me-2"></i>{{ __('front/cart.odjava') }}
+                        </button>
+                    </form>
                 </div>
 
                 <div class="d-none d-lg-flex align-items-start pt-lg-3 pb-1 pb-lg-1 mb-lg-2">

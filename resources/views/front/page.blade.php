@@ -607,6 +607,8 @@
 
 @section('content')
 
+    @include('front.layouts.partials.session')
+
     @if (request()->routeIs(['index']))
 
 

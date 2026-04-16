@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Helpers\OrderHelper;
 use App\Models\Back\Orders\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -17,6 +18,11 @@ class StatusPaid extends Mailable
      */
     public $order;
 
+    /**
+     * @var array<string, mixed>|null
+     */
+    public $loyaltyMailData;
+
 
     /**
      * Create a new message instance.
@@ -26,6 +32,7 @@ class StatusPaid extends Mailable
     public function __construct(Order $order)
     {
         $this->order = $order;
+        $this->loyaltyMailData = OrderHelper::resolveLoyaltyMailData($order);
     }
 
 

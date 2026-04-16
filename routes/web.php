@@ -33,7 +33,10 @@ use App\Http\Controllers\Front\CheckoutController;
 use App\Http\Controllers\Front\CustomerController;
 use App\Http\Controllers\Front\GiftVoucherController;
 use App\Http\Controllers\Front\HomeController;
+use App\Http\Responses\LogoutResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Back\Marketing\WishlistController;
 
 
@@ -356,6 +359,14 @@ Route::prefix('api/v2')->group(function () {
  * FRONT ROUTES
  */
 Route::get('/', [HomeController::class, 'index'])->middleware('affiliate.track')->name('index');
+Route::get('/logout', function (Request $request) {
+    Auth::guard('web')->logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->route('index')->with('success', LogoutResponse::MESSAGE);
+});
 Route::get('/kontakt', [HomeController::class, 'contact'])->name('kontakt');
 Route::post('/kontakt/posalji', [HomeController::class, 'sendContactMessage'])->name('poruka');
 Route::get('/faq', [CatalogRouteController::class, 'faq'])->name('faq');

@@ -22,6 +22,7 @@
                 @include('emails.layouts.partials.order-price-table', ['order' => $order])
             </td>
         </tr>
+        @include('emails.layouts.partials.loyalty-summary', ['loyaltyMailData' => $loyaltyMailData, 'context' => 'status-paid'])
         <tr>
             <td class="ag-mail-tableset">
                 {{ __('Način plaćanja') }}:

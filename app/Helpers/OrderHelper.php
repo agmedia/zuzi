@@ -321,6 +321,37 @@ class OrderHelper
         return $this;
     }
 
+
+    /**
+     * Resolve loyalty data for transactional mails.
+     */
+    public static function resolveLoyaltyMailData(Order $order): ?array
+    {
+        $user_id = intval($order->user_id);
+
+        if (! $user_id || $order->giftVouchers()->exists()) {
+            return null;
+        }
+
+        $earned = intval(Loyalty::query()
+            ->where('user_id', $user_id)
+            ->where('reference_id', $order->id)
+            ->sum('earned'));
+
+        $spent = intval(Loyalty::query()
+            ->where('user_id', $user_id)
+            ->where('reference_id', $order->id)
+            ->sum('spend'));
+
+        return [
+            'earned' => $earned,
+            'spent' => $spent,
+            'url' => route('loyalty'),
+            'is_paid' => intval($order->order_status_id) === intval(config('settings.order.status.paid'))
+                || in_array((string) $order->payment_code, ['corvus', 'payway', 'wspay'], true),
+        ];
+    }
+
     /*******************************************************************************
      *                                Copyright : AGmedia                           *
      *                              email: filip@agmedia.hr                         *

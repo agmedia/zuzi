@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Console\Commands\CheckUsersBirthday;
 use App\Helpers\OrderHelper;
+use App\Mail\OrderSent;
 use App\Models\Back\Orders\Order as AdminOrder;
 use App\Models\Front\Loyalty;
 use App\Models\User;
@@ -39,6 +40,7 @@ class LoyaltyProgramTest extends TestCase
             200 => 12,
             100 => 5,
         ]);
+        config()->set('settings.order.status.paid', 3);
 
         DB::purge('sqlite');
         DB::reconnect('sqlite');
@@ -137,14 +139,68 @@ class LoyaltyProgramTest extends TestCase
             ->count());
     }
 
-    private function createOrder(User $user, float $total, $createdAt = null): AdminOrder
+    public function test_registered_order_email_contains_loyalty_points_and_account_link(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        $order = $this->createOrder(
+            $user,
+            25,
+            now(),
+            config('settings.order.status.paid'),
+            'corvus'
+        );
+
+        (new OrderHelper($order->id))->addLoyaltyPoints();
+
+        $html = (new OrderSent($order->fresh()))->render();
+
+        $this->assertStringContainsString('75 Loyalty bodova', $html);
+        $this->assertStringContainsString('/moj-racun/loyalty', $html);
+        $this->assertStringContainsString('Ovom narudžbom ostvarili ste', $html);
+    }
+
+    public function test_user_get_affiliate_link_generates_missing_affiliate_name(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Ana Maric',
+        ]);
+
+        UserDetail::query()->create([
+            'user_id' => $user->id,
+            'fname' => 'Ana',
+            'lname' => 'Maric',
+            'role' => 'customer',
+            'affiliate_name' => null,
+        ]);
+
+        $affiliateLink = $user->fresh()->getAffiliateLink();
+
+        $this->assertNotEmpty($affiliateLink);
+        $this->assertStringStartsWith('ana', $affiliateLink);
+        $this->assertDatabaseHas('user_details', [
+            'user_id' => $user->id,
+            'affiliate_name' => $affiliateLink,
+        ]);
+    }
+
+    private function createOrder(
+        User $user,
+        float $total,
+        $createdAt = null,
+        ?int $status = null,
+        string $paymentCode = 'cod'
+    ): AdminOrder
     {
         $createdAt = $createdAt ?: now();
+        $status = $status ?: 1;
 
         return AdminOrder::query()->create([
             'user_id' => $user->id,
             'affiliate_id' => 0,
-            'order_status_id' => 1,
+            'order_status_id' => $status,
             'invoice' => '',
             'total' => $total,
             'payment_fname' => 'Test',
@@ -155,7 +211,7 @@ class LoyaltyProgramTest extends TestCase
             'payment_phone' => '',
             'payment_email' => $user->email,
             'payment_method' => 'Plaćanje pouzećem',
-            'payment_code' => 'cod',
+            'payment_code' => $paymentCode,
             'payment_card' => '',
             'payment_installment' => 0,
             'shipping_fname' => 'Test',
@@ -193,6 +249,7 @@ class LoyaltyProgramTest extends TestCase
             $table->unsignedBigInteger('user_id');
             $table->string('fname');
             $table->string('lname')->nullable();
+            $table->string('affiliate_name')->nullable();
             $table->dateTime('birthday')->nullable();
             $table->string('role');
             $table->timestamps();
@@ -247,6 +304,19 @@ class LoyaltyProgramTest extends TestCase
             $table->string('title');
             $table->decimal('value', 15, 4)->default(0);
             $table->integer('sort_order')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::create('order_products', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('order_id')->index();
+            $table->unsignedBigInteger('product_id')->default(0);
+            $table->string('name')->nullable();
+            $table->integer('quantity')->default(0);
+            $table->decimal('org_price', 15, 4)->default(0);
+            $table->decimal('discount', 15, 4)->nullable();
+            $table->decimal('price', 15, 4)->default(0);
+            $table->decimal('total', 15, 4)->default(0);
             $table->timestamps();
         });
 
