@@ -15,6 +15,7 @@ class CuratedCollectionService
     private const EXCLUDED_ORDER_STATUSES = [5, 7, 8];
     private const MONTHLY_RANKING_LIMIT = 480;
     private const CANONICAL_MIN_SCORE = 140;
+    private const CANONICAL_SEED_MIN_COVERAGE = 0.5;
     private const EXCLUDED_TITLE_PATTERNS = [
         '%Hitler Adolf%',
     ];
@@ -415,7 +416,25 @@ class CuratedCollectionService
      */
     private function resolveCanonicalProductIds(string $source): Collection
     {
-        $sourceConfig = config('curated_sources.' . $source, []);
+        $sourceConfig = array_merge(
+            config('curated_sources.' . $source, []),
+            config('curated_source_seeds.' . $source, [])
+        );
+        $seedIds = $this->resolveSeededCanonicalProductIds($sourceConfig);
+
+        if ($seedIds->isNotEmpty()) {
+            $seedSlugCount = collect(data_get($sourceConfig, 'seed_slugs', []))
+                ->filter()
+                ->count();
+
+            if (
+                $seedSlugCount === 0
+                || ($seedIds->count() / $seedSlugCount) >= self::CANONICAL_SEED_MIN_COVERAGE
+            ) {
+                return $seedIds;
+            }
+        }
+
         $books = collect(data_get($sourceConfig, 'books', []))
             ->merge(data_get($sourceConfig, 'supplemental_books', []));
 
@@ -443,6 +462,36 @@ class CuratedCollectionService
                 return (int) $match->id;
             })
             ->filter()
+            ->values();
+    }
+
+
+    /**
+     * @param  array<string, mixed>  $sourceConfig
+     * @return Collection<int, int>
+     */
+    private function resolveSeededCanonicalProductIds(array $sourceConfig): Collection
+    {
+        $seedSlugs = collect(data_get($sourceConfig, 'seed_slugs', []))
+            ->map(fn ($slug) => trim((string) $slug))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($seedSlugs->isEmpty()) {
+            return collect();
+        }
+
+        $seededProducts = Product::query()
+            ->active()
+            ->hasStock()
+            ->whereIn('slug', $seedSlugs)
+            ->pluck('id', 'slug');
+
+        return $seedSlugs
+            ->map(fn (string $slug) => $seededProducts->get($slug))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
             ->values();
     }
 
