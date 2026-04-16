@@ -107,13 +107,37 @@ class Settings extends Model
      */
     public static function frontApiDefaults(): array
     {
-        return [
+        return static::normalizeFrontApiPayload([
             'currency.list' => static::fallbackCurrencyList()->values()->map(fn ($item) => json_decode(json_encode($item), true))->all(),
             'geo_zone.list' => static::fallbackGeoZones()->values()->map(fn ($item) => json_decode(json_encode($item), true))->all(),
             'payment.list' => static::fallbackPaymentMethods(false)->values()->map(fn ($item) => json_decode(json_encode($item), true))->all(),
             'shipping.list' => static::fallbackShippingMethods(false)->values()->map(fn ($item) => json_decode(json_encode($item), true))->all(),
             'tax.list' => static::fallbackTaxes()->values()->map(fn ($item) => json_decode(json_encode($item), true))->all(),
-        ];
+        ]);
+    }
+
+    /**
+     * Ensure frontend settings payloads do not expose inactive currencies.
+     */
+    public static function normalizeFrontApiPayload(array $payload): array
+    {
+        if (! isset($payload['currency.list']) || ! is_array($payload['currency.list'])) {
+            return $payload;
+        }
+
+        $payload['currency.list'] = array_values(array_filter($payload['currency.list'], function ($item) {
+            if (is_array($item)) {
+                return (bool) ($item['status'] ?? true);
+            }
+
+            if (is_object($item)) {
+                return (bool) ($item->status ?? true);
+            }
+
+            return true;
+        }));
+
+        return $payload;
     }
 
     /*******************************************************************************
@@ -348,7 +372,7 @@ class Settings extends Model
                 'symbol_right' => ' kn',
                 'decimal_places' => 2,
                 'main' => false,
-                'status' => true,
+                'status' => false,
                 'sort_order' => 2,
             ],
         ]);

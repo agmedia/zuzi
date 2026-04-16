@@ -8,6 +8,8 @@ use Illuminate\Support\Collection;
 
 class ProductRecommendationService
 {
+    private array $productImageDimensions = [];
+
     public function forCartItems(Collection $cartItems, int $limit = 10): Collection
     {
         $seedProductIds = $cartItems->map(fn ($item) => (int) data_get($item, 'id'))
@@ -16,6 +18,68 @@ class ProductRecommendationService
             ->values();
 
         return $this->forProductIds($seedProductIds, $limit);
+    }
+
+
+    public function randomBookmarkersForCart(Collection $cartItems, int $limit = 10): Collection
+    {
+        $excludedProductIds = $cartItems->map(fn ($item) => (int) data_get($item, 'id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $this->randomBookmarkers($excludedProductIds, $limit);
+    }
+
+
+    public function randomBookmarkers(?Collection $excludedProductIds = null, int $limit = 10): Collection
+    {
+        $excludedProductIds = ($excludedProductIds ?: collect())
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $bookmarkers = collect();
+        $seenProductIds = $excludedProductIds->values();
+        $attempts = 0;
+
+        while ($bookmarkers->count() < $limit && $attempts < 4) {
+            $batch = Product::query()
+                ->active()
+                ->hasStock()
+                ->hasImage()
+                ->with(['author', 'action', 'categories'])
+                ->withReviewSummary()
+                ->whereNotIn('id', $seenProductIds)
+                ->whereHas('categories', function ($query) {
+                    $query->where('slug', 'bookmarkeri');
+                })
+                ->inRandomOrder()
+                ->limit(max($limit * 4, 24))
+                ->get();
+
+            if ($batch->isEmpty()) {
+                break;
+            }
+
+            $seenProductIds = $seenProductIds->merge($batch->pluck('id'))
+                ->map(fn ($id) => (int) $id)
+                ->filter()
+                ->unique()
+                ->values();
+
+            $portraitBookmarkers = $batch->filter(fn (Product $product) => $this->isVerticalBookmarkerCandidate($product));
+
+            $bookmarkers = $bookmarkers->concat($portraitBookmarkers)
+                ->unique('id')
+                ->take($limit)
+                ->values();
+
+            $attempts++;
+        }
+
+        return $bookmarkers->values();
     }
 
 
@@ -120,7 +184,7 @@ class ProductRecommendationService
             ->active()
             ->hasStock()
             ->hasImage()
-            ->with(['author', 'action'])
+            ->with(['author', 'action', 'categories'])
             ->withReviewSummary()
             ->whereNotIn('id', $excludedIds)
             ->where(function ($query) {
@@ -229,7 +293,7 @@ class ProductRecommendationService
             ->active()
             ->hasStock()
             ->hasImage()
-            ->with(['author', 'action'])
+            ->with(['author', 'action', 'categories'])
             ->withReviewSummary()
             ->whereIn('id', $candidateIds)
             ->get()
@@ -245,5 +309,91 @@ class ProductRecommendationService
         $resolvedPrice = (float) $product->special();
 
         return $resolvedPrice >= 10.0 && $resolvedPrice <= 15.0;
+    }
+
+
+    private function hasPortraitImage(Product $product): bool
+    {
+        [$width, $height] = $this->resolveProductImageDimensions($product);
+
+        if (! $width || ! $height) {
+            return false;
+        }
+
+        return $height > $width;
+    }
+
+
+    private function isVerticalBookmarkerCandidate(Product $product): bool
+    {
+        if ($this->hasPortraitImage($product)) {
+            return true;
+        }
+
+        $normalizedName = strtolower(trim((string) $product->name));
+
+        if ($normalizedName === '') {
+            return false;
+        }
+
+        if (str_starts_with($normalizedName, '3d bookmark')) {
+            return false;
+        }
+
+        return str_starts_with($normalizedName, 'bookmarker');
+    }
+
+
+    private function resolveProductImageDimensions(Product $product): array
+    {
+        $imagePath = $this->resolveProductImagePath($product);
+
+        if (! $imagePath) {
+            return [0, 0];
+        }
+
+        if (isset($this->productImageDimensions[$imagePath])) {
+            return $this->productImageDimensions[$imagePath];
+        }
+
+        if (! is_file($imagePath)) {
+            return $this->productImageDimensions[$imagePath] = [0, 0];
+        }
+
+        $dimensions = @getimagesize($imagePath);
+
+        if (! $dimensions || count($dimensions) < 2) {
+            return $this->productImageDimensions[$imagePath] = [0, 0];
+        }
+
+        return $this->productImageDimensions[$imagePath] = [
+            (int) $dimensions[0],
+            (int) $dimensions[1],
+        ];
+    }
+
+
+    private function resolveProductImagePath(Product $product): ?string
+    {
+        $resolvedImageUrl = trim((string) $product->image);
+        $resolvedImagePath = $resolvedImageUrl !== '' ? parse_url($resolvedImageUrl, PHP_URL_PATH) : null;
+
+        if (is_string($resolvedImagePath) && $resolvedImagePath !== '') {
+            return public_path(ltrim($resolvedImagePath, '/'));
+        }
+
+        $storedImagePath = trim((string) $product->getRawOriginal('image'));
+
+        if ($storedImagePath === '') {
+            return null;
+        }
+
+        $webpRelativePath = preg_replace('/\.[^.]+$/', '.webp', parse_url($storedImagePath, PHP_URL_PATH) ?: $storedImagePath);
+
+        if (! $webpRelativePath) {
+            return null;
+        }
+
+        return public_path(ltrim($webpRelativePath, '/'));
     }
 }

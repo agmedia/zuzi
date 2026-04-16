@@ -2,6 +2,14 @@
     @php
         $reviewsCount = (int) ($product->reviews_count ?? 0);
         $reviewsAverage = $reviewsCount ? round((float) ($product->reviews_avg_stars ?? 0), 1) : 0;
+        $productCategories = $product->relationLoaded('categories') ? $product->categories : collect();
+        $isBookmarkerProduct = $productCategories->contains(function ($category) {
+            return (string) data_get($category, 'slug') === 'bookmarkeri';
+        });
+        $productImage = $isBookmarkerProduct ? $product->image : str_replace('.webp', '-thumb.webp', $product->image);
+        $productImageAlt = $isBookmarkerProduct ? 'Fotografija proizvoda ' . $product->name : 'Naslovnica knjige ' . $product->name;
+        $bookmarkerImageLinkStyle = $isBookmarkerProduct ? 'display:flex;align-items:center;justify-content:center;min-height:15rem;padding:.75rem .5rem;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);' : '';
+        $bookmarkerImageStyle = $isBookmarkerProduct ? 'display:block;width:auto;height:auto;max-width:100%;max-height:15rem;margin:0 auto;object-fit:contain;object-position:center;' : '';
     @endphp
 
     <div class="card product-card shadow pb-2 position-relative">
@@ -17,8 +25,8 @@
                 </span>
             @endif
         </div>
-        <a class="card-img-top d-block overflow-hidden text-center" href="{{ url($product->url) }}">
-            <img loading="lazy" src="{{ str_replace('.webp','-thumb.webp', $product->image) }}" width="250" height="300" alt="Naslovnica knjige {{ $product->name }}">
+        <a class="card-img-top d-block overflow-hidden text-center" href="{{ url($product->url) }}" @if($bookmarkerImageLinkStyle) style="{{ $bookmarkerImageLinkStyle }}" @endif>
+            <img loading="lazy" src="{{ $productImage }}" width="250" height="300" alt="{{ $productImageAlt }}" @if($bookmarkerImageStyle) style="{{ $bookmarkerImageStyle }}" @endif>
         </a>
         <div class="card-body pt-2" style="min-height: 120px;">
 
@@ -26,6 +34,8 @@
                 <div class="text-muted fs-xs me-1">
                     @if($product->author)
                         <a class="product-meta fw-medium" href="{{ $product->author->url }}">{{ $product->author->title }}</a>
+                    @elseif($isBookmarkerProduct)
+                        <span class="product-meta fw-medium">Bookmarker</span>
                     @else
                         <span class="product-meta fw-medium">Nepoznat autor</span>
                     @endif

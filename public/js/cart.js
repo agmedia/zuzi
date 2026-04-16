@@ -2709,6 +2709,31 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2718,7 +2743,15 @@ __webpack_require__.r(__webpack_exports__);
       type: Boolean,
       "default": true
     },
-    route: String
+    route: String,
+    bookmarkersTarget: {
+      type: String,
+      "default": 'cart-bookmarkers'
+    },
+    showBookmarkerPromo: {
+      type: Boolean,
+      "default": false
+    }
   },
   data: function data() {
     return {
@@ -2729,6 +2762,7 @@ __webpack_require__.r(__webpack_exports__);
       codeInput: '',
       couponSubmitting: false,
       showCouponPanel: false,
+      showLoyaltyPanel: false,
       has_loyalty: false,
       selected_loyalty: 0,
       tax: 0
@@ -2740,6 +2774,28 @@ __webpack_require__.r(__webpack_exports__);
     },
     hasGiftVoucher: function hasGiftVoucher() {
       return !!this.$store.state.cart.has_gift_voucher;
+    },
+    hasActiveLoyaltySelection: function hasActiveLoyaltySelection() {
+      return Number(this.selected_loyalty || 0) > 0;
+    },
+    hasSecondaryCurrency: function hasSecondaryCurrency() {
+      var settings = this.$store.state.settings || {};
+      var currencyList = Array.isArray(settings['currency.list']) ? settings['currency.list'] : [];
+      return currencyList.some(function (item) {
+        return item && item.status !== false && !item.main;
+      });
+    },
+    visibleDetailConditions: function visibleDetailConditions() {
+      var conditions = Array.isArray(this.$store.state.cart.detail_con) ? this.$store.state.cart.detail_con : [];
+      return conditions.filter(function (condition) {
+        if (!condition) {
+          return false;
+        }
+        if (String(condition.name || '').toLowerCase() !== 'loyalty') {
+          return true;
+        }
+        return Number(condition.value || 0) !== 0;
+      });
     }
   },
   mounted: function mounted() {
@@ -2791,6 +2847,9 @@ __webpack_require__.r(__webpack_exports__);
      */
     checkIfEmpty: function checkIfEmpty() {
       var cart = this.$store.state.storage.getCart();
+      if (!cart) {
+        return;
+      }
 
       // Check coupon
       if (cart && cart.coupon != '' && cart.coupon != 'null') {
@@ -2801,6 +2860,7 @@ __webpack_require__.r(__webpack_exports__);
       // Check loyalty
       if (cart.loyalty != '' && cart.loyalty != 'null') {
         this.selected_loyalty = cart.loyalty;
+        this.showLoyaltyPanel = Number(cart.loyalty || 0) > 0;
       }
       if (cart && !cart.count && window.location.pathname != '/kosarica') {
         window.location.href = '/kosarica';
@@ -2836,13 +2896,29 @@ __webpack_require__.r(__webpack_exports__);
     toggleCouponPanel: function toggleCouponPanel() {
       this.showCouponPanel = !this.showCouponPanel;
     },
+    toggleLoyaltyPanel: function toggleLoyaltyPanel() {
+      this.showLoyaltyPanel = !this.showLoyaltyPanel;
+    },
+    scrollToBookmarkers: function scrollToBookmarkers() {
+      var target = document.getElementById(this.bookmarkersTarget);
+      if (!target) {
+        window.location.hash = this.bookmarkersTarget;
+        return;
+      }
+      target.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start'
+      });
+    },
     setLoyalty: function setLoyalty() {
       var cart = this.$store.state.storage.getCart();
       cart.loyalty = this.selected_loyalty;
+      this.showLoyaltyPanel = true;
       this.updateLoyalty();
     },
     clearLoyalty: function clearLoyalty() {
       this.selected_loyalty = null;
+      this.showLoyaltyPanel = false;
       this.updateLoyalty();
     },
     /**
@@ -2866,7 +2942,7 @@ __webpack_require__.r(__webpack_exports__);
      */
     checkLoyalty: function checkLoyalty() {
       var cart = this.$store.state.storage.getCart();
-      if (cart.has_loyalty > 100) {
+      if (cart && cart.has_loyalty > 0) {
         this.has_loyalty = true;
       }
     }
@@ -3867,6 +3943,10 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     group: String,
     cat: String,
     subcat: String,
+    categorySlug: {
+      type: String,
+      "default": ''
+    },
     author: String,
     publisher: String,
     priceMin: {
@@ -3942,6 +4022,12 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     },
     hasActiveToolbarFilters: function hasActiveToolbarFilters() {
       return this.autor || this.nakladnik || this.start || this.end || this.condition || this.binding || this.letter;
+    },
+    normalizedCategorySlug: function normalizedCategorySlug() {
+      return String(this.categorySlug || '').trim().toLowerCase();
+    },
+    isBookmarkerListing: function isBookmarkerListing() {
+      return this.normalizedCategorySlug === 'bookmarkeri';
     },
     selectedAuthorTitle: function selectedAuthorTitle() {
       var _this2 = this;
@@ -4204,6 +4290,20 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         params.nakladnik = this.publisher;
       }
       return params;
+    },
+    /**
+     *
+     * @param product
+     * @return {string}
+     */
+    resolveProductImage: function resolveProductImage(product) {
+      if (!product || !product.image) {
+        return '';
+      }
+      if (this.isBookmarkerListing) {
+        return product.image;
+      }
+      return product.image.replace('.webp', '-thumb.webp');
     },
     /**
      *
@@ -4734,14 +4834,11 @@ var AgService = /*#__PURE__*/function () {
   }, {
     key: "formatMainPrice",
     value: function formatMainPrice(price) {
-      var _this8 = this;
       if (!store.state.settings) {
-        this.getSettings().then(function (response) {
-          return _this8.resolvePrice(response['currency.list'], price);
-        });
-      } else {
-        return this.resolvePrice(store.state.settings['currency.list'], price);
+        this.getSettings();
+        return Number(price).toFixed(2) + ' €';
       }
+      return this.resolvePrice(store.state.settings['currency.list'], price);
     }
 
     /**
@@ -4756,9 +4853,11 @@ var AgService = /*#__PURE__*/function () {
     value: function resolvePrice(currency_list, price) {
       var main = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       if (!Array.isArray(currency_list) || !currency_list.length) {
-        return Number(price).toFixed(2) + (main ? ' €' : '');
+        return main ? Number(price).toFixed(2) + ' €' : '';
       }
-      var list = currency_list;
+      var list = currency_list.filter(function (item) {
+        return item && item.status !== false;
+      });
       var main_currency = {};
       list.forEach(function (item) {
         if (main) {
@@ -4773,7 +4872,7 @@ var AgService = /*#__PURE__*/function () {
         }
       });
       if (typeof main_currency.value === 'undefined') {
-        return Number(price).toFixed(2) + (main ? ' €' : '');
+        return main ? Number(price).toFixed(2) + ' €' : '';
       }
       var left = main_currency.symbol_left ? main_currency.symbol_left + '' : '';
       var right = main_currency.symbol_right ? '' + main_currency.symbol_right : '';
@@ -4789,14 +4888,11 @@ var AgService = /*#__PURE__*/function () {
   }, {
     key: "formatSecondaryPrice",
     value: function formatSecondaryPrice(price) {
-      var _this9 = this;
       if (!store.state.settings) {
-        this.getSettings().then(function (response) {
-          return _this9.resolvePrice(response['currency.list'], price, false);
-        });
-      } else {
-        return this.resolvePrice(store.state.settings['currency.list'], price, false);
+        this.getSettings();
+        return '';
       }
+      return this.resolvePrice(store.state.settings['currency.list'], price, false);
     }
 
     /**
@@ -5095,7 +5191,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.coupon-toggle {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    gap: 1rem;\n}\n.coupon-toggle__content {\n    flex: 1 1 auto;\n    min-width: 0;\n}\n.coupon-toggle__action {\n    flex: 0 0 auto;\n    white-space: nowrap;\n    padding-top: 0.15rem;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.coupon-toggle {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    gap: 1rem;\n}\n.coupon-toggle__content {\n    flex: 1 1 auto;\n    min-width: 0;\n}\n.coupon-toggle__action {\n    flex: 0 0 auto;\n    white-space: nowrap;\n    padding-top: 0.15rem;\n}\n.cart-bookmarker-promo {\n    background:\n        radial-gradient(circle at top right, rgba(229, 0, 119, 0.08), transparent 38%),\n        linear-gradient(180deg, #fff 0%, #fff8fc 100%);\n}\n.cart-bookmarker-promo__eyebrow {\n    display: inline-flex;\n    align-items: center;\n    margin-bottom: 0.75rem;\n    color: #e50077;\n    font-size: 0.8rem;\n    font-weight: 700;\n    letter-spacing: 0.04em;\n    text-transform: uppercase;\n}\n.cart-bookmarker-promo__title {\n    margin-bottom: 0.65rem;\n    color: #2b3445;\n    font-size: 1.15rem;\n    line-height: 1.3;\n}\n.cart-bookmarker-promo__text {\n    color: #5f6c82;\n    font-size: 0.95rem;\n    line-height: 1.5;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -5119,7 +5215,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.catalog-toolbar__desktop {\n    gap: 1rem;\n    min-width: 0;\n}\n.catalog-toolbar__filters {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 1 1 auto;\n    min-width: 0;\n}\n.catalog-toolbar__filter-scroll {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 0 1 auto;\n    min-width: 0;\n    overflow-x: auto;\n    padding-bottom: 0.15rem;\n}\n.catalog-toolbar__filter-scroll::-webkit-scrollbar {\n    height: 6px;\n}\n.catalog-toolbar__filter-scroll::-webkit-scrollbar-thumb {\n    background: rgba(148, 163, 184, 0.45);\n    border-radius: 999px;\n}\n.catalog-toolbar__select {\n    min-width: 150px;\n    min-height: 46px;\n    padding: 0.7rem 2.85rem 0.7rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background-color: #fff;\n    background-image:\n        url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235f6c82' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\"),\n        linear-gradient(180deg, #ffffff 0%, #ffffff 100%);\n    background-repeat: no-repeat, no-repeat;\n    background-position: right 1rem center, center;\n    background-size: 0.95rem, 100% 100%;\n    box-shadow: none;\n    color: #334155;\n    font-weight: 500;\n    -moz-appearance: none;\n         appearance: none;\n    -webkit-appearance: none;\n    transition: border-color 0.2s ease;\n}\n.catalog-toolbar__select:hover,\n.catalog-toolbar__select:focus {\n    border-color: #bfcada;\n    box-shadow: none;\n}\n.catalog-toolbar__select:focus {\n    outline: none;\n}\n.catalog-toolbar__select--sort {\n    min-width: 170px;\n}\n.catalog-toolbar__author-select {\n    position: relative;\n    flex: 0 0 150px;\n    min-width: 150px;\n    max-width: 150px;\n}\n.catalog-toolbar__author-select--mobile {\n    flex: 1 1 auto;\n    min-width: 100%;\n    max-width: none;\n}\n.catalog-toolbar__author-trigger {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    width: 100%;\n    min-height: 46px;\n    padding: 0.7rem 0.95rem 0.7rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n    color: #334155;\n    font-size: 0.875rem;\n    font-weight: 500;\n    line-height: 1.25;\n    text-align: left;\n}\n.catalog-toolbar__author-trigger:focus,\n.catalog-toolbar__author-trigger:hover {\n    border-color: #bfcada;\n    box-shadow: none;\n    outline: none;\n}\n.catalog-toolbar__author-trigger-label {\n    display: block;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    padding-right: 0.75rem;\n}\n.catalog-toolbar__author-trigger-icon {\n    flex: 0 0 auto;\n    width: 0.95rem;\n    height: 0.95rem;\n    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235f6c82' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\");\n    background-repeat: no-repeat;\n    background-position: center;\n    background-size: contain;\n}\n.catalog-toolbar__author-panel {\n    position: absolute;\n    top: calc(100% + 0.35rem);\n    left: 0;\n    z-index: 30;\n    width: 280px;\n    max-width: min(280px, calc(100vw - 2rem));\n    padding: 0.65rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n}\n.catalog-toolbar__author-panel--mobile {\n    position: static;\n    width: 100%;\n    max-width: none;\n    margin-top: 0.35rem;\n}\n.catalog-toolbar__author-search {\n    min-height: 38px;\n    margin-bottom: 0.5rem;\n    padding: 0.45rem 0.75rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    box-shadow: none !important;\n    font-size: 0.875rem;\n}\n.catalog-toolbar__author-search:focus {\n    border-color: #bfcada;\n    box-shadow: none !important;\n}\n.catalog-toolbar__author-options {\n    max-height: 260px;\n    overflow-y: auto;\n    padding-right: 0.15rem;\n}\n.catalog-toolbar__author-option {\n    display: block;\n    width: 100%;\n    padding: 0.45rem 0.6rem;\n    border: 0;\n    border-radius: 0.35rem;\n    background: transparent;\n    color: #334155;\n    font-size: 0.875rem;\n    line-height: 1.35;\n    text-align: left;\n}\n.catalog-toolbar__author-option:hover,\n.catalog-toolbar__author-option--active {\n    background: #eef4ff;\n    color: #1d4ed8;\n}\n.catalog-toolbar__author-empty {\n    padding: 0.45rem 0.6rem;\n    color: #64748b;\n    font-size: 0.875rem;\n}\n.catalog-toolbar__actions {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 0.75rem;\n    flex-shrink: 0;\n    margin-left: auto;\n}\n.catalog-toolbar__clear,\n.catalog-toolbar__toggle {\n    min-height: 46px;\n    padding-inline: 1rem;\n    border-radius: 0.45rem;\n    border-color: #d8e0ea;\n    background: #fff;\n    box-shadow: none;\n    color: #334155;\n    white-space: nowrap;\n}\n.catalog-toolbar__clear {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.45rem;\n    border-color: #e50077;\n    color: #e50077;\n    font-weight: 500;\n}\n.catalog-toolbar__clear:hover,\n.catalog-toolbar__clear:focus {\n    border-color: #e50077;\n    background: rgba(229, 0, 119, 0.05);\n    color: #e50077;\n    box-shadow: none;\n}\n.catalog-toolbar__clear-icon {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    width: 1rem;\n    font-size: 1rem;\n    font-weight: 600;\n    line-height: 1;\n}\n.catalog-toolbar__summary {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 46px;\n    padding: 0.45rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n    color: #475569;\n    font-size: 0.875rem;\n    font-weight: 600;\n    white-space: nowrap;\n}\n.catalog-toolbar__mobile-top,\n.catalog-toolbar__mobile-grid {\n    gap: 0.75rem;\n}\n.catalog-toolbar__drawer {\n    position: fixed;\n    inset: 0;\n    z-index: 1080;\n}\n.catalog-toolbar__drawer-backdrop {\n    position: absolute;\n    inset: 0;\n    border: 0;\n    background: rgba(15, 23, 42, 0.4);\n}\n.catalog-toolbar__drawer-panel {\n    position: absolute;\n    top: 0;\n    left: 0;\n    display: flex;\n    flex-direction: column;\n    width: min(22rem, calc(100vw - 2rem));\n    height: 100dvh;\n    max-height: 100dvh;\n    padding: 1rem;\n    border-right: 1px solid #d8e0ea;\n    background: #fff;\n    overflow: hidden;\n}\n.catalog-toolbar__drawer-header {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    gap: 1rem;\n    padding-bottom: 0.85rem;\n    border-bottom: 1px solid #e2e8f0;\n}\n.catalog-toolbar__drawer-eyebrow {\n    margin: 0 0 0.2rem;\n    color: #64748b;\n    font-size: 0.75rem;\n    letter-spacing: 0.08em;\n    text-transform: uppercase;\n}\n.catalog-toolbar__drawer-title {\n    margin: 0;\n    color: #0f172a;\n    font-size: 1.1rem;\n    font-weight: 700;\n}\n.catalog-toolbar__drawer-close {\n    position: relative;\n    flex: 0 0 auto;\n    width: 2.25rem;\n    height: 2.25rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n}\n.catalog-toolbar__drawer-close span {\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    width: 0.95rem;\n    height: 1.5px;\n    background: #334155;\n}\n.catalog-toolbar__drawer-close span:first-child {\n    transform: translate(-50%, -50%) rotate(45deg);\n}\n.catalog-toolbar__drawer-close span:last-child {\n    transform: translate(-50%, -50%) rotate(-45deg);\n}\n.catalog-toolbar__drawer-body {\n    flex: 1 1 auto;\n    min-height: 0;\n    padding-top: 1rem;\n    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));\n    overflow-y: auto;\n}\n.catalog-toolbar__mobile-grid {\n    display: grid;\n    grid-template-columns: 1fr;\n}\n.catalog-toolbar__clear--mobile {\n    margin-top: 0.75rem;\n}\n.filter-drawer-enter-active .catalog-toolbar__drawer-backdrop,\n.filter-drawer-leave-active .catalog-toolbar__drawer-backdrop {\n    transition: opacity 0.22s ease;\n}\n.filter-drawer-enter-active .catalog-toolbar__drawer-panel,\n.filter-drawer-leave-active .catalog-toolbar__drawer-panel {\n    transition: transform 0.24s ease;\n}\n.filter-drawer-enter .catalog-toolbar__drawer-backdrop,\n.filter-drawer-leave-to .catalog-toolbar__drawer-backdrop {\n    opacity: 0;\n}\n.filter-drawer-enter .catalog-toolbar__drawer-panel,\n.filter-drawer-leave-to .catalog-toolbar__drawer-panel {\n    transform: translateX(-100%);\n}\n@media (max-width: 1199.98px) {\n.catalog-toolbar__mobile-top {\n        align-items: stretch;\n}\n.catalog-toolbar__toggle,\n    .catalog-toolbar__toggle--clear,\n    .catalog-toolbar__select--sort,\n    .catalog-toolbar__summary {\n        flex: 1 1 calc(50% - 0.375rem);\n}\n}\n@media (max-width: 767.98px) {\n.catalog-toolbar__toggle,\n    .catalog-toolbar__toggle--clear,\n    .catalog-toolbar__select--sort,\n    .catalog-toolbar__summary,\n    .catalog-toolbar__select,\n    .catalog-toolbar__author-select {\n        width: 100%;\n        flex-basis: 100%;\n}\n.catalog-toolbar__drawer-panel {\n        padding: 0.9rem;\n}\n}\n@media (min-width: 1400px) {\n.catalog-grid-card {\n        width: 100%;\n        height: 100%;\n}\n.catalog-grid-card__image-link {\n        display: flex !important;\n        align-items: center;\n        justify-content: center;\n        min-height: 250px;\n        padding: 0.5rem;\n        background-color: #fff;\n}\n.catalog-grid-card__image {\n        width: auto;\n        height: auto;\n        max-width: 100%;\n        max-height: 250px;\n        margin: 0 auto;\n}\n.catalog-grid-card__body {\n        display: flex;\n        flex: 1 1 auto;\n        flex-direction: column;\n        min-height: 6.5rem;\n}\nh3.catalog-grid-card__title {\n        display: -webkit-box;\n        -webkit-line-clamp: 3;\n        -webkit-box-orient: vertical;\n        overflow: hidden;\n        line-height: 1.25;\n        min-height: 3.2rem;\n}\n.catalog-grid-card__price-group {\n        margin-top: auto;\n}\n}\n@media (min-width: 1600px) {\n.catalog-grid-card__image {\n        max-height: 260px;\n}\n.catalog-grid-card__body {\n        min-height: 6rem;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.catalog-toolbar__desktop {\n    gap: 1rem;\n    min-width: 0;\n}\n.catalog-toolbar__filters {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 1 1 auto;\n    min-width: 0;\n}\n.catalog-toolbar__filter-scroll {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 0 1 auto;\n    min-width: 0;\n    overflow-x: auto;\n    padding-bottom: 0.15rem;\n}\n.catalog-toolbar__filter-scroll::-webkit-scrollbar {\n    height: 6px;\n}\n.catalog-toolbar__filter-scroll::-webkit-scrollbar-thumb {\n    background: rgba(148, 163, 184, 0.45);\n    border-radius: 999px;\n}\n.catalog-toolbar__select {\n    min-width: 150px;\n    min-height: 46px;\n    padding: 0.7rem 2.85rem 0.7rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background-color: #fff;\n    background-image:\n        url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235f6c82' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\"),\n        linear-gradient(180deg, #ffffff 0%, #ffffff 100%);\n    background-repeat: no-repeat, no-repeat;\n    background-position: right 1rem center, center;\n    background-size: 0.95rem, 100% 100%;\n    box-shadow: none;\n    color: #334155;\n    font-weight: 500;\n    -moz-appearance: none;\n         appearance: none;\n    -webkit-appearance: none;\n    transition: border-color 0.2s ease;\n}\n.catalog-toolbar__select:hover,\n.catalog-toolbar__select:focus {\n    border-color: #bfcada;\n    box-shadow: none;\n}\n.catalog-toolbar__select:focus {\n    outline: none;\n}\n.catalog-toolbar__select--sort {\n    min-width: 170px;\n}\n.catalog-toolbar__author-select {\n    position: relative;\n    flex: 0 0 150px;\n    min-width: 150px;\n    max-width: 150px;\n}\n.catalog-toolbar__author-select--mobile {\n    flex: 1 1 auto;\n    min-width: 100%;\n    max-width: none;\n}\n.catalog-toolbar__author-trigger {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    width: 100%;\n    min-height: 46px;\n    padding: 0.7rem 0.95rem 0.7rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n    color: #334155;\n    font-size: 0.875rem;\n    font-weight: 500;\n    line-height: 1.25;\n    text-align: left;\n}\n.catalog-toolbar__author-trigger:focus,\n.catalog-toolbar__author-trigger:hover {\n    border-color: #bfcada;\n    box-shadow: none;\n    outline: none;\n}\n.catalog-toolbar__author-trigger-label {\n    display: block;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    padding-right: 0.75rem;\n}\n.catalog-toolbar__author-trigger-icon {\n    flex: 0 0 auto;\n    width: 0.95rem;\n    height: 0.95rem;\n    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235f6c82' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\");\n    background-repeat: no-repeat;\n    background-position: center;\n    background-size: contain;\n}\n.catalog-toolbar__author-panel {\n    position: absolute;\n    top: calc(100% + 0.35rem);\n    left: 0;\n    z-index: 30;\n    width: 280px;\n    max-width: min(280px, calc(100vw - 2rem));\n    padding: 0.65rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n}\n.catalog-toolbar__author-panel--mobile {\n    position: static;\n    width: 100%;\n    max-width: none;\n    margin-top: 0.35rem;\n}\n.catalog-toolbar__author-search {\n    min-height: 38px;\n    margin-bottom: 0.5rem;\n    padding: 0.45rem 0.75rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    box-shadow: none !important;\n    font-size: 0.875rem;\n}\n.catalog-toolbar__author-search:focus {\n    border-color: #bfcada;\n    box-shadow: none !important;\n}\n.catalog-toolbar__author-options {\n    max-height: 260px;\n    overflow-y: auto;\n    padding-right: 0.15rem;\n}\n.catalog-toolbar__author-option {\n    display: block;\n    width: 100%;\n    padding: 0.45rem 0.6rem;\n    border: 0;\n    border-radius: 0.35rem;\n    background: transparent;\n    color: #334155;\n    font-size: 0.875rem;\n    line-height: 1.35;\n    text-align: left;\n}\n.catalog-toolbar__author-option:hover,\n.catalog-toolbar__author-option--active {\n    background: #eef4ff;\n    color: #1d4ed8;\n}\n.catalog-toolbar__author-empty {\n    padding: 0.45rem 0.6rem;\n    color: #64748b;\n    font-size: 0.875rem;\n}\n.catalog-toolbar__actions {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 0.75rem;\n    flex-shrink: 0;\n    margin-left: auto;\n}\n.catalog-toolbar__clear,\n.catalog-toolbar__toggle {\n    min-height: 46px;\n    padding-inline: 1rem;\n    border-radius: 0.45rem;\n    border-color: #d8e0ea;\n    background: #fff;\n    box-shadow: none;\n    color: #334155;\n    white-space: nowrap;\n}\n.catalog-toolbar__clear {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.45rem;\n    border-color: #e50077;\n    color: #e50077;\n    font-weight: 500;\n}\n.catalog-toolbar__clear:hover,\n.catalog-toolbar__clear:focus {\n    border-color: #e50077;\n    background: rgba(229, 0, 119, 0.05);\n    color: #e50077;\n    box-shadow: none;\n}\n.catalog-toolbar__clear-icon {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    width: 1rem;\n    font-size: 1rem;\n    font-weight: 600;\n    line-height: 1;\n}\n.catalog-toolbar__summary {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 46px;\n    padding: 0.45rem 1rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n    box-shadow: none;\n    color: #475569;\n    font-size: 0.875rem;\n    font-weight: 600;\n    white-space: nowrap;\n}\n.catalog-toolbar__mobile-top,\n.catalog-toolbar__mobile-grid {\n    gap: 0.75rem;\n}\n.catalog-toolbar__drawer {\n    position: fixed;\n    inset: 0;\n    z-index: 1080;\n}\n.catalog-toolbar__drawer-backdrop {\n    position: absolute;\n    inset: 0;\n    border: 0;\n    background: rgba(15, 23, 42, 0.4);\n}\n.catalog-toolbar__drawer-panel {\n    position: absolute;\n    top: 0;\n    left: 0;\n    display: flex;\n    flex-direction: column;\n    width: min(22rem, calc(100vw - 2rem));\n    height: 100dvh;\n    max-height: 100dvh;\n    padding: 1rem;\n    border-right: 1px solid #d8e0ea;\n    background: #fff;\n    overflow: hidden;\n}\n.catalog-toolbar__drawer-header {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    gap: 1rem;\n    padding-bottom: 0.85rem;\n    border-bottom: 1px solid #e2e8f0;\n}\n.catalog-toolbar__drawer-eyebrow {\n    margin: 0 0 0.2rem;\n    color: #64748b;\n    font-size: 0.75rem;\n    letter-spacing: 0.08em;\n    text-transform: uppercase;\n}\n.catalog-toolbar__drawer-title {\n    margin: 0;\n    color: #0f172a;\n    font-size: 1.1rem;\n    font-weight: 700;\n}\n.catalog-toolbar__drawer-close {\n    position: relative;\n    flex: 0 0 auto;\n    width: 2.25rem;\n    height: 2.25rem;\n    border: 1px solid #d8e0ea;\n    border-radius: 0.45rem;\n    background: #fff;\n}\n.catalog-toolbar__drawer-close span {\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    width: 0.95rem;\n    height: 1.5px;\n    background: #334155;\n}\n.catalog-toolbar__drawer-close span:first-child {\n    transform: translate(-50%, -50%) rotate(45deg);\n}\n.catalog-toolbar__drawer-close span:last-child {\n    transform: translate(-50%, -50%) rotate(-45deg);\n}\n.catalog-toolbar__drawer-body {\n    flex: 1 1 auto;\n    min-height: 0;\n    padding-top: 1rem;\n    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));\n    overflow-y: auto;\n}\n.catalog-toolbar__mobile-grid {\n    display: grid;\n    grid-template-columns: 1fr;\n}\n.catalog-toolbar__clear--mobile {\n    margin-top: 0.75rem;\n}\n.filter-drawer-enter-active .catalog-toolbar__drawer-backdrop,\n.filter-drawer-leave-active .catalog-toolbar__drawer-backdrop {\n    transition: opacity 0.22s ease;\n}\n.filter-drawer-enter-active .catalog-toolbar__drawer-panel,\n.filter-drawer-leave-active .catalog-toolbar__drawer-panel {\n    transition: transform 0.24s ease;\n}\n.filter-drawer-enter .catalog-toolbar__drawer-backdrop,\n.filter-drawer-leave-to .catalog-toolbar__drawer-backdrop {\n    opacity: 0;\n}\n.filter-drawer-enter .catalog-toolbar__drawer-panel,\n.filter-drawer-leave-to .catalog-toolbar__drawer-panel {\n    transform: translateX(-100%);\n}\n.catalog-grid-card--bookmarkers {\n    width: 100%;\n    height: 100%;\n}\n.catalog-grid-card__image-link--bookmarkers {\n    display: flex !important;\n    align-items: center;\n    justify-content: center;\n    min-height: 15rem;\n    padding: 0.75rem 0.5rem;\n    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);\n}\n.catalog-grid-card__image--bookmarkers {\n    display: block;\n    width: auto;\n    height: auto;\n    max-width: 100%;\n    max-height: 15rem;\n    margin: 0 auto;\n    -o-object-fit: contain;\n       object-fit: contain;\n    -o-object-position: center;\n       object-position: center;\n}\n.catalog-grid-card--bookmarkers .catalog-grid-card__body {\n    display: flex;\n    flex: 1 1 auto;\n    flex-direction: column;\n    min-height: 6.5rem;\n}\n.catalog-grid-card--bookmarkers h3.catalog-grid-card__title {\n    display: -webkit-box;\n    -webkit-line-clamp: 3;\n    -webkit-box-orient: vertical;\n    overflow: hidden;\n    line-height: 1.25;\n    min-height: 3.2rem;\n}\n.catalog-grid-card--bookmarkers .catalog-grid-card__price-group {\n    margin-top: auto;\n}\n@media (max-width: 1199.98px) {\n.catalog-toolbar__mobile-top {\n        align-items: stretch;\n}\n.catalog-toolbar__toggle,\n    .catalog-toolbar__toggle--clear,\n    .catalog-toolbar__select--sort,\n    .catalog-toolbar__summary {\n        flex: 1 1 calc(50% - 0.375rem);\n}\n}\n@media (max-width: 767.98px) {\n.catalog-toolbar__toggle,\n    .catalog-toolbar__toggle--clear,\n    .catalog-toolbar__select--sort,\n    .catalog-toolbar__summary,\n    .catalog-toolbar__select,\n    .catalog-toolbar__author-select {\n        width: 100%;\n        flex-basis: 100%;\n}\n.catalog-toolbar__drawer-panel {\n        padding: 0.9rem;\n}\n}\n@media (min-width: 1400px) {\n.catalog-grid-card {\n        width: 100%;\n        height: 100%;\n}\n.catalog-grid-card__image-link {\n        display: flex !important;\n        align-items: center;\n        justify-content: center;\n        min-height: 250px;\n        padding: 0.5rem;\n        background-color: #fff;\n}\n.catalog-grid-card__image {\n        width: auto;\n        height: auto;\n        max-width: 100%;\n        max-height: 250px;\n        margin: 0 auto;\n}\n.catalog-grid-card__body {\n        display: flex;\n        flex: 1 1 auto;\n        flex-direction: column;\n        min-height: 6.5rem;\n}\nh3.catalog-grid-card__title {\n        display: -webkit-box;\n        -webkit-line-clamp: 3;\n        -webkit-box-orient: vertical;\n        overflow: hidden;\n        line-height: 1.25;\n        min-height: 3.2rem;\n}\n.catalog-grid-card__price-group {\n        margin-top: auto;\n}\n.catalog-grid-card__image-link--bookmarkers {\n        min-height: 250px;\n        padding: 0.75rem;\n}\n.catalog-grid-card__image--bookmarkers {\n        max-height: 250px;\n}\n}\n@media (min-width: 1600px) {\n.catalog-grid-card__image {\n        max-height: 260px;\n}\n.catalog-grid-card__body {\n        min-height: 6rem;\n}\n.catalog-grid-card__image--bookmarkers {\n        max-height: 260px;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -7395,6 +7491,34 @@ var render = function() {
         )
       : _vm._e(),
     _vm._v(" "),
+    _vm.route == "kosarica" && _vm.showBookmarkerPromo
+      ? _c(
+          "div",
+          {
+            staticClass: "rounded-3 p-4 mt-3 cart-bookmarker-promo",
+            staticStyle: {
+              border: "1px solid #dae1e7",
+              "background-color": "#fff !important"
+            }
+          },
+          [
+            _c("div", { staticClass: "py-2 px-xl-2" }, [
+              _vm._m(0),
+              _vm._v(" "),
+              _c(
+                "button",
+                {
+                  staticClass: "btn btn-outline-primary btn-shadow w-100 mt-2",
+                  attrs: { type: "button" },
+                  on: { click: _vm.scrollToBookmarkers }
+                },
+                [_vm._v("\n                Pokaži bookmarkere\n            ")]
+              )
+            ])
+          ]
+        )
+      : _vm._e(),
+    _vm._v(" "),
     _vm.route == "naplata"
       ? _c(
           "div",
@@ -7471,6 +7595,7 @@ var render = function() {
                           ]),
                           _vm._v(" "),
                           _c("div", { staticClass: "widget-product-meta" }, [
+                            _vm.hasSecondaryCurrency &&
                             item.associatedModel.secondary_price_text
                               ? _c("span", { staticClass: "text-muted me-2" }, [
                                   _vm._v(
@@ -7539,7 +7664,7 @@ var render = function() {
                     ]
                   ),
                   _vm._v(" "),
-                  _vm.$store.state.cart.secondary_price
+                  _vm.hasSecondaryCurrency
                     ? _c(
                         "li",
                         {
@@ -7561,52 +7686,64 @@ var render = function() {
                       )
                     : _vm._e(),
                   _vm._v(" "),
-                  _vm._l(_vm.$store.state.cart.detail_con, function(condition) {
-                    return _c("div", [
-                      _c(
-                        "li",
-                        {
-                          staticClass:
-                            "d-flex justify-content-between align-items-center"
-                        },
-                        [
-                          _c("span", { staticClass: "me-2" }, [
-                            _vm._v(_vm._s(condition.name))
-                          ]),
-                          _c("span", { staticClass: "text-end" }, [
-                            _vm._v(
-                              _vm._s(
-                                _vm.$store.state.service.formatMainPrice(
-                                  condition.value
-                                )
-                              )
-                            )
-                          ])
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _vm.$store.state.cart.secondary_price
-                        ? _c(
-                            "li",
-                            {
-                              staticClass:
-                                "d-flex justify-content-between align-items-center"
-                            },
-                            [
-                              _c("span", { staticClass: "me-2" }),
-                              _c("span", { staticClass: "text-end" }, [
-                                _vm._v(
-                                  _vm._s(
-                                    _vm.$store.state.service.formatSecondaryPrice(
-                                      condition.value
-                                    )
+                  _vm._l(_vm.visibleDetailConditions, function(condition) {
+                    return _c(
+                      "div",
+                      {
+                        key:
+                          "checkout-" +
+                          condition.name +
+                          "-" +
+                          condition.type +
+                          "-" +
+                          condition.value
+                      },
+                      [
+                        _c(
+                          "li",
+                          {
+                            staticClass:
+                              "d-flex justify-content-between align-items-center"
+                          },
+                          [
+                            _c("span", { staticClass: "me-2" }, [
+                              _vm._v(_vm._s(condition.name))
+                            ]),
+                            _c("span", { staticClass: "text-end" }, [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.$store.state.service.formatMainPrice(
+                                    condition.value
                                   )
                                 )
-                              ])
-                            ]
-                          )
-                        : _vm._e()
-                    ])
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _vm.hasSecondaryCurrency
+                          ? _c(
+                              "li",
+                              {
+                                staticClass:
+                                  "d-flex justify-content-between align-items-center"
+                              },
+                              [
+                                _c("span", { staticClass: "me-2" }),
+                                _c("span", { staticClass: "text-end" }, [
+                                  _vm._v(
+                                    _vm._s(
+                                      _vm.$store.state.service.formatSecondaryPrice(
+                                        condition.value
+                                      )
+                                    )
+                                  )
+                                ])
+                              ]
+                            )
+                          : _vm._e()
+                      ]
+                    )
                   })
                 ],
                 2
@@ -7626,7 +7763,7 @@ var render = function() {
                 ]
               ),
               _vm._v(" "),
-              _vm.$store.state.cart.secondary_price
+              _vm.hasSecondaryCurrency
                 ? _c("h4", { staticClass: "fs-sm text-center my-2" }, [
                     _vm._v(
                       _vm._s(
@@ -7658,7 +7795,7 @@ var render = function() {
           },
           [
             _c("div", { staticClass: "py-2 px-xl-2" }, [
-              _vm._m(0),
+              _vm._m(1),
               _vm._v(" "),
               _c(
                 "ul",
@@ -7684,7 +7821,7 @@ var render = function() {
                     ]
                   ),
                   _vm._v(" "),
-                  _vm.$store.state.cart.secondary_price
+                  _vm.hasSecondaryCurrency
                     ? _c(
                         "li",
                         {
@@ -7706,52 +7843,64 @@ var render = function() {
                       )
                     : _vm._e(),
                   _vm._v(" "),
-                  _vm._l(_vm.$store.state.cart.detail_con, function(condition) {
-                    return _c("div", [
-                      _c(
-                        "li",
-                        {
-                          staticClass:
-                            "d-flex justify-content-between align-items-center"
-                        },
-                        [
-                          _c("span", { staticClass: "me-2" }, [
-                            _vm._v(_vm._s(condition.name))
-                          ]),
-                          _c("span", { staticClass: "text-end" }, [
-                            _vm._v(
-                              _vm._s(
-                                _vm.$store.state.service.formatMainPrice(
-                                  condition.value
-                                )
-                              )
-                            )
-                          ])
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _vm.$store.state.cart.secondary_price
-                        ? _c(
-                            "li",
-                            {
-                              staticClass:
-                                "d-flex justify-content-between align-items-center"
-                            },
-                            [
-                              _c("span", { staticClass: "me-2" }),
-                              _c("span", { staticClass: "text-end" }, [
-                                _vm._v(
-                                  _vm._s(
-                                    _vm.$store.state.service.formatSecondaryPrice(
-                                      condition.value
-                                    )
+                  _vm._l(_vm.visibleDetailConditions, function(condition) {
+                    return _c(
+                      "div",
+                      {
+                        key:
+                          "review-" +
+                          condition.name +
+                          "-" +
+                          condition.type +
+                          "-" +
+                          condition.value
+                      },
+                      [
+                        _c(
+                          "li",
+                          {
+                            staticClass:
+                              "d-flex justify-content-between align-items-center"
+                          },
+                          [
+                            _c("span", { staticClass: "me-2" }, [
+                              _vm._v(_vm._s(condition.name))
+                            ]),
+                            _c("span", { staticClass: "text-end" }, [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.$store.state.service.formatMainPrice(
+                                    condition.value
                                   )
                                 )
-                              ])
-                            ]
-                          )
-                        : _vm._e()
-                    ])
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _vm.hasSecondaryCurrency
+                          ? _c(
+                              "li",
+                              {
+                                staticClass:
+                                  "d-flex justify-content-between align-items-center"
+                              },
+                              [
+                                _c("span", { staticClass: "me-2" }),
+                                _c("span", { staticClass: "text-end" }, [
+                                  _vm._v(
+                                    _vm._s(
+                                      _vm.$store.state.service.formatSecondaryPrice(
+                                        condition.value
+                                      )
+                                    )
+                                  )
+                                ])
+                              ]
+                            )
+                          : _vm._e()
+                      ]
+                    )
                   })
                 ],
                 2
@@ -7771,7 +7920,7 @@ var render = function() {
                 ]
               ),
               _vm._v(" "),
-              _vm.$store.state.cart.secondary_price
+              _vm.hasSecondaryCurrency
                 ? _c("h4", { staticClass: "fs-sm text-center my-2" }, [
                     _vm._v(
                       _vm._s(
@@ -7957,104 +8106,164 @@ var render = function() {
           {
             staticClass: "rounded-3 p-4 mt-3",
             staticStyle: {
-              border: "1px solid #dae1e7",
+              border: "1px dashed #e3e9ef",
               "background-color": "#fff !important"
             }
           },
           [
             _c("div", { staticClass: "py-2 px-xl-2" }, [
-              _c("div", { staticClass: "form-group mb-3" }, [
-                _c("label", { staticClass: "form-label" }, [
-                  _vm._v("Iskoristite Loyalty popust")
-                ]),
-                _vm._v(" "),
-                _vm.$store.state.cart.has_loyalty >= 100
-                  ? _c("div", { staticClass: "form-check" }, [
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.selected_loyalty,
-                            expression: "selected_loyalty"
-                          }
-                        ],
-                        staticClass: "form-check-input",
-                        attrs: { type: "radio", value: "100" },
-                        domProps: {
-                          checked: _vm._q(_vm.selected_loyalty, "100")
-                        },
-                        on: {
-                          change: function($event) {
-                            _vm.selected_loyalty = "100"
-                          }
-                        }
-                      }),
-                      _vm._v(" "),
-                      _c(
-                        "label",
-                        {
-                          staticClass: "form-check-label",
-                          attrs: { for: "ex-radio-2" }
-                        },
-                        [_vm._v("100 = 5€ popust")]
-                      )
-                    ])
-                  : _vm._e(),
-                _vm._v(" "),
-                _vm.$store.state.cart.has_loyalty >= 200
-                  ? _c("div", { staticClass: "form-check" }, [
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.selected_loyalty,
-                            expression: "selected_loyalty"
-                          }
-                        ],
-                        staticClass: "form-check-input",
-                        attrs: { type: "radio", value: "200" },
-                        domProps: {
-                          checked: _vm._q(_vm.selected_loyalty, "200")
-                        },
-                        on: {
-                          change: function($event) {
-                            _vm.selected_loyalty = "200"
-                          }
-                        }
-                      }),
-                      _vm._v(" "),
-                      _c(
-                        "label",
-                        {
-                          staticClass: "form-check-label",
-                          attrs: { for: "ex-radio-3" }
-                        },
-                        [_vm._v("200 = 12€ popust")]
-                      )
-                    ])
-                  : _vm._e()
-              ]),
-              _vm._v(" "),
               _c(
                 "button",
                 {
-                  staticClass: "btn btn-outline-primary btn-shadow",
-                  attrs: { type: "button" },
-                  on: { click: _vm.clearLoyalty }
+                  staticClass:
+                    "coupon-toggle btn btn-link text-decoration-none w-100 px-0",
+                  attrs: {
+                    type: "button",
+                    "aria-expanded": _vm.showLoyaltyPanel ? "true" : "false"
+                  },
+                  on: { click: _vm.toggleLoyaltyPanel }
                 },
-                [_vm._v("Odbaci")]
+                [
+                  _c(
+                    "span",
+                    { staticClass: "coupon-toggle__content text-start" },
+                    [
+                      _c("strong", { staticClass: "d-block text-dark" }, [
+                        _vm._v("Iskoristite Loyalty popust")
+                      ]),
+                      _vm._v(" "),
+                      _c("small", { staticClass: "text-muted" }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.hasActiveLoyaltySelection
+                              ? "Loyalty popust je odabran za ovu narudžbu."
+                              : "Primijenite skupljene Loyalty bodove."
+                          )
+                        )
+                      ])
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "span",
+                    { staticClass: "coupon-toggle__action text-primary" },
+                    [
+                      _vm._v(
+                        "\n                    " +
+                          _vm._s(_vm.showLoyaltyPanel ? "Sakrij" : "Otvori") +
+                          "\n                "
+                      )
+                    ]
+                  )
+                ]
               ),
               _vm._v(" "),
               _c(
-                "button",
+                "div",
                 {
-                  staticClass: "btn btn-outline-primary btn-shadow",
-                  attrs: { type: "button" },
-                  on: { click: _vm.setLoyalty }
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: _vm.showLoyaltyPanel,
+                      expression: "showLoyaltyPanel"
+                    }
+                  ],
+                  staticClass: "mt-3"
                 },
-                [_vm._v("Primjeni ")]
+                [
+                  _c("div", { staticClass: "form-group mb-3" }, [
+                    _vm.$store.state.cart.has_loyalty >= 100
+                      ? _c("div", { staticClass: "form-check" }, [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.selected_loyalty,
+                                expression: "selected_loyalty"
+                              }
+                            ],
+                            staticClass: "form-check-input",
+                            attrs: { type: "radio", value: "100" },
+                            domProps: {
+                              checked: _vm._q(_vm.selected_loyalty, "100")
+                            },
+                            on: {
+                              change: function($event) {
+                                _vm.selected_loyalty = "100"
+                              }
+                            }
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "label",
+                            {
+                              staticClass: "form-check-label",
+                              attrs: { for: "ex-radio-2" }
+                            },
+                            [_vm._v("100 = 5€ popust")]
+                          )
+                        ])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.$store.state.cart.has_loyalty >= 200
+                      ? _c("div", { staticClass: "form-check" }, [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.selected_loyalty,
+                                expression: "selected_loyalty"
+                              }
+                            ],
+                            staticClass: "form-check-input",
+                            attrs: { type: "radio", value: "200" },
+                            domProps: {
+                              checked: _vm._q(_vm.selected_loyalty, "200")
+                            },
+                            on: {
+                              change: function($event) {
+                                _vm.selected_loyalty = "200"
+                              }
+                            }
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "label",
+                            {
+                              staticClass: "form-check-label",
+                              attrs: { for: "ex-radio-3" }
+                            },
+                            [_vm._v("200 = 12€ popust")]
+                          )
+                        ])
+                      : _vm._e()
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "d-flex flex-wrap gap-2" }, [
+                    _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-outline-primary btn-shadow",
+                        attrs: { type: "button" },
+                        on: { click: _vm.clearLoyalty }
+                      },
+                      [_vm._v("Odbaci")]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-outline-primary btn-shadow",
+                        attrs: { type: "button" },
+                        on: { click: _vm.setLoyalty }
+                      },
+                      [_vm._v("Primjeni")]
+                    )
+                  ])
+                ]
               )
             ])
           ]
@@ -8063,6 +8272,15 @@ var render = function() {
   ])
 }
 var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "cart-bookmarker-promo__eyebrow mb-0" }, [
+      _c("i", { staticClass: "ci-bookmark me-2" }),
+      _vm._v("Trebate bookmarker?\n            ")
+    ])
+  },
   function() {
     var _vm = this
     var _h = _vm.$createElement
@@ -9767,7 +9985,11 @@ var render = function() {
                     "div",
                     {
                       staticClass:
-                        "card product-card catalog-grid-card shadow pb-2 position-relative"
+                        "card product-card catalog-grid-card shadow pb-2 position-relative",
+                      class: {
+                        "catalog-grid-card--bookmarkers":
+                          _vm.isBookmarkerListing
+                      }
                     },
                     [
                       _c(
@@ -9834,17 +10056,22 @@ var render = function() {
                         {
                           staticClass:
                             "card-img-top catalog-grid-card__image-link d-block overflow-hidden text-center",
+                          class: {
+                            "catalog-grid-card__image-link--bookmarkers":
+                              _vm.isBookmarkerListing
+                          },
                           attrs: { href: _vm.origin + product.url }
                         },
                         [
                           _c("img", {
                             staticClass: "catalog-grid-card__image",
+                            class: {
+                              "catalog-grid-card__image--bookmarkers":
+                                _vm.isBookmarkerListing
+                            },
                             attrs: {
                               loading: "lazy",
-                              src: product.image.replace(
-                                ".webp",
-                                "-thumb.webp"
-                              ),
+                              src: _vm.resolveProductImage(product),
                               width: "250",
                               height: "300",
                               alt: product.name

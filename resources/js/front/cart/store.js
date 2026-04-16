@@ -195,15 +195,13 @@ class AgService {
      * @returns {string}
      */
     formatMainPrice(price) {
-
         if (!store.state.settings) {
-            this.getSettings().then((response) => {
-                return this.resolvePrice(response['currency.list'], price);
-            });
+            this.getSettings();
 
-        } else {
-            return this.resolvePrice(store.state.settings['currency.list'], price);
+            return Number(price).toFixed(2) + ' €';
         }
+
+        return this.resolvePrice(store.state.settings['currency.list'], price);
     }
 
     /**
@@ -215,10 +213,10 @@ class AgService {
      */
     resolvePrice(currency_list, price, main = true) {
         if (!Array.isArray(currency_list) || !currency_list.length) {
-            return Number(price).toFixed(2) + (main ? ' €' : '');
+            return main ? Number(price).toFixed(2) + ' €' : '';
         }
 
-        let list = currency_list;
+        let list = currency_list.filter((item) => item && item.status !== false);
         let main_currency = {};
 
         list.forEach((item) => {
@@ -236,7 +234,7 @@ class AgService {
         });
 
         if (typeof main_currency.value === 'undefined') {
-            return Number(price).toFixed(2) + (main ? ' €' : '');
+            return main ? Number(price).toFixed(2) + ' €' : '';
         }
 
         let left = main_currency.symbol_left ? main_currency.symbol_left + '' : '';
@@ -253,13 +251,12 @@ class AgService {
      */
     formatSecondaryPrice(price) {
         if (!store.state.settings) {
-            this.getSettings().then((response) => {
-                return this.resolvePrice(response['currency.list'], price, false);
-            });
+            this.getSettings();
 
-        } else {
-            return this.resolvePrice(store.state.settings['currency.list'], price, false);
+            return '';
         }
+
+        return this.resolvePrice(store.state.settings['currency.list'], price, false);
     }
 
     /**

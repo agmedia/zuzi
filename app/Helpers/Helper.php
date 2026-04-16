@@ -949,7 +949,7 @@ class Helper
         if ($has_loyalty) {
             $discount = Loyalty::calculateLoyalty($loyalty);
 
-            if ($cart->getTotal() > $discount) {
+            if ($discount > 0 && $cart->getTotal() > $discount) {
                 $condition = new CartCondition(array(
                     'name'       => 'Loyalty',
                     'type'       => 'special',

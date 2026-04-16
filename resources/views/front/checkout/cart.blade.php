@@ -15,19 +15,43 @@
         'preventScrollOnTouch' => 'auto',
         'responsive' => [
             0 => ['items' => 2, 'controls' => true, 'nav' => true],
-            480 => ['items' => 2, 'controls' => true, 'nav' => true],
-            720 => ['items' => 3],
-            1140 => ['items' => 4],
+            576 => ['items' => 3],
+            768 => ['items' => 3],
+            1200 => ['items' => 4],
+            1400 => ['items' => 5],
         ],
     ];
+    $bookmarkersUrl = route('catalog.route', ['group' => 'kategorija-proizvoda', 'cat' => 'bookmarkeri']);
 @endphp
 
 @push('css_after')
     <style>
+        .cart-recommendations-carousel,
+        .cart-bookmarkers-carousel {
+            position: relative;
+        }
+
         .cart-recommendations-carousel .tns-ovh,
         .cart-recommendations-carousel .tns-item,
+        .cart-bookmarkers-carousel .tns-ovh,
+        .cart-bookmarkers-carousel .tns-item,
+        .cart-bookmarkers-carousel .tns-carousel-inner,
         .cart-recommendations-carousel .tns-carousel-inner {
             touch-action: pan-y pinch-zoom;
+        }
+
+        .cart-shelf-section {
+            scroll-margin-top: 7rem;
+        }
+
+        .cart-shelf-section + .cart-shelf-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(226, 232, 240, 0.9);
+        }
+
+        .cart-shelf-header__link {
+            flex-shrink: 0;
         }
     </style>
 @endpush
@@ -103,34 +127,62 @@
             <cart-view continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}" checkouturl="{{ route('naplata') }}" freeship="{{ config('settings.free_shipping') }}"></cart-view>
             </div>
 
-            @if(isset($cartRecommendations) && $cartRecommendations->count())
-                <section class="mt-4 pt-2">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                        <div>
-                            <h2 class="h4 mb-1">S obzirom na vašu košaricu, preporučujemo</h2>
-                            <p class="text-muted mb-0">Odabrali smo slične naslove od 10 do 15 € koje kupci često dodaju prije završetka kupnje.</p>
-                        </div>
-                    </div>
-
-                    <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 cart-recommendations-carousel">
-                        <div class="tns-carousel-inner" data-carousel-options='@json($cartRecommendationCarouselOptions)'>
-                            @foreach ($cartRecommendations as $product)
-                                <div>
-                                    @include('front.catalog.category.product', ['product' => $product])
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </section>
-            @endif
-
         </section>
         <!-- Sidebar-->
         <aside class="col-lg-4 pt-4 pt-lg-0 ps-xl-5">
 
-            <cart-view-aside route="kosarica" continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}" checkouturl="{{ route('naplata') }}"></cart-view-aside>
+            <cart-view-aside
+                route="kosarica"
+                continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}"
+                checkouturl="{{ route('naplata') }}"
+                bookmarkers-target="cart-bookmarkers"
+                :show-bookmarker-promo='@json(isset($cartBookmarkers) && $cartBookmarkers->count() > 0)'
+            ></cart-view-aside>
         </aside>
     </div>
+
+    @if(isset($cartRecommendations) && $cartRecommendations->count())
+        <section class="mt-4 pt-2 cart-shelf-section">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h4 mb-1">S obzirom na vašu košaricu, preporučujemo</h2>
+                    <p class="text-muted mb-0">Odabrali smo slične naslove od 10 do 15 € koje kupci često dodaju prije završetka kupnje.</p>
+                </div>
+            </div>
+
+            <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 cart-recommendations-carousel">
+                <div class="tns-carousel-inner" data-carousel-options='@json($cartRecommendationCarouselOptions)'>
+                    @foreach ($cartRecommendations as $product)
+                        <div>
+                            @include('front.catalog.category.product', ['product' => $product])
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
+    @if(isset($cartBookmarkers) && $cartBookmarkers->count())
+        <section id="cart-bookmarkers" class="mt-4 pt-2 cart-shelf-section">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                <div>
+                    <h2 class="h4 mb-1">Dodajte bookmarker uz narudžbu</h2>
+                    <p class="text-muted mb-0">Nasumično smo izdvojili 10 bookmarkera koji super sjednu kao mali dodatak uz knjigu.</p>
+                </div>
+                <a class="btn btn-outline-primary btn-sm cart-shelf-header__link" href="{{ $bookmarkersUrl }}">Pogledajte sve</a>
+            </div>
+
+            <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 cart-bookmarkers-carousel">
+                <div class="tns-carousel-inner" data-carousel-options='@json($cartRecommendationCarouselOptions)'>
+                    @foreach ($cartBookmarkers as $product)
+                        <div>
+                            @include('front.catalog.category.product', ['product' => $product])
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
 
 </div>
 

@@ -307,6 +307,7 @@
                            group="{{ isset($group) ? $group : null }}"
                            cat="{{ isset($cat) ? $cat['id'] : null }}"
                            subcat="{{ isset($subcat) ? $subcat['id'] : null }}"
+                           category-slug="{{ isset($subcat) ? $subcat['slug'] : (isset($cat) ? $cat['slug'] : null) }}"
                            author="{{ isset($author) ? $author['slug'] : null }}"
                            publisher="{{ isset($publisher) ? $publisher['slug'] : null }}"
                            default-sort="{{ $isActionListing ? 'popular' : '' }}">

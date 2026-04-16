@@ -40,7 +40,7 @@ class SettingsController extends Controller
             $response['currency.list'] = Settings::frontApiDefaults()['currency.list'];
         }
 
-        return response()->json($response);
+        return response()->json(Settings::normalizeFrontApiPayload($response));
     }
     
 }

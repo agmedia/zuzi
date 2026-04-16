@@ -11,6 +11,17 @@
             </div>
         </div>
 
+        <div class="rounded-3 p-4 mt-3 cart-bookmarker-promo" v-if="route == 'kosarica' && showBookmarkerPromo" style="border: 1px solid #dae1e7;background-color: #fff !important;">
+            <div class="py-2 px-xl-2">
+                <div class="cart-bookmarker-promo__eyebrow mb-0">
+                    <i class="ci-bookmark me-2"></i>Trebate bookmarker?
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-shadow w-100 mt-2" @click="scrollToBookmarkers">
+                    Pokaži bookmarkere
+                </button>
+            </div>
+        </div>
+
         <div class="rounded-3 p-4 ms-lg-auto" v-if="route == 'naplata'" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2">
                 <div class="widget mb-3">
@@ -21,7 +32,7 @@
                         <div class="ps-2">
                             <h6 class="widget-product-title"><a :href="base_path + item.attributes.path">{{ item.name }}</a></h6>
                             <div class="widget-product-meta"><span class="text-primary me-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
-                            <div class="widget-product-meta"><span class="text-muted me-2" v-if="item.associatedModel.secondary_price_text">{{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
+                            <div class="widget-product-meta"><span class="text-muted me-2" v-if="hasSecondaryCurrency && item.associatedModel.secondary_price_text">{{ Object.keys(item.conditions).length ? item.associatedModel.secondary_special_text : item.associatedModel.secondary_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
                             <div class="widget-product-meta text-muted" v-if="isGiftVoucher(item)">
                                 {{ giftVoucherData(item).recipient_email }}
                             </div>
@@ -30,16 +41,16 @@
                 </div>
                 <ul class="list-unstyled fs-sm pb-2 border-bottom">
                     <li class="d-flex justify-content-between align-items-center"><span class="me-2">Ukupno:</span><span class="text-end">{{ $store.state.service.formatMainPrice($store.state.cart.subtotal) }}</span></li>
-                    <li v-if="$store.state.cart.secondary_price" class="d-flex justify-content-between align-items-center">
+                    <li v-if="hasSecondaryCurrency" class="d-flex justify-content-between align-items-center">
                         <span class="me-2"></span><span class="text-end">{{ $store.state.service.formatSecondaryPrice($store.state.cart.subtotal) }}</span>
                     </li>
-                    <div v-for="condition in $store.state.cart.detail_con">
+                    <div v-for="condition in visibleDetailConditions" :key="`checkout-${condition.name}-${condition.type}-${condition.value}`">
                         <li class="d-flex justify-content-between align-items-center"><span class="me-2">{{ condition.name }}</span><span class="text-end">{{ $store.state.service.formatMainPrice(condition.value) }}</span></li>
-                        <li v-if="$store.state.cart.secondary_price" class="d-flex justify-content-between align-items-center"><span class="me-2"></span><span class="text-end">{{ $store.state.service.formatSecondaryPrice(condition.value) }}</span></li>
+                        <li v-if="hasSecondaryCurrency" class="d-flex justify-content-between align-items-center"><span class="me-2"></span><span class="text-end">{{ $store.state.service.formatSecondaryPrice(condition.value) }}</span></li>
                     </div>
                 </ul>
                 <h3 class="fw-bold text-primary text-center my-2">{{ $store.state.service.formatMainPrice($store.state.cart.total) }}</h3>
-                <h4 v-if="$store.state.cart.secondary_price" class="fs-sm text-center my-2">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</h4>
+                <h4 v-if="hasSecondaryCurrency" class="fs-sm text-center my-2">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</h4>
                 <p class="small text-center mt-0 mb-0">PDV uračunat u cijeni</p>
             </div>
         </div>
@@ -51,16 +62,16 @@
                 </div>
                 <ul class="list-unstyled fs-sm pb-2 border-bottom">
                     <li class="d-flex justify-content-between align-items-center"><span class="me-2">Ukupno:</span><span class="text-end">{{ $store.state.service.formatMainPrice($store.state.cart.subtotal) }}</span></li>
-                    <li v-if="$store.state.cart.secondary_price" class="d-flex justify-content-between align-items-center">
+                    <li v-if="hasSecondaryCurrency" class="d-flex justify-content-between align-items-center">
                         <span class="me-2"></span><span class="text-end">{{ $store.state.service.formatSecondaryPrice($store.state.cart.subtotal) }}</span>
                     </li>
-                    <div v-for="condition in $store.state.cart.detail_con">
+                    <div v-for="condition in visibleDetailConditions" :key="`review-${condition.name}-${condition.type}-${condition.value}`">
                         <li class="d-flex justify-content-between align-items-center"><span class="me-2">{{ condition.name }}</span><span class="text-end">{{ $store.state.service.formatMainPrice(condition.value) }}</span></li>
-                        <li v-if="$store.state.cart.secondary_price" class="d-flex justify-content-between align-items-center"><span class="me-2"></span><span class="text-end">{{ $store.state.service.formatSecondaryPrice(condition.value) }}</span></li>
+                        <li v-if="hasSecondaryCurrency" class="d-flex justify-content-between align-items-center"><span class="me-2"></span><span class="text-end">{{ $store.state.service.formatSecondaryPrice(condition.value) }}</span></li>
                     </div>
                 </ul>
                 <h3 class="fw-bold text-primary text-center my-2">{{ $store.state.service.formatMainPrice($store.state.cart.total) }}</h3>
-                <h4 v-if="$store.state.cart.secondary_price" class="fs-sm text-center my-2">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</h4>
+                <h4 v-if="hasSecondaryCurrency" class="fs-sm text-center my-2">{{ $store.state.service.formatSecondaryPrice($store.state.cart.total) }}</h4>
                 <p class="small text-center mt-0 mb-0">PDV uračunat u cijeni</p>
             </div>
         </div>
@@ -111,26 +122,40 @@
             </div>
         </div>
 
-        <div class="rounded-3 p-4 mt-3" v-if="!hasGiftVoucher && (has_loyalty && route == 'kosarica' || has_loyalty && route == 'naplata')" style="border: 1px solid #dae1e7;background-color: #fff !important;">
+        <div class="rounded-3 p-4 mt-3" v-if="!hasGiftVoucher && (has_loyalty && route == 'kosarica' || has_loyalty && route == 'naplata')" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2" v-cloak>
-                <div class="form-group mb-3">
+                <button
+                    type="button"
+                    class="coupon-toggle btn btn-link text-decoration-none w-100 px-0"
+                    @click="toggleLoyaltyPanel"
+                    :aria-expanded="showLoyaltyPanel ? 'true' : 'false'"
+                >
+                    <span class="coupon-toggle__content text-start">
+                        <strong class="d-block text-dark">Iskoristite Loyalty popust</strong>
+                        <small class="text-muted">{{ hasActiveLoyaltySelection ? 'Loyalty popust je odabran za ovu narudžbu.' : 'Primijenite skupljene Loyalty bodove.' }}</small>
+                    </span>
+                    <span class="coupon-toggle__action text-primary">
+                        {{ showLoyaltyPanel ? 'Sakrij' : 'Otvori' }}
+                    </span>
+                </button>
 
-                    <label class="form-label">Iskoristite Loyalty popust</label>
-
-
-                    <div class="form-check" v-if="$store.state.cart.has_loyalty >= 100">
-                        <input class="form-check-input" type="radio"    v-model="selected_loyalty" value="100" >
-                        <label class="form-check-label" for="ex-radio-2">100 = 5€ popust</label>
+                <div v-show="showLoyaltyPanel" class="mt-3">
+                    <div class="form-group mb-3">
+                        <div class="form-check" v-if="$store.state.cart.has_loyalty >= 100">
+                            <input class="form-check-input" type="radio" v-model="selected_loyalty" value="100">
+                            <label class="form-check-label" for="ex-radio-2">100 = 5€ popust</label>
+                        </div>
+                        <div class="form-check" v-if="$store.state.cart.has_loyalty >= 200">
+                            <input class="form-check-input" type="radio" v-model="selected_loyalty" value="200">
+                            <label class="form-check-label" for="ex-radio-3">200 = 12€ popust</label>
+                        </div>
                     </div>
-                    <div class="form-check" v-if="$store.state.cart.has_loyalty >= 200">
-                        <input class="form-check-input" type="radio"   v-model="selected_loyalty" value="200">
-                        <label class="form-check-label" for="ex-radio-3">200 = 12€ popust</label>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" v-on:click="clearLoyalty" class="btn btn-outline-primary btn-shadow">Odbaci</button>
+                        <button type="button" v-on:click="setLoyalty" class="btn btn-outline-primary btn-shadow">Primjeni</button>
                     </div>
-
-
                 </div>
-                <button type="button" v-on:click="clearLoyalty" class="btn btn-outline-primary btn-shadow">Odbaci</button>
-                <button type="button" v-on:click="setLoyalty" class="btn btn-outline-primary btn-shadow">Primjeni </button>
             </div>
         </div>
 
@@ -144,7 +169,15 @@ export default {
         continueurl: String,
         checkouturl: String,
         buttons: {type: Boolean, default: true},
-        route: String
+        route: String,
+        bookmarkersTarget: {
+            type: String,
+            default: 'cart-bookmarkers'
+        },
+        showBookmarkerPromo: {
+            type: Boolean,
+            default: false
+        }
     },
     data() {
         return {
@@ -155,6 +188,7 @@ export default {
             codeInput: '',
             couponSubmitting: false,
             showCouponPanel: false,
+            showLoyaltyPanel: false,
             has_loyalty: false,
             selected_loyalty: 0,
             tax: 0,
@@ -166,6 +200,30 @@ export default {
         },
         hasGiftVoucher() {
             return !!this.$store.state.cart.has_gift_voucher;
+        },
+        hasActiveLoyaltySelection() {
+            return Number(this.selected_loyalty || 0) > 0;
+        },
+        hasSecondaryCurrency() {
+            const settings = this.$store.state.settings || {};
+            const currencyList = Array.isArray(settings['currency.list']) ? settings['currency.list'] : [];
+
+            return currencyList.some((item) => item && item.status !== false && !item.main);
+        },
+        visibleDetailConditions() {
+            const conditions = Array.isArray(this.$store.state.cart.detail_con) ? this.$store.state.cart.detail_con : [];
+
+            return conditions.filter((condition) => {
+                if (!condition) {
+                    return false;
+                }
+
+                if (String(condition.name || '').toLowerCase() !== 'loyalty') {
+                    return true;
+                }
+
+                return Number(condition.value || 0) !== 0;
+            });
         }
     },
     mounted() {
@@ -223,6 +281,10 @@ export default {
         checkIfEmpty() {
             let cart = this.$store.state.storage.getCart();
 
+            if (!cart) {
+                return;
+            }
+
             // Check coupon
             if (cart && cart.coupon != '' && cart.coupon != 'null') {
                 this.coupon = cart.coupon;
@@ -232,6 +294,7 @@ export default {
             // Check loyalty
             if (cart.loyalty != '' && cart.loyalty != 'null') {
                 this.selected_loyalty = cart.loyalty;
+                this.showLoyaltyPanel = Number(cart.loyalty || 0) > 0;
             }
 
             if (cart && ! cart.count && window.location.pathname != '/kosarica') {
@@ -279,15 +342,35 @@ export default {
             this.showCouponPanel = ! this.showCouponPanel;
         },
 
+        toggleLoyaltyPanel() {
+            this.showLoyaltyPanel = ! this.showLoyaltyPanel;
+        },
+
+        scrollToBookmarkers() {
+            let target = document.getElementById(this.bookmarkersTarget);
+
+            if (!target) {
+                window.location.hash = this.bookmarkersTarget;
+                return;
+            }
+
+            target.scrollIntoView({
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                block: 'start'
+            });
+        },
+
         setLoyalty() {
             let cart = this.$store.state.storage.getCart();
 
             cart.loyalty = this.selected_loyalty;
+            this.showLoyaltyPanel = true;
             this.updateLoyalty();
         },
 
         clearLoyalty() {
             this.selected_loyalty = null;
+            this.showLoyaltyPanel = false;
             this.updateLoyalty();
         },
 
@@ -315,7 +398,7 @@ export default {
         checkLoyalty() {
             let cart = this.$store.state.storage.getCart();
 
-            if (cart.has_loyalty > 0) {
+            if (cart && cart.has_loyalty > 0) {
                 this.has_loyalty = true;
             }
         }
@@ -349,5 +432,31 @@ export default {
     flex: 0 0 auto;
     white-space: nowrap;
     padding-top: 0.15rem;
+}
+.cart-bookmarker-promo {
+    background:
+        radial-gradient(circle at top right, rgba(229, 0, 119, 0.08), transparent 38%),
+        linear-gradient(180deg, #fff 0%, #fff8fc 100%);
+}
+.cart-bookmarker-promo__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: #e50077;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.cart-bookmarker-promo__title {
+    margin-bottom: 0.65rem;
+    color: #2b3445;
+    font-size: 1.15rem;
+    line-height: 1.3;
+}
+.cart-bookmarker-promo__text {
+    color: #5f6c82;
+    font-size: 0.95rem;
+    line-height: 1.5;
 }
 </style>

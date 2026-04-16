@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Back\Settings\App;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\Helper;
 use App\Models\Back\Settings\Faq;
 use App\Models\Back\Settings\Settings;
 use Illuminate\Http\Request;
@@ -167,6 +168,9 @@ class CurrencyController extends Controller
         Cache::forget('currency_list');
         Cache::forget('currency_main');
         Cache::forget('currency_secondary');
+        Cache::forget('currency_symbol');
+        Helper::flushCache('settings', 'currencylist');
+        Helper::flushCache('settings', 'currency');
 
         return true;
     }

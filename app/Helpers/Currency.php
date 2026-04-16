@@ -4,22 +4,17 @@ namespace App\Helpers;
 
 use App\Models\Back\Settings\Settings;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 class Currency
 {
 
     /**
      * @return Collection
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
      */
     public static function list(): Collection
     {
-        return Cache::rememberForever('currency_list', function () {
-            return Settings::get('currency', 'list');
-        });
+        return static::loadCurrentCurrencyList();
     }
 
 
@@ -31,8 +26,8 @@ class Currency
      */
     public static function main($price = null, bool $text_price = false)
     {
-        $currency = Cache::rememberForever('currency_main', function () {
-            return Settings::get('currency', 'list')->where('status', '=', true)->where('main', '=', true)->first();
+        $currency = static::list()->first(function ($item) {
+            return (bool) ($item->status ?? false) && (bool) ($item->main ?? false);
         });
 
         return static::resolveCurrency($currency, $price, $text_price);
@@ -47,8 +42,8 @@ class Currency
      */
     public static function secondary($price = null, bool $text_price = false)
     {
-        $currency = Cache::rememberForever('currency_secondary', function () {
-            return Settings::get('currency', 'list')->where('status', '=', true)->where('main', '=', false)->first();
+        $currency = static::list()->first(function ($item) {
+            return (bool) ($item->status ?? false) && ! (bool) ($item->main ?? false);
         });
 
         return static::resolveCurrency($currency, $price, $text_price);
@@ -60,15 +55,13 @@ class Currency
      */
     public static function main_symbol(): string
     {
-        return Cache::rememberForever('currency_symbol', function () {
-            $currency = self::main();
+        $currency = self::main();
 
-            if ($currency) {
-                return $currency->symbol_left ?: $currency->symbol_right;
-            }
+        if ($currency) {
+            return $currency->symbol_left ?: $currency->symbol_right;
+        }
 
-            return '€';
-        });
+        return '€';
     }
 
     /*******************************************************************************
@@ -94,6 +87,41 @@ class Currency
         }
 
         return false;
+    }
+
+
+    private static function loadCurrentCurrencyList(): Collection
+    {
+        try {
+            if (! Schema::hasTable('settings')) {
+                return static::normalizeCurrencyList(Settings::frontApiDefaults()['currency.list'] ?? []);
+            }
+
+            $setting = Settings::query()
+                ->where('code', 'currency')
+                ->where('key', 'list')
+                ->first();
+
+            if ($setting && $setting->json) {
+                return static::normalizeCurrencyList(json_decode($setting->value) ?: []);
+            }
+        } catch (\Throwable $exception) {
+            return static::normalizeCurrencyList(Settings::frontApiDefaults()['currency.list'] ?? []);
+        }
+
+        return static::normalizeCurrencyList(Settings::frontApiDefaults()['currency.list'] ?? []);
+    }
+
+
+    private static function normalizeCurrencyList(iterable $items): Collection
+    {
+        return collect($items)->map(function ($item) {
+            if (is_array($item)) {
+                return (object) $item;
+            }
+
+            return $item;
+        })->values();
     }
 
 

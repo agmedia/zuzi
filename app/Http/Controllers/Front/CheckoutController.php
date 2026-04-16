@@ -35,11 +35,13 @@ class CheckoutController extends Controller
     public function cart(Request $request)
     {
         $cart = $this->shoppingCart()->get();
+        $cartItems = collect($cart['items'] ?? []);
         $gdl = TagManager::getGoogleCartDataLayer($cart);
-        $cartRecommendations = app(ProductRecommendationService::class)
-            ->forCartItems(collect($cart['items'] ?? []));
+        $recommendationService = app(ProductRecommendationService::class);
+        $cartRecommendations = $recommendationService->forCartItems($cartItems);
+        $cartBookmarkers = $recommendationService->randomBookmarkersForCart($cartItems);
 
-        return view('front.checkout.cart', compact('gdl', 'cartRecommendations'));
+        return view('front.checkout.cart', compact('gdl', 'cartRecommendations', 'cartBookmarkers'));
     }
 
 

@@ -226,7 +226,7 @@
         <!-- Products grid-->
         <div class=" row row-cols-2 row-cols-sm-3 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 row-cols-xxxl-6 mb-3 px-2" v-if="products.total">
             <div class="col px-2 mb-4 d-flex align-items-stretch " v-for="product in products.data">
-                <div class="card product-card catalog-grid-card shadow pb-2 position-relative">
+                <div class="card product-card catalog-grid-card shadow pb-2 position-relative" :class="{ 'catalog-grid-card--bookmarkers': isBookmarkerListing }">
                     <div style="position:absolute; top:.75rem; left:.75rem; right:.75rem; z-index:5; display:flex; justify-content:space-between; align-items:flex-start;">
                         <span class="badge rounded-pill bg-primary badge-shadow" style="position:static;" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
                         <span v-else></span>
@@ -236,8 +236,8 @@
                             style="position:static; background:#e50077; color:#fff;"
                         ><i class="ci-delivery me-1"></i>24 sata</span>
                     </div>
-                       <a class="card-img-top catalog-grid-card__image-link d-block overflow-hidden text-center" :href="origin + product.url">
-                           <img class="catalog-grid-card__image" loading="lazy" :src="product.image.replace('.webp', '-thumb.webp')" width="250" height="300" :alt="product.name">
+                       <a class="card-img-top catalog-grid-card__image-link d-block overflow-hidden text-center" :class="{ 'catalog-grid-card__image-link--bookmarkers': isBookmarkerListing }" :href="origin + product.url">
+                           <img class="catalog-grid-card__image" :class="{ 'catalog-grid-card__image--bookmarkers': isBookmarkerListing }" loading="lazy" :src="resolveProductImage(product)" width="250" height="300" :alt="product.name">
                     </a>
                     <div class="card-body catalog-grid-card__body py-2">
                         <h3 class="product-title catalog-grid-card__title fs-sm mt-2 mb-1"><a :href="origin + product.url">{{ product.name }}</a></h3>
@@ -311,6 +311,10 @@
             group: String,
             cat: String,
             subcat: String,
+            categorySlug: {
+                type: String,
+                default: ''
+            },
             author: String,
             publisher: String,
             priceMin: {
@@ -387,6 +391,12 @@
             },
             hasActiveToolbarFilters() {
                 return this.autor || this.nakladnik || this.start || this.end || this.condition || this.binding || this.letter;
+            },
+            normalizedCategorySlug() {
+                return String(this.categorySlug || '').trim().toLowerCase();
+            },
+            isBookmarkerListing() {
+                return this.normalizedCategorySlug === 'bookmarkeri';
             },
             selectedAuthorTitle() {
                 if (!this.autor) {
@@ -660,6 +670,23 @@
                 }
 
                 return params;
+            },
+
+            /**
+             *
+             * @param product
+             * @return {string}
+             */
+            resolveProductImage(product) {
+                if (!product || !product.image) {
+                    return '';
+                }
+
+                if (this.isBookmarkerListing) {
+                    return product.image;
+                }
+
+                return product.image.replace('.webp', '-thumb.webp');
             },
 
             /**
@@ -1288,6 +1315,51 @@
     transform: translateX(-100%);
 }
 
+.catalog-grid-card--bookmarkers {
+    width: 100%;
+    height: 100%;
+}
+
+.catalog-grid-card__image-link--bookmarkers {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 15rem;
+    padding: 0.75rem 0.5rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.catalog-grid-card__image--bookmarkers {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 15rem;
+    margin: 0 auto;
+    object-fit: contain;
+    object-position: center;
+}
+
+.catalog-grid-card--bookmarkers .catalog-grid-card__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 6.5rem;
+}
+
+.catalog-grid-card--bookmarkers h3.catalog-grid-card__title {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.25;
+    min-height: 3.2rem;
+}
+
+.catalog-grid-card--bookmarkers .catalog-grid-card__price-group {
+    margin-top: auto;
+}
+
 @media (max-width: 1199.98px) {
     .catalog-toolbar__mobile-top {
         align-items: stretch;
@@ -1359,6 +1431,15 @@
     .catalog-grid-card__price-group {
         margin-top: auto;
     }
+
+    .catalog-grid-card__image-link--bookmarkers {
+        min-height: 250px;
+        padding: 0.75rem;
+    }
+
+    .catalog-grid-card__image--bookmarkers {
+        max-height: 250px;
+    }
 }
 
 @media (min-width: 1600px) {
@@ -1368,6 +1449,10 @@
 
     .catalog-grid-card__body {
         min-height: 6rem;
+    }
+
+    .catalog-grid-card__image--bookmarkers {
+        max-height: 260px;
     }
 }
 </style>
