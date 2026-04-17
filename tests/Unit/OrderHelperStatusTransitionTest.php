@@ -41,4 +41,23 @@ class OrderHelperStatusTransitionTest extends TestCase
             'already canceled to canceled does not restore stock again' => [5, 5, false],
         ];
     }
+
+
+    public function test_it_resolves_ready_notification_from_status_id_or_title(): void
+    {
+        $this->assertSame('ready', OrderHelper::resolveCustomerStatusNotificationType(10));
+        $this->assertSame('ready', OrderHelper::resolveCustomerStatusNotificationType(99, 'vaša knjiga je spremna za preuzimanje'));
+    }
+
+
+    public function test_it_resolves_completed_notification_from_zavrseno_title(): void
+    {
+        $this->assertSame('completed', OrderHelper::resolveCustomerStatusNotificationType(9, 'Završeno'));
+    }
+
+
+    public function test_it_does_not_resolve_notification_for_unrelated_status(): void
+    {
+        $this->assertNull(OrderHelper::resolveCustomerStatusNotificationType(4, 'Poslano'));
+    }
 }

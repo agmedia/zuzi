@@ -180,18 +180,17 @@
 
             $('#status-select').on('change', (e) => {
                 let selected = e.currentTarget.selectedOptions[0].value;
-                let orders = '[';
-                var checkedBoxes = document.querySelectorAll('input[name=status]:checked');
+                let orders = Array.from(document.querySelectorAll('input[name=status]:checked'))
+                    .map((checkbox) => checkbox.value);
 
-                for (let i = 0; i < checkedBoxes.length; i++) {
-                    if (checkedBoxes.length - 1 == i) {
-                        orders += checkedBoxes[i].value + ']';
-                    } else {
-                        orders += checkedBoxes[i].value + ','
-                    }
+                if (! orders.length) {
+                    return;
                 }
 
-                axios.get('{{ route('api.order.status.change') }}' + '?selected=' + selected + '&orders=' + orders)
+                axios.post('{{ route('api.order.status.change') }}', {
+                    selected: selected,
+                    orders: orders
+                })
                     .then((r) => {
                         location.reload();
                     })

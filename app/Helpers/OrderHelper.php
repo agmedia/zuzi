@@ -14,6 +14,7 @@ use App\Services\GiftVoucherService;
 use App\Services\AffiliateService;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 /**
  *
@@ -350,6 +351,38 @@ class OrderHelper
             'is_paid' => intval($order->order_status_id) === intval(config('settings.order.status.paid'))
                 || in_array((string) $order->payment_code, ['corvus', 'payway', 'wspay'], true),
         ];
+    }
+
+
+    /**
+     * Resolve which customer-facing status notification should be sent.
+     */
+    public static function resolveCustomerStatusNotificationType(int $statusId, ?string $statusTitle = null): ?string
+    {
+        if (! $statusId) {
+            return null;
+        }
+
+        $normalizedTitle = static::normalizeStatusTitle($statusTitle);
+
+        if (
+            $statusId === intval(config('settings.order.status.ready'))
+            || in_array($normalizedTitle, ['spremna', 'vasa knjiga je spremna za preuzimanje'], true)
+        ) {
+            return 'ready';
+        }
+
+        if (in_array($normalizedTitle, ['zavrseno'], true)) {
+            return 'completed';
+        }
+
+        return null;
+    }
+
+
+    private static function normalizeStatusTitle(?string $statusTitle): string
+    {
+        return Str::lower(trim(preg_replace('/\s+/', ' ', Str::ascii((string) $statusTitle)) ?? ''));
     }
 
     /*******************************************************************************

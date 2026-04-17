@@ -7,6 +7,7 @@ use App\Helpers\OrderHelper;
 use App\Helpers\ProductHelper;
 use App\Http\Controllers\Controller;
 use App\Mail\StatusCanceled;
+use App\Mail\StatusCompleted;
 use App\Mail\StatusPaid;
 use App\Mail\StatusReady;
 use App\Models\Back\Orders\Order;
@@ -146,7 +147,11 @@ class OrderController extends Controller
     {
         if ($request->has('orders')) {
             $selectedStatus = (int) $request->input('selected');
-            $orders = explode(',', substr($request->input('orders'), 1, -1));
+            $ordersInput = $request->input('orders', []);
+            $orders = is_array($ordersInput)
+                ? $ordersInput
+                : explode(',', trim((string) $ordersInput, '[]'));
+            $orders = array_values(array_filter(array_map('intval', $orders)));
             $existingOrders = Order::query()
                 ->whereIn('id', $orders)
                 ->get(['id', 'order_status_id'])
@@ -155,6 +160,10 @@ class OrderController extends Controller
             Order::whereIn('id', $orders)->update([
                 'order_status_id' => $selectedStatus
             ]);
+            $fullOrders = Order::query()
+                ->whereIn('id', $orders)
+                ->get()
+                ->keyBy('id');
 
             foreach ($existingOrders as $existingOrder) {
                 $order_id = (int) $existingOrder->id;
@@ -166,7 +175,7 @@ class OrderController extends Controller
                 }
 
                 if (in_array($selectedStatus, [config('settings.order.status.paid'), config('settings.order.status.canceled')], true)) {
-                    $fullOrder = Order::query()->find($order_id);
+                    $fullOrder = $fullOrders->get($order_id);
 
                     if ($fullOrder) {
                         if ($selectedStatus == config('settings.order.status.paid')) {
@@ -177,6 +186,14 @@ class OrderController extends Controller
                             GiftVoucherService::cancelOrder($fullOrder);
                         }
                     }
+                }
+
+                if ($fullOrders->has($order_id)) {
+                    $this->dispatchCustomerStatusMail(
+                        $fullOrders->get($order_id),
+                        $selectedStatus,
+                        (int) $existingOrder->order_status_id
+                    );
                 }
 
                 OrderHistory::store($order_id, new Request([
@@ -224,11 +241,7 @@ class OrderController extends Controller
                     });
                 }
 
-                if ($selectedStatus == config('settings.order.status.ready')) {
-                    dispatch(function () use ($order) {
-                        Mail::to($order->payment_email)->send(new StatusReady($order));
-                    });
-                }
+                $this->dispatchCustomerStatusMail($order, $selectedStatus, $previousStatus);
             }
 
             OrderHistory::store($request->input('order_id'), $request);
@@ -237,6 +250,31 @@ class OrderController extends Controller
         }
 
         return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
+    }
+
+
+    private function dispatchCustomerStatusMail(Order $order, int $selectedStatus, int $previousStatus = 0): void
+    {
+        if (! $order->payment_email || $selectedStatus === $previousStatus) {
+            return;
+        }
+
+        $notificationType = OrderHelper::resolveCustomerStatusNotificationType(
+            $selectedStatus,
+            data_get($order->status($selectedStatus), 'title')
+        );
+
+        if ($notificationType === 'ready') {
+            dispatch(function () use ($order) {
+                Mail::to($order->payment_email)->send(new StatusReady($order));
+            });
+        }
+
+        if ($notificationType === 'completed') {
+            dispatch(function () use ($order) {
+                Mail::to($order->payment_email)->send(new StatusCompleted($order));
+            });
+        }
     }
 
 

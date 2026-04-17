@@ -6,9 +6,8 @@ use App\Models\Back\Orders\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
-class StatusReady extends Mailable
+class StatusCompleted extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -36,7 +35,7 @@ class StatusReady extends Mailable
      */
     public function build()
     {
-        return $this->subject('Vasa knjiga je spremna u ducanu za preuzimanje - Zuzi Shop')
-            ->view('emails.status-ready');
+        return $this->subject('Vasa knjiga je poslana - Zuzi Shop')
+            ->view('emails.status-completed');
     }
 }

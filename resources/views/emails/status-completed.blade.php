@@ -2,14 +2,14 @@
 
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-        <tr><td class="ag-mail-tableset"><h3>Vaša knjiga je spremna u dućanu za preuzimanje</h3></td></tr>
+        <tr><td class="ag-mail-tableset"><h3>Vaša knjiga je poslana</h3></td></tr>
 
         <tr>
             <td class="ag-mail-tableset">
                 Broj narudžbe: <strong>{{ $order->id }}</strong><br>
                 Datum: <strong>{{ now()->format('d.m.Y') }}</strong><br>
-                Status: <strong>Knjiga je spremna za preuzimanje u dućanu</strong><br><br>
-                Obavještavamo Vas da je Vaša knjiga pripremljena i čeka Vas u dućanu za preuzimanje.
+                Status: <strong>Narudžba je završena</strong><br><br>
+                Obavještavamo Vas da je Vaša knjiga poslana.
             </td>
         </tr>
 
@@ -35,6 +35,8 @@
                 @else
                     <b>{{ __('Plaćanje prilikom preuzimanja') }}</b>
                 @endif
+                <br>
+                {{ __('Način dostave') }}: {{ $order->shipping_method }}
                 <br><br>Lijep pozdrav,<br>Zuzi Shop
             </td>
         </tr>
