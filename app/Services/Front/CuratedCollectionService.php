@@ -34,6 +34,20 @@ class CuratedCollectionService
      */
     private ?array $homepageSnapshot = null;
 
+    public function clearHomepageWidgetState(): void
+    {
+        $this->forgetCacheKey('homepage-widget');
+        $this->forgetCacheKey('featured-products');
+        $this->forgetCacheKey('monthly-ranking.orders');
+        $this->forgetCacheKey('monthly-ranking.quantity');
+
+        foreach (array_keys($this->definitions()) as $slug) {
+            $this->forgetCacheKey('collection.' . $slug);
+        }
+
+        $this->deleteHomepageSnapshot();
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -718,6 +732,24 @@ class CuratedCollectionService
         File::put($path, json_encode($snapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         $this->homepageSnapshot = $snapshot;
+    }
+
+
+    private function deleteHomepageSnapshot(): void
+    {
+        $path = storage_path(self::HOMEPAGE_SNAPSHOT_FILE);
+
+        if (File::exists($path)) {
+            File::delete($path);
+        }
+
+        $this->homepageSnapshot = null;
+    }
+
+
+    private function forgetCacheKey(string $suffix): void
+    {
+        Cache::forget($this->cacheKey($suffix));
     }
 
 
