@@ -66,6 +66,9 @@
 
                             <strong>Adresa</strong><br>Antuna Šoljana 33, 10000 Zagreb</p>
 
+                        <p class=" text-dark  fs-md pb-1 d-block">  <strong>Email</strong><br>
+                            <a href="mailto:info@zuzi.hr">info@zuzi.hr</a></p>
+
                         <p class=" text-dark  fs-md pb-1 d-block">  <strong>Broj telefona</strong><br>
                             <a href="tel:+38514831005">01 4831 005</a></p>
                         <p class=" text-dark  fs-md pb-1 d-block">  <strong>Broj mobitela</strong><br>
