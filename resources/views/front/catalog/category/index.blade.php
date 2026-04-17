@@ -37,9 +37,15 @@
     $actionLandingPromotionStart = $isActionListing ? ($actionLanding['promotion_start'] ?? null) : null;
     $actionLandingPromotionEnd = $isActionListing ? ($actionLanding['promotion_end'] ?? null) : null;
     $actionLandingCurrentTitle = isset($subcat) && $subcat ? $subcat->title : (isset($cat) && $cat ? $cat->title : null);
+    $isFullOfferListing = Route::currentRouteName() === 'catalog.route'
+        && ($group ?? null) === 'kategorija-proizvoda'
+        && ! (isset($cat) && $cat)
+        && ! (isset($subcat) && $subcat);
     $groupHeading = 'Knjige';
 
-    if (($group ?? null) === 'snizenja') {
+    if ($isFullOfferListing) {
+        $groupHeading = 'Cjelokupna ponuda';
+    } elseif (($group ?? null) === 'snizenja') {
         $groupHeading = 'Snižene knjige';
     } elseif (($group ?? null) === 'zemljovidi-i-vedute') {
         $groupHeading = 'Zemljovidi i vedute';
@@ -88,6 +94,8 @@
             $cat,
             'Pregledajte knjige iz kategorije ' . $cat->title . ' i izdvojite naslove koji vas zanimaju.'
         );
+    } elseif ($isFullOfferListing) {
+        $listingIntro = 'Artikli su sortirani od najnovijih.';
     } elseif (($group ?? null) === 'snizenja') {
         $listingIntro = 'Pregledajte aktualno snižene knjige i izdvojena izdanja po povoljnijim cijenama.';
     } elseif (isset($group) && $group) {
@@ -317,7 +325,7 @@
                            author="{{ isset($author) ? $author['slug'] : null }}"
                            publisher="{{ isset($publisher) ? $publisher['slug'] : null }}"
                            preserve-order="{{ Route::currentRouteName() === 'pretrazi' && ! empty($ids) ? '1' : '' }}"
-                           default-sort="{{ $isActionListing ? 'popular' : '' }}">
+                           default-sort="{{ $isActionListing ? 'popular' : ($isFullOfferListing ? 'novi' : '') }}">
             </products-view>
 
 
