@@ -11,6 +11,7 @@ use App\Models\Front\Loyalty;
 use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
+use App\Services\GiftWrapService;
 use Darryldecode\Cart\CartCondition;
 use Illuminate\Cache\TaggableStore;
 use Illuminate\Database\Eloquent\Builder;
@@ -865,20 +866,21 @@ class Helper
     {
         $condition     = false;
         $has_condition = false;
+        $discountableTotal = self::discountableCartTotal($cart);
 
-        if ($cart->getTotal() > 50) {
+        if ($discountableTotal > 50) {
             $has_condition = 10;
         }
-        if ($cart->getTotal() > 100) {
+        if ($discountableTotal > 100) {
             $has_condition = 15;
         }
-        if ($cart->getTotal() > 200) {
+        if ($discountableTotal > 200) {
             $has_condition = 20;
         }
 
         if ($has_condition && self::isDateBetween()) {
-            $value    = self::calculateDiscountPrice($cart->getTotal(), $has_condition, 'P');
-            $discount = $cart->getTotal() - $value;
+            $value    = self::calculateDiscountPrice($discountableTotal, $has_condition, 'P');
+            $discount = $discountableTotal - $value;
 
             $condition = new CartCondition(array(
                 'name'       => config('settings.special_action.title'),
@@ -906,8 +908,13 @@ class Helper
     public static function hasCouponCartConditions($cart, string $coupon = '')
     {
         $condition = false;
+        $discountableTotal = self::discountableCartTotal($cart);
 
         if (! Schema::hasTable('product_actions')) {
+            return false;
+        }
+
+        if ($discountableTotal <= 0) {
             return false;
         }
 
@@ -916,8 +923,8 @@ class Helper
         if ($actions->count()) {
             foreach ($actions as $action) {
                 if ($action->isValid($coupon)) {
-                    $value    = self::calculateDiscountPrice($cart->getTotal(), $action->discount, $action->type);
-                    $discount = $cart->getTotal() - $value;
+                    $value    = self::calculateDiscountPrice($discountableTotal, $action->discount, $action->type);
+                    $discount = $discountableTotal - $value;
 
                     $condition = new CartCondition(array(
                         'name'       => $action->title,
@@ -945,11 +952,12 @@ class Helper
     {
         $condition = false;
         $has_loyalty   = Loyalty::hasLoyalty();
+        $discountableTotal = self::discountableCartTotal($cart);
 
         if ($has_loyalty) {
             $discount = Loyalty::calculateLoyalty($loyalty);
 
-            if ($discount > 0 && $cart->getTotal() > $discount) {
+            if ($discount > 0 && $discountableTotal > $discount) {
                 $condition = new CartCondition(array(
                     'name'       => 'Loyalty',
                     'type'       => 'special',
@@ -964,6 +972,25 @@ class Helper
         }
 
         return $condition;
+    }
+
+    private static function discountableCartTotal($cart): float
+    {
+        if (! $cart) {
+            return 0.0;
+        }
+
+        $total = 0.0;
+
+        foreach ($cart->getContent() as $item) {
+            if (GiftWrapService::isGiftWrapItem($item)) {
+                continue;
+            }
+
+            $total += (float) $item->getPriceSumWithConditions(false);
+        }
+
+        return max(0.0, round($total, 2));
     }
 
 

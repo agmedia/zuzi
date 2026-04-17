@@ -5,6 +5,7 @@ namespace App\Models;
 
 use App\Models\Front\AgCart;
 use App\Models\Front\Catalog\Product;
+use App\Services\GiftWrapService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -83,18 +84,25 @@ class Cart extends Model
                 $cart_data = json_decode($has_cart->cart_data, true);
 
                 if (isset($cart_data['items'])) {
-                    foreach ($cart_data['items'] as $item) {
-                        $has_item_in_cart = $cart_items->where('id', $item['id'])->first();
+                    $storedItems = collect($cart_data['items'])->values();
+                    $passes = [
+                        $storedItems->reject(fn ($item) => GiftWrapService::isGiftWrapItem($item)),
+                        $storedItems->filter(fn ($item) => GiftWrapService::isGiftWrapItem($item)),
+                    ];
 
-                        if ( ! $has_item_in_cart) {
+                    foreach ($passes as $items) {
+                        foreach ($items as $item) {
                             $cart_item = $cart->resolveItemRequest($item);
+                            $itemId = data_get($cart_item, 'item.id');
 
-                            if (isset($cart_item['item']['id']) && isset($cart_item['item']['quantity'])) {
-                                $product = Product::where('id', $cart_item['item']['id'])->first();
+                            if (! $itemId || $cart_items->where('id', $itemId)->first()) {
+                                continue;
+                            }
 
-                                if ($product && $cart_item['item']['quantity'] < $product->quantity) {
-                                    $cart->add($cart_item);
-                                }
+                            $result = $cart->add($cart_item);
+
+                            if (! isset($result['error'])) {
+                                $cart_items = $cart->getCartItems(true);
                             }
                         }
                     }

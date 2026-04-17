@@ -10,6 +10,7 @@ use App\Models\Front\Catalog\ProductAction;
 use App\Models\Front\Checkout\PaymentMethod;
 use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\TagManager;
+use App\Services\GiftWrapService;
 use App\Services\GiftVoucherService;
 use Darryldecode\Cart\CartCondition;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -175,37 +176,63 @@ class AgCart extends Model
      */
     public function add($request, $id = null): array
     {
-        // Updejtaj artikl sa apsolutnom količinom.
-        foreach ($this->cart->getContent() as $item) {
-            if ($item->id == $request['item']['id']) {
-                if (GiftVoucherService::isGiftVoucherItem($item) || (($request['item']['type'] ?? '') === GiftVoucherService::CART_ITEM_TYPE)) {
-                    return $this->updateCartItem($item->id, 1, false);
-                }
+        $item = $this->extractRequestItem($request);
+        $existingItem = $this->findCartItem($item['id'] ?? null);
 
-                $quantity = $request['item']['quantity'];
-                $product  = Product::where('id', $request['item']['id'])->first();
-
-                if ($quantity > $product->quantity) {
-                    return ['error' => 'Nažalost nema dovoljnih količina artikla..!'];
-                }
-
-                if ($quantity == 1 && ($item->quantity == 1 || $item->quantity > $quantity)) {
-                    if ( ! $id) {
-                        $quantity = $item->quantity + 1;
-                    }
-                }
-
-                $relative = false;
-
-                if (isset($request['item']['relative']) && $request['item']['relative']) {
-                    $relative = true;
-                }
-
-                return $this->updateCartItem($item->id, $quantity, $relative);
+        if (GiftVoucherService::isGiftVoucherItem($existingItem) || (($item['type'] ?? '') === GiftVoucherService::CART_ITEM_TYPE)) {
+            if ($existingItem) {
+                return $this->updateCartItem($existingItem->id, 1, false);
             }
+
+            return $this->addToCart(['item' => $item]);
         }
 
-        return $this->addToCart($request);
+        if (GiftWrapService::isGiftWrapItem($existingItem) || (($item['type'] ?? '') === GiftWrapService::CART_ITEM_TYPE)) {
+            return $this->handleGiftWrapItem($item);
+        }
+
+        $product = Product::where('id', (int) ($item['id'] ?? 0))->first();
+
+        if (! $product) {
+            return ['error' => 'Nažalost, odabrani artikl nije pronađen.'];
+        }
+
+        if (($item['gift_wrap'] ?? false) && ! GiftWrapService::isEligibleProduct($product)) {
+            $item['gift_wrap'] = false;
+        }
+
+        $quantity = max(1, (int) ($item['quantity'] ?? 1));
+        $relative = (bool) ($item['relative'] ?? false);
+
+        if ($existingItem) {
+            $requestedTotal = $relative
+                ? ((int) $existingItem->quantity + $quantity)
+                : $quantity;
+
+            if ($requestedTotal > $product->quantity) {
+                return ['error' => 'Nažalost nema dovoljnih količina artikla..!'];
+            }
+
+            $response = $this->updateCartItem($existingItem->id, $quantity, $relative);
+        } else {
+            if ($quantity > $product->quantity) {
+                return ['error' => 'Nažalost nema dovoljnih količina artikla..!'];
+            }
+
+            $response = $this->addToCart(['item' => $item]);
+        }
+
+        if (isset($response['error'])) {
+            return $response;
+        }
+
+        $finalQuantity = $this->currentCartItemQuantity($product->id);
+
+        if (($item['gift_wrap'] ?? false) || $this->hasGiftWrapForProduct($product->id)) {
+            $this->syncGiftWrapItem($product, $finalQuantity);
+        }
+
+        return $this->get();
     }
 
 
@@ -216,7 +243,13 @@ class AgCart extends Model
      */
     public function remove($id)
     {
+        $item = $this->findCartItem($id);
+
         $this->cart->remove($id);
+
+        if ($item && ! GiftVoucherService::isGiftVoucherItem($item) && ! GiftWrapService::isGiftWrapItem($item)) {
+            $this->removeGiftWrapForProduct((int) $item->id);
+        }
 
         return $this->get();
     }
@@ -366,6 +399,13 @@ class AgCart extends Model
             ];
         }
 
+        if (GiftWrapService::isGiftWrapItem($item)) {
+            return GiftWrapService::buildCartItemRequest([
+                'product_id' => GiftWrapService::extractWrappedProductId($item),
+                'quantity' => data_get($item, 'quantity', 1),
+            ]);
+        }
+
         return [
             'item' => [
                 'id'       => $item['id'],
@@ -466,7 +506,13 @@ class AgCart extends Model
      */
     private function addToCart($request): array
     {
-        $this->cart->add($this->structureCartItem($request));
+        $item = $this->structureCartItem($request);
+
+        if (isset($item['error'])) {
+            return $item;
+        }
+
+        $this->cart->add($item);
 
         return $this->get();
     }
@@ -509,15 +555,44 @@ class AgCart extends Model
      */
     private function structureCartItem($request)
     {
-        if (($request['item']['type'] ?? '') === GiftVoucherService::CART_ITEM_TYPE) {
-            return GiftVoucherService::buildCartItem($request['item']);
+        $item = $this->extractRequestItem($request);
+
+        if (($item['type'] ?? '') === GiftVoucherService::CART_ITEM_TYPE) {
+            return GiftVoucherService::buildCartItem($item);
         }
 
-        $product = Product::where('id', $request['item']['id'])->first();
+        if (($item['type'] ?? '') === GiftWrapService::CART_ITEM_TYPE) {
+            $productId = GiftWrapService::resolveProductId($item);
+            $product = Product::where('id', $productId)->first();
+
+            if (! $product) {
+                return ['error' => 'Uslugu zamatanja trenutno nije moguće dodati.'];
+            }
+
+            if (! GiftWrapService::isEligibleProduct($product)) {
+                return ['error' => 'Zamatanje za poklon nije dostupno za ovaj artikl.'];
+            }
+
+            $productQuantity = $this->currentCartItemQuantity($productId);
+
+            if (! $productQuantity) {
+                return ['error' => 'Za zamatanje prvo dodajte artikl u košaricu.'];
+            }
+
+            $quantity = min(max(1, (int) ($item['quantity'] ?? 1)), $productQuantity);
+
+            return GiftWrapService::buildCartItem($product, $quantity);
+        }
+
+        $product = Product::where('id', $item['id'])->first();
+
+        if (! $product) {
+            return ['error' => 'Nažalost, odabrani artikl nije pronađen.'];
+        }
 
         $product->dataLayer = TagManager::getGoogleProductDataLayer($product);
 
-        if ($request['item']['quantity'] > $product->quantity) {
+        if ((int) $item['quantity'] > $product->quantity) {
             return ['error' => 'Nažalost nema dovoljnih količina artikla..!'];
         }
 
@@ -526,7 +601,7 @@ class AgCart extends Model
             'name'            => $product->name,
             'price'           => $product->price,
             'sec_price'       => $product->secondary_price,
-            'quantity'        => $request['item']['quantity'],
+            'quantity'        => (int) $item['quantity'],
             'associatedModel' => $product,
             'attributes'      => $this->structureCartItemAttributes($product)
         ];
@@ -615,6 +690,99 @@ class AgCart extends Model
         }
 
         return true;
+    }
+
+    private function extractRequestItem($request): array
+    {
+        $item = $request['item'] ?? (is_object($request) && method_exists($request, 'input') ? $request->input('item', []) : []);
+
+        return json_decode(json_encode($item), true) ?: [];
+    }
+
+    private function findCartItem($id)
+    {
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        foreach ($this->cart->getContent() as $item) {
+            if ((string) $item->id === (string) $id) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    private function currentCartItemQuantity($id): int
+    {
+        $item = $this->findCartItem($id);
+
+        return $item ? (int) $item->quantity : 0;
+    }
+
+    private function hasGiftWrapForProduct(int $productId): bool
+    {
+        return (bool) $this->findCartItem(GiftWrapService::cartItemId($productId));
+    }
+
+    private function removeGiftWrapForProduct(int $productId): void
+    {
+        $giftWrapId = GiftWrapService::cartItemId($productId);
+
+        if ($this->findCartItem($giftWrapId)) {
+            $this->cart->remove($giftWrapId);
+        }
+    }
+
+    private function syncGiftWrapItem(Product $product, int $quantity): void
+    {
+        $giftWrapId = GiftWrapService::cartItemId($product);
+
+        if ($quantity < 1) {
+            $this->removeGiftWrapForProduct((int) $product->id);
+
+            return;
+        }
+
+        if ($this->findCartItem($giftWrapId)) {
+            $this->cart->update($giftWrapId, [
+                'quantity' => [
+                    'relative' => false,
+                    'value' => $quantity,
+                ],
+            ]);
+
+            return;
+        }
+
+        $this->cart->add(GiftWrapService::buildCartItem($product, $quantity));
+    }
+
+    private function handleGiftWrapItem(array $item): array
+    {
+        $productId = GiftWrapService::resolveProductId($item);
+        $product = Product::where('id', $productId)->first();
+
+        if (! $product) {
+            return ['error' => 'Uslugu zamatanja trenutno nije moguće dodati.'];
+        }
+
+        if (! GiftWrapService::isEligibleProduct($product)) {
+            return ['error' => 'Zamatanje za poklon nije dostupno za ovaj artikl.'];
+        }
+
+        $productQuantity = $this->currentCartItemQuantity($productId);
+
+        if (! $productQuantity) {
+            return ['error' => 'Za zamatanje prvo dodajte artikl u košaricu.'];
+        }
+
+        $quantity = min(max(1, (int) ($item['quantity'] ?? 1)), $productQuantity);
+
+        $this->syncGiftWrapItem($product, $quantity);
+
+        return $this->get();
     }
 
 }

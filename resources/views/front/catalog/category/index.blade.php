@@ -79,9 +79,15 @@
     } elseif (isset($publisher) && $publisher) {
         $listingIntro = 'Istražite knjige nakladnika ' . $publisher->title . ', dostupna izdanja i povezane naslove u ' . \App\Models\Seo::brand() . '.';
     } elseif (isset($subcat) && $subcat) {
-        $listingIntro = 'Pregledajte knjige iz kategorije ' . $subcat->title . ' i pronađite izdanja koja odgovaraju vašem interesu.';
+        $listingIntro = \App\Models\Seo::categoryDescription(
+            $subcat,
+            'Pregledajte knjige iz kategorije ' . $subcat->title . ' i pronađite izdanja koja odgovaraju vašem interesu.'
+        );
     } elseif (isset($cat) && $cat) {
-        $listingIntro = 'Pregledajte knjige iz kategorije ' . $cat->title . ' i izdvojite naslove koji vas zanimaju.';
+        $listingIntro = \App\Models\Seo::categoryDescription(
+            $cat,
+            'Pregledajte knjige iz kategorije ' . $cat->title . ' i izdvojite naslove koji vas zanimaju.'
+        );
     } elseif (($group ?? null) === 'snizenja') {
         $listingIntro = 'Pregledajte aktualno snižene knjige i izdvojena izdanja po povoljnijim cijenama.';
     } elseif (isset($group) && $group) {

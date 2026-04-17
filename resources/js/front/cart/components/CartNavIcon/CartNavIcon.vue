@@ -7,7 +7,10 @@
                     <div class="widget-cart-item pb-2 border-bottom">
                         <button class="btn-close text-danger" type="button" @click.prevent="removeFromCart(item)" aria-label="Remove"><span aria-hidden="true">&times;</span></button>
                         <div class="d-flex align-items-center">
-                            <a class="d-block flex-shrink-0 pt-2" href="#"><img :src="item.associatedModel.image" :alt="item.name" :title="item.name" style="width: 5rem;"></a>
+                            <a v-if="!isGiftWrap(item)" class="d-block flex-shrink-0 pt-2" :href="base_path + item.attributes.path"><img :src="item.associatedModel.image" :alt="item.name" :title="item.name" style="width: 5rem;"></a>
+                            <a v-else class="gift-wrap-thumb gift-wrap-thumb--nav d-inline-flex flex-shrink-0" :href="base_path + item.attributes.path" :aria-label="item.name">
+                                <span class="gift-wrap-thumb__icon" aria-hidden="true"></span>
+                            </a>
                             <div class="ps-2">
                                 <h6 class="widget-product-title"><a :href="base_path + item.attributes.path">{{ item.name }}</a></h6>
                                 <div class="widget-product-meta"><span class="text-primary me-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
@@ -64,6 +67,10 @@
         },
         //
         methods: {
+            isGiftWrap(item) {
+                return item?.attributes?.item_type === 'gift_wrap';
+            },
+
             /**
              *
              */
@@ -95,3 +102,38 @@
         }
     };
 </script>
+
+<style>
+@font-face {
+    font-family: "Font Awesome 5 Free";
+    font-style: normal;
+    font-weight: 900;
+    font-display: block;
+    src: url("/fonts/fontawesome/fa-solid-900.woff2") format("woff2"),
+         url("/fonts/fontawesome/fa-solid-900.woff") format("woff");
+}
+
+.gift-wrap-thumb {
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.9rem;
+    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);
+    border: 1px solid rgba(229, 0, 119, 0.14);
+    text-decoration: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.gift-wrap-thumb--nav {
+    width: 5rem;
+    height: 5rem;
+    margin-top: 0.5rem;
+}
+
+.gift-wrap-thumb__icon::before {
+    content: "\f06b";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: #e50077;
+    font-size: 1.5rem;
+}
+</style>

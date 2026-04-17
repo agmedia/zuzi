@@ -14,6 +14,7 @@
     $reviewsCount = $reviews->count();
     $reviewsAverage = $reviewsCount ? round((float) $reviews->avg('stars'), 1) : 0;
     $hasReviewErrors = $errors->has('name') || $errors->has('email') || $errors->has('stars') || $errors->has('message');
+    $giftWrapAllowed = \App\Services\GiftWrapService::isEligibleProduct($prod);
     $productShelfCarouselOptions = [
         'items' => 2,
         'gutter' => 16,
@@ -227,7 +228,7 @@
                 <div class="d-flex row justify-content-between mt-2"><div class="col-md-12"><div role="alert" class="alert alert-info d-flex  mb-1 "><div class="alert-icon"><i class="ci-truck"></i></div> <small>Dostava za Regionalne naslove je 20 dana.  </small></div></div></div>
             @endif
             @if ( $prod->quantity > 0)
-   <add-to-cart-btn id="{{ $prod->id }}" available="{{ $prod->quantity }}"></add-to-cart-btn>
+   <add-to-cart-btn id="{{ $prod->id }}" available="{{ $prod->quantity }}" allow-gift-wrap="{{ $giftWrapAllowed ? 'true' : 'false' }}"></add-to-cart-btn>
                 @else
                 <div class="cart mb-3 mt-3 d-flex align-items-center" >
                     <a class="btn btn-primary btn-shadow d-block w-100" href="#wishlist-modal" data-bs-toggle="modal"><i class="ci-bell"></i> Obavijesti me o dostupnosti</a>

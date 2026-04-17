@@ -66,39 +66,37 @@
 @endpush
 
 @section('content')
-    <div class="container-xl px-0">
-        <nav class="mb-3" aria-label="breadcrumb">
-            <ol class="breadcrumb flex-lg-nowrap">
-                <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
-                <li class="breadcrumb-item text-nowrap active" aria-current="page">{{ $collection['title'] }}</li>
-            </ol>
-        </nav>
+    <nav class="mb-3" aria-label="breadcrumb">
+        <ol class="breadcrumb flex-lg-nowrap">
+            <li class="breadcrumb-item"><a class="text-nowrap" href="{{ route('index') }}"><i class="ci-home"></i>Naslovnica</a></li>
+            <li class="breadcrumb-item text-nowrap active" aria-current="page">{{ $collection['title'] }}</li>
+        </ol>
+    </nav>
 
-        <section
-            class="curated-landing__hero p-4 p-lg-5 mb-4"
-            style="--curated-accent: {{ $collection['accent'] }}; --curated-surface: {{ $collection['surface'] }};"
-        >
-            <div class="position-relative" style="z-index: 1;">
-                <span class="curated-landing__eyebrow">{{ $collection['badge'] }}</span>
-                <h1 class="display-6 font-title mt-3 mb-3">{{ $collection['title'] }}</h1>
-                <p class="lead mb-2">{{ $collection['lead'] }}</p>
-                <p class="text-muted mb-0" style="max-width: 52rem;">{{ $collection['body'] }}</p>
+    <section
+        class="curated-landing__hero p-4 p-lg-5 mb-4"
+        style="--curated-accent: {{ $collection['accent'] }}; --curated-surface: {{ $collection['surface'] }};"
+    >
+        <div class="position-relative" style="z-index: 1;">
+            <span class="curated-landing__eyebrow">{{ $collection['badge'] }}</span>
+            <h1 class="display-6 font-title mt-3 mb-3">{{ $collection['title'] }}</h1>
+            <p class="lead mb-2">{{ $collection['lead'] }}</p>
+            <p class="text-muted mb-0" style="max-width: 52rem;">{{ $collection['body'] }}</p>
 
-                <div class="curated-landing__meta">
-                    <span>{{ $collection['count_label'] }}</span>
-                    @if (! empty($collection['meta_pill']))
-                        <span>{{ $collection['meta_pill'] }}</span>
-                    @endif
-                </div>
+            <div class="curated-landing__meta">
+                <span>{{ $collection['count_label'] }}</span>
+                @if (! empty($collection['meta_pill']))
+                    <span>{{ $collection['meta_pill'] }}</span>
+                @endif
             </div>
-        </section>
+        </div>
+    </section>
 
-        <products-view
-            ids="{{ $collection['ids_json'] ?? '' }}"
-            price-min="{{ $collection['price_min'] ?? '' }}"
-            price-max="{{ $collection['price_max'] ?? '' }}"
-            preserve-order="{{ ! empty($collection['preserve_order']) ? '1' : '' }}"
-            default-sort="{{ $collection['default_sort'] ?? '' }}"
-        ></products-view>
-    </div>
+    <products-view
+        ids="{{ $collection['ids_json'] ?? '' }}"
+        price-min="{{ $collection['price_min'] ?? '' }}"
+        price-max="{{ $collection['price_max'] ?? '' }}"
+        preserve-order="{{ ! empty($collection['preserve_order']) ? '1' : '' }}"
+        default-sort="{{ $collection['default_sort'] ?? '' }}"
+    ></products-view>
 @endsection

@@ -20,8 +20,11 @@
         <!-- Item-->
         <div class="d-sm-flex justify-content-between align-items-center my-2 pb-3 border-bottom" v-for="item in $store.state.cart.items">
             <div class="d-block d-sm-flex align-items-center text-center text-sm-start">
-                <a class="d-inline-block flex-shrink-0 mx-auto me-sm-4" :href="base_path + item.attributes.path">
+                <a v-if="!isGiftWrap(item)" class="d-inline-block flex-shrink-0 mx-auto me-sm-4" :href="base_path + item.attributes.path">
                     <img :src="item.associatedModel.image" width="120" :alt="item.name" :title="item.name">
+                </a>
+                <a v-else class="gift-wrap-thumb gift-wrap-thumb--lg d-inline-flex flex-shrink-0 mx-auto me-sm-4" :href="base_path + item.attributes.path" :aria-label="item.name">
+                    <span class="gift-wrap-thumb__icon" aria-hidden="true"></span>
                 </a>
                 <div class="pt-2">
                     <h3 class="product-title fs-base mb-2"><a :href="base_path + item.attributes.path">{{ item.name }}</a></h3>
@@ -44,11 +47,15 @@
                         <div>E-mail: {{ giftVoucherData(item).recipient_email }}</div>
                         <div v-if="giftVoucherData(item).sender_name">Od: {{ giftVoucherData(item).sender_name }}</div>
                     </div>
+
+                    <div v-if="isGiftWrap(item)" class="fs-sm text-muted pt-2">
+                        {{ giftWrapInfo(item) }}
+                    </div>
                 </div>
             </div>
             <div class="pt-2 pt-sm-0 ps-sm-3 mx-auto mx-sm-0 text-center text-sm-start" style="max-width: 9rem;">
                 <label class="form-label">Količina: {{item.quantity}}</label>
-                <input class="form-control" type="number" v-model="item.quantity" min="1" :max="item.associatedModel.quantity" :disabled="isGiftVoucher(item)" @click.prevent="updateCart(item)">
+                <input class="form-control" type="number" v-model="item.quantity" min="1" :max="item.associatedModel.quantity" :disabled="!isQuantityEditable(item)" @click.prevent="updateCart(item)">
                 <button class="btn btn-link px-0 text-danger" type="button" @click.prevent="removeFromCart(item)"><i class="ci-close-circle me-2"></i><span class="fs-sm">Ukloni</span></button>
             </div>
         </div>
@@ -101,8 +108,20 @@
                 return item?.attributes?.item_type === 'gift_voucher';
             },
 
+            isGiftWrap(item) {
+                return item?.attributes?.item_type === 'gift_wrap';
+            },
+
             giftVoucherData(item) {
                 return item?.attributes?.gift_voucher || {};
+            },
+
+            giftWrapInfo(item) {
+                return item?.attributes?.gift_wrap_info || '';
+            },
+
+            isQuantityEditable(item) {
+                return item?.attributes?.is_editable_quantity !== false;
             },
 
             /**
@@ -168,6 +187,15 @@
 
 
 <style>
+@font-face {
+    font-family: "Font Awesome 5 Free";
+    font-style: normal;
+    font-weight: 900;
+    font-display: block;
+    src: url("/fonts/fontawesome/fa-solid-900.woff2") format("woff2"),
+         url("/fonts/fontawesome/fa-solid-900.woff") format("woff");
+}
+
 .table th, .table td {
     padding: 0.75rem 0.45rem !important;
     vertical-align: top;
@@ -181,5 +209,28 @@
 .mobile-prices {
     font-size: .66rem;
     color: #999999;
+}
+
+.gift-wrap-thumb {
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);
+    border: 1px solid rgba(229, 0, 119, 0.14);
+    text-decoration: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.gift-wrap-thumb--lg {
+    width: 120px;
+    height: 120px;
+}
+
+.gift-wrap-thumb__icon::before {
+    content: "\f06b";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: #e50077;
+    font-size: 2rem;
 }
 </style>

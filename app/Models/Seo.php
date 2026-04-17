@@ -95,6 +95,12 @@ class Seo
     }
 
 
+    public static function categoryDescription(?Category $category = null, ?string $fallback = null): string
+    {
+        return static::description($category?->meta_description, $fallback);
+    }
+
+
     public static function image(?string $image = null): string
     {
         if (! $image) {
@@ -337,14 +343,20 @@ class Seo
         if ($subcat) {
             return [
                 'title'       => static::appendBrand($subcat->meta_title ?: $subcat->title),
-                'description' => static::descriptionFromContent([$subcat->description], $subcat->title),
+                'description' => static::categoryDescription(
+                    $subcat,
+                    'Pregledajte knjige iz kategorije ' . $subcat->title . ' i pronađite izdanja koja odgovaraju vašem interesu.'
+                ),
             ];
         }
 
         if ($cat) {
             return [
                 'title'       => static::appendBrand($cat->meta_title ?: $cat->title),
-                'description' => static::descriptionFromContent([$cat->description], $cat->title),
+                'description' => static::categoryDescription(
+                    $cat,
+                    'Pregledajte knjige iz kategorije ' . $cat->title . ' i izdvojite naslove koji vas zanimaju.'
+                ),
             ];
         }
 

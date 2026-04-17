@@ -17,8 +17,10 @@
             0 => ['items' => 2, 'controls' => true, 'nav' => true],
             576 => ['items' => 3],
             768 => ['items' => 3],
+            992 => ['items' => 3],
             1200 => ['items' => 4],
             1400 => ['items' => 5],
+            1600 => ['items' => 6],
         ],
     ];
     $bookmarkersUrl = route('catalog.route', ['group' => 'kategorija-proizvoda', 'cat' => 'bookmarkeri']);
@@ -52,6 +54,80 @@
 
         .cart-shelf-header__link {
             flex-shrink: 0;
+        }
+
+        .cart-shelf-card {
+            width: 100%;
+            height: 100%;
+        }
+
+        .cart-shelf-card__image-link {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            min-height: 15rem;
+            padding: 0.75rem 0.5rem;
+            background-color: #fff;
+        }
+
+        .cart-shelf-card__image {
+            display: block;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 15rem;
+            margin: 0 auto;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        .cart-shelf-card__body {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 6.5rem;
+        }
+
+        .cart-shelf-card__title {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.25;
+            min-height: 3.2rem;
+        }
+
+        .cart-shelf-card__price-group {
+            margin-top: auto;
+        }
+
+        .cart-shelf-card--bookmarkers .cart-shelf-card__image-link {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        @media (min-width: 1400px) {
+            .cart-shelf-card__image-link {
+                min-height: 250px;
+                padding: 0.5rem;
+            }
+
+            .cart-shelf-card__image {
+                max-height: 250px;
+            }
+
+            .cart-shelf-card--bookmarkers .cart-shelf-card__image-link {
+                padding: 0.75rem;
+            }
+        }
+
+        @media (min-width: 1600px) {
+            .cart-shelf-card__image {
+                max-height: 260px;
+            }
+
+            .cart-shelf-card__body {
+                min-height: 6rem;
+            }
         }
     </style>
 @endpush
@@ -154,7 +230,7 @@
                 <div class="tns-carousel-inner" data-carousel-options='@json($cartRecommendationCarouselOptions)'>
                     @foreach ($cartRecommendations as $product)
                         <div>
-                            @include('front.catalog.category.product', ['product' => $product])
+                            @include('front.catalog.category.product', ['product' => $product, 'cardLayout' => 'cart-shelf'])
                         </div>
                     @endforeach
                 </div>
@@ -176,7 +252,7 @@
                 <div class="tns-carousel-inner" data-carousel-options='@json($cartRecommendationCarouselOptions)'>
                     @foreach ($cartBookmarkers as $product)
                         <div>
-                            @include('front.catalog.category.product', ['product' => $product])
+                            @include('front.catalog.category.product', ['product' => $product, 'cardLayout' => 'cart-shelf'])
                         </div>
                     @endforeach
                 </div>

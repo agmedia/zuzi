@@ -28,7 +28,10 @@
                     <h2 class="widget-title text-center mb-2">Sažetak narudžbe</h2>
 
                     <div class="d-flex align-items-center pb-2 border-bottom" v-for="item in $store.state.cart.items">
-                        <a class="d-block flex-shrink-0" :href="base_path + item.attributes.path"><img :src="item.associatedModel.image" :alt="item.name" width="64"></a>
+                        <a v-if="!isGiftWrap(item)" class="d-block flex-shrink-0" :href="base_path + item.attributes.path"><img :src="item.associatedModel.image" :alt="item.name" width="64"></a>
+                        <a v-else class="gift-wrap-thumb gift-wrap-thumb--sm d-inline-flex flex-shrink-0" :href="base_path + item.attributes.path" :aria-label="item.name">
+                            <span class="gift-wrap-thumb__icon" aria-hidden="true"></span>
+                        </a>
                         <div class="ps-2">
                             <h6 class="widget-product-title"><a :href="base_path + item.attributes.path">{{ item.name }}</a></h6>
                             <div class="widget-product-meta"><span class="text-primary me-2">{{ Object.keys(item.conditions).length ? item.associatedModel.main_special_text : item.associatedModel.main_price_text }}</span><span class="text-muted">x {{ item.quantity }}</span></div>
@@ -241,6 +244,10 @@ export default {
             return item?.attributes?.item_type === 'gift_voucher';
         },
 
+        isGiftWrap(item) {
+            return item?.attributes?.item_type === 'gift_wrap';
+        },
+
         giftVoucherData(item) {
             return item?.attributes?.gift_voucher || {};
         },
@@ -408,6 +415,15 @@ export default {
 
 
 <style>
+@font-face {
+    font-family: "Font Awesome 5 Free";
+    font-style: normal;
+    font-weight: 900;
+    font-display: block;
+    src: url("/fonts/fontawesome/fa-solid-900.woff2") format("woff2"),
+         url("/fonts/fontawesome/fa-solid-900.woff") format("woff");
+}
+
 .table th, .table td {
     padding: 0.75rem 0.45rem !important;
     vertical-align: top;
@@ -458,5 +474,25 @@ export default {
     color: #5f6c82;
     font-size: 0.95rem;
     line-height: 1.5;
+}
+.gift-wrap-thumb {
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.9rem;
+    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);
+    border: 1px solid rgba(229, 0, 119, 0.14);
+    text-decoration: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.gift-wrap-thumb--sm {
+    width: 64px;
+    height: 64px;
+}
+.gift-wrap-thumb__icon::before {
+    content: "\f06b";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: #e50077;
+    font-size: 1.2rem;
 }
 </style>

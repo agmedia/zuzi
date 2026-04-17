@@ -8,6 +8,7 @@ use App\Models\Back\Orders\OrderProduct;
 use App\Models\Back\Orders\OrderTotal;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\Catalog\Product;
+use App\Services\GiftWrapService;
 use App\Services\GiftVoucherService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -243,11 +244,13 @@ class Order extends Model
             $price    = $item->price;
             $productId = 0;
 
-            if (! GiftVoucherService::isGiftVoucherItem($item)) {
+            if (! GiftVoucherService::isGiftVoucherItem($item) && ! GiftWrapService::isGiftWrapItem($item)) {
                 $productId = (int) $item->id;
             }
 
-            if (! GiftVoucherService::isGiftVoucherItem($item) && $this->checkSpecial($item->associatedModel)) {
+            if (! GiftVoucherService::isGiftVoucherItem($item)
+                && ! GiftWrapService::isGiftWrapItem($item)
+                && $this->checkSpecial($item->associatedModel)) {
                 $price    = floatval($item->associatedModel->special);
                 $discount = Helper::calculateDiscount($item->price, $price);
             }

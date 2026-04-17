@@ -11,8 +11,7 @@ export default {
 
     data() {
         return {
-            quantity: 1,
-            has_in_cart: false,
+            has_in_cart: 0,
             disabled: false
         }
     },
@@ -25,8 +24,7 @@ export default {
         if(cart) {
             for (const key in cart.items) {
                 if (this.id == cart.items[key].id) {
-                    this.has_in_cart = true;
-                    this.quantity = cart.items[key].quantity;
+                    this.has_in_cart = Number(cart.items[key].quantity) || 0;
                 }
             }
         }
@@ -36,45 +34,50 @@ export default {
 
     methods: {
         add() {
-            this.checkAvailability();
+            const available = Number(this.available) || 0;
+
+            if (available && this.has_in_cart + 1 > available) {
+                this.disabled = this.has_in_cart >= available;
+                return;
+            }
+
+            const item = {
+                id: this.id,
+                quantity: 1
+            };
+
+            const action = this.has_in_cart ? 'updateCart' : 'addToCart';
 
             if (this.has_in_cart) {
-                this.updateCart();
-            } else {
-                this.addToCart();
+                item.relative = true;
             }
 
-            this.quantity += 1;
-        },
-        /**
-         *
-         */
-        addToCart() {
-            let item = {
-                id: this.id,
-                quantity: this.quantity
-            }
-
-            this.$store.dispatch('addToCart', item);
+            this.$store.dispatch(action, item).then((cart) => {
+                if (cart) {
+                    this.syncHasInCart(cart);
+                }
+            });
         },
 
-        /**
-         *
-         */
-        updateCart() {
-            let item = {
-                id: this.id,
-                quantity: this.quantity
+        syncHasInCart(cart) {
+            let quantity = 0;
+
+            if (cart && cart.items) {
+                Object.keys(cart.items).forEach((key) => {
+                    if (String(this.id) === String(cart.items[key].id)) {
+                        quantity = Number(cart.items[key].quantity) || 0;
+                    }
+                });
             }
 
-            this.$store.dispatch('updateCart', item);
+            this.has_in_cart = quantity;
+            this.checkAvailability();
         },
 
         checkAvailability() {
-            if (this.available < this.quantity) {
-                this.disabled = true;
-                this.quantity = this.available;
-            }
+            const available = Number(this.available) || 0;
+
+            this.disabled = available ? this.has_in_cart >= available : false;
         }
     }
 };

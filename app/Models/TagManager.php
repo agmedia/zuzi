@@ -8,6 +8,7 @@ use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\Catalog\Product;
 use App\Services\GiftVoucherService;
 use Darryldecode\Cart\CartCollection;
+use Illuminate\Support\Str;
 
 /**
  * Class Sitemap
@@ -105,12 +106,12 @@ class TagManager
         );
 
         return [
-            'item_id'        => (string) ($realProduct ? $realProduct->sku : $product->product_id),
+            'item_id'        => (string) ($realProduct ? $realProduct->sku : (trim((string) $product->name) !== '' ? Str::slug((string) $product->name) : $product->product_id)),
             'item_name'      => $product->name,
             'price'          => static::normalizeGoogleNumber($product->price),
             'currency'       => 'EUR',
             'discount'       => static::normalizeGoogleNumber($discount),
-            'item_category'  => $realProduct && $realProduct->category() ? $realProduct->category()->title : '',
+            'item_category'  => $realProduct && $realProduct->category() ? $realProduct->category()->title : (! $product->product_id ? 'Usluga' : ''),
             'item_category2' => $realProduct && $realProduct->subcategory() ? $realProduct->subcategory()->title : '',
             'quantity'       => (int) $product->quantity,
         ];

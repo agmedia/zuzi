@@ -334,7 +334,7 @@ let store = {
          * @returns {*}
          */
         getCart(context) {
-            context.commit('setCart');
+            return context.commit('setCart');
         },
 
         /**
@@ -345,11 +345,13 @@ let store = {
         addToCart(context, item) {
             let state = context.state;
 
-            state.service.addToCart(item).then(cart => {
+            return state.service.addToCart(item).then(cart => {
                 if (cart) {
                     state.storage.setCart(cart);
                     state.cart = cart;
                 }
+
+                return cart;
             });
         },
 
@@ -361,11 +363,13 @@ let store = {
         updateCart(context, item) {
             let state = context.state;
 
-            state.service.updateCart(item).then(cart => {
+            return state.service.updateCart(item).then(cart => {
                 if (cart) {
                     state.storage.setCart(cart);
                     state.cart = cart;
                 }
+
+                return cart;
             });
         },
 
@@ -377,9 +381,11 @@ let store = {
         removeFromCart(context, item) {
             let state = context.state;
 
-            state.service.removeItem(item).then(cart => {
+            return state.service.removeItem(item).then(cart => {
                 state.storage.setCart(cart);
                 state.cart = cart;
+
+                return cart;
             });
         },
 
