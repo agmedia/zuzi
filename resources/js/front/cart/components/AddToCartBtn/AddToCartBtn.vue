@@ -1,15 +1,61 @@
 <template>
-    <div class="cart gift-cart d-flex flex-wrap align-items-center pt-2 pb-2 mb-3">
-        <div class="gift-cart__controls d-flex flex-wrap align-items-center w-100">
-            <input class="form-control me-3 mb-1" type="number" inputmode="numeric" pattern="[0-9]*" v-model="quantity" min="1" :max="available" style="width: 5rem;">
-            <button class="btn btn-primary btn-shadow me-3 mb-1" @click="add()" :disabled="disabled"><i class="ci-cart"></i> Dodaj u Košaricu</button>
+    <div class="product-add-to-cart">
+        <div class="product-add-to-cart__controls">
+            <label class="product-add-to-cart__quantity" for="product-quantity-input">
+                <span class="product-add-to-cart__label">Količina</span>
+
+                <div class="quantity-stepper">
+                    <button
+                        type="button"
+                        class="quantity-stepper__button"
+                        aria-label="Smanji količinu"
+                        :disabled="quantityNumber <= 1 || isBusy"
+                        @click="decreaseQuantity"
+                    >
+                        -
+                    </button>
+
+                    <input
+                        id="product-quantity-input"
+                        class="quantity-stepper__input"
+                        type="number"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        v-model="quantity"
+                        min="1"
+                        :max="maxInputValue"
+                        :disabled="isBusy"
+                        @blur="normalizeQuantity"
+                    >
+
+                    <button
+                        type="button"
+                        class="quantity-stepper__button"
+                        aria-label="Povećaj količinu"
+                        :disabled="incrementDisabled"
+                        @click="increaseQuantity"
+                    >
+                        +
+                    </button>
+                </div>
+            </label>
+
+            <button type="button" class="btn btn-primary product-add-to-cart__cta" @click="add()" :disabled="disabled || isBusy">
+                <i class="ci-bag"></i>
+                {{ buttonLabel }}
+            </button>
         </div>
-        <label v-if="giftWrapEnabled" class="gift-wrap-option mb-2" for="gift-wrap-checkbox">
+
+        <p v-if="stockLimitMessage" class="product-add-to-cart__status product-add-to-cart__status--warning">{{ stockLimitMessage }}</p>
+        <p v-else-if="has_in_cart" class="product-add-to-cart__status">U košarici: {{ has_in_cart }} kom.</p>
+
+        <label v-if="giftWrapEnabled" class="gift-wrap-option" for="gift-wrap-checkbox">
             <span class="gift-wrap-option__checkbox">
                 <input id="gift-wrap-checkbox" class="form-check-input" type="checkbox" v-model="giftWrap">
             </span>
             <span class="gift-wrap-option__copy">
-                <span class="gift-wrap-option__title"><i class="fas fa-gift gift-wrap-option__icon" aria-hidden="true"></i> Želim zamatanje za poklon.</span>
+                <span class="gift-wrap-option__title"><i class="fas fa-gift gift-wrap-option__icon" aria-hidden="true"></i> Dodaj zamatanje za poklon</span>
+                <span class="gift-wrap-option__description">Ukrasni papir, mašna i priprema knjige za dar (opcionalno).</span>
                 <span class="gift-wrap-option__price">+5,00 €</span>
             </span>
             <span class="gift-wrap-option__info" tabindex="0" aria-label="Više informacija o zamatanju">
@@ -17,7 +63,6 @@
                 <span class="gift-wrap-option__tooltip">Usluga uključuje ukrasni papir, mašnu i pripremu knjige za poklon.</span>
             </span>
         </label>
-        <p style="width: 100%;" class="fs-md fw-light text-danger" v-if="has_in_cart">Imate {{ has_in_cart }} artikala u košarici.</p>
     </div>
 </template>
 
@@ -26,6 +71,10 @@ export default {
     props: {
         id: String,
         available: String,
+        trackStock: {
+            type: String,
+            default: 'true'
+        },
         allowGiftWrap: {
             type: String,
             default: 'true'
@@ -37,6 +86,7 @@ export default {
             quantity: 1,
             has_in_cart: 0,
             disabled: false,
+            isBusy: false,
             giftWrap: false
         }
     },
@@ -44,6 +94,70 @@ export default {
     computed: {
         giftWrapEnabled() {
             return String(this.allowGiftWrap) !== 'false';
+        },
+
+        stockTrackingEnabled() {
+            return String(this.trackStock) !== 'false';
+        },
+
+        availableCount() {
+            return Number(this.available) || 0;
+        },
+
+        quantityNumber() {
+            return Math.max(1, parseInt(this.quantity, 10) || 1);
+        },
+
+        currentQuantity() {
+            return Number(this.has_in_cart) || 0;
+        },
+
+        remainingAvailable() {
+            if (!this.stockTrackingEnabled) {
+                return null;
+            }
+
+            return Math.max(this.availableCount - this.currentQuantity, 0);
+        },
+
+        maxSelectableQuantity() {
+            if (this.remainingAvailable === null) {
+                return null;
+            }
+
+            return this.remainingAvailable > 0 ? this.remainingAvailable : 1;
+        },
+
+        maxInputValue() {
+            return this.maxSelectableQuantity || null;
+        },
+
+        incrementDisabled() {
+            return this.isBusy || (this.remainingAvailable !== null && this.quantityNumber >= this.maxSelectableQuantity);
+        },
+
+        stockLimitMessage() {
+            if (this.remainingAvailable === null) {
+                return null;
+            }
+
+            if (this.remainingAvailable === 0) {
+                return 'Dosegli ste maksimalnu dostupnu količinu za ovaj naslov.';
+            }
+
+            if (this.remainingAvailable <= 3) {
+                return `Možete dodati još ${this.remainingAvailable} kom.`;
+            }
+
+            return null;
+        },
+
+        buttonLabel() {
+            if (this.isBusy) {
+                return 'Dodavanje...';
+            }
+
+            return this.has_in_cart ? 'Dodaj još u košaricu' : 'Dodaj u košaricu';
         }
     },
 
@@ -57,21 +171,18 @@ export default {
             }
         }
 
-        if (this.available == undefined) {
-            this.available = 0;
-        }
-
         this.checkAvailability();
     },
 
     methods: {
         add() {
             const quantity = this.normalizeQuantity();
-            const currentQuantity = Number(this.has_in_cart) || 0;
-            const available = Number(this.available) || 0;
+            const currentQuantity = this.currentQuantity;
+            const available = this.remainingAvailable;
 
-            if (available && currentQuantity + quantity > available) {
-                this.disabled = currentQuantity >= available;
+            if (available !== null && quantity > available) {
+                this.quantity = available > 0 ? available : 1;
+                this.disabled = available <= 0;
                 return;
             }
 
@@ -87,18 +198,45 @@ export default {
                 item.relative = true;
             }
 
-            this.$store.dispatch(action, item).then((cart) => {
-                if (cart) {
-                    this.syncHasInCart(cart);
-                }
-            });
+            this.isBusy = true;
+
+            this.$store.dispatch(action, item)
+                .then((cart) => {
+                    if (cart) {
+                        this.syncHasInCart(cart);
+                    }
+                })
+                .finally(() => {
+                    this.isBusy = false;
+                });
         },
 
         normalizeQuantity() {
-            const quantity = Math.max(1, parseInt(this.quantity, 10) || 1);
+            const maxSelectableQuantity = this.maxSelectableQuantity;
+            let quantity = Math.max(1, parseInt(this.quantity, 10) || 1);
+
+            if (maxSelectableQuantity !== null) {
+                quantity = Math.min(quantity, maxSelectableQuantity);
+            }
+
             this.quantity = quantity;
 
             return quantity;
+        },
+
+        decreaseQuantity() {
+            this.quantity = Math.max(1, this.quantityNumber - 1);
+        },
+
+        increaseQuantity() {
+            const nextQuantity = this.quantityNumber + 1;
+
+            if (this.maxSelectableQuantity !== null) {
+                this.quantity = Math.min(nextQuantity, this.maxSelectableQuantity);
+                return;
+            }
+
+            this.quantity = nextQuantity;
         },
 
         syncHasInCart(cart) {
@@ -117,10 +255,16 @@ export default {
         },
 
         checkAvailability() {
-            const available = Number(this.available) || 0;
-            const inCart = Number(this.has_in_cart) || 0;
+            if (!this.stockTrackingEnabled) {
+                this.disabled = false;
+                return;
+            }
 
-            this.disabled = available ? inCart >= available : false;
+            this.disabled = this.remainingAvailable !== null ? this.remainingAvailable <= 0 : false;
+
+            if (this.maxSelectableQuantity !== null && this.quantityNumber > this.maxSelectableQuantity) {
+                this.quantity = this.maxSelectableQuantity;
+            }
         }
     }
 };
@@ -151,20 +295,132 @@ export default {
     content: "\f06b";
 }
 
-.gift-cart__controls {
-    margin-bottom: 0.35rem;
+.product-add-to-cart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.product-add-to-cart__controls {
+    display: grid;
+    grid-template-columns: minmax(8.75rem, 9.5rem) minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: end;
+}
+
+.product-add-to-cart__quantity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.product-add-to-cart__label {
+    color: #667085;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.product-add-to-cart__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    width: 100%;
+    border-radius: 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.product-add-to-cart__status {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: #667085;
+}
+
+.product-add-to-cart__status--warning {
+    color: #c2410c;
+}
+
+.quantity-stepper {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0.2rem;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 0.9rem;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+.quantity-stepper__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 2.2rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 0;
+    border-radius: 0.75rem;
+    background: #f4f6fb;
+    color: #2f3441;
+    font-size: 1rem;
+    font-weight: 700;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.quantity-stepper__button:not(:disabled):hover {
+    background: rgba(229, 0, 119, 0.1);
+    color: #e50077;
+    transform: translateY(-1px);
+}
+
+.quantity-stepper__button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.quantity-stepper__input {
+    flex: 1 1 auto;
+    width: 100%;
+    border: 0;
+    padding: 0 0.3rem;
+    background: transparent;
+    color: #2f3441;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: none;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.quantity-stepper__input:focus {
+    outline: 0;
+}
+
+.quantity-stepper__input::-webkit-outer-spin-button,
+.quantity-stepper__input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .gift-wrap-option {
     position: relative;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.65rem;
     width: 100%;
-    padding: 0.7rem 0.8rem;
-    border: 1px solid rgba(229, 0, 119, 0.16);
-    border-radius: 0.85rem;
-    background: linear-gradient(180deg, rgba(255, 239, 246, 0.86) 0%, rgba(255, 250, 252, 0.96) 100%);
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.8rem;
+    background: rgba(255, 255, 255, 0.96);
     cursor: pointer;
 }
 
@@ -177,8 +433,8 @@ export default {
     display: flex;
     flex: 1 1 auto;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem 0.75rem;
+    align-items: baseline;
+    gap: 0.12rem 0.55rem;
     color: #2f3441;
 }
 
@@ -186,8 +442,15 @@ export default {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 600;
+}
+
+.gift-wrap-option__description {
+    width: 100%;
+    color: #667085;
+    font-size: 0.75rem;
+    line-height: 1.3;
 }
 
 .gift-wrap-option__icon {
@@ -196,7 +459,7 @@ export default {
 }
 
 .gift-wrap-option__price {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: #e50077;
 }
@@ -207,13 +470,13 @@ export default {
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    width: 1.35rem;
-    height: 1.35rem;
+    width: 1.2rem;
+    height: 1.2rem;
     border-radius: 999px;
     background: #ffffff;
     border: 1px solid rgba(47, 52, 65, 0.15);
     color: #5c667a;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     line-height: 1;
 }
@@ -257,7 +520,16 @@ export default {
 }
 
 @media (max-width: 575.98px) {
+    .product-add-to-cart__controls {
+        grid-template-columns: 1fr;
+    }
+
+    .product-add-to-cart__cta {
+        min-height: 2.95rem;
+    }
+
     .gift-wrap-option {
+        grid-template-columns: auto minmax(0, 1fr);
         align-items: flex-start;
     }
 
@@ -265,6 +537,11 @@ export default {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.2rem;
+    }
+
+    .gift-wrap-option__info {
+        grid-column: 2;
+        justify-self: flex-start;
     }
 }
 </style>

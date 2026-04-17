@@ -2088,11 +2088,60 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
     id: String,
     available: String,
+    trackStock: {
+      type: String,
+      "default": 'true'
+    },
     allowGiftWrap: {
       type: String,
       "default": 'true'
@@ -2103,12 +2152,61 @@ __webpack_require__.r(__webpack_exports__);
       quantity: 1,
       has_in_cart: 0,
       disabled: false,
+      isBusy: false,
       giftWrap: false
     };
   },
   computed: {
     giftWrapEnabled: function giftWrapEnabled() {
       return String(this.allowGiftWrap) !== 'false';
+    },
+    stockTrackingEnabled: function stockTrackingEnabled() {
+      return String(this.trackStock) !== 'false';
+    },
+    availableCount: function availableCount() {
+      return Number(this.available) || 0;
+    },
+    quantityNumber: function quantityNumber() {
+      return Math.max(1, parseInt(this.quantity, 10) || 1);
+    },
+    currentQuantity: function currentQuantity() {
+      return Number(this.has_in_cart) || 0;
+    },
+    remainingAvailable: function remainingAvailable() {
+      if (!this.stockTrackingEnabled) {
+        return null;
+      }
+      return Math.max(this.availableCount - this.currentQuantity, 0);
+    },
+    maxSelectableQuantity: function maxSelectableQuantity() {
+      if (this.remainingAvailable === null) {
+        return null;
+      }
+      return this.remainingAvailable > 0 ? this.remainingAvailable : 1;
+    },
+    maxInputValue: function maxInputValue() {
+      return this.maxSelectableQuantity || null;
+    },
+    incrementDisabled: function incrementDisabled() {
+      return this.isBusy || this.remainingAvailable !== null && this.quantityNumber >= this.maxSelectableQuantity;
+    },
+    stockLimitMessage: function stockLimitMessage() {
+      if (this.remainingAvailable === null) {
+        return null;
+      }
+      if (this.remainingAvailable === 0) {
+        return 'Dosegli ste maksimalnu dostupnu količinu za ovaj naslov.';
+      }
+      if (this.remainingAvailable <= 3) {
+        return "Mo\u017Eete dodati jo\u0161 ".concat(this.remainingAvailable, " kom.");
+      }
+      return null;
+    },
+    buttonLabel: function buttonLabel() {
+      if (this.isBusy) {
+        return 'Dodavanje...';
+      }
+      return this.has_in_cart ? 'Dodaj još u košaricu' : 'Dodaj u košaricu';
     }
   },
   mounted: function mounted() {
@@ -2120,19 +2218,17 @@ __webpack_require__.r(__webpack_exports__);
         }
       }
     }
-    if (this.available == undefined) {
-      this.available = 0;
-    }
     this.checkAvailability();
   },
   methods: {
     add: function add() {
       var _this = this;
       var quantity = this.normalizeQuantity();
-      var currentQuantity = Number(this.has_in_cart) || 0;
-      var available = Number(this.available) || 0;
-      if (available && currentQuantity + quantity > available) {
-        this.disabled = currentQuantity >= available;
+      var currentQuantity = this.currentQuantity;
+      var available = this.remainingAvailable;
+      if (available !== null && quantity > available) {
+        this.quantity = available > 0 ? available : 1;
+        this.disabled = available <= 0;
         return;
       }
       var item = {
@@ -2144,16 +2240,34 @@ __webpack_require__.r(__webpack_exports__);
       if (currentQuantity) {
         item.relative = true;
       }
+      this.isBusy = true;
       this.$store.dispatch(action, item).then(function (cart) {
         if (cart) {
           _this.syncHasInCart(cart);
         }
+      })["finally"](function () {
+        _this.isBusy = false;
       });
     },
     normalizeQuantity: function normalizeQuantity() {
+      var maxSelectableQuantity = this.maxSelectableQuantity;
       var quantity = Math.max(1, parseInt(this.quantity, 10) || 1);
+      if (maxSelectableQuantity !== null) {
+        quantity = Math.min(quantity, maxSelectableQuantity);
+      }
       this.quantity = quantity;
       return quantity;
+    },
+    decreaseQuantity: function decreaseQuantity() {
+      this.quantity = Math.max(1, this.quantityNumber - 1);
+    },
+    increaseQuantity: function increaseQuantity() {
+      var nextQuantity = this.quantityNumber + 1;
+      if (this.maxSelectableQuantity !== null) {
+        this.quantity = Math.min(nextQuantity, this.maxSelectableQuantity);
+        return;
+      }
+      this.quantity = nextQuantity;
     },
     syncHasInCart: function syncHasInCart(cart) {
       var _this2 = this;
@@ -2169,9 +2283,14 @@ __webpack_require__.r(__webpack_exports__);
       this.checkAvailability();
     },
     checkAvailability: function checkAvailability() {
-      var available = Number(this.available) || 0;
-      var inCart = Number(this.has_in_cart) || 0;
-      this.disabled = available ? inCart >= available : false;
+      if (!this.stockTrackingEnabled) {
+        this.disabled = false;
+        return;
+      }
+      this.disabled = this.remainingAvailable !== null ? this.remainingAvailable <= 0 : false;
+      if (this.maxSelectableQuantity !== null && this.quantityNumber > this.maxSelectableQuantity) {
+        this.quantity = this.maxSelectableQuantity;
+      }
     }
   }
 });
@@ -5234,7 +5353,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n@font-face {\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    font-display: block;\n    src: url(\"/fonts/fontawesome/fa-solid-900.woff2\") format(\"woff2\"),\n         url(\"/fonts/fontawesome/fa-solid-900.woff\") format(\"woff\");\n}\n.fas[data-v-d1743cde] {\n    display: inline-block;\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    line-height: 1;\n    text-rendering: auto;\n    -webkit-font-smoothing: antialiased;\n    -moz-osx-font-smoothing: grayscale;\n}\n.fa-gift[data-v-d1743cde]::before {\n    content: \"\\f06b\";\n}\n.gift-cart__controls[data-v-d1743cde] {\n    margin-bottom: 0.35rem;\n}\n.gift-wrap-option[data-v-d1743cde] {\n    position: relative;\n    display: flex;\n    align-items: center;\n    gap: 0.65rem;\n    width: 100%;\n    padding: 0.7rem 0.8rem;\n    border: 1px solid rgba(229, 0, 119, 0.16);\n    border-radius: 0.85rem;\n    background: linear-gradient(180deg, rgba(255, 239, 246, 0.86) 0%, rgba(255, 250, 252, 0.96) 100%);\n    cursor: pointer;\n}\n.gift-wrap-option__checkbox[data-v-d1743cde] {\n    display: inline-flex;\n    align-items: center;\n}\n.gift-wrap-option__copy[data-v-d1743cde] {\n    display: flex;\n    flex: 1 1 auto;\n    flex-wrap: wrap;\n    align-items: center;\n    gap: 0.4rem 0.75rem;\n    color: #2f3441;\n}\n.gift-wrap-option__title[data-v-d1743cde] {\n    display: inline-flex;\n    align-items: center;\n    gap: 0.45rem;\n    font-size: 0.95rem;\n    font-weight: 600;\n}\n.gift-wrap-option__icon[data-v-d1743cde] {\n    color: #e50077;\n    font-size: 0.95rem;\n}\n.gift-wrap-option__price[data-v-d1743cde] {\n    font-size: 0.88rem;\n    font-weight: 700;\n    color: #e50077;\n}\n.gift-wrap-option__info[data-v-d1743cde] {\n    position: relative;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex: 0 0 auto;\n    width: 1.35rem;\n    height: 1.35rem;\n    border-radius: 999px;\n    background: #ffffff;\n    border: 1px solid rgba(47, 52, 65, 0.15);\n    color: #5c667a;\n    font-size: 0.78rem;\n    font-weight: 700;\n    line-height: 1;\n}\n.gift-wrap-option__tooltip[data-v-d1743cde] {\n    position: absolute;\n    right: 0;\n    bottom: calc(100% + 0.65rem);\n    z-index: 10;\n    width: min(15rem, 80vw);\n    padding: 0.65rem 0.75rem;\n    border-radius: 0.75rem;\n    background: #2f3441;\n    color: #ffffff;\n    font-size: 0.76rem;\n    line-height: 1.45;\n    box-shadow: 0 12px 30px rgba(18, 25, 38, 0.2);\n    opacity: 0;\n    visibility: hidden;\n    transform: translateY(0.25rem);\n    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;\n    pointer-events: none;\n}\n.gift-wrap-option__tooltip[data-v-d1743cde]::after {\n    content: \"\";\n    position: absolute;\n    right: 0.55rem;\n    top: 100%;\n    border-width: 0.4rem;\n    border-style: solid;\n    border-color: #2f3441 transparent transparent transparent;\n}\n.gift-wrap-option__info:hover .gift-wrap-option__tooltip[data-v-d1743cde],\n.gift-wrap-option__info:focus .gift-wrap-option__tooltip[data-v-d1743cde],\n.gift-wrap-option__info:focus-within .gift-wrap-option__tooltip[data-v-d1743cde] {\n    opacity: 1;\n    visibility: visible;\n    transform: translateY(0);\n}\n@media (max-width: 575.98px) {\n.gift-wrap-option[data-v-d1743cde] {\n        align-items: flex-start;\n}\n.gift-wrap-option__copy[data-v-d1743cde] {\n        flex-direction: column;\n        align-items: flex-start;\n        gap: 0.2rem;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n@font-face {\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    font-display: block;\n    src: url(\"/fonts/fontawesome/fa-solid-900.woff2\") format(\"woff2\"),\n         url(\"/fonts/fontawesome/fa-solid-900.woff\") format(\"woff\");\n}\n.fas[data-v-d1743cde] {\n    display: inline-block;\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    line-height: 1;\n    text-rendering: auto;\n    -webkit-font-smoothing: antialiased;\n    -moz-osx-font-smoothing: grayscale;\n}\n.fa-gift[data-v-d1743cde]::before {\n    content: \"\\f06b\";\n}\n.product-add-to-cart[data-v-d1743cde] {\n    display: flex;\n    flex-direction: column;\n    gap: 0.6rem;\n}\n.product-add-to-cart__controls[data-v-d1743cde] {\n    display: grid;\n    grid-template-columns: minmax(8.75rem, 9.5rem) minmax(0, 1fr);\n    gap: 0.65rem;\n    align-items: end;\n}\n.product-add-to-cart__quantity[data-v-d1743cde] {\n    display: flex;\n    flex-direction: column;\n    gap: 0.3rem;\n    min-width: 0;\n}\n.product-add-to-cart__label[data-v-d1743cde] {\n    color: #667085;\n    font-size: 0.7rem;\n    font-weight: 700;\n    letter-spacing: 0.08em;\n    text-transform: uppercase;\n}\n.product-add-to-cart__cta[data-v-d1743cde] {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.5rem;\n    min-height: 3rem;\n    width: 100%;\n    border-radius: 0.9rem;\n    font-size: 0.95rem;\n    font-weight: 700;\n    box-shadow: none;\n}\n.product-add-to-cart__status[data-v-d1743cde] {\n    margin: 0;\n    font-size: 0.78rem;\n    line-height: 1.35;\n    color: #667085;\n}\n.product-add-to-cart__status--warning[data-v-d1743cde] {\n    color: #c2410c;\n}\n.quantity-stepper[data-v-d1743cde] {\n    display: flex;\n    align-items: center;\n    min-height: 3rem;\n    padding: 0.2rem;\n    border: 1px solid rgba(15, 23, 42, 0.1);\n    border-radius: 0.9rem;\n    background: #ffffff;\n    box-shadow: none;\n}\n.quantity-stepper__button[data-v-d1743cde] {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex: 0 0 2.2rem;\n    width: 2.2rem;\n    height: 2.2rem;\n    border: 0;\n    border-radius: 0.75rem;\n    background: #f4f6fb;\n    color: #2f3441;\n    font-size: 1rem;\n    font-weight: 700;\n    transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;\n}\n.quantity-stepper__button[data-v-d1743cde]:not(:disabled):hover {\n    background: rgba(229, 0, 119, 0.1);\n    color: #e50077;\n    transform: translateY(-1px);\n}\n.quantity-stepper__button[data-v-d1743cde]:disabled {\n    opacity: 0.45;\n    cursor: not-allowed;\n}\n.quantity-stepper__input[data-v-d1743cde] {\n    flex: 1 1 auto;\n    width: 100%;\n    border: 0;\n    padding: 0 0.3rem;\n    background: transparent;\n    color: #2f3441;\n    font-size: 0.95rem;\n    font-weight: 700;\n    text-align: center;\n    box-shadow: none;\n    -moz-appearance: textfield;\n    -webkit-appearance: textfield;\n            appearance: textfield;\n}\n.quantity-stepper__input[data-v-d1743cde]:focus {\n    outline: 0;\n}\n.quantity-stepper__input[data-v-d1743cde]::-webkit-outer-spin-button,\n.quantity-stepper__input[data-v-d1743cde]::-webkit-inner-spin-button {\n    -webkit-appearance: none;\n    margin: 0;\n}\n.gift-wrap-option[data-v-d1743cde] {\n    position: relative;\n    display: grid;\n    grid-template-columns: auto minmax(0, 1fr) auto;\n    align-items: center;\n    gap: 0.65rem;\n    width: 100%;\n    padding: 0.65rem 0.75rem;\n    border: 1px solid rgba(15, 23, 42, 0.08);\n    border-radius: 0.8rem;\n    background: rgba(255, 255, 255, 0.96);\n    cursor: pointer;\n}\n.gift-wrap-option__checkbox[data-v-d1743cde] {\n    display: inline-flex;\n    align-items: center;\n}\n.gift-wrap-option__copy[data-v-d1743cde] {\n    display: flex;\n    flex: 1 1 auto;\n    flex-wrap: wrap;\n    align-items: baseline;\n    gap: 0.12rem 0.55rem;\n    color: #2f3441;\n}\n.gift-wrap-option__title[data-v-d1743cde] {\n    display: inline-flex;\n    align-items: center;\n    gap: 0.45rem;\n    font-size: 0.88rem;\n    font-weight: 600;\n}\n.gift-wrap-option__description[data-v-d1743cde] {\n    width: 100%;\n    color: #667085;\n    font-size: 0.75rem;\n    line-height: 1.3;\n}\n.gift-wrap-option__icon[data-v-d1743cde] {\n    color: #e50077;\n    font-size: 0.95rem;\n}\n.gift-wrap-option__price[data-v-d1743cde] {\n    font-size: 0.82rem;\n    font-weight: 700;\n    color: #e50077;\n}\n.gift-wrap-option__info[data-v-d1743cde] {\n    position: relative;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex: 0 0 auto;\n    width: 1.2rem;\n    height: 1.2rem;\n    border-radius: 999px;\n    background: #ffffff;\n    border: 1px solid rgba(47, 52, 65, 0.15);\n    color: #5c667a;\n    font-size: 0.72rem;\n    font-weight: 700;\n    line-height: 1;\n}\n.gift-wrap-option__tooltip[data-v-d1743cde] {\n    position: absolute;\n    right: 0;\n    bottom: calc(100% + 0.65rem);\n    z-index: 10;\n    width: min(15rem, 80vw);\n    padding: 0.65rem 0.75rem;\n    border-radius: 0.75rem;\n    background: #2f3441;\n    color: #ffffff;\n    font-size: 0.76rem;\n    line-height: 1.45;\n    box-shadow: 0 12px 30px rgba(18, 25, 38, 0.2);\n    opacity: 0;\n    visibility: hidden;\n    transform: translateY(0.25rem);\n    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;\n    pointer-events: none;\n}\n.gift-wrap-option__tooltip[data-v-d1743cde]::after {\n    content: \"\";\n    position: absolute;\n    right: 0.55rem;\n    top: 100%;\n    border-width: 0.4rem;\n    border-style: solid;\n    border-color: #2f3441 transparent transparent transparent;\n}\n.gift-wrap-option__info:hover .gift-wrap-option__tooltip[data-v-d1743cde],\n.gift-wrap-option__info:focus .gift-wrap-option__tooltip[data-v-d1743cde],\n.gift-wrap-option__info:focus-within .gift-wrap-option__tooltip[data-v-d1743cde] {\n    opacity: 1;\n    visibility: visible;\n    transform: translateY(0);\n}\n@media (max-width: 575.98px) {\n.product-add-to-cart__controls[data-v-d1743cde] {\n        grid-template-columns: 1fr;\n}\n.product-add-to-cart__cta[data-v-d1743cde] {\n        min-height: 2.95rem;\n}\n.gift-wrap-option[data-v-d1743cde] {\n        grid-template-columns: auto minmax(0, 1fr);\n        align-items: flex-start;\n}\n.gift-wrap-option__copy[data-v-d1743cde] {\n        flex-direction: column;\n        align-items: flex-start;\n        gap: 0.2rem;\n}\n.gift-wrap-option__info[data-v-d1743cde] {\n        grid-column: 2;\n        justify-self: flex-start;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -6859,137 +6978,171 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    {
-      staticClass:
-        "cart gift-cart d-flex flex-wrap align-items-center pt-2 pb-2 mb-3"
-    },
-    [
+  return _c("div", { staticClass: "product-add-to-cart" }, [
+    _c("div", { staticClass: "product-add-to-cart__controls" }, [
       _c(
-        "div",
+        "label",
         {
-          staticClass:
-            "gift-cart__controls d-flex flex-wrap align-items-center w-100"
+          staticClass: "product-add-to-cart__quantity",
+          attrs: { for: "product-quantity-input" }
         },
         [
-          _c("input", {
-            directives: [
-              {
-                name: "model",
-                rawName: "v-model",
-                value: _vm.quantity,
-                expression: "quantity"
-              }
-            ],
-            staticClass: "form-control me-3 mb-1",
-            staticStyle: { width: "5rem" },
-            attrs: {
-              type: "number",
-              inputmode: "numeric",
-              pattern: "[0-9]*",
-              min: "1",
-              max: _vm.available
-            },
-            domProps: { value: _vm.quantity },
-            on: {
-              input: function($event) {
-                if ($event.target.composing) {
-                  return
-                }
-                _vm.quantity = $event.target.value
-              }
-            }
-          }),
+          _c("span", { staticClass: "product-add-to-cart__label" }, [
+            _vm._v("Količina")
+          ]),
           _vm._v(" "),
-          _c(
-            "button",
-            {
-              staticClass: "btn btn-primary btn-shadow me-3 mb-1",
-              attrs: { disabled: _vm.disabled },
+          _c("div", { staticClass: "quantity-stepper" }, [
+            _c(
+              "button",
+              {
+                staticClass: "quantity-stepper__button",
+                attrs: {
+                  type: "button",
+                  "aria-label": "Smanji količinu",
+                  disabled: _vm.quantityNumber <= 1 || _vm.isBusy
+                },
+                on: { click: _vm.decreaseQuantity }
+              },
+              [_vm._v("\n                    -\n                ")]
+            ),
+            _vm._v(" "),
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.quantity,
+                  expression: "quantity"
+                }
+              ],
+              staticClass: "quantity-stepper__input",
+              attrs: {
+                id: "product-quantity-input",
+                type: "number",
+                inputmode: "numeric",
+                pattern: "[0-9]*",
+                min: "1",
+                max: _vm.maxInputValue,
+                disabled: _vm.isBusy
+              },
+              domProps: { value: _vm.quantity },
               on: {
-                click: function($event) {
-                  return _vm.add()
+                blur: _vm.normalizeQuantity,
+                input: function($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.quantity = $event.target.value
                 }
               }
-            },
-            [_c("i", { staticClass: "ci-cart" }), _vm._v(" Dodaj u Košaricu")]
-          )
+            }),
+            _vm._v(" "),
+            _c(
+              "button",
+              {
+                staticClass: "quantity-stepper__button",
+                attrs: {
+                  type: "button",
+                  "aria-label": "Povećaj količinu",
+                  disabled: _vm.incrementDisabled
+                },
+                on: { click: _vm.increaseQuantity }
+              },
+              [_vm._v("\n                    +\n                ")]
+            )
+          ])
         ]
       ),
       _vm._v(" "),
-      _vm.giftWrapEnabled
-        ? _c(
-            "label",
-            {
-              staticClass: "gift-wrap-option mb-2",
-              attrs: { for: "gift-wrap-checkbox" }
-            },
-            [
-              _c("span", { staticClass: "gift-wrap-option__checkbox" }, [
-                _c("input", {
-                  directives: [
-                    {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.giftWrap,
-                      expression: "giftWrap"
-                    }
-                  ],
-                  staticClass: "form-check-input",
-                  attrs: { id: "gift-wrap-checkbox", type: "checkbox" },
-                  domProps: {
-                    checked: Array.isArray(_vm.giftWrap)
-                      ? _vm._i(_vm.giftWrap, null) > -1
-                      : _vm.giftWrap
-                  },
-                  on: {
-                    change: function($event) {
-                      var $$a = _vm.giftWrap,
-                        $$el = $event.target,
-                        $$c = $$el.checked ? true : false
-                      if (Array.isArray($$a)) {
-                        var $$v = null,
-                          $$i = _vm._i($$a, $$v)
-                        if ($$el.checked) {
-                          $$i < 0 && (_vm.giftWrap = $$a.concat([$$v]))
-                        } else {
-                          $$i > -1 &&
-                            (_vm.giftWrap = $$a
-                              .slice(0, $$i)
-                              .concat($$a.slice($$i + 1)))
-                        }
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-primary product-add-to-cart__cta",
+          attrs: { type: "button", disabled: _vm.disabled || _vm.isBusy },
+          on: {
+            click: function($event) {
+              return _vm.add()
+            }
+          }
+        },
+        [
+          _c("i", { staticClass: "ci-bag" }),
+          _vm._v("\n            " + _vm._s(_vm.buttonLabel) + "\n        ")
+        ]
+      )
+    ]),
+    _vm._v(" "),
+    _vm.stockLimitMessage
+      ? _c(
+          "p",
+          {
+            staticClass:
+              "product-add-to-cart__status product-add-to-cart__status--warning"
+          },
+          [_vm._v(_vm._s(_vm.stockLimitMessage))]
+        )
+      : _vm.has_in_cart
+      ? _c("p", { staticClass: "product-add-to-cart__status" }, [
+          _vm._v("U košarici: " + _vm._s(_vm.has_in_cart) + " kom.")
+        ])
+      : _vm._e(),
+    _vm._v(" "),
+    _vm.giftWrapEnabled
+      ? _c(
+          "label",
+          {
+            staticClass: "gift-wrap-option",
+            attrs: { for: "gift-wrap-checkbox" }
+          },
+          [
+            _c("span", { staticClass: "gift-wrap-option__checkbox" }, [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.giftWrap,
+                    expression: "giftWrap"
+                  }
+                ],
+                staticClass: "form-check-input",
+                attrs: { id: "gift-wrap-checkbox", type: "checkbox" },
+                domProps: {
+                  checked: Array.isArray(_vm.giftWrap)
+                    ? _vm._i(_vm.giftWrap, null) > -1
+                    : _vm.giftWrap
+                },
+                on: {
+                  change: function($event) {
+                    var $$a = _vm.giftWrap,
+                      $$el = $event.target,
+                      $$c = $$el.checked ? true : false
+                    if (Array.isArray($$a)) {
+                      var $$v = null,
+                        $$i = _vm._i($$a, $$v)
+                      if ($$el.checked) {
+                        $$i < 0 && (_vm.giftWrap = $$a.concat([$$v]))
                       } else {
-                        _vm.giftWrap = $$c
+                        $$i > -1 &&
+                          (_vm.giftWrap = $$a
+                            .slice(0, $$i)
+                            .concat($$a.slice($$i + 1)))
                       }
+                    } else {
+                      _vm.giftWrap = $$c
                     }
                   }
-                })
-              ]),
-              _vm._v(" "),
-              _vm._m(0),
-              _vm._v(" "),
-              _vm._m(1)
-            ]
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      _vm.has_in_cart
-        ? _c(
-            "p",
-            {
-              staticClass: "fs-md fw-light text-danger",
-              staticStyle: { width: "100%" }
-            },
-            [
-              _vm._v(
-                "Imate " + _vm._s(_vm.has_in_cart) + " artikala u košarici."
-              )
-            ]
-          )
-        : _vm._e()
-    ]
-  )
+                }
+              })
+            ]),
+            _vm._v(" "),
+            _vm._m(0),
+            _vm._v(" "),
+            _vm._m(1)
+          ]
+        )
+      : _vm._e()
+  ])
 }
 var staticRenderFns = [
   function() {
@@ -7002,7 +7155,11 @@ var staticRenderFns = [
           staticClass: "fas fa-gift gift-wrap-option__icon",
           attrs: { "aria-hidden": "true" }
         }),
-        _vm._v(" Želim zamatanje za poklon.")
+        _vm._v(" Dodaj zamatanje za poklon")
+      ]),
+      _vm._v(" "),
+      _c("span", { staticClass: "gift-wrap-option__description" }, [
+        _vm._v("Ukrasni papir, mašna i priprema knjige za dar (opcionalno).")
       ]),
       _vm._v(" "),
       _c("span", { staticClass: "gift-wrap-option__price" }, [

@@ -19,6 +19,28 @@
     $shouldOpenReviewForm = $reviewsCount > 0 || $hasReviewErrors || session('review_submitted');
     $showReviewPromoButton = ! $reviewsCount && ! $shouldOpenReviewForm;
     $giftWrapAllowed = \App\Services\GiftWrapService::isEligibleProduct($prod);
+    $isTrackedQuantity = (bool) $prod->decrease;
+    $isInStock = (int) $prod->quantity > 0;
+    $availabilityLabel = $isInStock
+        ? ($isTrackedQuantity ? 'Na stanju: ' . $prod->quantity . ' kom.' : 'Dostupno za narudžbu')
+        : 'Trenutno rasprodano';
+    $availabilityDetail = $isInStock
+        ? ($isTrackedQuantity ? 'Prikazana količina ažurira se u stvarnom vremenu.' : 'Naslov je dostupan i spreman za kupnju.')
+        : 'Ostavite obavijest i javit ćemo vam čim knjiga ponovno bude dostupna.';
+    $shippingLabel = null;
+    $shippingValue = null;
+
+    if ($prod->kat) {
+        $shippingLabel = 'Regionalni naslov';
+        $shippingValue = 'Dostava za ovaj naslov traje oko 20 dana.';
+    } elseif (! empty($prod->delivery_24h)) {
+        $shippingLabel = 'Brza dostava';
+        $shippingValue = 'Isporuka u roku 24 sata.';
+    } elseif ($prod->shipping_time) {
+        $shippingLabel = 'Rok dostave';
+        $shippingValue = $prod->shipping_time . '.';
+    }
+
     $productShelfCarouselOptions = [
         'items' => 2,
         'gutter' => 16,
@@ -148,6 +170,169 @@
             font-weight: 600;
         }
 
+        .product-purchase-summary {
+            position: relative;
+        }
+
+        .product-purchase-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .product-purchase-badge {
+            padding: 0.45rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .product-purchase-title {
+            margin-bottom: 0.9rem;
+            color: #2f3447;
+            line-height: 1.15;
+        }
+
+        .product-review-link span {
+            color: #667085;
+        }
+
+        .product-price-stack {
+            margin-bottom: 1.35rem;
+        }
+
+        .product-price-stack__primary {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 0.5rem 0.85rem;
+        }
+
+        .product-price-stack__current {
+            font-size: clamp(1.75rem, 2.2vw, 2rem);
+            font-weight: 700;
+            line-height: 1;
+            color: #2f3447;
+        }
+
+        .product-price-stack__original {
+            color: #98a2b3;
+            font-size: 0.92rem;
+        }
+
+        .product-price-stack__secondary {
+            margin-top: 0.45rem;
+            color: #667085;
+            font-size: 0.95rem;
+        }
+
+        .product-price-stack__secondary s {
+            color: #98a2b3;
+        }
+
+        .product-price-stack__legal {
+            margin-top: 0.35rem;
+            color: #98a2b3;
+            font-size: 0.8rem;
+        }
+
+        .product-purchase-meta {
+            display: grid;
+            gap: 0.8rem;
+            margin-bottom: 1.4rem;
+        }
+
+        .product-purchase-meta__item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.18rem;
+            padding: 0.95rem 1rem;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 1rem;
+            background: #ffffff;
+            box-shadow: none;
+        }
+
+        .product-purchase-meta__item--available {
+            border-color: rgba(16, 185, 129, 0.18);
+            background: #ffffff;
+        }
+
+        .product-purchase-meta__item--unavailable {
+            border-color: rgba(245, 158, 11, 0.22);
+            background: #ffffff;
+        }
+
+        .product-purchase-meta__eyebrow {
+            color: #667085;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .product-purchase-meta__value {
+            color: #2f3447;
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .product-purchase-meta__help {
+            color: #667085;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .product-purchase-box {
+            margin: 0 0 1.5rem;
+            padding: 0.85rem;
+            border: 1px solid rgba(229, 0, 119, 0.14);
+            border-radius: 1.1rem;
+            background: #ffffff;
+            box-shadow: none;
+        }
+
+        .product-purchase-box--unavailable {
+            border-color: rgba(148, 163, 184, 0.2);
+            background: #ffffff;
+        }
+
+        .product-purchase-box__header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem 0.85rem;
+            margin-bottom: 0.65rem;
+        }
+
+        .product-purchase-box__kicker {
+            margin: 0 0 0.15rem;
+            color: #e50077;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .product-purchase-box__title {
+            margin: 0;
+            color: #2f3447;
+            font-size: 1rem;
+            line-height: 1.25;
+        }
+
+        .product-purchase-box__support {
+            margin: 0;
+            color: #667085;
+            font-size: 0.8rem;
+            line-height: 1.35;
+            max-width: 15rem;
+        }
+
         @media (max-width: 991.98px) {
             .review-promo-banner__body {
                 padding: 1.25rem 1.25rem 1.25rem 1.45rem;
@@ -159,6 +344,14 @@
 
             .review-promo-banner__cta {
                 width: 100%;
+            }
+
+            .product-purchase-box {
+                padding: 0.8rem;
+            }
+
+            .product-purchase-box__support {
+                max-width: none;
             }
         }
     </style>
@@ -262,22 +455,23 @@
             </div>
         </div>
         <div class="col-xl-6 px-2 mb-3">
-            <div class="h-100 bg-light shadow  rounded-3 py-5 px-4 px-sm-5">
+            <div class="h-100 bg-light shadow rounded-3 py-5 px-4 px-sm-5 product-purchase-summary">
+                @if ($prod->quantity < 1 || $prod->main_price > $prod->main_special)
+                    <div class="product-purchase-badges">
+                        @if ($prod->quantity < 1)
+                            <span class="badge bg-warning product-purchase-badge">Rasprodano</span>
+                        @endif
 
-        @if ( $prod->quantity < 1)
-                    <span class="badge bg-warning ">Rasprodano</span>
-       @endif
+                        @if ($prod->main_price > $prod->main_special)
+                            <span class="badge bg-primary product-purchase-badge">-{{ number_format(floatval(\App\Helpers\Helper::calculateDiscount($prod->price, $prod->special())), 0) }}%</span>
+                        @endif
+                    </div>
+                @endif
 
-   @if ($prod->main_price > $prod->main_special)
-       <span class="badge bg-primary ">-{{ number_format(floatval(\App\Helpers\Helper::calculateDiscount($prod->price, $prod->special())), 0) }}%</span>
-   @endif
-
-
-
-   <h1 class="h3">{{ $prod->name }}</h1>
+                <h1 class="h3 product-purchase-title">{{ $prod->name }}</h1>
 
         <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
-            <a id="openReview" href="#reviews" class="d-inline-flex align-items-center text-decoration-none">
+            <a id="openReview" href="#reviews" class="d-inline-flex align-items-center text-decoration-none product-review-link">
                 <div class="star-rating me-2">
                     @for ($i = 0; $i < 5; $i++)
                         @if (floor($reviewsAverage) - $i >= 1)
@@ -296,49 +490,60 @@
             </a>
         </div>
 
-       <div class="mb-1">
+       <div class="product-price-stack">
+           <div class="product-price-stack__primary">
            @if ($prod->main_price > $prod->main_special)
-               <span class="h3 fw-normal text-accent me-1">{{ $prod->main_special_text }}</span>
-               <span class="text-muted fs-lg me-3"><s>*{{ $prod->main_price_text }}</s></span>
+               <span class="product-price-stack__current">{{ $prod->main_special_text }}</span>
+               <span class="product-price-stack__original"><s>*{{ $prod->main_price_text }}</s></span>
 
            @else
-               <span class="h3 fw-normal text-accent me-1">{{ $prod->main_price_text }}</span>
+               <span class="product-price-stack__current">{{ $prod->main_price_text }}</span>
            @endif
-
-       </div>
+           </div>
 
    @if($prod->secondary_price_text)
-       <div class="mb-1 mt-1 text-start">
+       <div class="product-price-stack__secondary">
            @if ($prod->main_price > $prod->main_special)
-               <span class=" fs-sm text-muted me-1"> {{ $prod->secondary_special_text }}</span>
-               <span class="text-muted fs-sm me-3"><s>*{{ $prod->secondary_price_text }}</s></span>
+               <span>{{ $prod->secondary_special_text }}</span>
+               <span><s>*{{ $prod->secondary_price_text }}</s></span>
            @else
-               <span class="fs-sm text-muted  me-1">{{ $prod->secondary_price_text }}</span>
+               <span>{{ $prod->secondary_price_text }}</span>
            @endif
        </div>
    @endif
    @if ($prod->main_price > $prod->main_special)
-
-       <div class="mb-3 mt-1 text-start">
-           <span class=" fs-sm text-muted me-1"> *Najniža cijena u zadnjih 30 dana.</span>
+       <div class="product-price-stack__legal">
+           <span>*Najniža cijena u zadnjih 30 dana.</span>
+       </div>
+   @endif
        </div>
 
-
-
-
-
-   @endif
-
-
-
-            @if($prod->kat)
-                <div class="d-flex row justify-content-between mt-2"><div class="col-md-12"><div role="alert" class="alert alert-info d-flex  mb-1 "><div class="alert-icon"><i class="ci-truck"></i></div> <small>Dostava za Regionalne naslove je 20 dana.  </small></div></div></div>
+            @if ($prod->quantity > 0)
+                <div class="product-purchase-box">
+                    <add-to-cart-btn id="{{ $prod->id }}" available="{{ $prod->quantity }}" track-stock="{{ $isTrackedQuantity ? 'true' : 'false' }}" allow-gift-wrap="{{ $giftWrapAllowed ? 'true' : 'false' }}"></add-to-cart-btn>
+                </div>
+            @else
+                <div class="product-purchase-box product-purchase-box--unavailable">
+                    <div class="product-purchase-box__header">
+                        <div>
+                            <p class="product-purchase-box__kicker">Dostupnost</p>
+                            <h2 class="product-purchase-box__title">Pošaljite si obavijest čim knjiga ponovno stigne</h2>
+                        </div>
+                        <p class="product-purchase-box__support">Čim naslov opet bude dostupan, javit ćemo vam da ga možete naručiti bez dodatnog traženja.</p>
+                    </div>
+                    <div class="cart mb-0 mt-0 d-flex align-items-center">
+                        <a class="btn btn-primary d-block w-100" href="#wishlist-modal" data-bs-toggle="modal"><i class="ci-bell"></i> Obavijesti me o dostupnosti</a>
+                    </div>
+                </div>
             @endif
-            @if ( $prod->quantity > 0)
-   <add-to-cart-btn id="{{ $prod->id }}" available="{{ $prod->quantity }}" allow-gift-wrap="{{ $giftWrapAllowed ? 'true' : 'false' }}"></add-to-cart-btn>
-                @else
-                <div class="cart mb-3 mt-3 d-flex align-items-center" >
-                    <a class="btn btn-primary btn-shadow d-block w-100" href="#wishlist-modal" data-bs-toggle="modal"><i class="ci-bell"></i> Obavijesti me o dostupnosti</a>
+
+            @if ($shippingValue)
+                <div class="product-purchase-meta">
+                    <div class="product-purchase-meta__item">
+                        <span class="product-purchase-meta__eyebrow">{{ $shippingLabel }}</span>
+                        <strong class="product-purchase-meta__value">{{ $shippingValue }}</strong>
+                        <span class="product-purchase-meta__help">Besplatna dostava za narudžbe iznad {{ config('settings.free_shipping') }} €.</span>
+                    </div>
                 </div>
             @endif
    <!-- Product panels-->
