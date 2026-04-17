@@ -316,6 +316,7 @@
                            category-slug="{{ isset($subcat) ? $subcat['slug'] : (isset($cat) ? $cat['slug'] : null) }}"
                            author="{{ isset($author) ? $author['slug'] : null }}"
                            publisher="{{ isset($publisher) ? $publisher['slug'] : null }}"
+                           preserve-order="{{ Route::currentRouteName() === 'pretrazi' && ! empty($ids) ? '1' : '' }}"
                            default-sort="{{ $isActionListing ? 'popular' : '' }}">
             </products-view>
 
