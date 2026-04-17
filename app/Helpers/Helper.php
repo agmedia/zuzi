@@ -434,34 +434,94 @@ class Helper
             return '';
         }
 
-        $ids = Cache::remember('wg_ids', config('cache.life'), function () use ($description) {
-            $iterator = substr_count($description, '++');
-            $offset   = 0;
-            $ids      = [];
+        $ids = static::extractWidgetIds($description);
 
-            for ($i = 0; $i < $iterator / 2; $i++) {
-                $from  = strpos($description, '++', $offset) + 2;
-                $to    = strpos($description, '++', $from + 2);
-                $ids[] = substr($description, $from, $to - $from);
+        if ($ids === []) {
+            return $description;
+        }
 
-                $offset = $to + 2;
-            }
-
-            return $ids;
-        });
-
-        $wgs = Cache::remember('wgs', config('cache.life'), function () use ($ids) {
-            return WidgetGroup::whereIn('id', $ids)->orWhereIn('slug', $ids)->where('status', 1)->with('widgets')->get();
-        });
+        $wgs = WidgetGroup::query()
+            ->where('status', 1)
+            ->where(function (Builder $query) use ($ids) {
+                $query->whereIn('id', $ids)->orWhereIn('slug', $ids);
+            })
+            ->with('widgets')
+            ->get();
 
         foreach ($ids as $id) {
-            $description = Cache::remember('wg.' . $id, config('cache.life'), function () use ($wgs, $description, $id, $context) {
-                return static::resolveDescription($wgs, $description, $id, $context);
-            });
+            $description = static::resolveWidgetDescription($wgs, $description, $id, $context);
         }
 
 
         return $description;
+    }
+
+
+    private static function extractWidgetIds(string $description): array
+    {
+        $iterator = substr_count($description, '++');
+        $offset   = 0;
+        $ids      = [];
+
+        for ($i = 0; $i < $iterator / 2; $i++) {
+            $from = strpos($description, '++', $offset);
+
+            if ($from === false) {
+                break;
+            }
+
+            $from += 2;
+            $to = strpos($description, '++', $from);
+
+            if ($to === false) {
+                break;
+            }
+
+            $ids[] = substr($description, $from, $to - $from);
+            $offset = $to + 2;
+        }
+
+        return $ids;
+    }
+
+
+    private static function resolveWidgetDescription(Collection $wgs, string $description, string $id, array $context = []): string
+    {
+        $wg = $wgs->firstWhere('id', $id) ?: $wgs->firstWhere('slug', $id);
+
+        if (! $wg) {
+            return $description;
+        }
+
+        if (! static::shouldCacheResolvedWidget($wg)) {
+            return static::resolveDescription($wgs, $description, $id, $context);
+        }
+
+        $widgetsSignature = $wg->widgets
+            ->sortBy('id')
+            ->map(function ($widget) {
+                return implode(':', [
+                    $widget->id,
+                    optional($widget->updated_at)->timestamp ?? 0,
+                ]);
+            })
+            ->implode('|');
+
+        $renderedWidget = Cache::remember(
+            'wg.' . $wg->id . '.' . md5(serialize($context) . '|' . (optional($wg->updated_at)->timestamp ?? 0) . '|' . $widgetsSignature),
+            config('cache.life'),
+            function () use ($wg, $context) {
+                return static::renderDescriptionWidget($wg, $context);
+            }
+        );
+
+        return str_replace('++' . $id . '++', $renderedWidget, $description);
+    }
+
+
+    private static function shouldCacheResolvedWidget(WidgetGroup $wg): bool
+    {
+        return ! in_array($wg->template, ['product_carousel', 'page_carousel'], true);
     }
 
 
@@ -480,10 +540,25 @@ class Helper
             $wg = $wgs->where('slug', $id)->first();
         }
 
+        if (! $wg) {
+            return $description;
+        }
+
+        return str_replace('++' . $id . '++', static::renderDescriptionWidget($wg, $context), $description);
+    }
+
+
+    private static function renderDescriptionWidget(WidgetGroup $wg, array $context = []): string
+    {
         $widgets = [];
 
         if ($wg->template == 'product_carousel' || $wg->template == 'page_carousel') {
-            $widget = $wg->widgets()->first();
+            $widget = $wg->widgets->sortBy('sort_order')->first();
+
+            if (! $widget) {
+                return '';
+            }
+
             $data   = unserialize($widget->data);
 
             if (static::isDescriptionTarget($data, 'product')) {
@@ -528,7 +603,7 @@ class Helper
             ];
 
         } else {
-            foreach ($wg->widgets()->orderBy('sort_order')->get() as $widget) {
+            foreach ($wg->widgets->sortBy('sort_order') as $widget) {
                 $data = unserialize($widget->data);
 
 
@@ -546,16 +621,10 @@ class Helper
             }
         }
 
-
-
-        return str_replace(
-            '++' . $id . '++',
-            view(
-                'front.layouts.widget.widget_' . $wg->template,
-                array_merge(['data' => $widgets], $context) // ⬅ short_description dolazi kao $short_description
-            )->render(),
-            $description
-        );
+        return view(
+            'front.layouts.widget.widget_' . $wg->template,
+            array_merge(['data' => $widgets], $context)
+        )->render();
     }
 
 

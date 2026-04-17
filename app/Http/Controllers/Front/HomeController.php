@@ -27,6 +27,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class HomeController extends Controller
 {
+    private const HOMEPAGE_DESCRIPTION_SNAPSHOT_VERSION = 2;
     private const HOMEPAGE_DESCRIPTION_SNAPSHOT_FILE = 'app/homepage-description-snapshot.json';
 
     /**
@@ -41,10 +42,13 @@ class HomeController extends Controller
         });
 
         $homeSalesWidget = view('front.layouts.partials.home-sales-widget', $curatedCollectionService->homepageWidgetData())->render();
-        $page->description = str_replace(
-            '<!--home-sales-widget-->',
-            $homeSalesWidget,
-            $this->resolveHomepageDescriptionSnapshot($page)
+        $page->description = Helper::setDescription(
+            str_replace(
+                '<!--home-sales-widget-->',
+                $homeSalesWidget,
+                $this->resolveHomepageDescriptionSnapshot($page)
+            ),
+            ['short_description' => $page->short_description ?? '']
         );
 
         return view('front.page', compact('page'));
@@ -367,6 +371,7 @@ class HomeController extends Controller
     private function resolveHomepageDescriptionSnapshot(Page $page): string
     {
         $signature = sha1(implode('|', [
+            (string) self::HOMEPAGE_DESCRIPTION_SNAPSHOT_VERSION,
             (string) $page->id,
             (string) (optional($page->updated_at)->timestamp ?? 0),
             md5((string) ($page->description ?? '')),
@@ -377,8 +382,13 @@ class HomeController extends Controller
         if (File::exists($path)) {
             $snapshot = json_decode((string) File::get($path), true);
 
-            if (is_array($snapshot) && data_get($snapshot, 'signature') === $signature && is_string(data_get($snapshot, 'html'))) {
-                return (string) $snapshot['html'];
+            if (
+                is_array($snapshot)
+                && data_get($snapshot, 'version') === self::HOMEPAGE_DESCRIPTION_SNAPSHOT_VERSION
+                && data_get($snapshot, 'signature') === $signature
+                && is_string(data_get($snapshot, 'description'))
+            ) {
+                return (string) $snapshot['description'];
             }
         }
 
@@ -390,19 +400,15 @@ class HomeController extends Controller
             $description = '<!--home-sales-widget-->' . $description;
         }
 
-        $html = \App\Helpers\Helper::setDescription(
-            $description,
-            ['short_description' => $page->short_description ?? '']
-        );
-
         File::ensureDirectoryExists(dirname($path));
         File::put($path, json_encode([
+            'version' => self::HOMEPAGE_DESCRIPTION_SNAPSHOT_VERSION,
             'signature' => $signature,
-            'html' => $html,
+            'description' => $description,
             'updated_at' => now()->toAtomString(),
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        return $html;
+        return $description;
     }
 
 }
