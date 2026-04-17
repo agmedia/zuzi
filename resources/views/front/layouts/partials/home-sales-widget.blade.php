@@ -46,6 +46,8 @@
                                 @foreach ($featuredProducts as $featuredProductData)
                                     @php
                                         $featuredProduct = data_get($featuredProductData, 'product');
+                                        $featuredReviewsCount = (int) ($featuredProduct->reviews_count ?? 0);
+                                        $featuredReviewsAverage = $featuredReviewsCount ? round((float) ($featuredProduct->reviews_avg_stars ?? 0), 1) : 0;
                                     @endphp
                                     <div>
                                         <a
@@ -74,6 +76,20 @@
 
                                                         <h3 class="h4 mb-2">{{ $featuredProduct->name }}</h3>
                                                         <p class="text-muted mb-3">Naslov koji kupci trenutno grabe bez puno razmišljanja.</p>
+
+                                                        @if ($featuredReviewsCount)
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <div class="star-rating" aria-label="Ocjena {{ number_format($featuredReviewsAverage, 1) }} od 5">
+                                                                @for ($i = 0; $i < 5; $i++)
+                                                                    @if (floor($featuredReviewsAverage) - $i >= 1)
+                                                                        <i class="star-rating-icon ci-star-filled active"></i>
+                                                                    @else
+                                                                        <i class="star-rating-icon ci-star"></i>
+                                                                    @endif
+                                                                @endfor
+                                                            </div>
+                                                        </div>
+                                                        @endif
 
                                                         <div class="home-sales-hub__featured-price mt-3">
                                                             @if ($featuredProduct->main_price > $featuredProduct->main_special)
@@ -164,4 +180,31 @@
             </div>
         </a>
     </section>
+
+    @if ($featuredProducts->isNotEmpty())
+        @php
+            $featuredProductsSchema = \App\Helpers\Metatags::itemListSchema(
+                $featuredProducts->map(function ($featuredProductData) {
+                    $featuredProduct = data_get($featuredProductData, 'product');
+
+                    return [
+                        'name' => $featuredProduct->name,
+                        'url' => url($featuredProduct->url),
+                        'image' => $featuredProduct->image,
+                        'sku' => $featuredProduct->sku,
+                        'price' => number_format((float) $featuredProduct->special(), 2, '.', ''),
+                        'availability' => $featuredProduct->quantity ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                        'reviews_count' => (int) ($featuredProduct->reviews_count ?? 0),
+                        'reviews_avg_stars' => round((float) ($featuredProduct->reviews_avg_stars ?? 0), 1),
+                        'brand' => \App\Models\Seo::brand(),
+                    ];
+                }),
+                url()->current(),
+                'Bestselleri mjeseca'
+            );
+        @endphp
+        <script type="application/ld+json">
+            {!! collect($featuredProductsSchema)->toJson() !!}
+        </script>
+    @endif
 @endif

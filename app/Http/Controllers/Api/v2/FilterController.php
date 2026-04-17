@@ -190,19 +190,21 @@ class FilterController extends Controller
         $request_data['page'] = $request->input('page');
 
         $cache_string .= 'page=' . $request_data['page'];
-        $cache_string = md5($cache_string);
+        $cache_string = 'products-review-summary-v2-' . md5($cache_string);
 
         $request = new Request($request_data);
 
         if (isset($params['ids']) && $params['ids'] != '') {
             $products = (new Product())->filter($request)
                                        ->with(['author', 'action'])
+                                       ->withReviewSummary()
                                        ->paginate(config('settings.pagination.front'));
         } else {
 
             $products = Helper::resolveCache('products')->remember($cache_string, config('cache.life'), function () use ($request) {
                 $products = (new Product())->filter($request)
                                            ->with(['author', 'action'])
+                                           ->withReviewSummary()
                                            ->paginate(config('settings.pagination.front'));
                 return $products;
 

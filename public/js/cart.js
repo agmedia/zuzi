@@ -4118,6 +4118,17 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -4254,6 +4265,10 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     document.removeEventListener('click', this.handleDocumentClick);
     document.removeEventListener('keydown', this.handleDocumentKeydown);
     this.setBodyScrollLock(false);
+    var schemaScript = document.getElementById('catalog-products-schema');
+    if (schemaScript) {
+      schemaScript.remove();
+    }
   },
   methods: {
     /**
@@ -4299,6 +4314,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         _this4.checkHrTotal();
         _this4.checkSpecials();
         _this4.checkAvailables();
+        _this4.syncProductsSchema();
         if (params.pojam != '' && !_this4.products.total) {
           _this4.search_zero_result = true;
         }
@@ -4338,6 +4354,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         _this5.checkHrTotal();
         _this5.checkSpecials();
         _this5.checkAvailables();
+        _this5.syncProductsSchema();
       });
     },
     /**
@@ -4490,6 +4507,138 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     },
     /**
      *
+     * @param product
+     * @return {number}
+     */
+    getReviewsCount: function getReviewsCount(product) {
+      return Number(product && product.reviews_count ? product.reviews_count : 0);
+    },
+    /**
+     *
+     * @param product
+     * @return {number}
+     */
+    getReviewsAverage: function getReviewsAverage(product) {
+      if (!this.getReviewsCount(product)) {
+        return 0;
+      }
+      return Number(product && product.reviews_avg_stars ? product.reviews_avg_stars : 0);
+    },
+    /**
+     *
+     * @param product
+     * @return {string}
+     */
+    formatReviewAverage: function formatReviewAverage(product) {
+      return this.getReviewsAverage(product).toFixed(1);
+    },
+    /**
+     *
+     * @param product
+     * @param index
+     * @return {boolean}
+     */
+    hasFilledReviewStar: function hasFilledReviewStar(product, index) {
+      return Math.floor(this.getReviewsAverage(product)) - index >= 1;
+    },
+    /**
+     *
+     * @return {string}
+     */
+    getSchemaUrl: function getSchemaUrl() {
+      var canonicalLink = document.querySelector("link[rel='canonical']");
+      if (canonicalLink && canonicalLink.href) {
+        return canonicalLink.href;
+      }
+      return window.location.href;
+    },
+    /**
+     *
+     * @return {string}
+     */
+    getSchemaName: function getSchemaName() {
+      var heading = document.querySelector('h1');
+      if (heading && heading.textContent) {
+        return heading.textContent.trim();
+      }
+      return document.title || 'Popis knjiga';
+    },
+    /**
+     *
+     * @param product
+     * @return {Object}
+     */
+    resolveProductSchema: function resolveProductSchema(product) {
+      var item = {
+        '@type': 'Product',
+        name: product.name,
+        url: this.origin + product.url
+      };
+      if (product.image) {
+        item.image = [product.image];
+      }
+      if (product.sku) {
+        item.sku = product.sku;
+      }
+      item.offers = {
+        '@type': 'Offer',
+        priceCurrency: 'EUR',
+        price: Number(product.special ? product.special : product.price).toFixed(2),
+        url: this.origin + product.url,
+        availability: Number(product.quantity) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+      };
+      if (this.getReviewsCount(product) > 0) {
+        item.aggregateRating = {
+          '@type': 'AggregateRating',
+          ratingValue: Number(this.formatReviewAverage(product)),
+          reviewCount: this.getReviewsCount(product)
+        };
+      }
+      return item;
+    },
+    /**
+     *
+     */
+    syncProductsSchema: function syncProductsSchema() {
+      var _this7 = this;
+      if (typeof document === 'undefined') {
+        return;
+      }
+      var schemaId = 'catalog-products-schema';
+      var existing = document.getElementById(schemaId);
+      var items = this.products && Array.isArray(this.products.data) ? this.products.data : [];
+      if (!items.length) {
+        if (existing) {
+          existing.remove();
+        }
+        return;
+      }
+      var schema = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: this.getSchemaName(),
+        url: this.getSchemaUrl(),
+        numberOfItems: items.length,
+        itemListElement: items.map(function (product, index) {
+          return {
+            '@type': 'ListItem',
+            position: index + 1,
+            name: product.name,
+            url: _this7.origin + product.url,
+            item: _this7.resolveProductSchema(product)
+          };
+        })
+      };
+      if (!existing) {
+        existing = document.createElement('script');
+        existing.type = 'application/ld+json';
+        existing.id = schemaId;
+        document.head.appendChild(existing);
+      }
+      existing.text = JSON.stringify(schema);
+    },
+    /**
+     *
      * @param params
      */
     checkNoFollowQuery: function checkNoFollowQuery(params) {
@@ -4606,7 +4755,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
      * @param target
      */
     toggleAuthorDropdown: function toggleAuthorDropdown(target) {
-      var _this7 = this;
+      var _this8 = this;
       if (this.activeAuthorDropdown === target) {
         this.closeAuthorDropdown();
         return;
@@ -4614,12 +4763,12 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       this.activeAuthorDropdown = target;
       this.authorSearchTerm = '';
       this.$nextTick(function () {
-        if (_this7.shouldSkipAuthorSearchAutofocus(target)) {
+        if (_this8.shouldSkipAuthorSearchAutofocus(target)) {
           return;
         }
         var refName = target === 'mobile' ? 'mobileAuthorSearch' : 'desktopAuthorSearch';
-        if (_this7.$refs[refName]) {
-          _this7.$refs[refName].focus();
+        if (_this8.$refs[refName]) {
+          _this8.$refs[refName].focus();
         }
       });
     },
@@ -10620,7 +10769,8 @@ var render = function() {
                       _c(
                         "div",
                         {
-                          staticClass: "card-body catalog-grid-card__body py-2"
+                          staticClass:
+                            "card-body catalog-grid-card__body py-2 d-flex flex-column"
                         },
                         [
                           _c(
@@ -10638,9 +10788,52 @@ var render = function() {
                             ]
                           ),
                           _vm._v(" "),
+                          _vm.getReviewsCount(product)
+                            ? _c(
+                                "div",
+                                {
+                                  staticClass: "d-flex align-items-center mb-1"
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    {
+                                      staticClass: "star-rating",
+                                      attrs: {
+                                        "aria-label":
+                                          "Ocjena " +
+                                          _vm.formatReviewAverage(product) +
+                                          " od 5"
+                                      }
+                                    },
+                                    _vm._l(5, function(index) {
+                                      return _c("i", {
+                                        key:
+                                          "product-rating-" +
+                                          product.id +
+                                          "-" +
+                                          index,
+                                        staticClass: "star-rating-icon",
+                                        class: _vm.hasFilledReviewStar(
+                                          product,
+                                          index - 1
+                                        )
+                                          ? "ci-star-filled active"
+                                          : "ci-star"
+                                      })
+                                    }),
+                                    0
+                                  )
+                                ]
+                              )
+                            : _vm._e(),
+                          _vm._v(" "),
                           _c(
                             "div",
-                            { staticClass: "catalog-grid-card__price-group" },
+                            {
+                              staticClass:
+                                "catalog-grid-card__price-group mt-auto"
+                            },
                             [
                               product.special
                                 ? _c("div", { staticClass: "product-price" }, [

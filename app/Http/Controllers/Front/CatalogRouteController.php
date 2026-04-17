@@ -776,14 +776,22 @@ class CatalogRouteController extends Controller
         }
 
         return $query
+            ->withReviewSummary()
             ->orderBy('viewed', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit(12)
-            ->get(['name', 'url'])
+            ->get(['id', 'name', 'url', 'sku', 'price', 'special', 'special_from', 'special_to', 'quantity', 'image'])
             ->map(function (Product $product) {
                 return [
                     'name' => $product->name,
                     'url' => url($product->url),
+                    'image' => $product->image,
+                    'sku' => $product->sku,
+                    'price' => number_format((float) $product->special(), 2, '.', ''),
+                    'availability' => $product->quantity ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                    'reviews_count' => (int) ($product->reviews_count ?? 0),
+                    'reviews_avg_stars' => round((float) ($product->reviews_avg_stars ?? 0), 1),
+                    'brand' => \App\Models\Seo::brand(),
                 ];
             })
             ->values()

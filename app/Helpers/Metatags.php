@@ -133,12 +133,20 @@ class Metatags
                 continue;
             }
 
-            $elements[] = [
+            $listItem = [
                 '@type'    => 'ListItem',
                 'position' => count($elements) + 1,
                 'name'     => $itemName,
                 'url'      => $itemUrl,
             ];
+
+            $entitySchema = static::itemListEntitySchema($itemName, $itemUrl, $item);
+
+            if ($entitySchema) {
+                $listItem['item'] = $entitySchema;
+            }
+
+            $elements[] = $listItem;
         }
 
         return [
@@ -149,6 +157,74 @@ class Metatags
             'numberOfItems' => count($elements),
             'itemListElement' => $elements,
         ];
+    }
+
+
+    /**
+     * @param  mixed  $item
+     * @return array<string, mixed>|null
+     */
+    private static function itemListEntitySchema(string $itemName, string $itemUrl, $item): ?array
+    {
+        $price = data_get($item, 'price');
+        $image = trim((string) data_get($item, 'image', ''));
+        $sku = trim((string) data_get($item, 'sku', ''));
+        $reviewsCount = (int) data_get($item, 'reviews_count', 0);
+        $reviewsAverage = round((float) data_get($item, 'reviews_avg_stars', 0), 1);
+        $author = trim((string) data_get($item, 'author', ''));
+        $brand = trim((string) data_get($item, 'brand', ''));
+
+        if ($price === null && ! $image && ! $sku && ! $reviewsCount && ! $author && ! $brand) {
+            return null;
+        }
+
+        $schema = [
+            '@type' => (string) data_get($item, 'schema_type', 'Product'),
+            'name' => $itemName,
+            'url' => $itemUrl,
+        ];
+
+        if ($image) {
+            $schema['image'] = [$image];
+        }
+
+        if ($sku) {
+            $schema['sku'] = $sku;
+        }
+
+        if ($author) {
+            $schema['author'] = [
+                '@type' => 'Person',
+                'name' => $author,
+            ];
+        }
+
+        if ($brand) {
+            $schema['brand'] = [
+                '@type' => 'Brand',
+                'name' => $brand,
+            ];
+        }
+
+        if ($price !== null && $price !== '') {
+            $schema['offers'] = [
+                '@type' => 'Offer',
+                'priceCurrency' => (string) data_get($item, 'price_currency', 'EUR'),
+                'price' => (string) $price,
+                'url' => $itemUrl,
+                'availability' => (string) data_get($item, 'availability', 'https://schema.org/InStock'),
+            ];
+        }
+
+        if ($reviewsCount > 0) {
+            $schema['aggregateRating'] = [
+                '@type' => 'AggregateRating',
+                'ratingValue' => $reviewsAverage,
+                'reviewCount' => $reviewsCount,
+            ];
+        }
+
+        return $schema;
     }
 
 
@@ -348,12 +424,12 @@ class Metatags
             if ($reviews && $reviews->count()) {
                 $response['aggregateRating'] = [
                     '@type'       => 'AggregateRating',
-                    'ratingValue' => floor($reviews->avg('stars')),
+                    'ratingValue' => round((float) $reviews->avg('stars'), 1),
                     'reviewCount' => $reviews->count(),
                 ];
 
-                foreach ($reviews as $review) {
-                    $res_review = [
+                $response['review'] = $reviews->map(function ($review) use ($prod) {
+                    return [
                         '@type'         => 'Review',
                         'author'        => [
                             '@type' => 'Person',
@@ -365,13 +441,11 @@ class Metatags
                         'reviewRating'  => [
                             '@type'       => 'Rating',
                             'bestRating'  => '5',
-                            'ratingValue' => floor($review->stars),
+                            'ratingValue' => round((float) $review->stars, 1),
                             'worstRating' => '1'
                         ]
                     ];
-                }
-
-                $response['review'] = $res_review;
+                })->values()->all();
             }
         }
 

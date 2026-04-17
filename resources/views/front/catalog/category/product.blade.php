@@ -30,7 +30,7 @@
         <a class="card-img-top d-block overflow-hidden text-center @if($isCartShelfLayout) cart-shelf-card__image-link @endif" href="{{ url($product->url) }}" @if($bookmarkerImageLinkStyle) style="{{ $bookmarkerImageLinkStyle }}" @endif>
             <img class="@if($isCartShelfLayout) cart-shelf-card__image @endif" loading="lazy" src="{{ $productImage }}" width="250" height="300" alt="{{ $productImageAlt }}" @if($bookmarkerImageStyle) style="{{ $bookmarkerImageStyle }}" @endif>
         </a>
-        <div class="@if($isCartShelfLayout) card-body cart-shelf-card__body py-2 @else card-body pt-2 @endif" @if(! $isCartShelfLayout) style="min-height: 120px;" @endif>
+        <div class="@if($isCartShelfLayout) card-body cart-shelf-card__body py-2 @else card-body pt-2 d-flex flex-column @endif" @if(! $isCartShelfLayout) style="min-height: 138px;" @endif>
 
             @unless($isCartShelfLayout)
                 <div class="d-flex flex-wrap justify-content-between align-items-start pb-1">
@@ -49,8 +49,8 @@
             <h3 class="product-title fs-sm @if($isCartShelfLayout) mt-2 mb-1 cart-shelf-card__title @else text-truncate @endif"><a href="{{ url($product->url) }}">{{ $product->name }}</a></h3>
 
             @if ($reviewsCount && ! $isCartShelfLayout)
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <div class="star-rating">
+                <div class="d-flex align-items-center mb-1">
+                    <div class="star-rating" aria-label="Ocjena {{ number_format($reviewsAverage, 1) }} od 5">
                         @for ($i = 0; $i < 5; $i++)
                             @if (floor($reviewsAverage) - $i >= 1)
                                 <i class="star-rating-icon ci-star-filled active"></i>
@@ -59,11 +59,10 @@
                             @endif
                         @endfor
                     </div>
-                    <span class="fs-xs text-muted">{{ number_format($reviewsAverage, 1) }}/5</span>
                 </div>
             @endif
 
-            <div class="@if($isCartShelfLayout) cart-shelf-card__price-group @endif">
+            <div class="@if($isCartShelfLayout) cart-shelf-card__price-group @else mt-auto @endif">
                 @if ($product->main_price > $product->main_special)
                     <div class="product-price"><small><span class="text-muted">NC30: <s>{{ $product->main_price_text }}</s>  @if($product->secondary_price_text){{ $product->secondary_price_text }} @endif</span></small>
                    <span class="text-dark fs-md">{{ $product->main_special_text }} @if($product->secondary_special_text) <small class="text-muted">{{ $product->secondary_special_text }}</small> @endif</span></div>

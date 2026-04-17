@@ -314,6 +314,7 @@ class CuratedCollectionService
                             }
                         })
                         ->with(['action'])
+                        ->withReviewSummary()
                         ->popular(5)
                         ->get()
                         ->map(function (Product $product, int $index) {
@@ -330,6 +331,7 @@ class CuratedCollectionService
                     ->hasStock()
                     ->hasImage()
                     ->with(['action'])
+                    ->withReviewSummary()
                     ->whereIn('id', $rankedProducts->pluck('product_id'))
                     ->get()
                     ->keyBy('id');
@@ -740,6 +742,6 @@ class CuratedCollectionService
 
     private function cacheKey(string $suffix): string
     {
-        return 'curated-collections.v5.' . now()->format('Y-m') . '.' . $suffix;
+        return 'curated-collections.v6.' . now()->format('Y-m') . '.' . $suffix;
     }
 }

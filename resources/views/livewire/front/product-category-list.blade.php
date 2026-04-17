@@ -79,6 +79,14 @@
                     return [
                         'name' => $product->name,
                         'url' => url($product->url),
+                        'image' => $product->image,
+                        'sku' => $product->sku,
+                        'price' => number_format((float) $product->special(), 2, '.', ''),
+                        'availability' => $product->quantity ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                        'reviews_count' => (int) ($product->reviews_count ?? 0),
+                        'reviews_avg_stars' => round((float) ($product->reviews_avg_stars ?? 0), 1),
+                        'author' => optional($product->author)->title,
+                        'brand' => \App\Models\Seo::brand(),
                     ];
                 }),
                 \App\Models\Seo::canonical(request()),
