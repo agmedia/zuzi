@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Back\Marketing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Back\Marketing\Review;
+use App\Models\Front\Loyalty;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
@@ -64,9 +65,14 @@ class ReviewController extends Controller
      */
     public function update(Request $request, Review $review)
     {
+        $wasApproved = (bool) $review->status;
         $updated = $review->validateRequest($request)->edit();
 
         if ($updated) {
+            if ($wasApproved !== (bool) $updated->status) {
+                Loyalty::syncProductReviewReward($updated);
+            }
+
             return redirect()
                 ->route('reviews.edit', ['review' => $updated])
                 ->with(['success' => 'Komentar je uspješno spremljen.']);
@@ -84,6 +90,8 @@ class ReviewController extends Controller
      */
     public function destroy(Request $request, Review $review)
     {
+        Loyalty::clearProductReviewReward($review);
+
         if (Review::destroy($review->id)) {
             return redirect()->route('reviews')->with(['success' => 'Komentar je uspješno izbrisan.']);
         }
@@ -99,6 +107,14 @@ class ReviewController extends Controller
      */
     public function destroyApi(Request $request)
     {
+        if ($request->filled('id')) {
+            $review = Review::query()->find((int) $request->input('id'));
+
+            if ($review) {
+                Loyalty::clearProductReviewReward($review);
+            }
+        }
+
         if ($request->filled('id') && Review::destroy((int) $request->input('id'))) {
             return response()->json(['success' => 200]);
         }

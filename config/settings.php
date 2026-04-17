@@ -110,6 +110,11 @@ return [
             'send'       => 4,
             'ready'      => 10,
         ],
+        'review_request' => [
+            'days_after_completed' => 20,
+            'max_order_age_days' => 30,
+            'status_titles' => ['Završeno'],
+        ],
         // Can be number or array.
         'new_status' => 1,
         'canceled_status' => [7, 5],
@@ -149,6 +154,8 @@ return [
         'affiliate_points' => 50,
         'affiliate_minutes_approval' => 43200,
         'points_per_euro' => 1,
+        'product_review' => 5,
+        'product_review_monthly_limit' => 3,
         'rewards' => [
             'orders_per_month' => [
                 3 => 20,

@@ -106,19 +106,29 @@ class HomeController extends Controller
                 ]);
         }
 
+        if (auth()->check() && Review::hasReachedMonthlyLimitForUser((int) auth()->id())) {
+            $limit = Review::monthlyLimit();
+
+            return back()
+                ->withInput()
+                ->with([
+                    'error'            => 'Hvala vam na dosadašnjim komentarima. Ovaj mjesec ste već iskoristili maksimum od ' . $limit . ' komentara za loyalty nagradu.',
+                    'review_submitted' => true,
+                ]);
+        }
+
         $review = new Review();
 
         $createdReview = $review->validateRequest($request)->create();
 
         if ($createdReview) {
-            $points = (int) config('settings.loyalty.product_review', 0);
+            Loyalty::syncProductReviewReward($createdReview);
 
-            if ($points > 0) {
-                Loyalty::addPoints($points, (int) $request->input('product_id'), 'product_review', '');
-            }
+            $points = Review::rewardPoints();
+            $limit = Review::monthlyLimit();
 
             return back()->with([
-                'success'          => 'Komentar je uspješno poslan i bit će vidljiv nakon odobrenja.',
+                'success'          => 'Hvala vam na komentaru. Nakon odobrenja bit će vidljiv na stranici, a registrirani kupci dobivaju ' . $points . ' loyalty bodova po odobrenom komentaru, do ' . $limit . ' komentara mjesečno.',
                 'review_submitted' => true,
             ]);
         }

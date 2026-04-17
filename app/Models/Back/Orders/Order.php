@@ -29,6 +29,13 @@ class Order extends Model
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
     /**
+     * @var array
+     */
+    protected $casts = [
+        'review_request_sent_at' => 'datetime',
+    ];
+
+    /**
      * @var Request
      */
     protected $request;

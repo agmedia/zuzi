@@ -4,6 +4,7 @@ namespace App\Models\Back\Marketing;
 
 use App\Models\Back\Catalog\Product\Product;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -94,6 +95,71 @@ class Review extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+
+    public static function monthlyLimit(): int
+    {
+        return max(0, (int) config('settings.loyalty.product_review_monthly_limit', 3));
+    }
+
+
+    public static function rewardPoints(): int
+    {
+        return max(0, (int) config('settings.loyalty.product_review', 5));
+    }
+
+
+    public static function countForUserInMonth(int $userId, ?CarbonInterface $date = null): int
+    {
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        $date = $date ? Carbon::instance($date) : now();
+
+        return static::query()
+            ->where('user_id', $userId)
+            ->whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
+            ->count();
+    }
+
+
+    public static function hasReachedMonthlyLimitForUser(int $userId, ?CarbonInterface $date = null): bool
+    {
+        $limit = static::monthlyLimit();
+
+        if ($limit <= 0 || $userId <= 0) {
+            return false;
+        }
+
+        return static::countForUserInMonth($userId, $date) >= $limit;
+    }
+
+
+    public function qualifiesForMonthlyReward(): bool
+    {
+        if ((int) $this->user_id <= 0) {
+            return false;
+        }
+
+        $limit = static::monthlyLimit();
+
+        if ($limit <= 0 || ! $this->exists) {
+            return false;
+        }
+
+        $createdAt = $this->created_at ? Carbon::parse($this->created_at) : now();
+
+        $eligibleReviewIds = static::query()
+            ->where('user_id', (int) $this->user_id)
+            ->whereBetween('created_at', [$createdAt->copy()->startOfMonth(), $createdAt->copy()->endOfMonth()])
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->limit($limit)
+            ->pluck('id');
+
+        return $eligibleReviewIds->contains((int) $this->id);
     }
 
 

@@ -2,6 +2,7 @@
 
 namespace App\Models\Front;
 
+use App\Models\Back\Marketing\Review;
 use App\Models\Front\Catalog\Product;
 use App\Models\Back\Orders\Order;
 use App\Models\User;
@@ -156,6 +157,74 @@ class Loyalty extends Model
     }
 
 
+    public static function syncProductReviewReward(Review $review): bool
+    {
+        $points = static::configuredProductReviewPoints();
+
+        if ($points <= 0 || (int) $review->user_id <= 0 || ! $review->exists) {
+            return false;
+        }
+
+        $balance = static::productReviewRewardBalance((int) $review->id);
+
+        if ((bool) $review->status && $review->qualifiesForMonthlyReward() && $balance <= 0) {
+            return static::query()->insert([
+                'user_id'      => (int) $review->user_id,
+                'reference_id' => (int) $review->product_id,
+                'reference'    => 'product_review',
+                'target'       => static::productReviewRewardTarget((int) $review->id),
+                'comment'      => 'Reward for approved product review.',
+                'earned'       => $points,
+                'spend'        => 0,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
+        }
+
+        if ((! (bool) $review->status || ! $review->qualifiesForMonthlyReward()) && $balance > 0) {
+            return static::query()->insert([
+                'user_id'      => (int) $review->user_id,
+                'reference_id' => (int) $review->product_id,
+                'reference'    => 'product_review',
+                'target'       => static::productReviewRewardTarget((int) $review->id),
+                'comment'      => 'Reversal for removed product review reward.',
+                'earned'       => -$balance,
+                'spend'        => 0,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
+        }
+
+        return false;
+    }
+
+
+    public static function clearProductReviewReward(Review $review): bool
+    {
+        if ((int) $review->user_id <= 0 || ! $review->exists) {
+            return false;
+        }
+
+        $balance = static::productReviewRewardBalance((int) $review->id);
+
+        if ($balance <= 0) {
+            return false;
+        }
+
+        return static::query()->insert([
+            'user_id'      => (int) $review->user_id,
+            'reference_id' => (int) $review->product_id,
+            'reference'    => 'product_review',
+            'target'       => static::productReviewRewardTarget((int) $review->id),
+            'comment'      => 'Reversal for deleted product review reward.',
+            'earned'       => -$balance,
+            'spend'        => 0,
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
+    }
+
+
     /**
      * @param int    $points
      * @param int    $reference_id
@@ -232,6 +301,25 @@ class Loyalty extends Model
     private static function configuredDiscountForPoints(int $points): int
     {
         return intval(config('settings.loyalty.orders_discount.' . $points, 0));
+    }
+
+    private static function configuredProductReviewPoints(): int
+    {
+        return max(0, (int) config('settings.loyalty.product_review', 5));
+    }
+
+    private static function productReviewRewardTarget(int $reviewId): string
+    {
+        return 'review:' . $reviewId;
+    }
+
+    private static function productReviewRewardBalance(int $reviewId): int
+    {
+        return (int) static::query()
+            ->where('reference', 'product_review')
+            ->where('target', static::productReviewRewardTarget($reviewId))
+            ->selectRaw('COALESCE(SUM(earned), 0) - COALESCE(SUM(spend), 0) as balance')
+            ->value('balance');
     }
 
 }
