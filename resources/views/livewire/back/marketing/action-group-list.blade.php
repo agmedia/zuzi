@@ -49,7 +49,7 @@
                 </tbody>
             </table>
         </div>
-        <input type="hidden" value="{{ $group }}" name="group">
+        <input type="hidden" value="{{ $group }}" name="action_group">
 
     </div>
 </div>

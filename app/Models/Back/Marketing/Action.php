@@ -90,7 +90,13 @@ class Action extends Model
 
     public function validateRequest(Request $request)
     {
-        $is_combined_category = self::isCombinedCategoryGroup((string) $request->input('group'));
+        $resolved_group = (string) $request->input('group', $request->input('action_group'));
+
+        if ($resolved_group !== '') {
+            $request->merge(['group' => $resolved_group]);
+        }
+
+        $is_combined_category = self::isCombinedCategoryGroup($resolved_group);
 
         $request->validate([
             'title'    => 'required',

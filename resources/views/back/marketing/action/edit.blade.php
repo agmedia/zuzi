@@ -272,6 +272,8 @@
             $('#action-list-view').toggleClass('d-none', isCombined);
             $('#type-field-wrapper').toggleClass('d-none', isCombined);
             $('#discount-field-wrapper').toggleClass('d-none', isCombined);
+            setSectionEnabled('#combined-category-module', isCombined);
+            setSectionEnabled('#action-list-view', ! isCombined);
 
             if (isCombined) {
                 $('#group-select').attr('disabled', false);
@@ -286,6 +288,10 @@
             let hasRows = $('#combined-category-rows .combined-category-row').length > 0;
 
             $('#combined-category-empty-state').toggleClass('d-none', hasRows);
+        }
+
+        function setSectionEnabled(selector, enabled) {
+            $(selector).find('input, select, textarea, button').prop('disabled', !enabled);
         }
 
         function nextCombinedCategoryIndex() {

@@ -185,6 +185,27 @@ class CombinedCategoryActionTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_action_group_fallback_is_used_when_disabled_group_select_is_not_submitted(): void
+    {
+        $category = $this->createCategory('Fallback kategorija');
+
+        $request = Request::create('/action', 'POST', [
+            'title' => 'Fallback akcija',
+            'action_group' => 'category',
+            'type' => 'P',
+            'discount' => 10,
+            'status' => 'on',
+            'action_list' => [
+                $category => $category,
+            ],
+        ]);
+
+        $storedAction = (new Action())->validateRequest($request)->create();
+
+        $this->assertInstanceOf(Action::class, $storedAction);
+        $this->assertSame('category', $storedAction->group);
+    }
+
     private function resolveActionLanding(): array
     {
         $controller = app(CatalogRouteController::class);
