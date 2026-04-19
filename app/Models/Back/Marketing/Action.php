@@ -4,6 +4,7 @@ namespace App\Models\Back\Marketing;
 
 use App\Helpers\Currency;
 use App\Helpers\Helper;
+use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductCategory;
 use Carbon\Carbon;
@@ -16,7 +17,7 @@ class Action extends Model
 {
     protected $table = 'product_actions';
     protected $guarded = ['id', 'created_at', 'updated_at'];
-    protected $appends = ['discount_text'];
+    protected $appends = ['discount_text', 'selection_text'];
 
     /** @var Request */
     protected $request;
@@ -32,6 +33,10 @@ class Action extends Model
 
     public function getDiscountTextAttribute($value)
     {
+        if (self::isCombinedCategoryGroup((string) $this->group)) {
+            return 'Kombinirano';
+        }
+
         if ($this->type === 'F') {
             return Currency::main($this->discount, true);
         }
@@ -41,18 +46,74 @@ class Action extends Model
         return $this->discount;
     }
 
+    public function getSelectionTextAttribute(): string
+    {
+        if (self::isCombinedCategoryGroup((string) $this->group)) {
+            $rules = self::normalizeCombinedCategoryRules(is_array($this->data) ? $this->data : []);
+
+            if (empty($rules)) {
+                return '';
+            }
+
+            $titles = Category::query()
+                ->whereIn('id', collect($rules)->pluck('category_id')->all())
+                ->pluck('title', 'id');
+
+            return collect($rules)
+                ->map(function (array $rule) use ($titles) {
+                    $title = $titles->get($rule['category_id'], '#' . $rule['category_id']);
+                    $scope = $rule['apply_to'] === 'used' ? 'rabljene' : 'sve';
+
+                    return $title . ' ' . rtrim(rtrim(number_format((float) $rule['discount'], 2, '.', ''), '0'), '.') . '% (' . $scope . ')';
+                })
+                ->implode(', ');
+        }
+
+        if ((string) $this->group === 'category') {
+            $category_ids = collect(json_decode((string) $this->getRawOriginal('links'), true))
+                ->map(fn ($id) => (int) $id)
+                ->filter()
+                ->values();
+
+            if ($category_ids->isEmpty()) {
+                return '';
+            }
+
+            return Category::query()
+                ->whereIn('id', $category_ids)
+                ->pluck('title')
+                ->implode(', ');
+        }
+
+        return '';
+    }
+
     public function validateRequest(Request $request)
     {
+        $is_combined_category = self::isCombinedCategoryGroup((string) $request->input('group'));
+
         $request->validate([
             'title'    => 'required',
-            'type'     => 'required',   // 'F' = fixed amount, 'P' = percent
+            'type'     => $is_combined_category ? 'nullable' : 'required',   // 'F' = fixed amount, 'P' = percent
             'group'    => 'required',   // product|category|author|publisher|all|total
-            'discount' => 'required'
+            'discount' => $is_combined_category ? 'nullable' : 'required'
         ]);
 
         $this->request = $request;
 
-        if ($this->listRequired()) {
+        if ($is_combined_category) {
+            $request->validate([
+                'combined_categories' => 'required|array|min:1',
+                'combined_categories.*.category_id' => 'required|integer|exists:categories,id',
+                'combined_categories.*.discount' => 'required|numeric|min:0.01',
+                'combined_categories.*.apply_to' => 'required|in:all,used',
+            ]);
+
+            $request->merge([
+                'type' => 'P',
+                'discount' => $this->resolveCombinedCategoryDiscount(),
+            ]);
+        } elseif ($this->listRequired()) {
             $request->validate(['action_list' => 'required']);
         }
 
@@ -65,7 +126,7 @@ class Action extends Model
         $id   = $this->insertGetId($this->getModelArray());
 
         if ($id) {
-            if ($this->request->group === 'category') {
+            if (self::isCategoryLikeGroup((string) $this->request->group)) {
                 $this->syncCategoryProductsForAction($id, $data);
             } elseif ($this->shouldUpdateProducts($data)) {
                 $this->updateProducts($this->resolveTarget($data['links']), $id, $data);
@@ -90,12 +151,12 @@ class Action extends Model
         $updated = $this->update($this->getModelArray(false));
 
         if ($updated) {
-            if ($previous_group === 'category' || $this->request->group === 'category') {
+            if (self::isCategoryLikeGroup($previous_group) || self::isCategoryLikeGroup((string) $this->request->group)) {
                 $this->syncCategoryProductsForAction($this->id, $data, $existing_action_product_ids);
             } elseif ($this->shouldUpdateProducts($data)) {
                 $this->updateProducts($this->resolveTarget($data['links']), $this->id, $data);
             }
-            if ($previous_group !== 'category' && $this->shouldRemoveActions($data)) {
+            if (! self::isCategoryLikeGroup($previous_group) && $this->shouldRemoveActions($data)) {
                 $this->deleteProductActions();
             }
             return $this;
@@ -187,11 +248,9 @@ class Action extends Model
                 return true;
             }
 
-            if ($group === 'category') {
-                foreach ($affected_product_ids as $product_id) {
-                    self::syncCategoryActionForProduct((int) $product_id);
-                }
-
+            if (self::isCategoryLikeGroup($group)) {
+                self::syncCategoryActionsForProducts($affected_product_ids);
+                self::cleanupDetachedProductSpecials();
                 return true;
             }
 
@@ -204,6 +263,8 @@ class Action extends Model
                     'special_to' => null,
                     'special_lock' => 0,
                 ]);
+
+            self::cleanupDetachedProductSpecials();
 
             return true;
         });
@@ -220,10 +281,10 @@ class Action extends Model
 
         $resp = [
             'title'      => $this->request->title,
-            'type'       => $this->request->type,
-            'discount'   => $this->request->discount,
+            'type'       => $this->request->type ?: 'P',
+            'discount'   => $this->request->discount ?: 0,
             'group'      => $this->request->group,
-            'links'      => $data['links']->flatten()->toJson(),
+            'links'      => $this->normalizeLinks($data['links'])->toJson(),
             'date_start' => $data['start'],
             'date_end'   => $data['end'],
             'data'       => $data['data'],
@@ -243,15 +304,18 @@ class Action extends Model
 
     private function getRequestData(): array
     {
+        $data = $this->setActionData();
         $links = collect([$this->request->group]);
-        if ($this->request->action_list) {
+
+        if (self::isCombinedCategoryGroup((string) $this->request->group)) {
+            $links = collect($data['combined_categories'] ?? [])
+                ->pluck('category_id');
+        } elseif ($this->request->action_list) {
             $links = collect($this->request->action_list);
         }
 
-        $data = $this->setActionData();
-
         return [
-            'links'           => $links,
+            'links'           => $this->normalizeLinks($links),
             'status'          => (isset($this->request->status) && $this->request->status === 'on') ? 1 : 0,
             'start'           => $this->request->date_start ? Carbon::make($this->request->date_start) : null,
             'end'             => $this->request->date_end ? Carbon::make($this->request->date_end) : null,
@@ -264,9 +328,32 @@ class Action extends Model
     private function setActionData(): array
     {
         $resp = [];
-        if ($this->request->min) { $resp['min'] = $this->request->min; }
-        if ($this->request->max) { $resp['max'] = $this->request->max; }
+
+        if ($this->request->min !== null && $this->request->min !== '') {
+            $resp['min'] = $this->request->min;
+        }
+        if ($this->request->max !== null && $this->request->max !== '') {
+            $resp['max'] = $this->request->max;
+        }
+        if (self::isCombinedCategoryGroup((string) $this->request->group)) {
+            $resp['combined_categories'] = $this->resolveCombinedCategoryRules();
+        }
+
         return $resp;
+    }
+
+    private function normalizeLinks(Collection $links): Collection
+    {
+        if ((string) $this->request->group === 'all' && (string) $links->first() === 'all') {
+            return collect(['all']);
+        }
+
+        return $links
+            ->flatten()
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
     }
 
     private function shouldUpdateProducts(array $data): bool
@@ -284,7 +371,7 @@ class Action extends Model
 
     private function listRequired(): bool
     {
-        return !in_array($this->request->group, ['all', 'total']);
+        return !in_array($this->request->group, ['all', 'total', 'combined_category']);
     }
 
     /**
@@ -292,13 +379,13 @@ class Action extends Model
      */
     private function resolveTarget($links)
     {
-        if (in_array($this->request->group, ['product', 'category', 'author', 'publisher', 'all'])) {
+        if (in_array($this->request->group, ['product', 'category', 'combined_category', 'author', 'publisher', 'all'])) {
             $products = Product::query()
                 ->where('special_lock', 0);
 
             if ($this->request->group === 'product') {
                 $products->whereIn('id', $links);
-            } elseif ($this->request->group === 'category') {
+            } elseif (in_array($this->request->group, ['category', 'combined_category'], true)) {
                 $ids = ProductCategory::whereIn('category_id', $links)->pluck('product_id');
                 $products->whereIn('id', $ids);
             } elseif ($this->request->group === 'author') {
@@ -323,6 +410,8 @@ class Action extends Model
     private function updateProducts($target, int $id, array $data): void
     {
         $rows = [];
+        $start = $data['start'] ? Carbon::make($data['start'])->toDateTimeString() : null;
+        $end   = $data['end'] ? Carbon::make($data['end'])->toDateTimeString() : null;
 
         $products = Product::query()
             ->where('special_lock', 0);
@@ -376,8 +465,12 @@ class Action extends Model
 
             if ($shouldApply) {
                 $rows[] = [
-                    'product_id' => $p->id,
-                    'special'    => $newSpecial,
+                    'id' => $p->id,
+                    'special' => $newSpecial,
+                    'action_id' => $id,
+                    'special_from' => $start,
+                    'special_to' => $end,
+                    'special_lock' => (int) $data['lock'],
                 ];
             }
         }
@@ -386,27 +479,64 @@ class Action extends Model
             return; // ništa za ažurirati
         }
 
-        DB::table('temp_table')->truncate();
+        self::bulkUpdateResolvedProductRows($rows);
+    }
 
-        foreach (array_chunk($rows, 500) as $chunk) {
-            DB::table('temp_table')->insert($chunk);
-        }
+    private function resolveCombinedCategoryDiscount(): float
+    {
+        return (float) collect($this->resolveCombinedCategoryRules())
+            ->pluck('discount')
+            ->map(fn ($discount) => (float) $discount)
+            ->max();
+    }
 
-        $start = $data['start'] ? Carbon::make($data['start'])->toDateTimeString() : null;
-        $end   = $data['end'] ? Carbon::make($data['end'])->toDateTimeString() : null;
+    /**
+     * @return array<int, array{category_id:int, discount:float, apply_to:string}>
+     */
+    private function resolveCombinedCategoryRules(): array
+    {
+        return self::normalizeCombinedCategoryRules([
+            'combined_categories' => $this->request->input('combined_categories', []),
+        ]);
+    }
 
-        DB::update(
-            'UPDATE products p
-         INNER JOIN temp_table tt ON p.id = tt.product_id
-         SET p.special = tt.special,
-             p.action_id = ?,
-             p.special_from = ?,
-             p.special_to = ?,
-             p.special_lock = ?',
-            [$id, $start, $end, $data['lock']]
-        );
+    /**
+     * @param array<string, mixed>|null $data
+     * @return array<int, array{category_id:int, discount:float, apply_to:string}>
+     */
+    private static function normalizeCombinedCategoryRules(?array $data): array
+    {
+        $rules = collect($data['combined_categories'] ?? []);
 
-        DB::table('temp_table')->truncate();
+        return $rules
+            ->map(function ($rule) {
+                if (is_object($rule)) {
+                    $rule = (array) $rule;
+                }
+
+                $category_id = (int) ($rule['category_id'] ?? 0);
+                $discount = isset($rule['discount']) ? (float) $rule['discount'] : 0.0;
+                $apply_to = ($rule['apply_to'] ?? 'all') === 'used' ? 'used' : 'all';
+
+                return [
+                    'category_id' => $category_id,
+                    'discount' => $discount,
+                    'apply_to' => $apply_to,
+                ];
+            })
+            ->filter(fn (array $rule) => $rule['category_id'] > 0 && $rule['discount'] > 0)
+            ->values()
+            ->all();
+    }
+
+    private static function isCategoryLikeGroup(?string $group): bool
+    {
+        return in_array((string) $group, ['category', 'combined_category'], true);
+    }
+
+    private static function isCombinedCategoryGroup(?string $group): bool
+    {
+        return (string) $group === 'combined_category';
     }
 
 
@@ -453,119 +583,115 @@ class Action extends Model
      */
     public static function syncCategoryActionForProduct(int $product_id): void
     {
-        $product = Product::query()->find($product_id, [
-            'id',
-            'price',
-            'special',
-            'special_from',
-            'special_to',
-            'special_lock',
-            'action_id',
-        ]);
+        self::syncCategoryActionsForProducts(collect([$product_id]));
+    }
 
-        if (! $product || $product->special_lock) {
-            return;
-        }
+    /**
+     * Refresh category-based actions so future/expired windows are applied without manual edits.
+     */
+    public static function syncScheduledCategoryActions(): int
+    {
+        $actions = self::query()
+            ->whereIn('group', ['category', 'combined_category'])
+            ->get(['id', 'group', 'type', 'discount', 'links', 'date_start', 'date_end', 'data', 'lock']);
 
-        $currentAction = null;
-        $has_stale_action_reference = (bool) $product->action_id;
-
-        if ($product->action_id) {
-            $currentAction = self::query()->find($product->action_id, ['id', 'group']);
-            $has_stale_action_reference = $currentAction === null;
-        }
-
-        $category_ids = ProductCategory::query()
-            ->where('product_id', $product_id)
-            ->pluck('category_id')
+        $action_ids = $actions
+            ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->filter()
             ->unique()
             ->values();
 
-        $best_action = self::resolveBestCategoryActionForProduct($product, $category_ids);
+        $category_ids = $actions
+            ->flatMap(function (self $action) {
+                return self::resolveCategoryRulesForAction($action)
+                    ->pluck('category_id');
+            })
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
 
-        if ($currentAction && $currentAction->group === 'category') {
-            if ($best_action) {
-                self::applyResolvedActionToProduct($product_id, $best_action);
-            } else {
-                self::clearCategoryActionFromProduct($product_id);
-            }
+        $product_ids = collect();
 
-            return;
+        if ($action_ids->isNotEmpty()) {
+            $product_ids = $product_ids->merge(
+                Product::query()
+                    ->whereIn('action_id', $action_ids)
+                    ->pluck('id')
+            );
         }
 
-        if (! $best_action) {
-            if ($has_stale_action_reference) {
-                self::clearCategoryActionFromProduct($product_id);
-            }
-
-            return;
+        if ($category_ids->isNotEmpty()) {
+            $product_ids = $product_ids->merge(
+                ProductCategory::query()
+                    ->whereIn('category_id', $category_ids)
+                    ->pluck('product_id')
+            );
         }
 
-        if (self::shouldApplyResolvedAction($product, (float) $best_action['special'])) {
-            self::applyResolvedActionToProduct($product_id, $best_action);
+        $product_ids = $product_ids
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($product_ids->isNotEmpty()) {
+            self::syncCategoryActionsForProducts($product_ids);
         }
+
+        self::cleanupDetachedProductSpecials();
+
+        return $product_ids->count();
     }
 
     /**
      * @return array<string, mixed>|null
      */
-    private static function resolveBestCategoryActionForProduct(Product $product, Collection $category_ids): ?array
+    private static function resolveBestCategoryActionForProduct(Product $product, Collection $category_ids, ?Collection $rules_by_category = null): ?array
     {
         if ($category_ids->isEmpty()) {
             return null;
         }
 
-        $actions = self::query()
-            ->where('group', 'category')
-            ->where('status', 1)
-            ->where(function ($query) {
-                $query->whereNull('date_start')->orWhere('date_start', '<=', now());
-            })
-            ->where(function ($query) {
-                $query->whereNull('date_end')->orWhere('date_end', '>=', now());
-            })
-            ->get(['id', 'type', 'discount', 'links', 'date_start', 'date_end', 'data', 'lock']);
-
+        $rules_by_category = $rules_by_category ?: self::resolveActiveCategoryRulesByCategory();
         $best_action = null;
         $best_special = null;
         $price = (float) $product->price;
+        $is_used_book = self::isUsedBook($product->condition ?? null);
 
-        foreach ($actions as $action) {
-            $links = collect(json_decode((string) $action->getRawOriginal('links'), true))
-                ->map(fn ($id) => (int) $id)
-                ->filter()
-                ->unique()
-                ->values();
+        foreach ($category_ids as $category_id) {
+            /** @var Collection<int, array<string, mixed>> $rules */
+            $rules = $rules_by_category->get((int) $category_id, collect());
 
-            if ($links->isEmpty() || $links->intersect($category_ids)->isEmpty()) {
-                continue;
-            }
+            foreach ($rules as $rule) {
+                $min = $rule['min'];
+                $max = $rule['max'];
 
-            $data = is_array($action->data) ? $action->data : [];
-            $min = isset($data['min']) && $data['min'] !== '' ? (float) $data['min'] : null;
-            $max = isset($data['max']) && $data['max'] !== '' ? (float) $data['max'] : null;
+                if ($rule['apply_to'] === 'used' && ! $is_used_book) {
+                    continue;
+                }
 
-            if ($min !== null && $price <= $min) {
-                continue;
-            }
+                if ($min !== null && $price <= $min) {
+                    continue;
+                }
 
-            if ($max !== null && $price >= $max) {
-                continue;
-            }
+                if ($max !== null && $price >= $max) {
+                    continue;
+                }
 
-            $special = (float) Helper::calculateDiscountPrice($price, $action->discount, $action->type);
+                $special = (float) Helper::calculateDiscountPrice($price, $rule['discount'], $rule['type']);
 
-            if ($best_special === null || $special < $best_special) {
-                $best_special = $special;
-                $best_action = [
-                    'action_id' => $action->id,
-                    'special' => $special,
-                    'special_from' => $action->date_start ? Carbon::make($action->date_start)->toDateTimeString() : null,
-                    'special_to' => $action->date_end ? Carbon::make($action->date_end)->toDateTimeString() : null,
-                    'special_lock' => (int) ($action->lock ?? 0),
-                ];
+                if ($best_special === null || $special < $best_special) {
+                    $best_special = $special;
+                    $best_action = [
+                        'action_id' => $rule['action_id'],
+                        'special' => $special,
+                        'special_from' => $rule['special_from'],
+                        'special_to' => $rule['special_to'],
+                        'special_lock' => $rule['special_lock'],
+                    ];
+                }
             }
         }
 
@@ -601,28 +727,14 @@ class Action extends Model
      */
     private static function applyResolvedActionToProduct(int $product_id, array $resolved_action): void
     {
-        Product::query()
-            ->where('id', $product_id)
-            ->update([
-                'action_id' => $resolved_action['action_id'],
-                'special' => $resolved_action['special'],
-                'special_from' => $resolved_action['special_from'],
-                'special_to' => $resolved_action['special_to'],
-                'special_lock' => $resolved_action['special_lock'],
-            ]);
+        self::bulkApplyResolvedActions([
+            array_merge(['id' => $product_id], $resolved_action),
+        ]);
     }
 
     private static function clearCategoryActionFromProduct(int $product_id): void
     {
-        Product::query()
-            ->where('id', $product_id)
-            ->update([
-                'action_id' => 0,
-                'special' => null,
-                'special_from' => null,
-                'special_to' => null,
-                'special_lock' => 0,
-            ]);
+        self::bulkClearResolvedActions([$product_id]);
     }
 
     private function syncCategoryProductsForAction(int $action_id, array $data, ?Collection $existing_action_product_ids = null): void
@@ -634,7 +746,20 @@ class Action extends Model
 
         $target_ids = collect();
 
-        if ((bool) $data['status'] && $this->request->group === 'category') {
+        if (! self::isCategoryLikeGroup((string) $this->request->group) && $existing_action_product_ids->isNotEmpty()) {
+            Product::query()
+                ->where('action_id', $action_id)
+                ->whereIn('id', $existing_action_product_ids)
+                ->update([
+                    'action_id' => 0,
+                    'special' => null,
+                    'special_from' => null,
+                    'special_to' => null,
+                    'special_lock' => 0,
+                ]);
+        }
+
+        if ((bool) $data['status'] && self::isCategoryLikeGroup((string) $this->request->group)) {
             $target_ids = $this->resolveTarget($data['links'])
                 ->map(fn ($id) => (int) $id)
                 ->filter()
@@ -650,8 +775,329 @@ class Action extends Model
             return;
         }
 
-        foreach ($affected_ids as $product_id) {
-            self::syncCategoryActionForProduct((int) $product_id);
+        self::syncCategoryActionsForProducts($affected_ids);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    public static function resolveCategoryRulesForAction(self $action): Collection
+    {
+        $data = is_array($action->data) ? $action->data : [];
+        $min = isset($data['min']) && $data['min'] !== '' ? (float) $data['min'] : null;
+        $max = isset($data['max']) && $data['max'] !== '' ? (float) $data['max'] : null;
+        $base_rule = [
+            'action_id' => (int) $action->id,
+            'special_from' => $action->date_start ? Carbon::make($action->date_start)->toDateTimeString() : null,
+            'special_to' => $action->date_end ? Carbon::make($action->date_end)->toDateTimeString() : null,
+            'special_lock' => (int) ($action->lock ?? 0),
+            'min' => $min,
+            'max' => $max,
+        ];
+
+        if (self::isCombinedCategoryGroup((string) $action->group)) {
+            return collect(self::normalizeCombinedCategoryRules($data))
+                ->map(function (array $rule) use ($base_rule) {
+                    return array_merge($base_rule, [
+                        'category_id' => (int) $rule['category_id'],
+                        'discount' => (float) $rule['discount'],
+                        'type' => 'P',
+                        'apply_to' => $rule['apply_to'],
+                    ]);
+                })
+                ->values();
         }
+
+        $category_ids = collect(json_decode((string) $action->getRawOriginal('links'), true))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $category_ids
+            ->map(function (int $category_id) use ($action, $base_rule) {
+                return array_merge($base_rule, [
+                    'category_id' => $category_id,
+                    'discount' => (float) $action->discount,
+                    'type' => (string) $action->type,
+                    'apply_to' => 'all',
+                ]);
+            })
+            ->values();
+    }
+
+    private static function syncCategoryActionsForProducts(Collection $product_ids): void
+    {
+        $product_ids = $product_ids
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($product_ids->isEmpty()) {
+            return;
+        }
+
+        $rules_by_category = self::resolveActiveCategoryRulesByCategory();
+
+        foreach ($product_ids->chunk(500) as $chunk) {
+            $products = Product::query()
+                ->whereIn('id', $chunk)
+                ->get([
+                    'id',
+                    'price',
+                    'special',
+                    'special_from',
+                    'special_to',
+                    'special_lock',
+                    'action_id',
+                    'condition',
+                ]);
+
+            if ($products->isEmpty()) {
+                continue;
+            }
+
+            $category_map = ProductCategory::query()
+                ->whereIn('product_id', $products->pluck('id'))
+                ->get(['product_id', 'category_id'])
+                ->groupBy('product_id')
+                ->map(function (Collection $items) {
+                    return $items
+                        ->pluck('category_id')
+                        ->map(fn ($id) => (int) $id)
+                        ->filter()
+                        ->unique()
+                        ->values();
+                });
+
+            $action_groups = self::query()
+                ->whereIn('id', $products->pluck('action_id')->filter()->unique())
+                ->get(['id', 'group'])
+                ->pluck('group', 'id');
+
+            $rows_to_apply = [];
+            $product_ids_to_clear = [];
+
+            foreach ($products as $product) {
+                if ((int) $product->special_lock === 1) {
+                    continue;
+                }
+
+                $current_action_id = (int) $product->action_id;
+                $current_action_group = $current_action_id > 0 ? $action_groups->get($current_action_id) : null;
+                $has_stale_action_reference = $current_action_id > 0 && $current_action_group === null;
+                $best_action = self::resolveBestCategoryActionForProduct(
+                    $product,
+                    $category_map->get($product->id, collect()),
+                    $rules_by_category
+                );
+
+                if (self::isCategoryLikeGroup($current_action_group)) {
+                    if ($best_action) {
+                        $rows_to_apply[] = array_merge(['id' => (int) $product->id], $best_action);
+                    } else {
+                        $product_ids_to_clear[] = (int) $product->id;
+                    }
+
+                    continue;
+                }
+
+                if (! $best_action) {
+                    if ($has_stale_action_reference) {
+                        $product_ids_to_clear[] = (int) $product->id;
+                    }
+
+                    continue;
+                }
+
+                if (self::shouldApplyResolvedAction($product, (float) $best_action['special'])) {
+                    $rows_to_apply[] = array_merge(['id' => (int) $product->id], $best_action);
+                }
+            }
+
+            self::bulkApplyResolvedActions($rows_to_apply);
+            self::bulkClearResolvedActions($product_ids_to_clear);
+        }
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, \Illuminate\Support\Collection<int, array<string, mixed>>>
+     */
+    private static function resolveActiveCategoryRulesByCategory(): Collection
+    {
+        $actions = self::query()
+            ->whereIn('group', ['category', 'combined_category'])
+            ->where('status', 1)
+            ->where(function ($query) {
+                $query->whereNull('date_start')->orWhere('date_start', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('date_end')->orWhere('date_end', '>=', now());
+            })
+            ->get(['id', 'group', 'type', 'discount', 'links', 'date_start', 'date_end', 'data', 'lock']);
+
+        $rules = collect();
+
+        foreach ($actions as $action) {
+            foreach (self::resolveCategoryRulesForAction($action) as $rule) {
+                $category_id = (int) ($rule['category_id'] ?? 0);
+
+                if ($category_id <= 0) {
+                    continue;
+                }
+
+                $bucket = $rules->get($category_id, collect());
+                $bucket->push($rule);
+                $rules->put($category_id, $bucket);
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private static function bulkApplyResolvedActions(array $rows): void
+    {
+        if (empty($rows)) {
+            return;
+        }
+
+        self::bulkUpdateResolvedProductRows($rows);
+    }
+
+    /**
+     * @param array<int, int> $product_ids
+     */
+    private static function bulkClearResolvedActions(array $product_ids): void
+    {
+        $product_ids = collect($product_ids)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($product_ids)) {
+            return;
+        }
+
+        foreach (array_chunk($product_ids, 500) as $chunk) {
+            Product::query()
+                ->whereIn('id', $chunk)
+                ->update([
+                    'action_id' => 0,
+                    'special' => null,
+                    'special_from' => null,
+                    'special_to' => null,
+                    'special_lock' => 0,
+                ]);
+        }
+    }
+
+    private static function cleanupDetachedProductSpecials(): void
+    {
+        $existing_action_ids = self::query()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values();
+
+        $clear_payload = [
+            'action_id' => 0,
+            'special' => null,
+            'special_from' => null,
+            'special_to' => null,
+            'special_lock' => 0,
+        ];
+
+        if ($existing_action_ids->isEmpty()) {
+            Product::query()
+                ->where('special_lock', 0)
+                ->where(function ($query) {
+                    $query->whereNotNull('special')
+                        ->orWhere('action_id', '>', 0);
+                })
+                ->update($clear_payload);
+
+            return;
+        }
+
+        Product::query()
+            ->where('special_lock', 0)
+            ->where('action_id', '>', 0)
+            ->whereNotIn('action_id', $existing_action_ids)
+            ->update($clear_payload);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private static function bulkUpdateResolvedProductRows(array $rows): void
+    {
+        foreach (array_chunk($rows, 500) as $chunk) {
+            $ids = [];
+            $special_cases = [];
+            $special_bindings = [];
+            $action_id_cases = [];
+            $action_id_bindings = [];
+            $special_from_cases = [];
+            $special_from_bindings = [];
+            $special_to_cases = [];
+            $special_to_bindings = [];
+            $special_lock_cases = [];
+            $special_lock_bindings = [];
+
+            foreach ($chunk as $row) {
+                $id = (int) ($row['id'] ?? 0);
+
+                if ($id <= 0) {
+                    continue;
+                }
+
+                $ids[] = $id;
+                $special_cases[] = 'WHEN ' . $id . ' THEN ?';
+                $special_bindings[] = $row['special'];
+                $action_id_cases[] = 'WHEN ' . $id . ' THEN ?';
+                $action_id_bindings[] = (int) ($row['action_id'] ?? 0);
+                $special_from_cases[] = 'WHEN ' . $id . ' THEN ?';
+                $special_from_bindings[] = $row['special_from'] ?? null;
+                $special_to_cases[] = 'WHEN ' . $id . ' THEN ?';
+                $special_to_bindings[] = $row['special_to'] ?? null;
+                $special_lock_cases[] = 'WHEN ' . $id . ' THEN ?';
+                $special_lock_bindings[] = (int) ($row['special_lock'] ?? 0);
+            }
+
+            if (empty($ids)) {
+                continue;
+            }
+
+            $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+            $sql = 'UPDATE products SET '
+                . 'special = CASE id ' . implode(' ', $special_cases) . ' ELSE special END, '
+                . 'action_id = CASE id ' . implode(' ', $action_id_cases) . ' ELSE action_id END, '
+                . 'special_from = CASE id ' . implode(' ', $special_from_cases) . ' ELSE special_from END, '
+                . 'special_to = CASE id ' . implode(' ', $special_to_cases) . ' ELSE special_to END, '
+                . 'special_lock = CASE id ' . implode(' ', $special_lock_cases) . ' ELSE special_lock END '
+                . 'WHERE id IN (' . $placeholders . ')';
+
+            DB::update($sql, array_merge(
+                $special_bindings,
+                $action_id_bindings,
+                $special_from_bindings,
+                $special_to_bindings,
+                $special_lock_bindings,
+                $ids
+            ));
+        }
+    }
+
+    private static function isUsedBook(?string $condition): bool
+    {
+        $normalized_condition = mb_strtolower(trim((string) $condition), 'UTF-8');
+
+        return ! in_array($normalized_condition, ['novo', 'nova knjiga'], true);
     }
 }

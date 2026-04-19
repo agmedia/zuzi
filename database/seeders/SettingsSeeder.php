@@ -25,10 +25,14 @@ class SettingsSeeder extends Seeder
                 'title' => 'Kategorija'
             ],
             2 => [
+                'id' => 'combined_category',
+                'title' => 'Kombinirane kategorije'
+            ],
+            3 => [
                 'id' => 'publisher',
                 'title' => 'Nakladnik'
             ],
-            3 => [
+            4 => [
                 'id' => 'author',
                 'title' => 'Autor'
             ]

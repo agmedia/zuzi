@@ -69,9 +69,12 @@
                             <tr>
                                 <td class="font-size-sm">
                                     <a class="font-w600" href="{{ route('actions.edit', ['action' => $action]) }}">{{ $action->title }}</a>
+                                    @if ($action->selection_text)
+                                        <div class="text-muted font-size-sm mt-1">{{ $action->selection_text }}</div>
+                                    @endif
                                 </td>
                                 <td class="font-size-sm">
-                                    {{ $groups->where('id', $action->group)->first()->title }}
+                                    {{ optional($groups->where('id', $action->group)->first())->title ?: $action->group }}
                                 </td>
                                 <td class="font-size-sm">{{ $action->date_start ? \Illuminate\Support\Carbon::make($action->date_start)->format('d.m.Y') : '...' }}</td>
                                 <td class="font-size-sm">{{ $action->date_end ? \Illuminate\Support\Carbon::make($action->date_end)->format('d.m.Y') : '...' }}</td>

@@ -621,15 +621,25 @@ class CatalogRouteController extends Controller
     private function resolveActionLanding(?Category $cat = null, ?Category $subcat = null): array
     {
         $actions = $this->resolveActiveActionLandingActions();
+        $hasCombinedCategoryAction = $actions->contains(
+            fn (MarketingAction $action) => (string) $action->group === 'combined_category'
+        );
 
         return [
-            'title' => 'Knjige na popustu 💖',
-            'lead' => '',
-            'body' => 'Iskoristi  popuste i pronađi nove naslove, antikvarne dragulje i omiljene knjiške ulove po posebnim cijenama.',
-            'seo_title' => \App\Models\Seo::appendBrand('7 godina ljubavi prema knjigama 💖'),
+            'eyebrow' => $hasCombinedCategoryAction ? 'NOĆ KNJIGE 🌙' : 'AKCIJSKA PONUDA',
+            'title' => $hasCombinedCategoryAction ? 'Noć knjige 20.4. - 1.5. - posebna akcijska ponuda 🌙' : 'Akcijska ponuda',
+            'lead' => $hasCombinedCategoryAction
+                ? 'Od novih hitova do antikvarnih otkrića, prošeći kroz izdvojene kategorije i ulovi naslove po cijenama rezerviranima za Noć knjige.'
+                : 'Pogledajte artikle na akciji i izdvojite naslove po povoljnijim cijenama.',
+            'body' => null,
+            'seo_title' => \App\Models\Seo::appendBrand(
+                $hasCombinedCategoryAction ? 'Noć knjige 20.4. - 1.5. - posebna akcijska ponuda' : 'Akcijska ponuda'
+            ),
             'seo_description' => \App\Models\Seo::description(
                 null,
-                'Iskoristi  popuste i pronađi nove naslove, antikvarne dragulje i omiljene knjiške ulove po posebnim cijenama.'
+                $hasCombinedCategoryAction
+                    ? 'Od novih hitova do antikvarnih otkrića, prošeći kroz izdvojene kategorije i ulovi naslove po posebnim cijenama tijekom Noći knjige.'
+                    : 'Pogledajte artikle na akciji i pronađite izdvojene naslove po povoljnijim cijenama.'
             ),
             'landing_url' => route('catalog.route.actions'),
             'promotion_start' => optional(
@@ -687,14 +697,13 @@ class CatalogRouteController extends Controller
 
         return $actions
             ->flatMap(function (MarketingAction $action) use ($categories, $selectedCategoryId) {
-                $discountLabel = $action->type === 'P'
-                    ? rtrim(rtrim(number_format((float) $action->discount, 2, '.', ''), '0'), '.') . '%'
-                    : (string) $action->discount_text;
+                return MarketingAction::resolveCategoryRulesForAction($action)
+                    ->map(function (array $rule) use ($action, $categories, $selectedCategoryId) {
+                        $discountLabel = $rule['type'] === 'P'
+                            ? rtrim(rtrim(number_format((float) $rule['discount'], 2, '.', ''), '0'), '.') . '%'
+                            : (string) $action->discount_text;
 
-                return collect(json_decode((string) $action->links, true))
-                    ->map(fn ($id) => (int) $id)
-                    ->filter()
-                    ->map(function (int $categoryId) use ($action, $categories, $selectedCategoryId, $discountLabel) {
+                        $categoryId = (int) ($rule['category_id'] ?? 0);
                         /** @var Category|null $category */
                         $category = $categories->get($categoryId);
 
@@ -708,6 +717,7 @@ class CatalogRouteController extends Controller
                             'id' => $category->id,
                             'title' => $category->title,
                             'discount' => $discountLabel,
+                            'sort_discount' => (float) ($rule['discount'] ?? 0),
                             'url' => route('catalog.route.actions', [
                                 'cat' => $parent ?: $category,
                                 'subcat' => $parent ? $category : null,
@@ -718,8 +728,14 @@ class CatalogRouteController extends Controller
                     ->filter();
             })
             ->filter()
+            ->sortByDesc('sort_discount')
             ->unique('id')
             ->values()
+            ->map(function (array $item) {
+                unset($item['sort_discount']);
+
+                return $item;
+            })
             ->all();
     }
 
@@ -731,7 +747,7 @@ class CatalogRouteController extends Controller
     {
         return MarketingAction::query()
             ->where('status', 1)
-            ->where('group', 'category')
+            ->whereIn('group', ['category', 'combined_category'])
             ->where(function (Builder $query) {
                 $query->whereNull('coupon')->orWhere('coupon', '');
             })
@@ -743,7 +759,7 @@ class CatalogRouteController extends Controller
             })
             ->orderByDesc('discount')
             ->orderBy('title')
-            ->get(['id', 'title', 'type', 'discount', 'links', 'date_start', 'date_end']);
+            ->get(['id', 'group', 'title', 'type', 'discount', 'links', 'date_start', 'date_end']);
     }
 
 

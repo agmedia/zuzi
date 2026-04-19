@@ -6,6 +6,10 @@
 @endpush
 
 @section('content')
+    @php
+        $initialGroup = old('group', isset($action) ? $action->group : 'product');
+        $isCombinedCategoryAction = $initialGroup === 'combined_category';
+    @endphp
     <div class="bg-body-light">
         <div class="content content-full">
             <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center">
@@ -60,21 +64,21 @@
                                             <select class="form-control" id="group-select" name="group">
                                                 <option></option>
                                                 @foreach ($groups as $group)
-                                                    <option value="{{ $group->id }}" {{ (isset($action) and $group->id == $action->group) ? 'selected="selected"' : '' }}>{{ $group->title }}</option>
+                                                    <option value="{{ $group->id }}" @if(isset($action) && $group->id == $action->group) selected @endif>{{ $group->title }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
                                     </div>
                                     <div class="form-group row items-push mb-2">
-                                        <div class="col-md-6">
+                                        <div class="col-md-6 @if($isCombinedCategoryAction) d-none @endif" id="type-field-wrapper">
                                             <label for="type-select">Vrsta popusta <span class="text-danger">*</span></label>
                                             <select class="form-control" id="type-select" name="type">
                                                 @foreach ($types as $type)
-                                                    <option value="{{ $type->id }}" {{ (isset($action) and $type->id == $action->type) ? 'selected="selected"' : '' }}>{{ $type->title }}</option>
+                                                    <option value="{{ $type->id }}" @if(isset($action) && $type->id == $action->type) selected @endif>{{ $type->title }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-6 @if($isCombinedCategoryAction) d-none @endif" id="discount-field-wrapper">
                                             <label for="discount-input">Akcija @include('back.layouts.partials.required-star')</label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="discount-input" name="discount" placeholder="Unesite popust" value="{{ isset($action) ? $action->discount : old('discount') }}">
@@ -152,12 +156,16 @@
                 </div>
 
 
-                <div class="col-md-5" id="action-list-view">
+                <div class="col-md-5 @if($isCombinedCategoryAction) d-none @endif" id="action-list-view">
                     @if (isset($action))
-                        @livewire('back.marketing.action-group-list', ['group' => $action->group, 'list' => json_decode($action->links)])
+                        @livewire('back.marketing.action-group-list', ['group' => $action->group === 'combined_category' ? 'product' : $action->group, 'list' => $action->group === 'combined_category' ? [] : json_decode($action->links)])
                     @else
-                        @livewire('back.marketing.action-group-list', ['group' => 'products'])
+                        @livewire('back.marketing.action-group-list', ['group' => 'product'])
                     @endif
+                </div>
+
+                <div class="col-md-12 mt-3">
+                    @include('back.marketing.action.partials.combined-category-module')
                 </div>
             </div>
         </form>
@@ -179,6 +187,8 @@
 
     <script>
         $(() => {
+            const combinedCategoryGroup = 'combined_category';
+
             /**
              *
              */
@@ -187,11 +197,16 @@
                 minimumResultsForSearch: Infinity
             });
             $('#group-select').on('change', function (e) {
-                Livewire.emit('groupUpdated', e.currentTarget.value);
+                let selectedGroup = e.currentTarget.value;
+
+                Livewire.emit('groupUpdated', selectedGroup);
+                toggleCombinedCategoryUi(selectedGroup);
             });
 
             Livewire.on('list_full', () => {
-                $('#group-select').attr("disabled", true);
+                if (! isCombinedCategoryGroup($('#group-select').val())) {
+                    $('#group-select').attr("disabled", true);
+                }
             });
             Livewire.on('list_empty', () => {
                 $('#group-select').attr("disabled", false);
@@ -207,7 +222,7 @@
                 setType(e.currentTarget.value);
             });
 
-            @if (isset($action) && ! in_array($action->group, ['total']))
+            @if (isset($action) && ! in_array($action->group, ['total', 'combined_category']))
                 let group = '{{ $action->group }}';
                 let links = '{{ $action->links }}';
                 links = JSON.parse(links.replace(/&quot;/g,'"'));
@@ -221,6 +236,21 @@
                 setType('{{ $action->type }}');
             @endif
 
+            $('#add-combined-category-row').on('click', function () {
+                appendCombinedCategoryRow();
+            });
+
+            $(document).on('click', '.remove-combined-category-row', function () {
+                $(this).closest('.combined-category-row').remove();
+                updateCombinedCategoryEmptyState();
+            });
+
+            toggleCombinedCategoryUi($('#group-select').val());
+
+            if (isCombinedCategoryGroup($('#group-select').val()) && ! $('#combined-category-rows .combined-category-row').length) {
+                appendCombinedCategoryRow();
+            }
+
         })
 
         function setType(type) {
@@ -229,6 +259,98 @@
             } else {
                 $('#discount-append-badge').text('%');
             }
+        }
+
+        function isCombinedCategoryGroup(group) {
+            return group === 'combined_category';
+        }
+
+        function toggleCombinedCategoryUi(group) {
+            let isCombined = isCombinedCategoryGroup(group);
+
+            $('#combined-category-module').toggleClass('d-none', ! isCombined);
+            $('#action-list-view').toggleClass('d-none', isCombined);
+            $('#type-field-wrapper').toggleClass('d-none', isCombined);
+            $('#discount-field-wrapper').toggleClass('d-none', isCombined);
+
+            if (isCombined) {
+                $('#group-select').attr('disabled', false);
+                $('#type-select').val('P').trigger('change');
+                $('#discount-input').val('0');
+                initVisibleCombinedCategorySelects();
+                updateCombinedCategoryEmptyState();
+            }
+        }
+
+        function updateCombinedCategoryEmptyState() {
+            let hasRows = $('#combined-category-rows .combined-category-row').length > 0;
+
+            $('#combined-category-empty-state').toggleClass('d-none', hasRows);
+        }
+
+        function nextCombinedCategoryIndex() {
+            let rows = $('#combined-category-rows');
+            let nextIndex = parseInt(rows.attr('data-next-index'), 10);
+
+            if (Number.isNaN(nextIndex)) {
+                nextIndex = rows.find('.combined-category-row').length;
+            }
+
+            rows.attr('data-next-index', nextIndex + 1);
+
+            return nextIndex;
+        }
+
+        function appendCombinedCategoryRow(rule = {}) {
+            let template = $('#combined-category-row-template').html();
+            let index = nextCombinedCategoryIndex();
+            let discount = rule.discount ? rule.discount : '';
+            let allSelected = (rule.apply_to || 'all') === 'all' ? 'selected="selected"' : '';
+            let usedSelected = (rule.apply_to || 'all') === 'used' ? 'selected="selected"' : '';
+
+            template = template
+                .replaceAll('__INDEX__', index)
+                .replace('__DISCOUNT__', discount)
+                .replace('__ALL_SELECTED__', allSelected)
+                .replace('__USED_SELECTED__', usedSelected);
+
+            let row = $(template);
+
+            $('#combined-category-rows').append(row);
+
+            if (rule.category_id) {
+                row.find('.combined-category-select').val(String(rule.category_id));
+            }
+
+            initCombinedCategorySelect(row.find('.combined-category-select'));
+            updateCombinedCategoryEmptyState();
+        }
+
+        function initCombinedCategorySelect(element) {
+            if (element.hasClass('select2-hidden-accessible')) {
+                return;
+            }
+
+            let selectedCategoryId = element.data('selectedCategoryId');
+
+            if (selectedCategoryId) {
+                element.val(String(selectedCategoryId));
+            }
+
+            element.select2({
+                placeholder: '-- Odaberite kategoriju --',
+                width: '100%'
+            });
+
+            if (selectedCategoryId) {
+                element.trigger('change.select2');
+            }
+        }
+
+        function initVisibleCombinedCategorySelects() {
+            $('#combined-category-rows .combined-category-select').each(function () {
+                initCombinedCategorySelect($(this));
+            });
         }
     </script>
 

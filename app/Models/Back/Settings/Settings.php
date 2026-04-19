@@ -53,7 +53,11 @@ class Settings extends Model
 
         if ($styles) {
             if ($styles->json) {
-                return collect(json_decode($styles->value));
+                return static::mergeJsonSettingWithFallback(
+                    $code,
+                    $key,
+                    collect(json_decode($styles->value))
+                );
             }
 
             return $styles->value;
@@ -447,6 +451,7 @@ class Settings extends Model
         return collect([
             (object) ['id' => 'product', 'title' => 'Proizvod'],
             (object) ['id' => 'category', 'title' => 'Kategorija'],
+            (object) ['id' => 'combined_category', 'title' => 'Kombinirane kategorije'],
             (object) ['id' => 'author', 'title' => 'Autor'],
             (object) ['id' => 'publisher', 'title' => 'Nakladnik'],
             (object) ['id' => 'all', 'title' => 'Svi proizvodi'],
@@ -473,5 +478,36 @@ class Settings extends Model
             (object) ['id' => (int) config('settings.order.status.declined'), 'title' => 'Odbijena', 'sort_order' => 6],
             (object) ['id' => (int) config('settings.order.status.ready'), 'title' => 'Spremna', 'sort_order' => 7],
         ]);
+    }
+
+    private static function mergeJsonSettingWithFallback(string $code, string $key, Collection $items): Collection
+    {
+        if ($code !== 'action' || ! in_array($key, ['group_list', 'type_list'], true)) {
+            return $items;
+        }
+
+        $fallback = static::fallbackValue($code, $key);
+
+        if (! $fallback instanceof Collection || $fallback->isEmpty()) {
+            return $items;
+        }
+
+        $merged = $items
+            ->filter()
+            ->keyBy(function ($item) {
+                return (string) ($item->id ?? $item->code ?? $item->title ?? spl_object_hash((object) $item));
+            });
+
+        foreach ($fallback as $fallback_item) {
+            $fallback_key = (string) ($fallback_item->id ?? $fallback_item->code ?? $fallback_item->title ?? '');
+
+            if ($fallback_key === '' || $merged->has($fallback_key)) {
+                continue;
+            }
+
+            $merged->put($fallback_key, $fallback_item);
+        }
+
+        return $merged->values();
     }
 }

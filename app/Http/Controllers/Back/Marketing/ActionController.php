@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Back\Marketing;
 
 use App\Helpers\Currency;
 use App\Http\Controllers\Controller;
+use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Marketing\Action;
 use App\Models\Back\Settings\Settings;
@@ -55,8 +56,9 @@ class ActionController extends Controller
     {
         $groups = Settings::get('action', 'group_list');
         $types  = Settings::get('action', 'type_list');
+        $category_options = $this->resolveCategoryOptions();
 
-        return view('back.marketing.action.edit', compact('groups', 'types'));
+        return view('back.marketing.action.edit', compact('groups', 'types', 'category_options'));
     }
 
 
@@ -92,8 +94,9 @@ class ActionController extends Controller
     {
         $groups = Settings::get('action', 'group_list');
         $types  = Settings::get('action', 'type_list');
+        $category_options = $this->resolveCategoryOptions();
 
-        return view('back.marketing.action.edit', compact('action', 'groups', 'types'));
+        return view('back.marketing.action.edit', compact('action', 'groups', 'types', 'category_options'));
     }
 
 
@@ -163,5 +166,31 @@ class ActionController extends Controller
         }
 
         return response()->json(['error' => 300]);
+    }
+
+    private function resolveCategoryOptions()
+    {
+        $categories = Category::query()
+            ->orderBy('group')
+            ->orderBy('parent_id')
+            ->orderBy('title')
+            ->get(['id', 'parent_id', 'title']);
+
+        $parents = $categories
+            ->where('parent_id', 0)
+            ->keyBy('id');
+
+        return $categories->map(function (Category $category) use ($parents) {
+            $label = $category->title;
+
+            if ($category->parent_id && $parents->has($category->parent_id)) {
+                $label = $parents[$category->parent_id]->title . ' > ' . $category->title;
+            }
+
+            return (object) [
+                'id' => (int) $category->id,
+                'label' => $label,
+            ];
+        })->values();
     }
 }

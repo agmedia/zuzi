@@ -28,6 +28,7 @@
     $listingUpdatedAt = $listingUpdatedAt ?: (isset($publisher) && $publisher ? $publisher->updated_at : null);
     $isActionListing = Route::currentRouteName() === 'catalog.route.actions';
     $actionLanding = $actionLanding ?? [];
+    $actionLandingEyebrow = $isActionListing ? ($actionLanding['eyebrow'] ?? 'AKCIJSKA PONUDA') : null;
     $actionLandingTitle = $isActionListing ? ($actionLanding['title'] ?? null) : null;
     $actionLandingLead = $isActionListing ? ($actionLanding['lead'] ?? null) : null;
     $actionLandingBody = $isActionListing ? ($actionLanding['body'] ?? null) : null;
@@ -255,7 +256,7 @@
             @if ($isActionListing && $actionLandingTitle)
                 <section class="birthday-landing mb-4">
                     <div class="birthday-landing__panel">
-                        <p class="birthday-landing__eyebrow">AKCIJSKA PONUDA</p>
+                        <p class="birthday-landing__eyebrow">{{ $actionLandingEyebrow }}</p>
                         <h1 class="birthday-landing__title mb-3">{{ $actionLandingTitle }}</h1>
 
                         @if ($actionLandingLead)
@@ -278,8 +279,15 @@
             @endif
 
             @if ($isActionListing && $actionLandingCategories->isNotEmpty())
-                <section class="discount-category-pills mb-4" aria-label="Kategorije na popustu">
-                    <div class="discount-category-pills__inner">
+                @php
+                    $hasActiveActionCategory = $actionLandingCategories->contains(fn ($item) => ! empty($item['is_active']));
+                @endphp
+                <section class="discount-category-pills mb-4" id="offer-catalog" aria-label="Kategorije na popustu">
+                    <div class="discount-category-pills__inner scrolling-wrapper">
+                        <a href="{{ $actionLandingUrl ?: route('catalog.route.actions') }}" class="discount-category-pill discount-category-pill--all{{ ! $hasActiveActionCategory ? ' is-active' : '' }}">
+                            <span class="discount-category-pill__title">Sve kategorije</span>
+                        </a>
+
                         @foreach ($actionLandingCategories as $actionCategory)
                             <a href="{{ $actionCategory['url'] }}" class="discount-category-pill{{ ! empty($actionCategory['is_active']) ? ' is-active' : '' }}">
                                 <span class="discount-category-pill__title">{{ $actionCategory['title'] }}</span>
@@ -421,15 +429,15 @@
         </script>
         <script type="application/ld+json">
             {!! collect(\App\Helpers\Metatags::offerCatalogSchema(
-                'Rođendanski popusti po kategorijama',
-                $actionLandingBody ?: $listingSeo['description'],
+                ($actionLandingTitle ?: 'Posebna akcijska ponuda') . ' - popusti po kategorijama',
+                trim(collect([$actionLandingLead, $actionLandingBody, $listingSeo['description']])->filter()->implode(' ')),
                 $actionLandingUrl ?: $listingSchemaUrl,
                 $actionLandingCategories->map(function ($item) {
                     return [
                         'name' => $item['title'],
                         'url' => $item['url'],
                         'discount' => $item['discount'],
-                        'description' => 'Rođendanski popust ' . $item['discount'] . ' na kategoriju ' . $item['title'] . '.',
+                        'description' => 'Posebna akcijska ponuda donosi popust ' . $item['discount'] . ' na kategoriju ' . $item['title'] . '.',
                     ];
                 }),
                 ($actionLandingUrl ?: $listingSchemaUrl) . '#offer-catalog'
@@ -520,21 +528,16 @@
             overflow: hidden;
             padding: 1.1rem 1.35rem 1.15rem;
             border-radius: 1rem;
-            background:
-                radial-gradient(circle at top right, rgba(229, 0, 119, 0.12), transparent 26%),
-                radial-gradient(circle at left center, rgba(53, 56, 74, 0.08), transparent 30%),
-                linear-gradient(135deg, #ffffff 0%, #f8f9fc 46%, #fff3f8 100%);
+            background: #fff;
             border: 1px solid rgba(229, 0, 119, 0.12);
-            box-shadow: 0 0.8rem 1.8rem rgba(53, 56, 74, 0.08);
+            box-shadow: 0 0.2rem 0.65rem rgba(53, 56, 74, 0.04);
         }
 
         .birthday-landing__panel::before {
             content: "";
             position: absolute;
             inset: 0;
-            background:
-                linear-gradient(90deg, rgba(53, 56, 74, 0.03) 0%, transparent 28%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, transparent 100%);
+            background: none;
             pointer-events: none;
         }
 
@@ -560,9 +563,10 @@
 
         .birthday-landing__title {
             color: #231f31;
-            font-size: clamp(1.75rem, 3vw, 2.75rem);
-            line-height: 1.02;
+            font-size: clamp(1.5rem, 2.35vw, 2.2rem);
+            line-height: 1.05;
             letter-spacing: -0.03em;
+            text-wrap: balance;
         }
 
         .birthday-landing__lead {
@@ -590,19 +594,29 @@
             font-size: 0.9rem;
         }
 
+        .discount-category-pills {
+            position: relative;
+        }
+
         .discount-category-pills__inner {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 0.55rem;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0.6rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            padding-bottom: 0.55rem;
+            scrollbar-width: thin;
         }
 
         .discount-category-pill {
             display: inline-flex;
             align-items: center;
             justify-content: space-between;
-            gap: 0.45rem;
+            gap: 0.6rem;
             min-width: 0;
-            padding: 0.55rem 0.75rem;
+            min-height: 3rem;
+            padding: 0.65rem 0.9rem;
             border-radius: 999px;
             border: 1px solid rgba(229, 0, 119, 0.22);
             background: #fff;
@@ -610,6 +624,7 @@
             text-decoration: none;
             transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
             box-shadow: none;
+            flex: 0 0 auto;
         }
 
         .discount-category-pill:hover {
@@ -623,6 +638,12 @@
             background: linear-gradient(135deg, #e50077 0%, #ff4b9a 100%);
             color: #fff;
             box-shadow: none;
+        }
+
+        .discount-category-pill--all {
+            min-height: 3rem;
+            padding: 0.65rem 1rem;
+            justify-content: center;
         }
 
         .discount-category-pill__title {
@@ -644,6 +665,7 @@
             font-size: 0.76rem;
             font-weight: 700;
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .discount-category-pill.is-active .discount-category-pill__discount {
@@ -651,22 +673,7 @@
             color: #fff;
         }
 
-        @media only screen and (min-width: 992px) {
-            .birthday-landing__title {
-                white-space: nowrap;
-            }
-        }
-
-        @media only screen and (max-width: 1199px) {
-            .discount-category-pills__inner {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-            }
-        }
-
         @media only screen and (max-width: 991px) {
-            .discount-category-pills__inner {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
         }
 
         @media only screen and (max-width: 767px) {
@@ -676,15 +683,11 @@
             }
 
             .birthday-landing__title {
-                font-size: clamp(1.65rem, 8vw, 2.2rem);
+                font-size: clamp(1.45rem, 7vw, 1.95rem);
             }
 
             .discount-category-pill {
                 padding: 0.55rem 0.65rem;
-            }
-
-            .discount-category-pills__inner {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
     </style>
@@ -693,17 +696,15 @@
             const description = document.querySelector('[data-category-description]');
             const toggle = document.querySelector('[data-category-description-toggle]');
 
-            if (!description || !toggle) {
-                return;
+            if (description && toggle) {
+                toggle.addEventListener('click', function () {
+                    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+
+                    description.classList.toggle('is-collapsed', isExpanded);
+                    toggle.setAttribute('aria-expanded', String(!isExpanded));
+                    toggle.textContent = isExpanded ? 'Prikaži više' : 'Prikaži manje';
+                });
             }
-
-            toggle.addEventListener('click', function () {
-                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-
-                description.classList.toggle('is-collapsed', isExpanded);
-                toggle.setAttribute('aria-expanded', String(!isExpanded));
-                toggle.textContent = isExpanded ? 'Prikaži više' : 'Prikaži manje';
-            });
         });
     </script>
 @endpush

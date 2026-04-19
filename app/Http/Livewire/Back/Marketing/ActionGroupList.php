@@ -134,6 +134,9 @@ class ActionGroupList extends Component
             case 'total':
                 $this->title = '';
                 break;
+            default:
+                $this->title = '';
+                break;
         }
     }
 
@@ -168,6 +171,9 @@ class ActionGroupList extends Component
                     break;
                 case 'all':
                     $this->search_results = Publisher::where('title', 'like', '%' . $this->search . '%')->limit($this->dropdown_limit)->get();
+                    break;
+                default:
+                    $this->search_results = [];
                     break;
             }
         }
@@ -232,6 +238,8 @@ class ActionGroupList extends Component
     public function groupSelected(string $group)
     {
         $this->group = $group;
+        $this->search = '';
+        $this->search_results = [];
         $this->resolveTitle();
     }
 
