@@ -385,6 +385,11 @@ class Action extends Model
      */
     private function resolveTarget($links)
     {
+        $links = collect($links)
+            ->map(fn ($id) => is_numeric($id) ? (int) $id : $id)
+            ->filter(fn ($id) => $id !== null && $id !== '')
+            ->values();
+
         if (in_array($this->request->group, ['product', 'category', 'combined_category', 'author', 'publisher', 'all'])) {
             $products = Product::query()
                 ->where('special_lock', 0);
@@ -392,8 +397,16 @@ class Action extends Model
             if ($this->request->group === 'product') {
                 $products->whereIn('id', $links);
             } elseif (in_array($this->request->group, ['category', 'combined_category'], true)) {
-                $ids = ProductCategory::whereIn('category_id', $links)->pluck('product_id');
-                $products->whereIn('id', $ids);
+                if ($links->isEmpty()) {
+                    return collect();
+                }
+
+                $products->whereExists(function ($query) use ($links) {
+                    $query->select(DB::raw(1))
+                        ->from('product_category as pc')
+                        ->whereColumn('pc.product_id', 'products.id')
+                        ->whereIn('pc.category_id', $links->all());
+                });
             } elseif ($this->request->group === 'author') {
                 $products->whereIn('author_id', $links);
             } elseif ($this->request->group === 'publisher') {
@@ -402,7 +415,10 @@ class Action extends Model
                 $products->whereNotIn('publisher_id', $links);
             }
 
-            return $products->pluck('id')->unique();
+            return $products->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
         }
 
         return collect(); // fallback
