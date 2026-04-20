@@ -101,7 +101,12 @@ class WidgetController extends Controller
             $selected = $widget->group;
 
             $widget->data = unserialize($widget->data);
-            $widget->target = isset($widget->data['group']) ? $widget->data['group'] : null;
+
+            if (! is_array($widget->data)) {
+                $widget->data = [];
+            }
+
+            $widget->target = Widget::resolveSelectionTarget($widget->data);
             $widget->links = collect()->flatten()->toJson();
 
             if (isset($widget->data['list'])) {

@@ -91,6 +91,12 @@ class Widget extends Model
             'title' => 'required'
         ]);
 
+        $resolved_target = (string) $request->input('target', $request->input('action_group'));
+
+        if ($resolved_target !== '') {
+            $request->merge(['target' => $resolved_target]);
+        }
+
         // Set Product Model request variable
         $this->setRequest($request);
 
@@ -123,19 +129,7 @@ class Widget extends Model
         if ($this->request->has('group_template')) {
             $group = WidgetGroup::where('id', $this->request->group_id)->first();
             $group_id = $group->id;
-
-            $arr = $this->request->toArray();
-            unset($arr['_token']);
-            unset($arr['_method']);
-            unset($arr['image']);
-            unset($arr['image_long']);
-
-            if ($this->request->has('action_list')) {
-                $arr['list'] = $this->request->input('action_list');
-                unset($arr['action_list']);
-            }
-
-            $data = serialize($arr);
+            $data = $this->serializeRequestData();
         }
 
         $id = $this->insertGetId([
@@ -169,19 +163,7 @@ class Widget extends Model
         if ($this->request->has('group_template')) {
             $group = WidgetGroup::where('id', $this->request->group_id)->first();
             $group_id = $group->id;
-
-            $arr = $this->request->toArray();
-            unset($arr['_token']);
-            unset($arr['_method']);
-            unset($arr['image']);
-            unset($arr['image_long']);
-
-            if ($this->request->has('action_list')) {
-                $arr['list'] = $this->request->input('action_list');
-                unset($arr['action_list']);
-            }
-
-            $data = serialize($arr);
+            $data = $this->serializeRequestData();
         }
 
         $ok = $this->where('id', $id)->update([
@@ -205,6 +187,17 @@ class Widget extends Model
         }
 
         return false;
+    }
+
+
+    /**
+     * @param array $data
+     *
+     * @return string|null
+     */
+    public static function resolveSelectionTarget(array $data): ?string
+    {
+        return $data['target'] ?? $data['group'] ?? $data['action_group'] ?? null;
     }
 
 
@@ -270,6 +263,28 @@ class Widget extends Model
     private function setRequest($request)
     {
         $this->request = $request;
+    }
+
+
+    /**
+     * @return string
+     */
+    private function serializeRequestData()
+    {
+        $arr = $this->request->toArray();
+
+        unset($arr['_token']);
+        unset($arr['_method']);
+        unset($arr['image']);
+        unset($arr['image_long']);
+        unset($arr['action_group']);
+
+        if ($this->request->has('action_list')) {
+            $arr['list'] = $this->request->input('action_list');
+            unset($arr['action_list']);
+        }
+
+        return serialize($arr);
     }
 
 
