@@ -530,6 +530,26 @@ class Product extends Model
      *
      * @return Builder
      */
+    public function scopeWithListingSpecial(Builder $query): Builder
+    {
+        return $query->whereNotNull('special')
+            ->where('special', '>', 0)
+            ->whereColumn('special', '<', 'price')
+            ->where(function (Builder $query) {
+                $query->whereDate('special_from', '<=', now())->orWhereNull('special_from');
+            })
+            ->where(function (Builder $query) {
+                $query->whereDate('special_to', '>=', now())->orWhereNull('special_to');
+            });
+    }
+
+
+    /**
+     * @param Request         $request
+     * @param Collection|null $ids
+     *
+     * @return Builder
+     */
     public function filter(Request $request, ?Collection $ids = null): Builder
     {
         $query = $this->newQuery();
@@ -555,13 +575,7 @@ class Product extends Model
         if ($request->has('group')) {
             // Akcije
             if ($request->input('group') == 'snizenja') {
-                $query->where('special', '!=', '')
-                    ->where(function ($query) {
-                        $query->whereDate('special_from', '<=', now())->orWhereNull('special_from');
-                    })
-                    ->where(function ($query) {
-                        $query->whereDate('special_to', '>=', now())->orWhereNull('special_to');
-                    });
+                $query->withListingSpecial();
             } else {
                 // Kategorija...
                 $group = $request->input('group');
@@ -634,6 +648,10 @@ class Product extends Model
 
         if ($request->has('letter')) {
             $query->where('letter', $request->input('letter'));
+        }
+
+        if ($request->boolean('akcija')) {
+            $query->withListingSpecial();
         }
 
         $currentListingPriceSql = $this->currentListingPriceSql();

@@ -162,12 +162,12 @@ class Seo
         }
 
         if ($request->routeIs('catalog.route')
-            && static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'sort'])) {
+            && static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'akcija', 'sort'])) {
             return 'noindex,follow';
         }
 
         if ($request->routeIs('catalog.route.actions')
-            && static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'sort'])) {
+            && static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'akcija', 'sort'])) {
             return 'noindex,follow';
         }
 
@@ -206,7 +206,7 @@ class Seo
         }
 
         if ($request->routeIs('catalog.route')) {
-            if (static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'sort'])) {
+            if (static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'akcija', 'sort'])) {
                 return static::canonicalUrl($request);
             }
 
@@ -218,7 +218,7 @@ class Seo
         }
 
         if ($request->routeIs('catalog.route.actions')) {
-            if (static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'sort'])) {
+            if (static::hasAnyQuery($request, ['autor', 'nakladnik', 'start', 'end', 'condition', 'binding', 'letter', 'akcija', 'sort'])) {
                 return $request->url();
             }
 

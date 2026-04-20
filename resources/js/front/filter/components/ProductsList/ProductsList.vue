@@ -19,6 +19,20 @@
                             <option value="">Pismo</option>
                             <option v-for="option in facetLetters" :key="'desktop-letter-' + option" :value="option">{{ option }}</option>
                         </select>
+
+                        <label
+                            v-if="showActionFilter"
+                            class="catalog-toolbar__checkbox"
+                            :class="{ 'catalog-toolbar__checkbox--active': akcija }"
+                        >
+                            <input
+                                v-model="akcija"
+                                type="checkbox"
+                                aria-label="Filtriraj samo artikle na akciji"
+                                @change="applyToolbarFilters"
+                            >
+                            <span>Akcija</span>
+                        </label>
                     </div>
 
                     <div
@@ -158,6 +172,20 @@
                                         <option value="">Pismo</option>
                                         <option v-for="option in facetLetters" :key="'mobile-letter-' + option" :value="option">{{ option }}</option>
                                     </select>
+
+                                    <label
+                                        v-if="showActionFilter"
+                                        class="catalog-toolbar__checkbox"
+                                        :class="{ 'catalog-toolbar__checkbox--active': akcija }"
+                                    >
+                                        <input
+                                            v-model="akcija"
+                                            type="checkbox"
+                                            aria-label="Filtriraj samo artikle na akciji"
+                                            @change="applyToolbarFilters"
+                                        >
+                                        <span>Akcija</span>
+                                    </label>
 
                                     <div
                                         v-if="author === '' && facetAuthors.length"
@@ -359,9 +387,11 @@
                 condition: '',
                 binding: '',
                 letter: '',
+                akcija: false,
                 facetConditions: [],
                 facetBindings: [],
                 facetLetters: [],
+                actionFilterAvailable: false,
                 productsRequestToken: 0,
                 sorting: '',
                 search_query: '',
@@ -398,16 +428,23 @@
                 });
             },
             hasToolbarFilters() {
-                return this.facetConditions.length || this.facetBindings.length || this.facetLetters.length || (this.author === '' && this.normalizedFacetAuthors.length);
+                return this.facetConditions.length
+                    || this.facetBindings.length
+                    || this.facetLetters.length
+                    || this.showActionFilter
+                    || (this.author === '' && this.normalizedFacetAuthors.length);
             },
             hasActiveToolbarFilters() {
-                return this.autor || this.nakladnik || this.start || this.end || this.condition || this.binding || this.letter;
+                return this.autor || this.nakladnik || this.start || this.end || this.condition || this.binding || this.letter || this.akcija;
             },
             normalizedCategorySlug() {
                 return String(this.categorySlug || '').trim().toLowerCase();
             },
             isBookmarkerListing() {
                 return this.normalizedCategorySlug === 'bookmarkeri';
+            },
+            showActionFilter() {
+                return this.group !== 'snizenja' && (this.actionFilterAvailable || this.akcija);
             },
             selectedAuthorTitle() {
                 if (!this.autor) {
@@ -477,6 +514,7 @@
                     this.facetConditions = response.data.conditions || [];
                     this.facetBindings = response.data.bindings || [];
                     this.facetLetters = response.data.letters || [];
+                    this.actionFilterAvailable = Boolean(response.data.action_available);
 
                     if (!this.hasToolbarFilters) {
                         this.closeMobileFilters();
@@ -568,6 +606,7 @@
                 this.condition = '';
                 this.binding = '';
                 this.letter = '';
+                this.akcija = false;
                 this.closeAuthorDropdown();
                 this.closeMobileFilters();
                 this.setQueryParam('clear', '');
@@ -612,6 +651,7 @@
                     condition: this.condition,
                     binding: this.binding,
                     letter: this.letter,
+                    akcija: this.akcija ? 1 : '',
                     sort: this.sorting,
                     pojam: this.search_query,
                     page: this.page
@@ -639,6 +679,7 @@
                 this.condition = params.query.condition ? params.query.condition : '';
                 this.binding = params.query.binding ? params.query.binding : '';
                 this.letter = params.query.letter ? params.query.letter : '';
+                this.akcija = ['1', 1, true, 'true'].includes(params.query.akcija);
                 this.page = params.query.page ? params.query.page : '';
                 this.search_query = params.query.pojam ? params.query.pojam : '';
 
@@ -673,6 +714,7 @@
                     condition: this.condition,
                     binding: this.binding,
                     letter: this.letter,
+                    akcija: this.akcija ? 1 : '',
                     sort: this.sorting,
                     price_min: this.priceMin,
                     price_max: this.priceMax,
@@ -878,7 +920,7 @@
                     return;
                 }
 
-                if (params.nakladnik || params.autor || params.start || params.end || params.condition || params.binding || params.letter) {
+                if (params.nakladnik || params.autor || params.start || params.end || params.condition || params.binding || params.letter || params.akcija) {
                     robotsMeta.setAttribute('content', 'noindex,nofollow');
                 } else if (this.defaultRobots) {
                     robotsMeta.setAttribute('content', this.defaultRobots);
@@ -1190,6 +1232,41 @@
     flex: 1 1 auto;
     min-width: 100%;
     max-width: none;
+}
+
+.catalog-toolbar__checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 46px;
+    padding: 0.7rem 1rem;
+    border: 1px solid #d8e0ea;
+    border-radius: 0.45rem;
+    background: #fff;
+    color: #334155;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.catalog-toolbar__checkbox:hover {
+    border-color: #bfcada;
+}
+
+.catalog-toolbar__checkbox--active {
+    border-color: rgba(229, 0, 119, 0.35);
+    background: rgba(229, 0, 119, 0.06);
+    color: #be185d;
+}
+
+.catalog-toolbar__checkbox input {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    accent-color: #e50077;
 }
 
 .catalog-toolbar__author-trigger {
@@ -1552,7 +1629,8 @@
     .catalog-toolbar__select--sort,
     .catalog-toolbar__summary,
     .catalog-toolbar__select,
-    .catalog-toolbar__author-select {
+    .catalog-toolbar__author-select,
+    .catalog-toolbar__checkbox {
         width: 100%;
         flex-basis: 100%;
     }
