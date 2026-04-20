@@ -145,7 +145,7 @@ class ProductController extends Controller
             if ($product) {
                 $action = Action::query()->where('id', $product->action_id)->first();
 
-                if ($action && $action->group = 'single') {
+                if ($action && $action->group === 'single') {
                     $action->delete();
                 }
 
