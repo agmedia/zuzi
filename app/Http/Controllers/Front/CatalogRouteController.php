@@ -759,7 +759,7 @@ class CatalogRouteController extends Controller
             })
             ->orderByDesc('discount')
             ->orderBy('title')
-            ->get(['id', 'group', 'title', 'type', 'discount', 'links', 'date_start', 'date_end']);
+            ->get(['id', 'group', 'title', 'type', 'discount', 'links', 'data', 'date_start', 'date_end']);
     }
 
 

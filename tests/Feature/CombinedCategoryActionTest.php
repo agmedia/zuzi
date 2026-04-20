@@ -181,6 +181,9 @@ class CombinedCategoryActionTest extends TestCase
         $this->assertSame('2026-04-20 00:00:00', $productAfterStart->special_from);
         $this->assertSame('NOĆ KNJIGE 🌙', $landingAfterStart['eyebrow']);
         $this->assertSame('Noć knjige 20.4. - 1.5. - posebna akcijska ponuda 🌙', $landingAfterStart['title']);
+        $this->assertCount(1, $landingAfterStart['categories']);
+        $this->assertSame('Noć knjige test', $landingAfterStart['categories'][0]['title']);
+        $this->assertSame('20%', $landingAfterStart['categories'][0]['discount']);
 
         Carbon::setTestNow();
     }
