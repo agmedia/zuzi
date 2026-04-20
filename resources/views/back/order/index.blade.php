@@ -34,14 +34,19 @@
                         </select>
                     </div>
                 </div>--}}
-                <div class="block-options">
+                <div class="block-options d-flex align-items-center">
+                    <a class="btn {{ request()->boolean('gift_wrap') ? 'btn-primary' : 'btn-light' }} mr-2"
+                       href="javascript:setPageURL('gift_wrap', '{{ request()->boolean('gift_wrap') ? '' : '1' }}')">
+                        <i class="fa fa-gift mr-1"></i>
+                        Poklon zamatanje
+                    </a>
                     <div class="dropdown">
                         <button type="button" class="btn btn-light" id="dropdown-ecom-filters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Filtriraj
                             <i class="fa fa-angle-down ml-1"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown-ecom-filters">
-                            <a class="dropdown-item d-flex align-items-center justify-content-between" href="javascript:setPageURL('status', 0)">
+                            <a class="dropdown-item d-flex align-items-center justify-content-between" href="javascript:setPageURL('status', '')">
                                 Sve narudžbe
                             </a>
                             @foreach ($statuses as $status)
@@ -56,11 +61,17 @@
             <div class="block-content bg-body-dark">
                 <!-- Search Form -->
                 <form action="{{ route('orders') }}" method="GET">
+                    @if (request()->filled('status'))
+                        <input type="hidden" name="status" value="{{ request()->input('status') }}">
+                    @endif
+                    @if (request()->boolean('gift_wrap'))
+                        <input type="hidden" name="gift_wrap" value="1">
+                    @endif
                     <div class="form-group">
                         <div class="form-group">
                             <div class="input-group flex-nowrap">
                                 <input type="text" class="form-control py-3 text-center" name="search" id="search-input" value="{{ request()->input('search') }}" placeholder="Pretraži po broju narudžbe, imenu, prezimenu ili emailu kupca...">
-                                <button type="submit" class="btn btn-primary fs-base" onclick="setPageURL('search', $('#search-input').val());"><i class="fa fa-search"></i> </button>
+                                <button type="submit" class="btn btn-primary fs-base"><i class="fa fa-search"></i> </button>
                             </div>
                         </div>
                     </div>

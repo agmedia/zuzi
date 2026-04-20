@@ -403,6 +403,13 @@ class Order extends Model
             $query->where('order_status_id', '=', $request->input('status'));
         }
 
+        if ($request->boolean('gift_wrap')) {
+            $query->whereHas('products', function (Builder $query) {
+                $query->where('product_id', 0)
+                      ->where('name', 'like', 'Zamatanje%');
+            });
+        }
+
         if ($request->has('search') && ! empty($request->input('search'))) {
             $query->where(function ($query) use ($request) {
                 return $query->where('id', 'like', '%' . $request->input('search') . '%')
