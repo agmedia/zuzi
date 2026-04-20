@@ -29,8 +29,7 @@
                             <p class="text-dark  ">{{ $widget['subtitle'] }}</p>
                             <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2 slider-focus-btn" href="{{ url($widget['url']) }}" role="button">
 
-                                    Kreni u kupnju
-
+Pogledajte akcije
                                      <i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                         </div>
                         <div class="p-3"><a  href="{{ url($widget['url']) }}" ><img src="{{ $widget['image'] }}" alt="{{ $widget['title'] }}" width="350" height="350" style="border-radius: 10px;"></a></div>
