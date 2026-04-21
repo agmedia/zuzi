@@ -9,6 +9,7 @@ use App\Models\Back\Settings\Settings;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class SendReviewRequestEmails extends Command
@@ -25,6 +26,15 @@ class SendReviewRequestEmails extends Command
 
     public function handle(): int
     {
+        if (! Schema::hasColumn('orders', 'review_request_sent_at')) {
+            $message = 'Missing orders.review_request_sent_at column. Apply database/032_add_review_request_sent_at_to_orders_table.sql before sending review requests.';
+
+            $this->error($message);
+            Log::error($message);
+
+            return self::FAILURE;
+        }
+
         $completedStatusId = $this->resolveCompletedStatusId();
         $daysAfterCompleted = max(1, (int) config('settings.order.review_request.days_after_completed', 20));
         $maxOrderAgeDays = max($daysAfterCompleted, (int) config('settings.order.review_request.max_order_age_days', 30));
@@ -104,6 +114,8 @@ class SendReviewRequestEmails extends Command
 
     private function normalizeStatusTitle(string $title): string
     {
-        return (string) Str::of($title)->ascii()->lower()->squish();
+        $normalized = Str::lower(Str::ascii($title));
+
+        return trim((string) preg_replace('/\s+/', ' ', $normalized));
     }
 }
