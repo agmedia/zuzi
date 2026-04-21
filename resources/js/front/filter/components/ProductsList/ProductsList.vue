@@ -256,7 +256,7 @@
             <div class="col px-2 mb-4 d-flex align-items-stretch " v-for="product in products.data">
                 <div class="card product-card catalog-grid-card shadow pb-2 position-relative" :class="{ 'catalog-grid-card--bookmarkers': isBookmarkerListing }">
                     <div style="position:absolute; top:.75rem; left:.75rem; right:.75rem; z-index:5; display:flex; justify-content:space-between; align-items:flex-start;">
-                        <span class="badge rounded-pill bg-primary badge-shadow" style="position:static;" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
+                        <span class="badge rounded-pill bg-zuzi fw-700 badge-shadow" style="position:static;" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
                         <span v-else></span>
                         <span
                             class="badge rounded-pill badge-shadow"

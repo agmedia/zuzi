@@ -10864,7 +10864,7 @@ var render = function() {
                                 "span",
                                 {
                                   staticClass:
-                                    "badge rounded-pill bg-primary badge-shadow",
+                                    "badge rounded-pill bg-zuzi fw-700 badge-shadow",
                                   staticStyle: { position: "static" }
                                 },
                                 [

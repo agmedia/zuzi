@@ -37,6 +37,12 @@
     $actionLandingUrl = $isActionListing ? ($actionLanding['landing_url'] ?? route('catalog.route.actions')) : null;
     $actionLandingPromotionStart = $isActionListing ? ($actionLanding['promotion_start'] ?? null) : null;
     $actionLandingPromotionEnd = $isActionListing ? ($actionLanding['promotion_end'] ?? null) : null;
+    $actionLandingCountdownTarget = null;
+    $actionLandingCountdownDiff = 0;
+    $actionLandingCountdownDays = 0;
+    $actionLandingCountdownHours = 0;
+    $actionLandingCountdownMinutes = 0;
+    $actionLandingCountdownSeconds = 0;
     $actionLandingCurrentTitle = isset($subcat) && $subcat ? $subcat->title : (isset($cat) && $cat ? $cat->title : null);
     $isFullOfferListing = Route::currentRouteName() === 'catalog.route'
         && ($group ?? null) === 'kategorija-proizvoda'
@@ -110,6 +116,19 @@
             $listingSeo['title'] = $actionLanding['seo_title'] ?? $listingSeo['title'];
             $listingSeo['description'] = $actionLanding['seo_description'] ?? $listingSeo['description'];
             $listingSchemaName = $actionLandingTitle;
+        }
+    }
+
+    if ($isActionListing && $actionLandingPromotionEnd) {
+        $actionLandingCountdownTarget = \Illuminate\Support\Carbon::make($actionLandingPromotionEnd);
+
+        if ($actionLandingCountdownTarget) {
+            $actionLandingCountdownDiff = max(now($actionLandingCountdownTarget->getTimezone())->diffInSeconds($actionLandingCountdownTarget, false), 0);
+            $actionLandingCountdownDays = intdiv($actionLandingCountdownDiff, 86400);
+            $actionLandingCountdownHours = intdiv($actionLandingCountdownDiff % 86400, 3600);
+            $actionLandingCountdownMinutes = intdiv($actionLandingCountdownDiff % 3600, 60);
+            $actionLandingCountdownSeconds = $actionLandingCountdownDiff % 60;
+            $actionLandingCountdownTarget = $actionLandingCountdownTarget->toAtomString();
         }
     }
 
@@ -265,8 +284,30 @@
 
                         @if ($actionLandingBody)
                             <p class="birthday-landing__body mb-2">{{ $actionLandingBody }}</p>
+                        @endif
 
-
+                        @if ($actionLandingCountdownTarget)
+                            <div class="birthday-landing__countdown-wrap mt-3">
+                                <div class="birthday-landing__countdown-label">Akcija završava za</div>
+                                <div class="countdown birthday-landing__countdown" data-countdown="{{ $actionLandingCountdownTarget }}">
+                                    <div class="countdown-days birthday-landing__countdown-segment">
+                                        <span class="countdown-value birthday-landing__countdown-value">{{ str_pad((string) $actionLandingCountdownDays, 2, '0', STR_PAD_LEFT) }}</span>
+                                        <span class="countdown-label birthday-landing__countdown-unit">Dana</span>
+                                    </div>
+                                    <div class="countdown-hours birthday-landing__countdown-segment">
+                                        <span class="countdown-value birthday-landing__countdown-value">{{ str_pad((string) $actionLandingCountdownHours, 2, '0', STR_PAD_LEFT) }}</span>
+                                        <span class="countdown-label birthday-landing__countdown-unit">Sati</span>
+                                    </div>
+                                    <div class="countdown-minutes birthday-landing__countdown-segment">
+                                        <span class="countdown-value birthday-landing__countdown-value">{{ str_pad((string) $actionLandingCountdownMinutes, 2, '0', STR_PAD_LEFT) }}</span>
+                                        <span class="countdown-label birthday-landing__countdown-unit">Min</span>
+                                    </div>
+                                    <div class="countdown-seconds birthday-landing__countdown-segment">
+                                        <span class="countdown-value birthday-landing__countdown-value">{{ str_pad((string) $actionLandingCountdownSeconds, 2, '0', STR_PAD_LEFT) }}</span>
+                                        <span class="countdown-label birthday-landing__countdown-unit">Sek</span>
+                                    </div>
+                                </div>
+                            </div>
                         @endif
 
                         @if ($actionLandingCurrentTitle)
@@ -570,7 +611,6 @@
         }
 
         .birthday-landing__lead {
-            max-width: 60rem;
             color: #bb296f;
             font-size: clamp(1rem, 1.35vw, 1.15rem);
             font-weight: 700;
@@ -592,6 +632,66 @@
             background: rgba(53, 56, 74, 0.06);
             color: #48485c;
             font-size: 0.9rem;
+        }
+
+        .birthday-landing__countdown-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.45rem;
+        }
+
+        .birthday-landing__countdown-label {
+            color: #7a7086;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .birthday-landing__countdown {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.42rem;
+        }
+
+        .birthday-landing__countdown .countdown-days,
+        .birthday-landing__countdown .countdown-hours,
+        .birthday-landing__countdown .countdown-minutes,
+        .birthday-landing__countdown .countdown-seconds {
+            margin-right: 0;
+            margin-bottom: 0;
+        }
+
+        .birthday-landing__countdown-segment {
+            display: flex;
+            min-width: 3.3rem;
+            padding: 0.42rem 0.55rem;
+            border: 1px solid rgba(229, 0, 119, 0.16);
+            border-radius: 0.75rem;
+            background: #fff;
+            box-shadow: 0 0.2rem 0.55rem rgba(53, 56, 74, 0.04);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .birthday-landing__countdown-value {
+            color: #343248;
+            font-size: 1.1rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .birthday-landing__countdown-unit {
+            margin-left: 0;
+            margin-top: 0.18rem;
+            color: #7a7086;
+            font-size: 0.58rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
         }
 
         .discount-category-pills {
@@ -684,6 +784,15 @@
 
             .birthday-landing__title {
                 font-size: clamp(1.45rem, 7vw, 1.95rem);
+            }
+
+            .birthday-landing__countdown-segment {
+                min-width: 3rem;
+                padding: 0.38rem 0.5rem;
+            }
+
+            .birthday-landing__countdown-value {
+                font-size: 1rem;
             }
 
             .discount-category-pill {

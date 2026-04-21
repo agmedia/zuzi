@@ -13,6 +13,13 @@
             576 => ['nav' => false, 'controls' => true],
         ],
     ];
+    $countdownTarget = \Carbon\CarbonImmutable::create(2026, 5, 1, 0, 0, 0, config('app.timezone', 'Europe/Zagreb'));
+    $countdownNow = now(config('app.timezone', 'Europe/Zagreb'));
+    $countdownDiff = max($countdownNow->diffInSeconds($countdownTarget, false), 0);
+    $countdownDays = intdiv($countdownDiff, 86400);
+    $countdownHours = intdiv($countdownDiff % 86400, 3600);
+    $countdownMinutes = intdiv($countdownDiff % 3600, 60);
+    $countdownSeconds = $countdownDiff % 60;
 @endphp
 
 <section class="tns-carousel mb-3 rounded-3 bg-light shadow widget-touch-carousel">
@@ -24,6 +31,27 @@
                     <div class="d-xl-flex justify-content-between align-items-center px-4  mx-auto" style="max-width: 1226px;">
                         <div class=" py-sm-3 pb-0 me-xl-4 mx-auto mx-xl-0" style="max-width: 550px;">
                            <span class="badge bg-primary  mb-1 fs-md">Akcija u tijeku!</span>
+                            <div class="countdown mt-2 mb-2 justify-content-center justify-content-xl-start"
+                                 data-countdown="{{ $countdownTarget->toIso8601String() }}"
+                                 style="gap: .35rem;">
+                                <div class="countdown-days bg-white border rounded-3 px-2 py-1 text-center shadow-sm" style="min-width: 54px; margin-right: 0; margin-bottom: 0;">
+                                    <span class="countdown-value text-primary fw-bold d-block lh-1" style="font-size: 1.15rem;">{{ str_pad((string) $countdownDays, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="countdown-label text-muted text-uppercase d-block" style="margin-left: 0; font-size: .58rem; letter-spacing: .04em;">Dana</span>
+                                </div>
+                                <div class="countdown-hours bg-white border rounded-3 px-2 py-1 text-center shadow-sm" style="min-width: 54px; margin-right: 0; margin-bottom: 0;">
+                                    <span class="countdown-value text-primary fw-bold d-block lh-1" style="font-size: 1.15rem;">{{ str_pad((string) $countdownHours, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="countdown-label text-muted text-uppercase d-block" style="margin-left: 0; font-size: .58rem; letter-spacing: .04em;">Sati</span>
+                                </div>
+                                <div class="countdown-minutes bg-white border rounded-3 px-2 py-1 text-center shadow-sm" style="min-width: 54px; margin-right: 0; margin-bottom: 0;">
+                                    <span class="countdown-value text-primary fw-bold d-block lh-1" style="font-size: 1.15rem;">{{ str_pad((string) $countdownMinutes, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="countdown-label text-muted text-uppercase d-block" style="margin-left: 0; font-size: .58rem; letter-spacing: .04em;">Min</span>
+                                </div>
+                                <div class="countdown-seconds bg-white border rounded-3 px-2 py-1 text-center shadow-sm" style="min-width: 54px; margin-right: 0; margin-bottom: 0;">
+                                    <span class="countdown-value text-primary fw-bold d-block lh-1" style="font-size: 1.15rem;">{{ str_pad((string) $countdownSeconds, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="countdown-label text-muted text-uppercase d-block" style="margin-left: 0; font-size: .58rem; letter-spacing: .04em;">Sek</span>
+                                </div>
+                            </div>
+
                             <h4 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h4>
 
                             <p class="text-dark  ">{{ $widget['subtitle'] }}</p>
@@ -49,7 +77,6 @@ Pogledajte akcije
 @push('js_after')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Nađi prvi gumb sa klasom .slider-focus-btn i fokusiraj ga
             const firstBtn = document.querySelector('.slider-focus-btn');
             if (firstBtn) {
                 firstBtn.focus();

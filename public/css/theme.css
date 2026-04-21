@@ -9427,6 +9427,16 @@ textarea.form-control-lg {
     background-color: rgba(var(--cz-primary-rgb), var(--cz-bg-opacity)) !important;
 }
 
+
+.bg-zuzi {
+    --cz-bg-opacity: 1;
+    background-color: #e50077!important;
+}
+
+.fw-700{font-weight:700}
+
+
+
 .bg-accent {
     --cz-bg-opacity: 1;
     background-color: rgba(var(--cz-accent-rgb), var(--cz-bg-opacity)) !important;

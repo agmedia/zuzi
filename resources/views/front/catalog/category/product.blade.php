@@ -17,7 +17,7 @@
     <div class="card product-card shadow pb-2 position-relative @if($isCartShelfLayout) cart-shelf-card @endif @if($isCartShelfLayout && $isBookmarkerProduct) cart-shelf-card--bookmarkers @endif">
         <div style="position:absolute; top:.75rem; left:.75rem; right:.75rem; z-index:5; display:flex; justify-content:space-between; align-items:flex-start;">
             @if ($product->main_price > $product->main_special)
-                <span class="badge bg-primary badge-shadow" style="position:static;">-{{ number_format(floatval(\App\Helpers\Helper::calculateDiscount($product->price, $product->special())), 0) }}%</span>
+                <span class="badge bg-zuzi fw-700 badge-shadow" style="position:static;">-{{ number_format(floatval(\App\Helpers\Helper::calculateDiscount($product->price, $product->special())), 0) }}%</span>
             @else
                 <span></span>
             @endif
