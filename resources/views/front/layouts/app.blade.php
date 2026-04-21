@@ -50,7 +50,7 @@
 
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="stylesheet" media="screen" href="{{ asset('vendor/simplebar/dist/simplebar.min.css') }}"/>
-    <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.001') }}">
+    <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.0021') }}">
     <script src="{{ asset('js/jquery/jquery-2.1.1.min.js') }}"></script>
 
     <!-- Mailchimp embed CSS -->
