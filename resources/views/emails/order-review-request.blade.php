@@ -45,10 +45,10 @@
                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                     <tr>
                                         <td style="padding: 0 10px 10px 0;">
-                                            <a href="{{ $item['product_url'] }}" class="ag-btn" style="width: 180px;">Pogledaj knjigu</a>
+                                            <a href="{{ $item['product_url'] }}" class="ag-btn" style="width: 180px; color: #ffffff !important;">Pogledaj knjigu</a>
                                         </td>
                                         <td style="padding: 0 0 10px;">
-                                            <a href="{{ $item['review_url'] }}" class="ag-btn" style="width: 180px; background-color: #111827;">Napiši komentar</a>
+                                            <a href="{{ $item['review_url'] }}" class="ag-btn" style="width: 180px; background-color: #111827; color: #ffffff !important;">Napiši komentar</a>
                                         </td>
                                     </tr>
                                 </table>
