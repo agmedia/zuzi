@@ -6,13 +6,33 @@
 @endpush
 
 @php
-    $publishDateValue = old('publish_date');
+    $publishDateValue = old('publish_date', isset($blog) ? $blog->publish_date : null);
 
-    if ($publishDateValue === null && isset($blog) && $blog->publish_date) {
-        $publishDateValue = \Illuminate\Support\Carbon::make($blog->publish_date)->format('d.m.Y H:i');
+    if (filled($publishDateValue)) {
+        try {
+            $publishDateValue = \Illuminate\Support\Carbon::parse($publishDateValue)->format('d.m.Y H:i');
+        } catch (\Throwable $exception) {
+            try {
+                $publishDateValue = \Illuminate\Support\Carbon::createFromFormat('Y-m-d H:i', (string) $publishDateValue)->format('d.m.Y H:i');
+            } catch (\Throwable $exception) {
+            }
+        }
     }
 
-    $rawSelectedRelatedProducts = old('related_products', old('action_list', isset($blog) ? $blog->related_products : []));
+    $rawSelectedRelatedProducts = old('related_products');
+
+    if (empty($rawSelectedRelatedProducts)) {
+        $oldRelatedProductsJson = old('related_products_json');
+
+        if (is_string($oldRelatedProductsJson) && trim($oldRelatedProductsJson) !== '') {
+            $decodedOldRelatedProductsJson = json_decode($oldRelatedProductsJson, true);
+            $rawSelectedRelatedProducts = is_array($decodedOldRelatedProductsJson) ? $decodedOldRelatedProductsJson : [];
+        }
+    }
+
+    if (empty($rawSelectedRelatedProducts)) {
+        $rawSelectedRelatedProducts = old('action_list', isset($blog) ? $blog->related_products : []);
+    }
 
     if (is_string($rawSelectedRelatedProducts)) {
         $decodedSelectedRelatedProducts = json_decode($rawSelectedRelatedProducts, true);
@@ -272,7 +292,7 @@
 
             syncRelatedProducts();
 
-            relatedProductsSelect.on('select2:select select2:unselect', function () {
+            relatedProductsSelect.on('change select2:select select2:unselect', function () {
                 syncRelatedProducts();
             });
 

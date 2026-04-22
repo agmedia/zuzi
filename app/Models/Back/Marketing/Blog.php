@@ -202,7 +202,17 @@ class Blog extends Model
      */
     private function normalizeRelatedProductsInput(Request $request): array
     {
-        return collect($request->input('related_products', $this->decodeRelatedProductsJson($request) ?: $request->input('action_list', [])))
+        $selectedProducts = $request->input('related_products');
+
+        if (empty($selectedProducts)) {
+            $selectedProducts = $this->decodeRelatedProductsJson($request);
+        }
+
+        if (empty($selectedProducts)) {
+            $selectedProducts = $request->input('action_list', []);
+        }
+
+        return collect($selectedProducts)
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->values()
