@@ -50,11 +50,13 @@ class Blog extends Model
     public function validateRequest(Request $request)
     {
         $request->merge([
+            'publish_date' => $this->normalizePublishDateInput($request->input('publish_date')),
             'related_products' => $this->normalizeRelatedProductsInput($request),
         ]);
 
         $request->validate([
             'title' => 'required',
+            'publish_date' => 'nullable|date',
             'related_products' => 'nullable|array',
             'related_products.*' => [
                 'integer',
@@ -85,9 +87,9 @@ class Blog extends Model
             'meta_description'  => $this->request->meta_description,
             'slug'              => isset($this->request->slug) ? Str::slug($this->request->slug) : Str::slug($this->request->title),
             'keywords'          => null,
-            'publish_date'      => $this->request->publish_date ? Carbon::make($this->request->publish_date) : null,
+            'publish_date'      => $this->resolvePublishDate(),
             'keywords'          => false,
-            'related_products'  => $this->resolveRelatedProducts(),
+            'related_products'  => $this->encodeRelatedProducts(),
             'status'            => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
             'created_at'        => Carbon::now(),
             'updated_at'        => Carbon::now()
@@ -118,7 +120,7 @@ class Blog extends Model
             'meta_description'  => $this->request->meta_description,
             'slug'              => isset($this->request->slug) ? Str::slug($this->request->slug) : Str::slug($this->request->title),
             'keywords'          => null,
-            'publish_date'      => $this->request->publish_date ? Carbon::make($this->request->publish_date) : null,
+            'publish_date'      => $this->resolvePublishDate(),
             'keywords'          => false,
             'related_products'  => $this->resolveRelatedProducts(),
             'status'            => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
@@ -160,17 +162,38 @@ class Blog extends Model
 
 
     /**
+     * Resolve the normalized publish date.
+     */
+    private function resolvePublishDate(): ?Carbon
+    {
+        $publishDate = $this->request->input('publish_date');
+
+        return $publishDate ? Carbon::parse($publishDate) : null;
+    }
+
+
+    /**
      * Normalize selected related product ids before storage.
      */
-    private function resolveRelatedProducts(): ?string
+    private function resolveRelatedProducts(): array
     {
-        $ids = collect($this->request->input('related_products', []))
+        return collect($this->request->input('related_products', []))
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->unique()
-            ->values();
+            ->values()
+            ->all();
+    }
 
-        return $ids->isNotEmpty() ? $ids->toJson() : null;
+
+    /**
+     * Encode selected related products for raw insert queries.
+     */
+    private function encodeRelatedProducts(): ?string
+    {
+        $ids = $this->resolveRelatedProducts();
+
+        return ! empty($ids) ? json_encode($ids) : null;
     }
 
 
@@ -179,10 +202,61 @@ class Blog extends Model
      */
     private function normalizeRelatedProductsInput(Request $request): array
     {
-        return collect($request->input('related_products', $request->input('action_list', [])))
+        return collect($request->input('related_products', $this->decodeRelatedProductsJson($request) ?: $request->input('action_list', [])))
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->values()
             ->all();
+    }
+
+
+    /**
+     * Normalize publish_date from admin form formats into a database-friendly value.
+     */
+    private function normalizePublishDateInput($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        foreach (['d.m.Y H:i', 'd.m.Y', 'Y-m-d H:i', 'Y-m-d H:i:s', 'Y-m-d'] as $format) {
+            try {
+                $date = Carbon::createFromFormat($format, $value);
+
+                if ($date !== false) {
+                    return $date->format('Y-m-d H:i:s');
+                }
+            } catch (\Throwable $exception) {
+            }
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d H:i:s');
+        } catch (\Throwable $exception) {
+            return $value;
+        }
+    }
+
+
+    /**
+     * Read selected ids from the hidden JSON field as a fallback for Select2.
+     */
+    private function decodeRelatedProductsJson(Request $request): array
+    {
+        $payload = $request->input('related_products_json');
+
+        if (! is_string($payload) || trim($payload) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($payload, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 }

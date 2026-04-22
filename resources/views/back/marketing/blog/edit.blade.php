@@ -6,7 +6,20 @@
 @endpush
 
 @php
-    $selectedRelatedProductIds = collect(old('related_products', old('action_list', isset($blog) ? $blog->related_products : [])))
+    $publishDateValue = old('publish_date');
+
+    if ($publishDateValue === null && isset($blog) && $blog->publish_date) {
+        $publishDateValue = \Illuminate\Support\Carbon::make($blog->publish_date)->format('d.m.Y H:i');
+    }
+
+    $rawSelectedRelatedProducts = old('related_products', old('action_list', isset($blog) ? $blog->related_products : []));
+
+    if (is_string($rawSelectedRelatedProducts)) {
+        $decodedSelectedRelatedProducts = json_decode($rawSelectedRelatedProducts, true);
+        $rawSelectedRelatedProducts = is_array($decodedSelectedRelatedProducts) ? $decodedSelectedRelatedProducts : [];
+    }
+
+    $selectedRelatedProductIds = collect($rawSelectedRelatedProducts)
         ->map(fn ($id) => (int) $id)
         ->filter()
         ->values()
@@ -17,6 +30,13 @@
         ->get(['id', 'name', 'sku'])
         ->sortBy(fn ($product) => array_search($product->id, $selectedRelatedProductIds, true))
         ->values();
+
+    $selectedRelatedProductOptions = $selectedRelatedProducts->map(function ($product) {
+        return [
+            'id' => (string) $product->id,
+            'text' => $product->name . ($product->sku ? ' - ' . $product->sku : ''),
+        ];
+    })->values();
 @endphp
 
 @section('content')
@@ -85,9 +105,9 @@
                             <div class="form-group row">
                                 <div class="col-xl-6">
                                     <label for="publish-date-input">Datum objave</label>
-                                    <input type="text" class="js-flatpickr form-control bg-white" id="publish-date-input"
-                                           value="{{ isset($blog) && $blog->publish_date ? \Illuminate\Support\Carbon::make($blog->publish_date)->format('d.m.Y') : '' }}"
-                                           name="publish_date" data-enable-time="true" placeholder="Ili ostavi prazno za odmah...">
+                                    <input type="text" class="form-control bg-white" id="publish-date-input"
+                                           value="{{ $publishDateValue }}"
+                                           name="publish_date" placeholder="npr. 22.04.2026 14:30">
                                 </div>
                             </div>
 
@@ -101,6 +121,7 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    <input type="hidden" id="related-products-json" name="related_products_json" value='@json($selectedRelatedProductIds)'>
                                     <div class="form-text text-muted font-size-sm font-italic">Odabrani artikli prikazat će se kao carousel na dnu blog posta.</div>
                                     @error('related_products')
                                         <div class="text-danger font-italic mt-1">{{ $message }}</div>
@@ -181,12 +202,21 @@
     <script src="{{ asset('js/plugins/flatpickr/flatpickr.min.js') }}"></script>
     <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>
 
-    <!-- Page JS Helpers (CKEditor 5 plugins) -->
-    <script>jQuery(function(){Dashmix.helpers(['flatpickr']);});</script>
-
     <script>
         $(() => {
-            $('#related-products-select').select2({
+            const publishDateInput = document.querySelector('#publish-date-input');
+            const relatedProductsSelect = $('#related-products-select');
+            const relatedProductsJson = $('#related-products-json');
+            const initialRelatedProducts = @json($selectedRelatedProductOptions);
+
+            flatpickr(publishDateInput, {
+                enableTime: true,
+                time_24hr: true,
+                allowInput: true,
+                dateFormat: 'd.m.Y H:i'
+            });
+
+            relatedProductsSelect.select2({
                 placeholder: 'Pretraži i odaberi artikle...',
                 multiple: true,
                 ajax: {
@@ -211,6 +241,43 @@
                     cache: true
                 },
                 minimumInputLength: 1
+            });
+
+            const syncRelatedProducts = () => {
+                const selectedItems = relatedProductsSelect.select2('data').filter((item) => item.id);
+                const selectedIds = selectedItems.map((item) => String(item.id));
+
+                selectedItems.forEach((item) => {
+                    if (! relatedProductsSelect.find(`option[value="${item.id}"]`).length) {
+                        relatedProductsSelect.append(new Option(item.text, item.id, true, true));
+                    }
+                });
+
+                relatedProductsSelect.find('option').each(function () {
+                    $(this).prop('selected', selectedIds.includes(String(this.value)));
+                });
+
+                relatedProductsJson.val(JSON.stringify(selectedIds));
+            };
+
+            initialRelatedProducts.forEach((item) => {
+                if (! relatedProductsSelect.find(`option[value="${item.id}"]`).length) {
+                    relatedProductsSelect.append(new Option(item.text, item.id, true, true));
+                }
+            });
+
+            if (initialRelatedProducts.length) {
+                relatedProductsSelect.val(initialRelatedProducts.map((item) => item.id)).trigger('change');
+            }
+
+            syncRelatedProducts();
+
+            relatedProductsSelect.on('select2:select select2:unselect', function () {
+                syncRelatedProducts();
+            });
+
+            relatedProductsSelect.closest('form').on('submit', function () {
+                syncRelatedProducts();
             });
 
             ClassicEditor

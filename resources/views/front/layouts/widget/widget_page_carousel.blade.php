@@ -166,7 +166,7 @@
                         $reviewProduct = $review->product;
                         $reviewProductTitle = $reviewProduct->name ?? 'Obrisan artikl';
                         $reviewUrl = $reviewProduct && filled($reviewProduct->url)
-                            ? url($reviewProduct->url) . '#review-' . $review->id
+                            ? url($reviewProduct->url)
                             : null;
                     @endphp
                     <div class="review-widget-slide">

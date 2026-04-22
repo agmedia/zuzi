@@ -52,6 +52,27 @@ class BlogRelatedArticlesTest extends TestCase
         $this->assertSame([$firstRelatedId, $secondRelatedId], $stored->fresh()->related_products);
     }
 
+    public function test_blog_model_edit_normalizes_publish_date_and_related_products_json_fallback(): void
+    {
+        $firstRelatedId = $this->createProduct('Edit povezani artikl 1', 'BLOG-EDIT-1');
+        $secondRelatedId = $this->createProduct('Edit povezani artikl 2', 'BLOG-EDIT-2');
+        $blogId = $this->createBlogPage('Edit glavni clanak', 'edit-glavni-clanak');
+
+        $blog = AdminBlog::query()->findOrFail($blogId);
+        $request = Request::create('/admin/marketing/blog/' . $blogId, 'PATCH', [
+            'title' => 'Edit glavni clanak',
+            'publish_date' => '22.04.2026 14:30',
+            'related_products_json' => json_encode([$firstRelatedId, $secondRelatedId]),
+            'status' => 'on',
+        ]);
+
+        $updated = $blog->validateRequest($request)->edit();
+
+        $this->assertInstanceOf(AdminBlog::class, $updated);
+        $this->assertSame([$firstRelatedId, $secondRelatedId], $updated->fresh()->related_products);
+        $this->assertSame('2026-04-22 14:30', $updated->fresh()->publish_date->format('Y-m-d H:i'));
+    }
+
     public function test_front_blog_detail_resolves_only_active_related_products_in_saved_order(): void
     {
         $firstRelatedId = $this->createProduct('Prvi aktivni artikl', 'BLOG-REL-3');
@@ -67,6 +88,21 @@ class BlogRelatedArticlesTest extends TestCase
         $relatedProducts = $response->getData()['relatedProducts'];
 
         $this->assertSame([$secondRelatedId, $firstRelatedId], $relatedProducts->pluck('id')->all());
+    }
+
+    public function test_front_blog_detail_supports_legacy_double_encoded_related_products(): void
+    {
+        $firstRelatedId = $this->createProduct('Legacy front artikl 1', 'BLOG-LEGACY-FRONT-1');
+        $secondRelatedId = $this->createProduct('Legacy front artikl 2', 'BLOG-LEGACY-FRONT-2');
+        $mainBlogId = $this->createBlogPage('Legacy front clanak', 'legacy-front-clanak', [
+            'related_products' => json_encode(json_encode([$firstRelatedId, $secondRelatedId])),
+        ]);
+
+        $blog = FrontBlog::query()->findOrFail($mainBlogId);
+        $response = app(CatalogRouteController::class)->blog($blog);
+        $relatedProducts = $response->getData()['relatedProducts'];
+
+        $this->assertSame([$firstRelatedId, $secondRelatedId], $relatedProducts->pluck('id')->all());
     }
 
     public function test_admin_blog_index_orders_posts_from_newest_to_oldest(): void

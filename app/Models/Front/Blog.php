@@ -126,7 +126,14 @@ class Blog extends Model
      */
     public function relatedProducts(int $limit = 12): Collection
     {
-        $ids = collect($this->related_products ?: [])
+        $relatedProducts = $this->related_products;
+
+        if (is_string($relatedProducts)) {
+            $decodedRelatedProducts = json_decode($relatedProducts, true);
+            $relatedProducts = is_array($decodedRelatedProducts) ? $decodedRelatedProducts : [];
+        }
+
+        $ids = collect($relatedProducts ?: [])
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->unique()
