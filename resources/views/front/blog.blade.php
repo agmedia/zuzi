@@ -3,6 +3,27 @@
 @php
     $isBlogListing = isset($blogs);
     $blogSeo = $isBlogListing ? null : \App\Models\Seo::getBlogData($blog);
+    $relatedProducts = $relatedProducts ?? collect();
+    $blogRelatedProductsCarouselOptions = [
+        'items' => 2,
+        'gutter' => 16,
+        'controls' => true,
+        'nav' => true,
+        'autoHeight' => false,
+        'mouseDrag' => true,
+        'touch' => true,
+        'swipeAngle' => 30,
+        'preventActionWhenRunning' => true,
+        'preventScrollOnTouch' => 'auto',
+        'responsive' => [
+            0 => ['items' => 1, 'controls' => true, 'nav' => true],
+            480 => ['items' => 2, 'controls' => true, 'nav' => true],
+            720 => ['items' => 3],
+            991 => ['items' => 2],
+            1140 => ['items' => 3],
+            1300 => ['items' => 4],
+        ],
+    ];
 @endphp
 
 @if($isBlogListing)
@@ -16,6 +37,18 @@
     @section('og_type', 'article')
     @section('seo_published_time', optional($blog->publish_date ?: $blog->created_at)->toAtomString())
     @section('seo_updated_time', optional($blog->updated_at ?: $blog->created_at)->toAtomString())
+@endif
+
+@if(! $isBlogListing)
+    @push('css_after')
+        <style>
+            .blog-related-products-carousel .tns-ovh,
+            .blog-related-products-carousel .tns-item,
+            .blog-related-products-carousel .tns-carousel-inner {
+                touch-action: pan-y pinch-zoom;
+            }
+        </style>
+    @endpush
 @endif
 
 @section('content')
@@ -84,6 +117,23 @@
                     {!! $blog->description !!}
 
         </div>
+
+        @if($relatedProducts->count())
+            <section class="pb-5 mb-2 mb-xl-4">
+                <div class="flex-wrap justify-content-between align-items-center text-center">
+                    <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Povezani artikli</h2>
+                </div>
+                <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 blog-related-products-carousel">
+                    <div class="tns-carousel-inner" data-carousel-options='@json($blogRelatedProductsCarouselOptions)'>
+                        @foreach ($relatedProducts as $relatedProduct)
+                            <div>
+                                @include('front.catalog.category.product', ['product' => $relatedProduct])
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
 
 
     @endif

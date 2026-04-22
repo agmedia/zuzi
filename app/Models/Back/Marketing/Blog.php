@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Intervention\Image\Facades\Image;
 
 class Blog extends Model
@@ -26,6 +27,14 @@ class Blog extends Model
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'publish_date' => 'datetime',
+        'related_products' => 'array',
+    ];
+
+    /**
      * @var Request
      */
     protected $request;
@@ -41,7 +50,12 @@ class Blog extends Model
     public function validateRequest(Request $request)
     {
         $request->validate([
-            'title' => 'required'
+            'title' => 'required',
+            'action_list' => 'nullable|array',
+            'action_list.*' => [
+                'integer',
+                Rule::exists('products', 'id'),
+            ],
         ]);
 
         $this->request = $request;
@@ -69,6 +83,7 @@ class Blog extends Model
             'keywords'          => null,
             'publish_date'      => $this->request->publish_date ? Carbon::make($this->request->publish_date) : null,
             'keywords'          => false,
+            'related_products'  => $this->resolveRelatedProducts(),
             'status'            => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
             'created_at'        => Carbon::now(),
             'updated_at'        => Carbon::now()
@@ -101,6 +116,7 @@ class Blog extends Model
             'keywords'          => null,
             'publish_date'      => $this->request->publish_date ? Carbon::make($this->request->publish_date) : null,
             'keywords'          => false,
+            'related_products'  => $this->resolveRelatedProducts(),
             'status'            => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
             'updated_at'        => Carbon::now()
         ]);
@@ -136,5 +152,20 @@ class Blog extends Model
         }
 
         return false;
+    }
+
+
+    /**
+     * Normalize selected related product ids before storage.
+     */
+    private function resolveRelatedProducts(): ?string
+    {
+        $ids = collect($this->request->input('action_list', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        return $ids->isNotEmpty() ? $ids->toJson() : null;
     }
 }

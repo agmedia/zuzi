@@ -19,11 +19,16 @@ class BlogController extends Controller
      */
     public function index(Request $request)
     {
+        $query = Blog::query()
+            ->where('group', 'blog')
+            ->orderByDesc('publish_date')
+            ->orderByDesc('created_at');
+
         if ($request->has('search') && ! empty($request->search)) {
-            $blogs = Blog::where('group', 'blog')->where('title', 'like', '%' . $request->search . '%')->paginate(12);
-        } else {
-            $blogs = Blog::where('group', 'blog')->paginate(12);
+            $query->where('title', 'like', '%' . $request->search . '%');
         }
+
+        $blogs = $query->paginate(12);
 
         return view('back.marketing.blog.index', compact('blogs'));
     }

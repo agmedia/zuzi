@@ -13,7 +13,12 @@
                         <div class="autocomplete" >
                             <div id="myInputautocomplete-list" class="autocomplete-items">
                                 @foreach($search_results as $item)
-                                    <div wire:click="addItem({{ $item->id }})">{{ isset($item->title) ? $item->title : $item->name }} - {{ isset($item->sku) ? $item->sku : '' }}</div>
+                                    @php
+                                        $itemTitle = isset($item->title) ? $item->title : (isset($item->name) ? $item->name : trim((string) data_get($item, 'fname') . ' ' . (string) data_get($item, 'lname')));
+                                        $itemTitle = $itemTitle !== '' ? $itemTitle : \Illuminate\Support\Str::limit(strip_tags((string) data_get($item, 'message')), 70);
+                                        $itemMeta = isset($item->sku) ? $item->sku : trim((string) data_get($item, 'product.name'));
+                                    @endphp
+                                    <div wire:click="addItem({{ $item->id }})">{{ $itemTitle }}{{ $itemMeta ? ' - ' . $itemMeta : '' }}</div>
                                 @endforeach
                             </div>
                         </div>
@@ -34,9 +39,14 @@
                 </thead>
                 <tbody>
                 @foreach ($list as $item)
+                    @php
+                        $itemTitle = isset($item['title']) ? $item['title'] : (isset($item['name']) ? $item['name'] : trim((string) data_get($item, 'fname') . ' ' . (string) data_get($item, 'lname')));
+                        $itemTitle = $itemTitle !== '' ? $itemTitle : \Illuminate\Support\Str::limit(strip_tags((string) data_get($item, 'message')), 70);
+                        $itemMeta = isset($item['sku']) ? $item['sku'] : trim((string) data_get($item, 'product.name'));
+                    @endphp
                     <tr>
                         <td class="font-size-sm">
-                            {{ isset($item['title']) ? $item['title'] : (isset($item['name']) ? $item['name'] : 'WTF') }} - {{ isset($item['sku']) ? $item['sku'] : '' }}
+                            {{ $itemTitle }}{{ $itemMeta ? ' - ' . $itemMeta : '' }}
                             <input type="hidden" name="action_list[{{ isset($item['id']) ? $item['id'] : '' }}]" value="{{ isset($item['id']) ? $item['id'] : '' }}">
                         </td>
                         <td class="text-right font-size-sm">

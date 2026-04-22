@@ -4,6 +4,7 @@
 namespace App\Helpers;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Marketing\Action;
+use App\Models\Back\Marketing\Review;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Widget\WidgetGroup;
 use App\Models\Front\Blog;
@@ -799,6 +800,35 @@ class Helper
         }
 
         return $publisher;
+    }
+
+
+    /**
+     * @param array $data
+     *
+     * @return Builder
+     */
+    private static function reviews(array $data): Builder
+    {
+        $reviews = (new Review())->newQuery()
+            ->where('status', 1);
+
+        if (isset($data['popular']) && $data['popular'] == 'on') {
+            $reviews->where('featured', 1);
+        }
+
+        if (isset($data['list']) && $data['list']) {
+            $reviews->whereIn('id', $data['list']);
+        }
+
+        if (isset($data['new']) && $data['new'] == 'on') {
+            return $reviews->orderByDesc('created_at');
+        }
+
+        return $reviews
+            ->orderByDesc('featured')
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at');
     }
 
 

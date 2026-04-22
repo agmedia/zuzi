@@ -1,9 +1,16 @@
 @extends('back.layouts.backend')
 
 @push('css_before')
-    <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('js/plugins/flatpickr/flatpickr.min.css') }}">
 @endpush
+
+@php
+    $selectedRelatedProducts = collect(old('action_list', isset($blog) ? $blog->related_products : []))
+        ->map(fn ($id) => (int) $id)
+        ->filter()
+        ->values()
+        ->all();
+@endphp
 
 @section('content')
     <div class="bg-body-light">
@@ -74,6 +81,20 @@
                                     <input type="text" class="js-flatpickr form-control bg-white" id="publish-date-input"
                                            value="{{ isset($blog) && $blog->publish_date ? \Illuminate\Support\Carbon::make($blog->publish_date)->format('d.m.Y') : '' }}"
                                            name="publish_date" data-enable-time="true" placeholder="Ili ostavi prazno za odmah...">
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <div class="col-xl-12">
+                                    <label>Povezani artikli</label>
+                                    @livewire('back.marketing.action-group-list', ['group' => 'product', 'list' => $selectedRelatedProducts], key('blog-related-products-' . (isset($blog) ? $blog->id : 'create')))
+                                    <div class="form-text text-muted font-size-sm font-italic">Odabrani artikli prikazat će se kao carousel na dnu blog posta.</div>
+                                    @error('action_list')
+                                        <div class="text-danger font-italic mt-1">{{ $message }}</div>
+                                    @enderror
+                                    @error('action_list.*')
+                                        <div class="text-danger font-italic mt-1">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>

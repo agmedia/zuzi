@@ -7,6 +7,7 @@ use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Blog;
+use App\Models\Back\Marketing\Review;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -128,6 +129,9 @@ class ActionGroupList extends Component
             case 'blog':
                 $this->title = 'Novosti koje želite uključiti' . $this->requiredSymbol();
                 break;
+            case 'reviews':
+                $this->title = 'Komentari koje želite uključiti <span class="font-weight-lighter text-xs font-italic">Opcionalno, prazno znači svi odobreni komentari</span>';
+                break;
             case 'all':
                 $this->title = 'Nakladnici koje želite isključiti iz akcije <span class="font-weight-lighter text-xs font-italic">Opcionalno</span>';
                 break;
@@ -169,6 +173,25 @@ class ActionGroupList extends Component
                 case 'blog':
                     $this->search_results = Blog::where('title', 'like', '%' . $this->search . '%')->limit($this->dropdown_limit)->get();
                     break;
+                case 'reviews':
+                    $this->search_results = Review::query()
+                        ->with('product')
+                        ->where('status', 1)
+                        ->where(function ($query) {
+                            $query->where('fname', 'like', '%' . $this->search . '%')
+                                ->orWhere('lname', 'like', '%' . $this->search . '%')
+                                ->orWhere('email', 'like', '%' . $this->search . '%')
+                                ->orWhere('message', 'like', '%' . $this->search . '%')
+                                ->orWhereHas('product', function ($productQuery) {
+                                    $productQuery->where('name', 'like', '%' . $this->search . '%')
+                                        ->orWhere('sku', 'like', '%' . $this->search . '%');
+                                });
+                        })
+                        ->orderByDesc('featured')
+                        ->orderByDesc('created_at')
+                        ->limit($this->dropdown_limit)
+                        ->get();
+                    break;
                 case 'all':
                     $this->search_results = Publisher::where('title', 'like', '%' . $this->search . '%')->limit($this->dropdown_limit)->get();
                     break;
@@ -208,6 +231,9 @@ class ActionGroupList extends Component
                     break;
                 case 'blog':
                     $this->list[$id] = Blog::where('id', $id)->first();
+                    break;
+                case 'reviews':
+                    $this->list[$id] = Review::with('product')->where('id', $id)->first();
                     break;
                 case 'all':
                     $this->list[$id] = Publisher::where('id', $id)->first();

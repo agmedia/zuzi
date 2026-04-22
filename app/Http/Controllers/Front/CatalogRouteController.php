@@ -582,7 +582,9 @@ class CatalogRouteController extends Controller
             return view('front.blog', compact('blogs'));
         }
 
-        return view('front.blog', compact('blog'));
+        $relatedProducts = $blog->relatedProducts(12);
+
+        return view('front.blog', compact('blog', 'relatedProducts'));
     }
 
 

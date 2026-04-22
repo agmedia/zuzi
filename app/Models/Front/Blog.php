@@ -2,11 +2,13 @@
 
 namespace App\Models\Front;
 
+use App\Models\Front\Catalog\Product;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class Blog extends Model
@@ -21,6 +23,14 @@ class Blog extends Model
      * @var array
      */
     protected $guarded = ['id', 'created_at', 'updated_at'];
+
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'publish_date' => 'datetime',
+        'related_products' => 'array',
+    ];
 
 
     /**
@@ -108,5 +118,33 @@ class Blog extends Model
     public function scopeFeatured(Builder $query, $count = 9): Builder
     {
         return $query->where('featured', 1)->orderBy('updated_at', 'desc')->limit($count);
+    }
+
+
+    /**
+     * Resolve related products in the saved order.
+     */
+    public function relatedProducts(int $limit = 12): Collection
+    {
+        $ids = collect($this->related_products ?: [])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return Product::query()
+            ->active()
+            ->hasStock()
+            ->with(['author', 'action'])
+            ->withReviewSummary()
+            ->whereIn('id', $ids)
+            ->get()
+            ->sortBy(fn (Product $product) => $ids->search($product->id))
+            ->values()
+            ->take($limit);
     }
 }
