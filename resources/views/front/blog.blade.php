@@ -122,8 +122,8 @@
 
         @if($relatedProducts->count())
             <section class="pb-5 mb-2 mb-xl-4">
-                <div class="flex-wrap justify-content-between align-items-center text-center">
-                    <h2 class="h3 mb-4 pt-1 font-title me-3 text-center">Povezani artikli</h2>
+                <div class="flex-wrap justify-content-between align-items-center text-start">
+                    <h2 class="h3 mb-4 pt-1 font-title me-3">Povezani artikli</h2>
                 </div>
                 <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 product-page-carousel">
                     <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
