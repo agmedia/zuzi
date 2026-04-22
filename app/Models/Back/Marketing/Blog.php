@@ -49,10 +49,14 @@ class Blog extends Model
      */
     public function validateRequest(Request $request)
     {
+        $request->merge([
+            'related_products' => $this->normalizeRelatedProductsInput($request),
+        ]);
+
         $request->validate([
             'title' => 'required',
-            'action_list' => 'nullable|array',
-            'action_list.*' => [
+            'related_products' => 'nullable|array',
+            'related_products.*' => [
                 'integer',
                 Rule::exists('products', 'id'),
             ],
@@ -160,12 +164,25 @@ class Blog extends Model
      */
     private function resolveRelatedProducts(): ?string
     {
-        $ids = collect($this->request->input('action_list', []))
+        $ids = collect($this->request->input('related_products', []))
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->unique()
             ->values();
 
         return $ids->isNotEmpty() ? $ids->toJson() : null;
+    }
+
+
+    /**
+     * Support both the new related_products[] field and legacy action_list[] payloads.
+     */
+    private function normalizeRelatedProductsInput(Request $request): array
+    {
+        return collect($request->input('related_products', $request->input('action_list', [])))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->values()
+            ->all();
     }
 }

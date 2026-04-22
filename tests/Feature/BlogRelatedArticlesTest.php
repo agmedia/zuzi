@@ -24,6 +24,23 @@ class BlogRelatedArticlesTest extends TestCase
 
         $request = Request::create('/admin/marketing/blog', 'POST', [
             'title' => 'Glavni clanak',
+            'related_products' => [$firstRelatedId, $secondRelatedId, $firstRelatedId],
+            'status' => 'on',
+        ]);
+
+        $stored = (new AdminBlog())->validateRequest($request)->create();
+
+        $this->assertInstanceOf(AdminBlog::class, $stored);
+        $this->assertSame([$firstRelatedId, $secondRelatedId], $stored->fresh()->related_products);
+    }
+
+    public function test_blog_model_supports_legacy_action_list_payload_for_related_products(): void
+    {
+        $firstRelatedId = $this->createProduct('Legacy povezani artikl 1', 'BLOG-LEG-1');
+        $secondRelatedId = $this->createProduct('Legacy povezani artikl 2', 'BLOG-LEG-2');
+
+        $request = Request::create('/admin/marketing/blog', 'POST', [
+            'title' => 'Glavni clanak legacy',
             'action_list' => [$firstRelatedId, $secondRelatedId, $firstRelatedId],
             'action_group' => 'product',
             'status' => 'on',

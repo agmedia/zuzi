@@ -811,6 +811,7 @@ class Helper
     private static function reviews(array $data): Builder
     {
         $reviews = (new Review())->newQuery()
+            ->with(['product:id,name,url'])
             ->where('status', 1);
 
         if (isset($data['popular']) && $data['popular'] == 'on') {

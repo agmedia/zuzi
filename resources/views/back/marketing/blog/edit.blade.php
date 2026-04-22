@@ -2,14 +2,21 @@
 
 @push('css_before')
     <link rel="stylesheet" href="{{ asset('js/plugins/flatpickr/flatpickr.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">
 @endpush
 
 @php
-    $selectedRelatedProducts = collect(old('action_list', isset($blog) ? $blog->related_products : []))
+    $selectedRelatedProductIds = collect(old('related_products', old('action_list', isset($blog) ? $blog->related_products : [])))
         ->map(fn ($id) => (int) $id)
         ->filter()
         ->values()
         ->all();
+
+    $selectedRelatedProducts = \App\Models\Back\Catalog\Product\Product::query()
+        ->whereIn('id', $selectedRelatedProductIds)
+        ->get(['id', 'name', 'sku'])
+        ->sortBy(fn ($product) => array_search($product->id, $selectedRelatedProductIds, true))
+        ->values();
 @endphp
 
 @section('content')
@@ -87,12 +94,18 @@
                             <div class="form-group row">
                                 <div class="col-xl-12">
                                     <label>Povezani artikli</label>
-                                    @livewire('back.marketing.action-group-list', ['group' => 'product', 'list' => $selectedRelatedProducts], key('blog-related-products-' . (isset($blog) ? $blog->id : 'create')))
+                                    <select class="form-control" id="related-products-select" name="related_products[]" multiple="multiple" data-placeholder="Pretraži i odaberi artikle..." style="width: 100%;">
+                                        @foreach($selectedRelatedProducts as $selectedRelatedProduct)
+                                            <option value="{{ $selectedRelatedProduct->id }}" selected>
+                                                {{ $selectedRelatedProduct->name }}{{ $selectedRelatedProduct->sku ? ' - ' . $selectedRelatedProduct->sku : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                     <div class="form-text text-muted font-size-sm font-italic">Odabrani artikli prikazat će se kao carousel na dnu blog posta.</div>
-                                    @error('action_list')
+                                    @error('related_products')
                                         <div class="text-danger font-italic mt-1">{{ $message }}</div>
                                     @enderror
-                                    @error('action_list.*')
+                                    @error('related_products.*')
                                         <div class="text-danger font-italic mt-1">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -166,12 +179,40 @@
 @push('js_after')
     <script src="{{ asset('js/plugins/ckeditor5-classic/build/ckeditor.js') }}"></script>
     <script src="{{ asset('js/plugins/flatpickr/flatpickr.min.js') }}"></script>
+    <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>
 
     <!-- Page JS Helpers (CKEditor 5 plugins) -->
     <script>jQuery(function(){Dashmix.helpers(['flatpickr']);});</script>
 
     <script>
         $(() => {
+            $('#related-products-select').select2({
+                placeholder: 'Pretraži i odaberi artikle...',
+                multiple: true,
+                ajax: {
+                    url: '{{ route('products.autocomplete') }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            query: params.term || ''
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.map(function (item) {
+                                return {
+                                    id: item.id,
+                                    text: item.name + (item.sku ? ' - ' + item.sku : '')
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1
+            });
+
             ClassicEditor
             .create(document.querySelector('#description-editor'), {
                 ckfinder: {

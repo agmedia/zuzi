@@ -832,7 +832,7 @@
                    <div class="row py-4">
                        <div class="col-md-7">
                            @foreach($reviews as $review)
-                               <div class="product-review pb-4 mb-4 border-bottom">
+                               <div id="review-{{ $review->id }}" class="product-review pb-4 mb-4 border-bottom">
                                    <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
                                        <div class="d-flex align-items-center me-4 pe-2">
                                            <div>

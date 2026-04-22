@@ -21,7 +21,7 @@
         'items' => 1,
         'controls' => false,
         'autoplay' => true,
-        'autoHeight' => true,
+        'autoHeight' => false,
         'mouseDrag' => true,
         'touch' => true,
         'swipeAngle' => 30,
@@ -52,6 +52,59 @@
         ],
     ];
 @endphp
+@once
+    @push('css_after')
+        <style>
+            .review-widget-carousel .tns-slider {
+                display: flex;
+                align-items: stretch;
+            }
+
+            .review-widget-carousel .tns-item {
+                display: flex;
+                height: auto !important;
+            }
+
+            .review-widget-carousel .tns-item > * {
+                width: 100%;
+            }
+
+            .review-widget-slide,
+            .review-widget-quote {
+                height: 100%;
+            }
+
+            .review-widget-quote {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .review-widget-card {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .review-widget-title {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                min-height: 2.8rem;
+                font-weight: 700;
+                line-height: 1.4;
+            }
+
+            .review-widget-message {
+                display: -webkit-box;
+                -webkit-line-clamp: 6;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+        </style>
+    @endpush
+@endonce
 <section class=" py-0 pt-5" >
     <div class="d-flex flex-wrap justify-content-between align-items-center pt-1  pb-3 mb-2">
         <h2 class="h3 mb-0 pt-0 font-title me-3"> {{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h2>
@@ -87,13 +140,28 @@
 
     @elseif ($data['tablename'] == 'reviews')
 
-        <div class="tns-carousel widget-touch-carousel widget-card-carousel">
+        <div class="tns-carousel widget-touch-carousel widget-card-carousel review-widget-carousel">
             <div class="tns-carousel-inner" data-carousel-options='@json($reviewWidgetCarouselOptions)'>
                 @foreach ($data['items'] as $review)
+                    @php
+                        $reviewProduct = $review->product;
+                        $reviewProductTitle = $reviewProduct->name ?? 'Obrisan artikl';
+                        $reviewUrl = $reviewProduct && filled($reviewProduct->url)
+                            ? url($reviewProduct->url) . '#review-' . $review->id
+                            : null;
+                    @endphp
+                    <div class="review-widget-slide">
+                        <blockquote class="mb-2 review-widget-quote">
+                            <div class="card card-body fs-md text-muted border-0 shadow-sm review-widget-card">
+                                @if ($reviewUrl)
+                                    <a class="review-widget-title text-decoration-none mb-2" href="{{ $reviewUrl }}">
+                                        {{ $reviewProductTitle }}
+                                    </a>
+                                @else
+                                    <div class="review-widget-title text-muted mb-2">{{ $reviewProductTitle }}</div>
+                                @endif
 
-                    <blockquote class="mb-2">
-                        <div class="card card-body fs-md text-muted border-0 shadow-sm">
-                            <div class="mb-2">
+                                <div class="mb-2">
                                 <div class="star-rating"> @for ($i = 0; $i < 5; $i++)
                                         @if (floor($review->stars) - $i >= 1)
                                             {{--Full Start--}}
@@ -107,17 +175,17 @@
                                         @endif
                                     @endfor
                                 </div>
-                            </div>{{ strip_tags($review->message) }}
-                        </div>
-                        <footer class="d-flex justify-content-center align-items-center pt-4">
-                            <div class="ps-3">
-                                <p class="fs-sm fw-bold text-default mb-n1">{{ $review->fname }} {{ $review->lname }}</p>
+                                </div>
+
+                                <div class="review-widget-message">{{ strip_tags($review->message) }}</div>
                             </div>
-                        </footer>
-                    </blockquote>
-
-
-
+                            <footer class="d-flex justify-content-center align-items-center pt-4 mt-auto">
+                                <div class="ps-3">
+                                    <p class="fs-sm fw-bold text-default mb-n1">{{ $review->fname }} {{ $review->lname }}</p>
+                                </div>
+                            </footer>
+                        </blockquote>
+                    </div>
                 @endforeach
             </div>
         </div>
