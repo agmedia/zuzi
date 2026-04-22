@@ -5,6 +5,8 @@
     $blogSeo = $isBlogListing ? null : \App\Models\Seo::getBlogData($blog);
     $relatedProducts = $relatedProducts ?? collect();
     $ctaBlocks = $ctaBlocks ?? collect();
+    $singleRelatedProduct = $relatedProducts->count() === 1 ? $relatedProducts->first() : null;
+    $relatedProductsHeading = $singleRelatedProduct ? 'Naruči knjigu iz recenzije' : 'Preporučeni naslovi';
     $ctaButtonClasses = [
         'primary' => 'btn-primary',
         'secondary' => 'btn-secondary',
@@ -167,6 +169,23 @@
 
         </div>
 
+        @if($relatedProducts->count())
+            <section class="pb-5 mb-2 mb-xl-4">
+                <div class="flex-wrap justify-content-between align-items-center text-start">
+                    <h2 class="h3 mb-4 pt-1 font-title me-3">{{ $relatedProductsHeading }}</h2>
+                </div>
+                <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 product-page-carousel">
+                    <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
+                        @foreach ($relatedProducts as $relatedProduct)
+                            <div>
+                                @include('front.catalog.category.product', ['product' => $relatedProduct])
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
+
         @if($ctaBlocks->count())
             <section class="pb-4 mb-4">
                 @foreach($ctaBlocks as $ctaBlock)
@@ -189,23 +208,6 @@
                         </div>
                     </div>
                 @endforeach
-            </section>
-        @endif
-
-        @if($relatedProducts->count())
-            <section class="pb-5 mb-2 mb-xl-4">
-                <div class="flex-wrap justify-content-between align-items-center text-start">
-                    <h2 class="h3 mb-4 pt-1 font-title me-3">Povezani artikli</h2>
-                </div>
-                <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 product-page-carousel">
-                    <div class="tns-carousel-inner" data-carousel-options='@json($productShelfCarouselOptions)'>
-                        @foreach ($relatedProducts as $relatedProduct)
-                            <div>
-                                @include('front.catalog.category.product', ['product' => $relatedProduct])
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
             </section>
         @endif
 
