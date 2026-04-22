@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Back\Marketing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Back\Marketing\Blog;
+use App\Models\BlogCtaBlock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -39,7 +40,9 @@ class BlogController extends Controller
      */
     public function create()
     {
-        return view('back.marketing.blog.edit');
+        $reusableCtaBlocks = $this->reusableCtaBlocks();
+
+        return view('back.marketing.blog.edit', compact('reusableCtaBlocks'));
     }
 
 
@@ -82,8 +85,9 @@ class BlogController extends Controller
     public function edit(Blog $blog)
     {
         $blog->load('ctaBlocks.buttons');
+        $reusableCtaBlocks = $this->reusableCtaBlocks($blog);
 
-        return view('back.marketing.blog.edit', compact('blog'));
+        return view('back.marketing.blog.edit', compact('blog', 'reusableCtaBlocks'));
     }
 
 
@@ -179,5 +183,52 @@ class BlogController extends Controller
         Storage::disk('blog')->putFileAs($path, $img, $name);
 
         return response()->json(['fileName' => $name, 'uploaded' => true, 'url' => url(config('filesystems.disks.blog.url') . $path . $name)]);
+    }
+
+
+    /**
+     * Convert a stored CTA block into a payload safe for importing onto another post.
+     */
+    private function mapReusableCtaBlock(BlogCtaBlock $block): array
+    {
+        return [
+            'id' => $block->id,
+            'title' => $block->title,
+            'description' => $block->description,
+            'sort_order' => (int) $block->sort_order,
+            'is_active' => (bool) $block->is_active,
+            'buttons' => $block->buttons
+                ->sortBy('sort_order')
+                ->values()
+                ->map(function ($button) {
+                    return [
+                        'label' => $button->label,
+                        'url' => $button->url,
+                        'icon' => $button->icon,
+                        'style' => $button->style,
+                        'sort_order' => (int) $button->sort_order,
+                        'is_active' => (bool) $button->is_active,
+                    ];
+                })
+                ->all(),
+        ];
+    }
+
+
+    /**
+     * Build a small reusable CTA block library for the admin form.
+     */
+    private function reusableCtaBlocks(?Blog $excludeBlog = null): array
+    {
+        return BlogCtaBlock::query()
+            ->with('buttons')
+            ->when($excludeBlog, function ($query) use ($excludeBlog) {
+                $query->where('blog_post_id', '!=', $excludeBlog->getKey());
+            })
+            ->orderBy('title')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (BlogCtaBlock $block) => $this->mapReusableCtaBlock($block))
+            ->all();
     }
 }

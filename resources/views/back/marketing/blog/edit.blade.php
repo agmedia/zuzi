@@ -149,6 +149,7 @@
         ->all();
 
     $blogPublicBaseUrl = rtrim(route('catalog.route.blog'), '/');
+    $reusableCtaBlocks = collect($reusableCtaBlocks ?? [])->values()->all();
 @endphp
 
 @section('content')
@@ -265,11 +266,37 @@
                                 Dodaj jedan ili više CTA blokova. Svaki blok može imati više buttona, ručni redoslijed i aktivan/neaktivan status.
                             </div>
 
+                            <div class="card card-body bg-body-light border mb-4">
+                                <div class="row align-items-end">
+                                    <div class="col-lg-9 form-group mb-lg-0">
+                                        <label for="cta-library-select">Naslov bloka</label>
+                                        <select class="form-control" id="cta-library-select">
+                                            <option value="">Odaberi postojeći CTA blok...</option>
+                                            @foreach($reusableCtaBlocks as $reusableCtaBlock)
+                                                <option value="{{ $reusableCtaBlock['id'] }}">{{ $reusableCtaBlock['title'] }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div class="form-text text-muted font-size-sm font-italic">
+                                            Prikazani su svi postojeći CTA blokovi. Odabrani blok se kopira u ovaj članak pa ga možeš dodatno urediti prije spremanja.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-3 form-group mb-0">
+                                        <button type="button" class="btn btn-alt-primary btn-block" id="add-existing-cta-block-button" disabled>
+                                            <i class="fa fa-plus mr-1"></i> Dodaj blok
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info mb-0 mt-3 d-none" id="cta-import-feedback"></div>
+                            </div>
+
                             <div
                                 id="cta-blocks-builder"
                                 data-initial-blocks='@json($ctaBlocksFormData)'
                                 data-style-options='@json($ctaButtonStyleOptions)'
-                                data-blog-base-url='@json($blogPublicBaseUrl)'>
+                                data-blog-base-url='@json($blogPublicBaseUrl)'
+                                data-reusable-blocks='@json($reusableCtaBlocks)'>
                             </div>
 
                             <button type="button" class="btn btn-alt-success mt-3" id="add-cta-block-button">
@@ -351,8 +378,12 @@
             const initialRelatedProducts = @json($selectedRelatedProductOptions);
             const ctaBlocksBuilder = $('#cta-blocks-builder');
             const addCtaBlockButton = $('#add-cta-block-button');
+            const ctaLibrarySelect = $('#cta-library-select');
+            const addExistingCtaBlockButton = $('#add-existing-cta-block-button');
+            const ctaImportFeedback = $('#cta-import-feedback');
             const styleOptions = ctaBlocksBuilder.data('style-options') || {};
             const blogBaseUrl = ctaBlocksBuilder.data('blog-base-url') || '';
+            const reusableCtaBlocks = Array.isArray(ctaBlocksBuilder.data('reusable-blocks')) ? ctaBlocksBuilder.data('reusable-blocks') : [];
             let ctaBlocksState = Array.isArray(ctaBlocksBuilder.data('initial-blocks')) ? ctaBlocksBuilder.data('initial-blocks') : [];
 
             const escapeHtml = (value) => String(value ?? '')
@@ -584,6 +615,17 @@
                 refreshCtaWarnings();
             };
 
+            const showCtaImportFeedback = (message, type = 'info') => {
+                ctaImportFeedback
+                    .removeClass('d-none alert-info alert-success alert-warning alert-danger')
+                    .addClass(`alert-${type}`)
+                    .text(message);
+            };
+
+            const setExistingBlockButtonState = () => {
+                addExistingCtaBlockButton.prop('disabled', ! ctaLibrarySelect.val());
+            };
+
             const normalizeUrlPath = (value) => {
                 if (! value) {
                     return '';
@@ -695,6 +737,41 @@
                 syncRelatedProducts();
             });
 
+            ctaLibrarySelect.on('change', function () {
+                if (ctaImportFeedback.hasClass('alert-danger') || ctaImportFeedback.hasClass('alert-warning')) {
+                    ctaImportFeedback.addClass('d-none').text('');
+                }
+
+                setExistingBlockButtonState();
+            });
+
+            addExistingCtaBlockButton.on('click', function () {
+                const selectedBlockId = ctaLibrarySelect.val();
+                const selectedBlock = reusableCtaBlocks.find((block) => String(block.id) === String(selectedBlockId));
+
+                if (! selectedBlock) {
+                    showCtaImportFeedback('Odabrani CTA blok nije pronađen.', 'warning');
+                    return;
+                }
+
+                ctaBlocksState = syncSequentialSortOrders(readStateFromDom());
+                ctaBlocksState.push(normalizeBlockState({
+                    ...selectedBlock,
+                    id: '',
+                    buttons: Array.isArray(selectedBlock.buttons)
+                        ? selectedBlock.buttons.map((button) => ({
+                            ...button,
+                            id: '',
+                        }))
+                        : [],
+                }, ctaBlocksState.length));
+
+                renderCtaBlocks();
+                ctaLibrarySelect.val('');
+                setExistingBlockButtonState();
+                showCtaImportFeedback(`CTA blok "${selectedBlock.title}" je dodan u ovaj članak.`, 'success');
+            });
+
             addCtaBlockButton.on('click', function () {
                 ctaBlocksState = syncSequentialSortOrders(readStateFromDom());
                 ctaBlocksState.push(normalizeBlockState({}, ctaBlocksState.length));
@@ -791,6 +868,7 @@
                     console.error(error);
                 });
 
+            setExistingBlockButtonState();
             renderCtaBlocks();
         });
     </script>

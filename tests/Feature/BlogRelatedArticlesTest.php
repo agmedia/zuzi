@@ -290,6 +290,60 @@ class BlogRelatedArticlesTest extends TestCase
         $this->assertSame([$newestId, $middleId, $oldestId], $orderedIds);
     }
 
+    public function test_admin_blog_edit_exposes_reusable_cta_block_library(): void
+    {
+        $currentBlogId = $this->createBlogPage('Aktivni clanak', 'aktivni-clanak');
+        $otherBlogId = $this->createBlogPage('Izvorni CTA clanak', 'izvorni-cta-clanak');
+
+        $this->createBlogCtaBlock($currentBlogId, [
+            'title' => 'Postojeci blok trenutnog clanka',
+            'sort_order' => 1,
+            'is_active' => 1,
+        ]);
+
+        $firstReusableBlockId = $this->createBlogCtaBlock($otherBlogId, [
+            'title' => 'Biblioteka blok A',
+            'description' => 'Opis reusable bloka A',
+            'sort_order' => 1,
+            'is_active' => 1,
+        ]);
+        $secondReusableBlockId = $this->createBlogCtaBlock($otherBlogId, [
+            'title' => 'Biblioteka blok B',
+            'description' => null,
+            'sort_order' => 2,
+            'is_active' => 0,
+        ]);
+
+        $this->createBlogCtaButton($firstReusableBlockId, [
+            'label' => 'Button A',
+            'url' => '/button-a',
+            'icon' => '💕',
+            'style' => 'outline',
+            'sort_order' => 1,
+            'is_active' => 1,
+        ]);
+        $this->createBlogCtaButton($secondReusableBlockId, [
+            'label' => 'Button B',
+            'url' => '/button-b',
+            'icon' => '🔥',
+            'style' => 'primary',
+            'sort_order' => 1,
+            'is_active' => 0,
+        ]);
+
+        $response = app(AdminBlogController::class)->edit(AdminBlog::query()->findOrFail($currentBlogId));
+
+        $payload = $response->getData();
+        $reusableCtaBlocks = $payload['reusableCtaBlocks'];
+
+        $this->assertCount(2, $reusableCtaBlocks);
+        $this->assertSame('Biblioteka blok A', $reusableCtaBlocks[0]['title']);
+        $this->assertSame('Button A', $reusableCtaBlocks[0]['buttons'][0]['label']);
+        $this->assertSame('Biblioteka blok B', $reusableCtaBlocks[1]['title']);
+        $this->assertSame('primary', $reusableCtaBlocks[1]['buttons'][0]['style']);
+        $this->assertFalse($reusableCtaBlocks[1]['buttons'][0]['is_active']);
+    }
+
     private function createBlogPage(string $title, string $slug, array $overrides = []): int
     {
         return (int) DB::table('pages')->insertGetId(array_merge([
