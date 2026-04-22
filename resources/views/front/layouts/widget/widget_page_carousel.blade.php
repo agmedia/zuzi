@@ -19,7 +19,8 @@
     ];
     $reviewWidgetCarouselOptions = [
         'items' => 1,
-        'controls' => false,
+        'controls' => true,
+        'nav' => true,
         'autoplay' => true,
         'autoHeight' => false,
         'mouseDrag' => true,
@@ -66,17 +67,22 @@
             }
 
             .review-widget-carousel .tns-item > * {
+                display: flex;
                 width: 100%;
             }
 
-            .review-widget-slide,
-            .review-widget-quote {
-                height: 100%;
+            .review-widget-slide {
+                display: flex;
+                flex: 1 1 auto;
+                width: 100%;
             }
 
             .review-widget-quote {
                 display: flex;
                 flex-direction: column;
+                flex: 1 1 auto;
+                height: 100%;
+                margin-bottom: 0;
             }
 
             .review-widget-card {
@@ -84,6 +90,7 @@
                 display: flex;
                 flex-direction: column;
                 height: 100%;
+                min-height: 12.5rem;
             }
 
             .review-widget-title {
@@ -98,9 +105,21 @@
 
             .review-widget-message {
                 display: -webkit-box;
-                -webkit-line-clamp: 6;
+                -webkit-line-clamp: 4;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
+                line-height: 1.6;
+                min-height: 6.4em;
+            }
+
+            .review-widget-carousel [data-controls] {
+                z-index: 2;
+            }
+
+            @media (max-width: 767.98px) {
+                .review-widget-card {
+                    min-height: 11.5rem;
+                }
             }
         </style>
     @endpush
@@ -140,7 +159,7 @@
 
     @elseif ($data['tablename'] == 'reviews')
 
-        <div class="tns-carousel widget-touch-carousel widget-card-carousel review-widget-carousel">
+        <div class="tns-carousel tns-controls-outside widget-touch-carousel widget-card-carousel review-widget-carousel">
             <div class="tns-carousel-inner" data-carousel-options='@json($reviewWidgetCarouselOptions)'>
                 @foreach ($data['items'] as $review)
                     @php
