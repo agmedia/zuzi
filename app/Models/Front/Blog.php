@@ -2,14 +2,12 @@
 
 namespace App\Models\Front;
 
+use App\Models\BlogCtaBlock;
 use App\Models\Front\Catalog\Product;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class Blog extends Model
 {
@@ -118,6 +116,34 @@ class Blog extends Model
     public function scopeFeatured(Builder $query, $count = 9): Builder
     {
         return $query->where('featured', 1)->orderBy('updated_at', 'desc')->limit($count);
+    }
+
+
+    /**
+     * @return HasMany
+     */
+    public function ctaBlocks(): HasMany
+    {
+        return $this->hasMany(BlogCtaBlock::class, 'blog_post_id')
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+
+    /**
+     * Resolve active CTA blocks with active buttons in the saved order.
+     */
+    public function activeCtaBlocks(): Collection
+    {
+        return $this->ctaBlocks()
+            ->active()
+            ->ordered()
+            ->with(['buttons' => function ($query) {
+                $query->active()->ordered();
+            }])
+            ->get()
+            ->filter(fn (BlogCtaBlock $block) => $block->buttons->isNotEmpty())
+            ->values();
     }
 
 

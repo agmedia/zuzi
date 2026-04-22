@@ -583,8 +583,9 @@ class CatalogRouteController extends Controller
         }
 
         $relatedProducts = $blog->relatedProducts(12);
+        $ctaBlocks = $blog->activeCtaBlocks();
 
-        return view('front.blog', compact('blog', 'relatedProducts'));
+        return view('front.blog', compact('blog', 'relatedProducts', 'ctaBlocks'));
     }
 
 

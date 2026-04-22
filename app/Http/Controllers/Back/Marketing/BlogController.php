@@ -5,10 +5,8 @@ namespace App\Http\Controllers\Back\Marketing;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Marketing\Blog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image;
 
 class BlogController extends Controller
 {
@@ -61,7 +59,13 @@ class BlogController extends Controller
         if ($stored) {
             $blog->resolveImage($stored);
 
-            return redirect()->route('blogs.edit', ['blog' => $stored])->with(['success' => 'Blog was succesfully saved!']);
+            $flash = ['success' => 'Blog was succesfully saved!'];
+
+            if ($warning = $blog->ctaWarningMessage()) {
+                $flash['warning'] = $warning;
+            }
+
+            return redirect()->route('blogs.edit', ['blog' => $stored])->with($flash);
         }
 
         return redirect()->back()->with(['error' => 'Whoops..! There was an error saving the blog.']);
@@ -77,6 +81,8 @@ class BlogController extends Controller
      */
     public function edit(Blog $blog)
     {
+        $blog->load('ctaBlocks.buttons');
+
         return view('back.marketing.blog.edit', compact('blog'));
     }
 
@@ -96,7 +102,13 @@ class BlogController extends Controller
         if ($updated) {
             $blog->resolveImage($updated);
 
-            return redirect()->route('blogs.edit', ['blog' => $updated])->with(['success' => 'Blog was succesfully saved!']);
+            $flash = ['success' => 'Blog was succesfully saved!'];
+
+            if ($warning = $blog->ctaWarningMessage()) {
+                $flash['warning'] = $warning;
+            }
+
+            return redirect()->route('blogs.edit', ['blog' => $updated])->with($flash);
         }
 
         return redirect()->back()->with(['error' => 'Whoops..! There was an error saving the blog.']);

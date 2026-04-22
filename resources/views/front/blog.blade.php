@@ -4,6 +4,12 @@
     $isBlogListing = isset($blogs);
     $blogSeo = $isBlogListing ? null : \App\Models\Seo::getBlogData($blog);
     $relatedProducts = $relatedProducts ?? collect();
+    $ctaBlocks = $ctaBlocks ?? collect();
+    $ctaButtonClasses = [
+        'primary' => 'btn-primary',
+        'secondary' => 'btn-secondary',
+        'outline' => 'btn-outline-primary',
+    ];
     $productShelfCarouselOptions = [
         'items' => 2,
         'gutter' => 16,
@@ -48,6 +54,47 @@
             .product-page-carousel .tns-item,
             .product-page-carousel .tns-carousel-inner {
                 touch-action: pan-y pinch-zoom;
+            }
+
+            .blog-cta-block {
+                background: #fff;
+                border: 0;
+                border-radius: 1rem;
+                box-shadow: 0 0.25rem 0.5625rem -0.0625rem rgba(0, 0, 0, 0.03),
+                    0 0.275rem 1.25rem -0.0625rem rgba(0, 0, 0, 0.05);
+            }
+
+            .blog-cta-buttons {
+                display: grid;
+                gap: 0.75rem;
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+            }
+
+            .blog-cta-button {
+                align-items: center;
+                display: inline-flex;
+                font-weight: 600;
+                gap: 0.5rem;
+                justify-content: center;
+                min-height: 3.25rem;
+                width: 100%;
+            }
+
+            .blog-cta-button__icon {
+                font-size: 1.1rem;
+                line-height: 1;
+            }
+
+            @media (min-width: 768px) {
+                .blog-cta-buttons {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
+
+            @media (min-width: 1200px) {
+                .blog-cta-buttons {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
             }
         </style>
     @endpush
@@ -119,6 +166,31 @@
                     {!! $blog->description !!}
 
         </div>
+
+        @if($ctaBlocks->count())
+            <section class="pb-4 mb-4">
+                @foreach($ctaBlocks as $ctaBlock)
+                    <div class="blog-cta-block p-4 p-md-5 mb-4">
+                        <h2 class="h3 mb-3">{{ $ctaBlock->title }}</h2>
+
+                        @if(filled($ctaBlock->description))
+                            <p class="fs-md text-muted mb-4">{!! nl2br(e($ctaBlock->description)) !!}</p>
+                        @endif
+
+                        <div class="blog-cta-buttons">
+                            @foreach($ctaBlock->buttons as $ctaButton)
+                                <a href="{{ $ctaButton->url }}" class="btn {{ $ctaButtonClasses[$ctaButton->style] ?? 'btn-outline-primary' }} blog-cta-button">
+                                    @if(filled($ctaButton->icon))
+                                        <span class="blog-cta-button__icon">{{ $ctaButton->icon }}</span>
+                                    @endif
+                                    <span>{{ $ctaButton->label }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </section>
+        @endif
 
         @if($relatedProducts->count())
             <section class="pb-5 mb-2 mb-xl-4">
