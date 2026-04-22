@@ -80,6 +80,7 @@ class CatalogRouteController extends Controller
             $authorProducts = collect();
             $publisherProducts = collect();
             $relatedProducts = collect();
+            $relatedBlogReview = Blog::latestActiveRelatedReviewForProduct($prod->id);
 
             $prod->kat = CategoryProducts::query()
                 ->where('product_id', $prod->id)
@@ -136,8 +137,7 @@ class CatalogRouteController extends Controller
                     ->values();
             }
 
-
-            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme', 'shipping_methods', 'payment_methods', 'gdl', 'reviews', 'authorProducts', 'publisherProducts', 'relatedProducts'));
+            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme', 'shipping_methods', 'payment_methods', 'gdl', 'reviews', 'authorProducts', 'publisherProducts', 'relatedProducts', 'relatedBlogReview'));
         }
 
         // If only group...

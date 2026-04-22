@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Back\Marketing\Blog;
 use App\Models\BlogCtaBlock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -229,6 +230,33 @@ class BlogController extends Controller
             ->orderBy('id')
             ->get()
             ->map(fn (BlogCtaBlock $block) => $this->mapReusableCtaBlock($block))
+            ->unique(fn (array $block) => $this->reusableCtaBlockFingerprint($block))
+            ->values()
             ->all();
+    }
+
+
+    /**
+     * Build a stable fingerprint so identical imported CTA blocks appear only once in the library.
+     */
+    private function reusableCtaBlockFingerprint(array $block): string
+    {
+        return json_encode([
+            'title' => (string) ($block['title'] ?? ''),
+            'description' => (string) ($block['description'] ?? ''),
+            'is_active' => (bool) ($block['is_active'] ?? true),
+            'buttons' => collect($block['buttons'] ?? [])
+                ->map(function ($button) {
+                    return [
+                        'label' => (string) ($button['label'] ?? ''),
+                        'url' => (string) ($button['url'] ?? ''),
+                        'icon' => (string) ($button['icon'] ?? ''),
+                        'style' => (string) ($button['style'] ?? ''),
+                        'is_active' => (bool) ($button['is_active'] ?? true),
+                    ];
+                })
+                ->values()
+                ->all(),
+        ]);
     }
 }

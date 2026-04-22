@@ -148,22 +148,75 @@ class Blog extends Model
 
 
     /**
-     * Resolve related products in the saved order.
+     * Resolve normalized related product ids from the saved payload.
      */
-    public function relatedProducts(int $limit = 12): Collection
+    public function relatedProductIds(): Collection
     {
         $relatedProducts = $this->related_products;
 
-        if (is_string($relatedProducts)) {
+        while (is_string($relatedProducts)) {
             $decodedRelatedProducts = json_decode($relatedProducts, true);
-            $relatedProducts = is_array($decodedRelatedProducts) ? $decodedRelatedProducts : [];
+
+            if (! is_array($decodedRelatedProducts) && ! is_string($decodedRelatedProducts)) {
+                $relatedProducts = [];
+                break;
+            }
+
+            $relatedProducts = $decodedRelatedProducts;
         }
 
-        $ids = collect($relatedProducts ?: [])
+        return collect(is_array($relatedProducts) ? $relatedProducts : [])
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->unique()
             ->values();
+    }
+
+
+    /**
+     * Resolve the newest visible blog review that references the given product.
+     */
+    public static function latestActiveRelatedReviewForProduct(int $productId): ?self
+    {
+        return static::query()
+            ->where('status', 1)
+            ->whereNotNull('related_products')
+            ->where(function (Builder $query) {
+                $query->whereNull('publish_date')
+                    ->orWhere('publish_date', '<=', now());
+            })
+            ->orderByDesc('publish_date')
+            ->orderByDesc('created_at')
+            ->get()
+            ->first(fn (self $blog) => $blog->relatedProductIds()->contains($productId));
+    }
+
+
+    /**
+     * Build a plain-text review teaser from the blog content.
+     */
+    public function reviewTeaser(int $characters = 200): string
+    {
+        $content = strip_tags((string) ($this->description ?: $this->short_description ?: ''));
+        $content = trim(preg_replace('/\s+/u', ' ', $content) ?: '');
+
+        if (mb_strlen($content) <= $characters) {
+            return $content;
+        }
+
+        $ending = '...';
+        $availableCharacters = max($characters - mb_strlen($ending), 0);
+
+        return rtrim(mb_substr($content, 0, $availableCharacters)) . $ending;
+    }
+
+
+    /**
+     * Resolve related products in the saved order.
+     */
+    public function relatedProducts(int $limit = 12): Collection
+    {
+        $ids = $this->relatedProductIds();
 
         if ($ids->isEmpty()) {
             return collect();

@@ -219,6 +219,49 @@ class BlogRelatedArticlesTest extends TestCase
         $this->assertSame([$firstRelatedId, $secondRelatedId], $relatedProducts->pluck('id')->all());
     }
 
+    public function test_front_blog_model_resolves_latest_visible_review_for_related_product(): void
+    {
+        $productId = $this->createProduct('Artikl s recenzijom', 'BLOG-REV-1');
+        $otherProductId = $this->createProduct('Drugi artikl', 'BLOG-REV-2');
+
+        $this->createBlogPage('Neaktivan review', 'neaktivan-review', [
+            'status' => 0,
+            'related_products' => json_encode([$productId]),
+            'publish_date' => Carbon::parse('2026-04-20 12:00:00'),
+        ]);
+        $this->createBlogPage('Buduci review', 'buduci-review', [
+            'related_products' => json_encode([$productId]),
+            'publish_date' => now()->addDay(),
+        ]);
+        $olderBlogId = $this->createBlogPage('Stariji review', 'stariji-review', [
+            'related_products' => json_encode([$productId, $otherProductId]),
+            'publish_date' => Carbon::parse('2026-04-10 12:00:00'),
+        ]);
+        $newerBlogId = $this->createBlogPage('Najnoviji review', 'najnoviji-review', [
+            'related_products' => json_encode([$productId]),
+            'publish_date' => Carbon::parse('2026-04-21 12:00:00'),
+        ]);
+
+        $latestReview = FrontBlog::latestActiveRelatedReviewForProduct($productId);
+
+        $this->assertInstanceOf(FrontBlog::class, $latestReview);
+        $this->assertSame($newerBlogId, $latestReview->id);
+        $this->assertNotSame($olderBlogId, $latestReview->id);
+    }
+
+    public function test_front_blog_review_teaser_limits_output_to_200_characters(): void
+    {
+        $blogId = $this->createBlogPage('Teaser review', 'teaser-review', [
+            'description' => '<p>' . str_repeat('Ovo je jako duga recenzija koja treba biti uredno skracena za prikaz na kartici. ', 8) . '</p>',
+        ]);
+
+        $blog = FrontBlog::query()->findOrFail($blogId);
+        $teaser = $blog->reviewTeaser(200);
+
+        $this->assertLessThanOrEqual(200, mb_strlen($teaser));
+        $this->assertStringEndsWith('...', $teaser);
+    }
+
     public function test_front_blog_detail_resolves_only_active_cta_blocks_and_buttons_in_saved_order(): void
     {
         $blogId = $this->createBlogPage('Front CTA clanak', 'front-cta-clanak');
@@ -342,6 +385,44 @@ class BlogRelatedArticlesTest extends TestCase
         $this->assertSame('Biblioteka blok B', $reusableCtaBlocks[1]['title']);
         $this->assertSame('primary', $reusableCtaBlocks[1]['buttons'][0]['style']);
         $this->assertFalse($reusableCtaBlocks[1]['buttons'][0]['is_active']);
+    }
+
+    public function test_admin_blog_edit_deduplicates_identical_reusable_cta_blocks(): void
+    {
+        $currentBlogId = $this->createBlogPage('Aktivni clanak za dedupe', 'aktivni-clanak-dedupe');
+        $firstSourceBlogId = $this->createBlogPage('Izvorni CTA A', 'izvorni-cta-a');
+        $secondSourceBlogId = $this->createBlogPage('Izvorni CTA B', 'izvorni-cta-b');
+        $thirdSourceBlogId = $this->createBlogPage('Izvorni CTA C', 'izvorni-cta-c');
+
+        $firstBlockId = $this->createBlogCtaBlock($firstSourceBlogId, [
+            'title' => 'Istraži ljubavne romane',
+            'description' => 'Odaberi mood koji ti paše.',
+        ]);
+        $secondBlockId = $this->createBlogCtaBlock($secondSourceBlogId, [
+            'title' => 'Istraži ljubavne romane',
+            'description' => 'Odaberi mood koji ti paše.',
+        ]);
+        $thirdBlockId = $this->createBlogCtaBlock($thirdSourceBlogId, [
+            'title' => 'Istraži ljubavne romane',
+            'description' => 'Odaberi mood koji ti paše.',
+        ]);
+
+        foreach ([$firstBlockId, $secondBlockId, $thirdBlockId] as $blockId) {
+            $this->createBlogCtaButton($blockId, [
+                'label' => 'Moderni ljubavni romani',
+                'url' => '/beletristika/ljubici/moderni',
+                'icon' => '💕',
+                'style' => 'outline',
+                'sort_order' => 1,
+                'is_active' => 1,
+            ]);
+        }
+
+        $response = app(AdminBlogController::class)->edit(AdminBlog::query()->findOrFail($currentBlogId));
+
+        $reusableCtaBlocks = $response->getData()['reusableCtaBlocks'];
+
+        $this->assertCount(1, array_values(array_filter($reusableCtaBlocks, fn ($block) => $block['title'] === 'Istraži ljubavne romane')));
     }
 
     private function createBlogPage(string $title, string $slug, array $overrides = []): int

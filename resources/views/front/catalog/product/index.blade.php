@@ -19,6 +19,12 @@
     $shouldOpenReviewForm = $reviewsCount > 0 || $hasReviewErrors || session('review_submitted');
     $showReviewPromoButton = ! $reviewsCount && ! $shouldOpenReviewForm;
     $giftWrapAllowed = \App\Services\GiftWrapService::isEligibleProduct($prod);
+    $relatedBlogReview = $relatedBlogReview ?? null;
+    $relatedBlogReviewUrl = $relatedBlogReview ? route('catalog.route.blog', ['blog' => $relatedBlogReview]) : null;
+    $relatedBlogReviewImage = $relatedBlogReview && filled($relatedBlogReview->getRawOriginal('image'))
+        ? $relatedBlogReview->image
+        : asset('media/img/lightslider.webp');
+    $relatedBlogReviewTeaser = $relatedBlogReview ? $relatedBlogReview->reviewTeaser(200) : '';
     $isTrackedQuantity = (bool) $prod->decrease;
     $isInStock = (int) $prod->quantity > 0;
     $availabilityLabel = $isInStock
@@ -170,6 +176,89 @@
             font-weight: 600;
         }
 
+        .blog-review-spotlight {
+            position: relative;
+            overflow: hidden;
+            scroll-margin-top: 7rem;
+            padding: 1.2rem;
+            border: 1px solid rgba(229, 0, 119, 0.12);
+            border-radius: 1.25rem;
+            background: linear-gradient(135deg, rgba(229, 0, 119, 0.04), rgba(255, 255, 255, 0.98) 62%);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .blog-review-spotlight__layout {
+            display: grid;
+            grid-template-columns: minmax(0, 168px) minmax(0, 1fr);
+            gap: 1.25rem;
+            align-items: center;
+        }
+
+        .blog-review-spotlight__media {
+            display: block;
+            width: 100%;
+            text-decoration: none;
+        }
+
+        .blog-review-spotlight__image {
+            display: block;
+            width: 100%;
+            aspect-ratio: 4 / 5;
+            object-fit: cover;
+            border-radius: 1rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .blog-review-spotlight__eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-bottom: 0.7rem;
+            padding: 0.38rem 0.78rem;
+            border: 1px solid rgba(229, 0, 119, 0.18);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.92);
+            color: #e50077;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .blog-review-spotlight__title {
+            color: #2f3447;
+            line-height: 1.2;
+        }
+
+        .blog-review-spotlight__title a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .blog-review-spotlight__title a:hover {
+            color: #e50077;
+        }
+
+        .blog-review-spotlight__text {
+            color: #5b6478;
+            font-size: 0.98rem;
+            line-height: 1.7;
+        }
+
+        .blog-review-spotlight__cta {
+            min-width: 220px;
+        }
+
+        @media (max-width: 767.98px) {
+            .blog-review-spotlight__layout {
+                grid-template-columns: 1fr;
+            }
+
+            .blog-review-spotlight__media {
+                max-width: 15rem;
+            }
+        }
+
         .product-purchase-summary {
             position: relative;
         }
@@ -197,6 +286,29 @@
 
         .product-review-link span {
             color: #667085;
+        }
+
+        .product-related-review-link {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 0.95rem;
+            padding: 0.46rem 0.9rem;
+            border: 1px solid rgba(229, 0, 119, 0.16);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.92);
+            color: #e50077;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            line-height: 1.2;
+            text-decoration: none;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        .product-related-review-link:hover {
+            background: rgba(229, 0, 119, 0.06);
+            border-color: rgba(229, 0, 119, 0.24);
+            color: #cf006b;
         }
 
         .product-price-stack {
@@ -468,9 +580,15 @@
                     </div>
                 @endif
 
-                <h1 class="h3 product-purchase-title">{{ $prod->name }}</h1>
+	                <h1 class="h3 product-purchase-title">{{ $prod->name }}</h1>
 
-        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+                    @if ($relatedBlogReview && $relatedBlogReviewUrl)
+                        <a id="openRelatedReview" href="#related-review" class="product-related-review-link">
+                            Recenzija uz ovaj naslov
+                        </a>
+                    @endif
+
+	        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
             <a id="openReview" href="#reviews" class="d-inline-flex align-items-center text-decoration-none product-review-link">
                 <div class="star-rating me-2">
                     @for ($i = 0; $i < 5; $i++)
@@ -759,6 +877,33 @@
 
                </div>
            </div>
+
+           @if ($relatedBlogReview && $relatedBlogReviewUrl)
+               <div id="related-review" class="blog-review-spotlight mb-4">
+                   <div class="blog-review-spotlight__layout">
+                       <a class="blog-review-spotlight__media" href="{{ $relatedBlogReviewUrl }}">
+                           <img
+                               class="blog-review-spotlight__image"
+                               src="{{ $relatedBlogReviewImage }}"
+                               alt="{{ $relatedBlogReview->title }}"
+                               loading="lazy"
+                               decoding="async"
+                           >
+                       </a>
+
+                       <div class="blog-review-spotlight__content">
+                           <span class="blog-review-spotlight__eyebrow">Recenzija uz ovaj naslov</span>
+                           <h3 class="h4 mb-2 blog-review-spotlight__title">
+                               <a href="{{ $relatedBlogReviewUrl }}">{{ $relatedBlogReview->title }}</a>
+                           </h3>
+                           <p class="blog-review-spotlight__text mb-3">{{ $relatedBlogReviewTeaser }}</p>
+                           <a class="blog-review-spotlight__cta btn btn-primary btn-shadow" href="{{ $relatedBlogReviewUrl }}">
+                               Pročitajte recenziju
+                           </a>
+                       </div>
+                   </div>
+               </div>
+           @endif
 
            <hr class="my-4">
 
@@ -1078,12 +1223,20 @@
 <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.sitekey') }}"></script>
 
 <script>
-    function scrollToReviewsSection() {
-        const reviewsSection = document.getElementById('reviews');
+    function scrollToSection(sectionId) {
+        const section = document.getElementById(sectionId);
 
-        if (reviewsSection) {
-            reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+    }
+
+    function scrollToReviewsSection() {
+        scrollToSection('reviews');
+    }
+
+    function scrollToRelatedReviewSection() {
+        scrollToSection('related-review');
     }
 
     function openReviewForm(scrollToForm = false) {
@@ -1116,6 +1269,11 @@
     $('#openReview').on('click', function(e) {
         e.preventDefault();
         scrollToReviewsSection();
+    });
+
+    $('#openRelatedReview').on('click', function(e) {
+        e.preventDefault();
+        scrollToRelatedReviewSection();
     });
 
     $('#open-review-form').on('click', function() {
