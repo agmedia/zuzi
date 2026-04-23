@@ -77,6 +77,7 @@ class AgCart extends Model
             'coupon'          => $this->coupon,
             'loyalty'         => $this->loyalty,
             'has_loyalty'     => $this->hasLoyalty(),
+            'loyalty_points_per_euro' => $this->loyaltyPointsPerEuro(),
             'has_gift_voucher' => $this->hasGiftVoucherItems(),
             'gift_voucher_only' => $this->hasOnlyGiftVoucherItems(),
             'items'           => $this->cart->getContent(),
@@ -125,6 +126,11 @@ class AgCart extends Model
         }
 
         return null;
+    }
+
+    private function loyaltyPointsPerEuro(): float
+    {
+        return max(0, floatval(data_get((array) config('settings.loyalty', []), 'points_per_euro', 1)));
     }
 
 

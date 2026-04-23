@@ -54,18 +54,21 @@ class AgService {
                 return false;
             }
 
-            let product = response.data.items[item.id].associatedModel;
+            let productItem = this.findCartItem(response.data, item.id);
+            let product = productItem ? productItem.associatedModel : null;
 
-            window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push({ ecommerce: null });
-            window.dataLayer.push({
-                'event': 'add_to_cart',
-                'ecommerce': {
-                    'items': [ { ...product.dataLayer, quantity: Number(item.quantity) || 1 } ]
-                }
-            });
+            if (product && product.dataLayer) {
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({ ecommerce: null });
+                window.dataLayer.push({
+                    'event': 'add_to_cart',
+                    'ecommerce': {
+                        'items': [ { ...product.dataLayer, quantity: Number(item.quantity) || 1 } ]
+                    }
+                });
+            }
 
-            this.returnSuccess(messages.cartAdd);
+            this.showCartAddSuccess(response.data, item);
             return response.data
         })
         .catch(error => { return this.returnError(messages.error) })
@@ -84,7 +87,12 @@ class AgService {
                 return false;
             }
 
-            this.returnSuccess(messages.cartUpdate);
+            if (item && item.relative) {
+                this.showCartAddSuccess(response.data, item);
+            } else {
+                this.returnSuccess(messages.cartUpdate);
+            }
+
             return response.data
         })
         .catch(error => { return this.returnError(messages.error) })
@@ -171,6 +179,32 @@ class AgService {
      */
     returnSuccess(msg) {
         window.ToastSuccess.fire(msg);
+    }
+
+    showCartAddSuccess(cart, item) {
+        try {
+            if (typeof window.CartAddSuccess === 'function') {
+                const result = window.CartAddSuccess({ cart, item });
+
+                if (result !== null) {
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        }
+
+        this.returnSuccess(messages.cartAdd);
+    }
+
+    findCartItem(cart, itemId) {
+        const items = cart?.items || {};
+
+        if (items[itemId]) {
+            return items[itemId];
+        }
+
+        return Object.values(items).find((cartItem) => String(cartItem?.id) === String(itemId)) || null;
     }
 
     /**

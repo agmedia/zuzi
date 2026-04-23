@@ -1,0 +1,429 @@
+.swal2-container.cart-add-modal-container {
+    padding:
+        max(0.9rem, env(safe-area-inset-top))
+        max(0.9rem, env(safe-area-inset-right))
+        max(0.9rem, env(safe-area-inset-bottom))
+        max(0.9rem, env(safe-area-inset-left)) !important;
+    box-sizing: border-box;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.swal2-container.cart-add-modal-container.swal2-backdrop-show {
+    background: rgba(43, 52, 69, 0.45);
+    backdrop-filter: none;
+}
+
+body.swal2-shown #agapp[aria-hidden=true] {
+    display: block !important;
+}
+
+.swal2-popup.cart-add-modal-popup {
+    --cart-add-modal-space: clamp(1rem, 2.6vw, 1.35rem);
+    --cart-add-modal-gap: 0.9rem;
+    width: min(33.5rem, calc(100vw - 1.8rem)) !important;
+    max-width: 33.5rem;
+    margin: auto !important;
+    padding: var(--cart-add-modal-space) !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: var(--cart-add-modal-gap);
+    overflow: visible;
+    border: 1px solid rgba(24, 50, 109, 0.08);
+    border-radius: 1.35rem;
+    background: #ffffff;
+    box-shadow: 0 1.4rem 3.25rem rgba(17, 27, 58, 0.18);
+    box-sizing: border-box;
+}
+
+.swal2-popup.cart-add-modal-popup .swal2-content,
+.swal2-popup.cart-add-modal-popup .swal2-html-container,
+.swal2-html-container.cart-add-modal-html {
+    width: 100%;
+    max-width: none;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible;
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    text-align: inherit;
+    box-sizing: border-box;
+}
+
+.swal2-close.cart-add-modal-close {
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid rgba(24, 50, 109, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #18326d;
+    font-size: 1.5rem;
+    line-height: 1;
+    box-shadow: 0 0.4rem 1rem rgba(17, 27, 58, 0.12);
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.swal2-close.cart-add-modal-close:hover {
+    transform: scale(1.04);
+    background: #18326d;
+    color: #ffffff;
+}
+
+.cart-add-modal {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--cart-add-modal-gap);
+    width: 100%;
+    margin: 0;
+    color: #18326d;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.cart-add-modal__hero {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.8rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cart-add-modal__hero-icon,
+.cart-add-modal__loyalty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.85rem;
+    height: 2.85rem;
+    border-radius: 0.95rem;
+}
+
+.cart-add-modal__hero-icon {
+    background: #e50077;
+    color: #ffffff;
+    box-shadow: 0 1rem 2rem rgba(229, 0, 119, 0.24);
+}
+
+.cart-add-modal__hero-copy,
+.cart-add-modal__body,
+.cart-add-modal__loyalty-copy {
+    min-width: 0;
+}
+
+.cart-add-modal__eyebrow {
+    display: inline-block;
+    margin-bottom: 0.3rem;
+    color: #e50077;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.cart-add-modal__heading {
+    margin: 0;
+    color: #18326d;
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.08;
+}
+
+.cart-add-modal__lead {
+    margin: 0.4rem 0 0;
+    color: #5f6c85;
+    font-size: 0.9rem;
+    line-height: 1.42;
+}
+
+.cart-add-modal__card {
+    display: grid;
+    grid-template-columns: 4.85rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #e3e9ef;
+    border-radius: 1.15rem;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 0.8rem 1.9rem rgba(24, 50, 109, 0.07);
+    box-sizing: border-box;
+}
+
+.cart-add-modal__image-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 5rem;
+    padding: 0.4rem;
+    border-radius: 0.9rem;
+    background: #f8fbff;
+    overflow: hidden;
+}
+
+.cart-add-modal__image {
+    width: 100%;
+    max-width: 3.75rem;
+    aspect-ratio: 3 / 4;
+    object-fit: contain;
+    filter: drop-shadow(0 0.55rem 0.95rem rgba(24, 50, 109, 0.12));
+}
+
+.cart-add-modal__body {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+    justify-items: start;
+}
+
+.cart-add-modal__price {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.34rem 0.58rem;
+    border-radius: 999px;
+    background: rgba(24, 50, 109, 0.07);
+    color: #18326d;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.cart-add-modal__name {
+    margin: 0;
+    color: #18326d;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.25;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.cart-add-modal__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.cart-add-modal__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.34rem 0.56rem;
+    border: 1px solid rgba(24, 50, 109, 0.09);
+    border-radius: 999px;
+    background: #f8fbff;
+    color: #4b566b;
+    font-size: 0.74rem;
+    line-height: 1.2;
+}
+
+.cart-add-modal__chip strong {
+    color: #18326d;
+    font-weight: 700;
+}
+
+.cart-add-modal__chip--accent {
+    border-color: rgba(229, 0, 119, 0.12);
+    background: rgba(229, 0, 119, 0.08);
+    color: #b4005f;
+}
+
+.cart-add-modal__loyalty {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.85rem;
+    border-radius: 1.05rem;
+    background: rgba(24, 50, 109, 0.06);
+    box-sizing: border-box;
+}
+
+.cart-add-modal__loyalty-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    background: rgba(255, 255, 255, 0.92);
+    color: #e50077;
+    box-shadow: 0 0.45rem 1rem rgba(24, 50, 109, 0.08);
+}
+
+.cart-add-modal__loyalty-copy {
+    display: flex;
+    align-items: center;
+    min-height: 2.25rem;
+}
+
+.cart-add-modal__loyalty-copy strong {
+    display: block;
+    color: #18326d;
+    font-size: 0.9rem;
+    line-height: 1.38;
+}
+
+.cart-add-modal__loyalty-copy p {
+    margin: 0.24rem 0 0;
+    color: #5f6c85;
+    font-size: 0.77rem;
+    line-height: 1.42;
+}
+
+.swal2-actions.cart-add-modal-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+}
+
+.swal2-styled.cart-add-modal-cancel.btn,
+.swal2-styled.cart-add-modal-confirm.btn {
+    width: 100%;
+    margin: 0 !important;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.85rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.swal2-styled.cart-add-modal-confirm.btn {
+    border: 1px solid #e50077 !important;
+    background: #e50077 !important;
+    color: #ffffff !important;
+}
+
+.swal2-styled.cart-add-modal-cancel.btn {
+    border: 1px solid rgba(229, 0, 119, 0.75) !important;
+    background: #ffffff !important;
+    color: #e50077 !important;
+}
+
+@media (max-width: 575.98px) {
+    .swal2-container.cart-add-modal-container {
+        padding:
+            max(0.75rem, env(safe-area-inset-top))
+            max(0.75rem, env(safe-area-inset-right))
+            max(0.75rem, env(safe-area-inset-bottom))
+            max(0.75rem, env(safe-area-inset-left)) !important;
+    }
+
+    .swal2-popup.cart-add-modal-popup {
+        --cart-add-modal-space: 0.95rem;
+        --cart-add-modal-gap: 0.8rem;
+        width: min(100%, 30rem) !important;
+        border-radius: 1.1rem;
+    }
+
+    .swal2-close.cart-add-modal-close {
+        top: 0.65rem;
+        right: 0.65rem;
+        width: 1.9rem;
+        height: 1.9rem;
+        font-size: 1.35rem;
+    }
+
+    .cart-add-modal__hero {
+        justify-items: center;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.65rem;
+        text-align: center;
+    }
+
+    .cart-add-modal__hero-copy,
+    .cart-add-modal__body,
+    .cart-add-modal__loyalty-copy {
+        text-align: center;
+    }
+
+    .cart-add-modal__hero-icon,
+    .cart-add-modal__loyalty-icon {
+        width: 2.3rem;
+        height: 2.3rem;
+        border-radius: 0.78rem;
+    }
+
+    .cart-add-modal__heading {
+        font-size: 1.3rem;
+    }
+
+    .cart-add-modal__lead {
+        font-size: 0.83rem;
+    }
+
+    .cart-add-modal__card {
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: center;
+        text-align: center;
+    }
+
+    .cart-add-modal__image-wrap {
+        width: 5rem;
+        min-height: 5rem;
+    }
+
+    .cart-add-modal__image {
+        max-width: 3rem;
+    }
+
+    .cart-add-modal__body {
+        justify-items: center;
+    }
+
+    .cart-add-modal__name {
+        font-size: 0.98rem;
+    }
+
+    .cart-add-modal__chips {
+        justify-content: center;
+    }
+
+    .cart-add-modal__loyalty {
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: center;
+        text-align: center;
+    }
+
+    .swal2-actions.cart-add-modal-actions {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.55rem;
+    }
+
+    .swal2-styled.cart-add-modal-cancel.btn,
+    .swal2-styled.cart-add-modal-confirm.btn {
+        padding: 0.78rem 0.75rem;
+        font-size: 0.84rem;
+    }
+}
+
+@media (max-width: 389.98px) {
+    .swal2-container.cart-add-modal-container {
+        padding:
+            max(0.6rem, env(safe-area-inset-top))
+            max(0.6rem, env(safe-area-inset-right))
+            max(0.6rem, env(safe-area-inset-bottom))
+            max(0.6rem, env(safe-area-inset-left)) !important;
+    }
+
+    .swal2-popup.cart-add-modal-popup {
+        --cart-add-modal-space: 0.85rem;
+        --cart-add-modal-gap: 0.75rem;
+    }
+
+    .cart-add-modal__eyebrow {
+        font-size: 0.62rem;
+    }
+
+    .cart-add-modal__heading {
+        font-size: 1.18rem;
+    }
+}

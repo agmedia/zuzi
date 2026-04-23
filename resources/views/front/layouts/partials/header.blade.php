@@ -92,8 +92,9 @@
 <!-- Sidebar menu-->
 @php
     $isActionListing = Route::currentRouteName() === 'catalog.route.actions';
+    $isSearchListing = Route::currentRouteName() === 'pretrazi';
     $sidebarGroup = $isActionListing ? \App\Helpers\Helper::categoryGroupPath(true) : ($group ?? \App\Helpers\Helper::categoryGroupPath(true));
-    $sidebarIds = $isActionListing ? null : (isset($ids) ? $ids : null);
+    $sidebarIds = ($isActionListing || $isSearchListing) ? null : (isset($ids) ? $ids : null);
     $sidebarCat = isset($cat) ? $cat : null;
     $sidebarSubcat = isset($subcat) ? $subcat : null;
 
