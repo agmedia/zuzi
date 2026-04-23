@@ -12,7 +12,7 @@ class WishlistController extends Controller
     {
         $query = Wishlist::query()
             ->with(['product' => function ($q) {
-                $q->select('id', 'name', 'sku', 'image', 'url');
+                $q->select('id', 'name', 'sku', 'image', 'url', 'quantity', 'status');
             }]);
 
         // Filtriranje po nazivu ili šifri proizvoda
@@ -30,7 +30,7 @@ class WishlistController extends Controller
             ->groupBy('product_id')
             ->orderByDesc('total')
             ->with(['product' => function ($q) {
-                $q->select('id', 'name', 'sku', 'image');
+                $q->select('id', 'name', 'sku', 'image', 'quantity', 'status');
             }])
             ->paginate(20); // broj zapisa po stranici
 

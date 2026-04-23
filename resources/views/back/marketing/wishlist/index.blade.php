@@ -83,6 +83,7 @@
                                             <th style="width: 80px;">Slika</th>
                                             <th>Naziv</th>
                                             <th>Šifra</th>
+                                            <th>Stanje</th>
                                             <th>E-mail (korisnik)</th>
                                             <th>Status</th>
                                             <th>Dodano</th>
@@ -99,6 +100,17 @@
                                                 </td>
                                                 <td>{{ $w->product->name ?? '---' }}</td>
                                                 <td>{{ $w->product->sku ?? '---' }}</td>
+                                                <td>
+                                                    @if($w->product)
+                                                        @if((int) $w->product->quantity !== 0)
+                                                            <span class="badge badge-success">Na stanju ({{ (int) $w->product->quantity }})</span>
+                                                        @else
+                                                            <span class="badge badge-secondary">Nema zalihe</span>
+                                                        @endif
+                                                    @else
+                                                        ---
+                                                    @endif
+                                                </td>
                                                 <td>{{ $w->email }}</td>
                                                 <td>
                                                     @if((int) $w->sent === 1)
@@ -112,7 +124,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="7">Nema zapisa u listi želja.</td>
+                                                <td colspan="8">Nema zapisa u listi želja.</td>
                                             </tr>
                                         @endforelse
                                         </tbody>
@@ -137,6 +149,7 @@
                                         <tr>
                                             <th>Naziv artikla</th>
                                             <th>Šifra</th>
+                                            <th>Stanje</th>
                                             <th class="text-right">Broj prijava</th>
                                         </tr>
                                         </thead>
@@ -145,11 +158,22 @@
                                             <tr>
                                                 <td>{{ optional($item->product)->name ?? '---' }}</td>
                                                 <td>{{ optional($item->product)->sku ?? '---' }}</td>
+                                                <td>
+                                                    @if($item->product)
+                                                        @if((int) $item->product->quantity !== 0)
+                                                            <span class="badge badge-success">Na stanju ({{ (int) $item->product->quantity }})</span>
+                                                        @else
+                                                            <span class="badge badge-secondary">Nema zalihe</span>
+                                                        @endif
+                                                    @else
+                                                        ---
+                                                    @endif
+                                                </td>
                                                 <td class="text-right">{{ $item->total }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="3">Nema zapisa za najtraženije artikle.</td>
+                                                <td colspan="4">Nema zapisa za najtraženije artikle.</td>
                                             </tr>
                                         @endforelse
                                         </tbody>
