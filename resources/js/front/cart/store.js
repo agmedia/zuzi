@@ -154,6 +154,19 @@ class AgService {
         .catch(error => { return this.returnError(messages.error) })
     }
 
+    ensureSettingsLoaded() {
+        if (typeof store === 'undefined' || !store || !store.state) {
+            this.getSettings();
+            return;
+        }
+
+        if (store.state.settings || store.state.settingsRequest) {
+            return;
+        }
+
+        store.dispatch('getSettings');
+    }
+
     /**
      *
      * @param msg
@@ -230,7 +243,7 @@ class AgService {
      */
     formatMainPrice(price) {
         if (!store.state.settings) {
-            this.getSettings();
+            this.ensureSettingsLoaded();
 
             return Number(price).toFixed(2) + ' €';
         }
@@ -285,7 +298,7 @@ class AgService {
      */
     formatSecondaryPrice(price) {
         if (!store.state.settings) {
-            this.getSettings();
+            this.ensureSettingsLoaded();
 
             return '';
         }
@@ -352,13 +365,18 @@ class AgStorage {
 }
 
 /**/
+const storage = new AgStorage();
+const initialCart = storage.getCart() || storage_cart.cart;
+
 let store = {
     state: {
-        storage: new AgStorage(),
+        storage: storage,
         service: new AgService(),
-        cart: storage_cart.cart,
+        cart: initialCart,
         messages: messages,
-        settings: null
+        settings: null,
+        cartRequest: null,
+        settingsRequest: null
     },
 
     actions: {
@@ -368,7 +386,22 @@ let store = {
          * @returns {*}
          */
         getCart(context) {
-            return context.commit('setCart');
+            let state = context.state;
+
+            if (state.cartRequest) {
+                return state.cartRequest;
+            }
+
+            state.cartRequest = state.service.getCart().then(cart => {
+                context.commit('setCart', cart);
+                state.storage.setCart(cart);
+
+                return cart;
+            }).finally(() => {
+                state.cartRequest = null;
+            });
+
+            return state.cartRequest;
         },
 
         /**
@@ -431,13 +464,13 @@ let store = {
         checkCart(context, ids) {
             let state = context.state;
 
-            state.service.checkCart(ids).then(response => {
+            return state.service.checkCart(ids).then(response => {
                 if ( ! response || ! response.cart) {
                     return;
                 }
 
+                context.commit('setCart', response.cart);
                 state.storage.setCart(response.cart);
-                state.cart = response.cart;
 
                 if (response.message && window.location.pathname != '/uspjeh') {
                     window.ToastWarningLong.fire(response.message)
@@ -468,10 +501,10 @@ let store = {
 
             return state.service.checkCoupon(normalizedCoupon).then(response => {
                 if (response && response.cart) {
+                    context.commit('setCart', response.cart);
                     state.storage.setCart(response.cart);
-                    state.cart = response.cart;
                 } else {
-                    context.commit('setCart');
+                    return context.dispatch('getCart');
                 }
 
                 if (response && response.success) {
@@ -502,7 +535,7 @@ let store = {
                     state.service.returnError(messages.loyaltyError);
                 }
 
-                context.commit('setCart');
+                return context.dispatch('getCart');
             });
         },
 
@@ -522,27 +555,35 @@ let store = {
         getSettings(context, item) {
             let state = context.state;
 
-            state.service.getSettings(item).then(settings => {
+            if (state.settings) {
+                return Promise.resolve(state.settings);
+            }
+
+            if (state.settingsRequest) {
+                return state.settingsRequest;
+            }
+
+            state.settingsRequest = state.service.getSettings(item).then(settings => {
                 if (settings) {
-                    state.settings = settings;
+                    context.commit('setSettings', settings);
                 }
+
+                return settings;
+            }).finally(() => {
+                state.settingsRequest = null;
             });
+
+            return state.settingsRequest;
         },
     },
 
     mutations: {
+        setCart(state, cart) {
+            state.cart = cart;
+        },
 
-        /**
-         *
-         * @param state
-         * @returns {*}
-         */
-        setCart(state) {
-            return state.cart = state.service.getCart().then(cart => {
-                state.cart = cart;
-
-                return state.storage.setCart(cart);
-            });
+        setSettings(state, settings) {
+            state.settings = settings;
         }
     },
 };

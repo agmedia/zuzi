@@ -5319,6 +5319,18 @@ var AgService = /*#__PURE__*/function () {
         return _this7.returnError(messages.error);
       });
     }
+  }, {
+    key: "ensureSettingsLoaded",
+    value: function ensureSettingsLoaded() {
+      if (typeof store === 'undefined' || !store || !store.state) {
+        this.getSettings();
+        return;
+      }
+      if (store.state.settings || store.state.settingsRequest) {
+        return;
+      }
+      store.dispatch('getSettings');
+    }
 
     /**
      *
@@ -5409,7 +5421,7 @@ var AgService = /*#__PURE__*/function () {
     key: "formatMainPrice",
     value: function formatMainPrice(price) {
       if (!store.state.settings) {
-        this.getSettings();
+        this.ensureSettingsLoaded();
         return Number(price).toFixed(2) + ' €';
       }
       return this.resolvePrice(store.state.settings['currency.list'], price);
@@ -5463,7 +5475,7 @@ var AgService = /*#__PURE__*/function () {
     key: "formatSecondaryPrice",
     value: function formatSecondaryPrice(price) {
       if (!store.state.settings) {
-        this.getSettings();
+        this.ensureSettingsLoaded();
         return '';
       }
       return this.resolvePrice(store.state.settings['currency.list'], price, false);
@@ -5536,13 +5548,17 @@ var AgStorage = /*#__PURE__*/function () {
   return AgStorage;
 }();
 /**/
+var storage = new AgStorage();
+var initialCart = storage.getCart() || storage_cart.cart;
 var store = {
   state: {
-    storage: new AgStorage(),
+    storage: storage,
     service: new AgService(),
-    cart: storage_cart.cart,
+    cart: initialCart,
     messages: messages,
-    settings: null
+    settings: null,
+    cartRequest: null,
+    settingsRequest: null
   },
   actions: {
     /**
@@ -5551,7 +5567,18 @@ var store = {
      * @returns {*}
      */
     getCart: function getCart(context) {
-      return context.commit('setCart');
+      var state = context.state;
+      if (state.cartRequest) {
+        return state.cartRequest;
+      }
+      state.cartRequest = state.service.getCart().then(function (cart) {
+        context.commit('setCart', cart);
+        state.storage.setCart(cart);
+        return cart;
+      })["finally"](function () {
+        state.cartRequest = null;
+      });
+      return state.cartRequest;
     },
     /**
      *
@@ -5603,12 +5630,12 @@ var store = {
      */
     checkCart: function checkCart(context, ids) {
       var state = context.state;
-      state.service.checkCart(ids).then(function (response) {
+      return state.service.checkCart(ids).then(function (response) {
         if (!response || !response.cart) {
           return;
         }
+        context.commit('setCart', response.cart);
         state.storage.setCart(response.cart);
-        state.cart = response.cart;
         if (response.message && window.location.pathname != '/uspjeh') {
           window.ToastWarningLong.fire(response.message);
           if (window.location.pathname != '/kosarica') {
@@ -5633,10 +5660,10 @@ var store = {
       }
       return state.service.checkCoupon(normalizedCoupon).then(function (response) {
         if (response && response.cart) {
+          context.commit('setCart', response.cart);
           state.storage.setCart(response.cart);
-          state.cart = response.cart;
         } else {
-          context.commit('setCart');
+          return context.dispatch('getCart');
         }
         if (response && response.success) {
           state.service.returnSuccess(response.message || messages.couponSuccess);
@@ -5661,7 +5688,7 @@ var store = {
         } else {
           state.service.returnError(messages.loyaltyError);
         }
-        context.commit('setCart');
+        return context.dispatch('getCart');
       });
     },
     /**
@@ -5678,24 +5705,29 @@ var store = {
      */
     getSettings: function getSettings(context, item) {
       var state = context.state;
-      state.service.getSettings(item).then(function (settings) {
+      if (state.settings) {
+        return Promise.resolve(state.settings);
+      }
+      if (state.settingsRequest) {
+        return state.settingsRequest;
+      }
+      state.settingsRequest = state.service.getSettings(item).then(function (settings) {
         if (settings) {
-          state.settings = settings;
+          context.commit('setSettings', settings);
         }
+        return settings;
+      })["finally"](function () {
+        state.settingsRequest = null;
       });
+      return state.settingsRequest;
     }
   },
   mutations: {
-    /**
-     *
-     * @param state
-     * @returns {*}
-     */
-    setCart: function setCart(state) {
-      return state.cart = state.service.getCart().then(function (cart) {
-        state.cart = cart;
-        return state.storage.setCart(cart);
-      });
+    setCart: function setCart(state, cart) {
+      state.cart = cart;
+    },
+    setSettings: function setSettings(state, settings) {
+      state.settings = settings;
     }
   }
 };
