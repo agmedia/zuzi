@@ -151,7 +151,11 @@ class Product extends Model
      */
     public function getEurPriceAttribute()
     {
-        $this->eur = Settings::get('currency', 'list')->where('code', 'EUR')->first();
+        if (! $this->eur) {
+            $this->eur = Currency::list()->first(function ($item) {
+                return ($item->code ?? null) === 'EUR';
+            });
+        }
 
         if (isset($this->eur->status) && $this->eur->status) {
             return number_format(($this->price * $this->eur->value), 2);
@@ -165,7 +169,11 @@ class Product extends Model
      */
     public function getEurSpecialAttribute()
     {
-        $this->eur = Settings::get('currency', 'list')->where('code', 'EUR')->first();
+        if (! $this->eur) {
+            $this->eur = Currency::list()->first(function ($item) {
+                return ($item->code ?? null) === 'EUR';
+            });
+        }
 
         if (isset($this->eur->status) && $this->eur->status) {
             return number_format(($this->special() * $this->eur->value), 2);

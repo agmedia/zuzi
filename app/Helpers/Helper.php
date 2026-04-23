@@ -494,10 +494,6 @@ class Helper
             return $description;
         }
 
-        if (! static::shouldCacheResolvedWidget($wg)) {
-            return static::resolveDescription($wgs, $description, $id, $context);
-        }
-
         $widgetsSignature = $wg->widgets
             ->sortBy('id')
             ->map(function ($widget) {
@@ -510,7 +506,7 @@ class Helper
 
         $renderedWidget = Cache::remember(
             'wg.' . $wg->id . '.' . md5(serialize($context) . '|' . (optional($wg->updated_at)->timestamp ?? 0) . '|' . $widgetsSignature),
-            config('cache.life'),
+            static::resolvedWidgetCacheTtl($wg),
             function () use ($wg, $context) {
                 return static::renderDescriptionWidget($wg, $context);
             }
@@ -520,9 +516,13 @@ class Helper
     }
 
 
-    private static function shouldCacheResolvedWidget(WidgetGroup $wg): bool
+    private static function resolvedWidgetCacheTtl(WidgetGroup $wg)
     {
-        return ! in_array($wg->template, ['product_carousel', 'page_carousel'], true);
+        if (in_array($wg->template, ['product_carousel', 'page_carousel'], true)) {
+            return now()->addMinutes(10);
+        }
+
+        return config('cache.life');
     }
 
 
