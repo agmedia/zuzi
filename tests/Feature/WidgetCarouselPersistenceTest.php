@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Back\Widget\WidgetController;
 use App\Models\Back\Widget\Widget;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -79,6 +81,137 @@ class WidgetCarouselPersistenceTest extends TestCase
         $this->assertSame([$productId], array_map('intval', array_values($restoredLinks)));
     }
 
+    public function test_widget_stores_category_discount_price_mix_flag(): void
+    {
+        $groupId = $this->createWidgetGroup('product_carousel', 'Kategorijski carousel');
+        $categoryId = $this->createCategory('Stripovi');
+
+        $request = Request::create('/widget', 'POST', [
+            'title' => 'Stripovi',
+            'group_id' => $groupId,
+            'group_template' => 'product_carousel',
+            'action_group' => 'category',
+            'action_list' => [
+                $categoryId => $categoryId,
+            ],
+            'category_discount_price_mix' => 'on',
+            'status' => 'on',
+        ]);
+
+        $storedWidget = (new Widget())->validateRequest($request)->setUrl()->store();
+
+        $this->assertInstanceOf(Widget::class, $storedWidget);
+
+        $data = unserialize($storedWidget->data);
+
+        $this->assertSame('category', $data['target'] ?? null);
+        $this->assertSame('on', $data['category_discount_price_mix'] ?? null);
+    }
+
+    public function test_category_product_carousel_checkbox_returns_only_highest_priced_discounted_products(): void
+    {
+        $categoryId = $this->createCategory('Preporuke');
+
+        $nonDiscountedMostExpensiveId = $this->createProduct('Najskuplji bez popusta', 'NODISC1', [
+            'price' => 500,
+            'image' => 'media/test/nodisc1.jpg',
+        ]);
+        $largestDiscountId = $this->createProduct('Najveci popust', 'DISC1', [
+            'price' => 100,
+            'special' => 20,
+            'special_from' => Carbon::now()->subDay(),
+            'special_to' => Carbon::now()->addDay(),
+            'image' => 'media/test/disc1.jpg',
+        ]);
+        $mostExpensiveId = $this->createProduct('Najskuplji artikl', 'PRICE1', [
+            'price' => 400,
+            'special' => 360,
+            'special_from' => Carbon::now()->subDay(),
+            'special_to' => Carbon::now()->addDay(),
+            'image' => 'media/test/price1.jpg',
+        ]);
+        $secondLargestDiscountId = $this->createProduct('Drugi popust', 'DISC2', [
+            'price' => 200,
+            'special' => 80,
+            'special_from' => Carbon::now()->subDay(),
+            'special_to' => Carbon::now()->addDay(),
+            'image' => 'media/test/disc2.jpg',
+        ]);
+        $secondMostExpensiveId = $this->createProduct('Drugi najskuplji', 'PRICE2', [
+            'price' => 350,
+            'special' => 320,
+            'special_from' => Carbon::now()->subDay(),
+            'special_to' => Carbon::now()->addDay(),
+            'image' => 'media/test/price2.jpg',
+        ]);
+        $thirdMostExpensiveId = $this->createProduct('Treci najskuplji', 'PRICE3', [
+            'price' => 250,
+            'special' => 230,
+            'special_from' => Carbon::now()->subDay(),
+            'special_to' => Carbon::now()->addDay(),
+            'image' => 'media/test/price3.jpg',
+        ]);
+
+        collect([
+            $nonDiscountedMostExpensiveId,
+            $largestDiscountId,
+            $mostExpensiveId,
+            $secondLargestDiscountId,
+            $secondMostExpensiveId,
+            $thirdMostExpensiveId,
+        ])->each(function (int $productId) use ($categoryId) {
+            $this->attachProductToCategory($productId, $categoryId);
+        });
+
+        $productIds = $this->invokeCategoryProducts([
+            'target' => 'category',
+            'list' => [$categoryId],
+            'category_discount_price_mix' => 'on',
+        ])->get()->pluck('id')->all();
+
+        $this->assertNotContains($nonDiscountedMostExpensiveId, $productIds);
+        $this->assertSame([
+            $mostExpensiveId,
+            $secondMostExpensiveId,
+            $thirdMostExpensiveId,
+            $secondLargestDiscountId,
+            $largestDiscountId,
+        ], array_slice($productIds, 0, 5));
+    }
+
+    public function test_category_product_carousel_keeps_price_desc_order_without_mix_flag(): void
+    {
+        $categoryId = $this->createCategory('Cjenovni poredak');
+
+        $lowestPriceId = $this->createProduct('Najniza cijena', 'BASE1', [
+            'price' => 100,
+            'image' => 'media/test/base1.jpg',
+        ]);
+        $highestPriceId = $this->createProduct('Najvisa cijena', 'BASE2', [
+            'price' => 300,
+            'image' => 'media/test/base2.jpg',
+        ]);
+        $middlePriceId = $this->createProduct('Srednja cijena', 'BASE3', [
+            'price' => 200,
+            'image' => 'media/test/base3.jpg',
+        ]);
+
+        collect([$lowestPriceId, $highestPriceId, $middlePriceId])->each(function (int $productId) use ($categoryId) {
+            $this->attachProductToCategory($productId, $categoryId);
+        });
+
+        $productIds = $this->invokeCategoryProducts([
+            'target' => 'category',
+            'list' => [$categoryId],
+        ])->get()->pluck('id')->all();
+
+        $this->assertSame([
+            $highestPriceId,
+            $middlePriceId,
+            $lowestPriceId,
+        ], array_slice($productIds, 0, 3));
+    }
+
     private function createWidgetGroup(string $template, string $title): int
     {
         return (int) DB::table('widget_groups')->insertGetId([
@@ -93,9 +226,28 @@ class WidgetCarouselPersistenceTest extends TestCase
         ]);
     }
 
-    private function createProduct(string $name, string $sku): int
+    private function createCategory(string $title, int $parentId = 0): int
     {
-        return (int) DB::table('products')->insertGetId([
+        return (int) DB::table('categories')->insertGetId([
+            'parent_id' => $parentId,
+            'title' => $title,
+            'description' => null,
+            'meta_title' => null,
+            'meta_description' => null,
+            'image' => 'media/test/category.jpg',
+            'group' => 'knjige',
+            'lang' => 'hr',
+            'sort_order' => 0,
+            'status' => 1,
+            'slug' => Str::slug($title . '-' . $parentId . '-' . uniqid()),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+    }
+
+    private function createProduct(string $name, string $sku, array $overrides = []): int
+    {
+        return (int) DB::table('products')->insertGetId(array_merge([
             'author_id' => 0,
             'publisher_id' => 0,
             'action_id' => 0,
@@ -128,6 +280,25 @@ class WidgetCarouselPersistenceTest extends TestCase
             'status' => 1,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
+        ], $overrides));
+    }
+
+    private function attachProductToCategory(int $productId, int $categoryId): void
+    {
+        DB::table('product_category')->insert([
+            'product_id' => $productId,
+            'category_id' => $categoryId,
         ]);
+    }
+
+    private function invokeCategoryProducts(array $data): Builder
+    {
+        $method = new \ReflectionMethod(Helper::class, 'categoryProducts');
+        $method->setAccessible(true);
+
+        /** @var Builder $query */
+        $query = $method->invoke(null, $data);
+
+        return $query;
     }
 }

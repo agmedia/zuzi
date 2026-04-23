@@ -15,6 +15,10 @@
     @php
         $selectedTarget = old('target', isset($widget) ? $widget->target : 'product');
         $selectedList = old('action_list', isset($widget) ? (array) json_decode($widget->links, true) : []);
+        $categoryDiscountPriceMixEnabled = old(
+            'category_discount_price_mix',
+            isset($widget->data['category_discount_price_mix']) ? $widget->data['category_discount_price_mix'] : null
+        );
     @endphp
     <div class="content" id="pages-app">
 
@@ -95,6 +99,19 @@
                                                     <label class="custom-control-label" for="popular-switch">Uključi popularne stavke</label>
                                                 </div>
                                             </div>
+                                            <div class="form-group mb-5 {{ $selectedTarget === 'category' ? '' : 'ag-hide' }}" id="category-discount-price-mix-wrapper">
+                                                <div class="custom-control custom-switch custom-control-success">
+                                                    <input
+                                                        type="checkbox"
+                                                        class="custom-control-input"
+                                                        id="category-discount-price-mix-switch"
+                                                        name="category_discount_price_mix"
+                                                        @if ($categoryDiscountPriceMixEnabled) checked @endif
+                                                        @if ($selectedTarget !== 'category') disabled @endif
+                                                    >
+                                                    <label class="custom-control-label" for="category-discount-price-mix-switch">Za kategorije prikaži samo najskuplje artikle na popustu</label>
+                                                </div>
+                                            </div>
                                             <div class="form-group mb-3">
                                                 <div class="custom-control custom-switch custom-control-success">
                                                     <input type="checkbox" class="custom-control-input" id="status-switch" name="status" @if (isset($widget) and $widget->status) checked @endif>
@@ -146,11 +163,20 @@
 
     <script>
         $(() => {
+            const toggleCategoryDiscountPriceMix = () => {
+                const isCategoryTarget = $('#target-select').val() === 'category';
+
+                $('#category-discount-price-mix-wrapper').toggleClass('ag-hide', !isCategoryTarget);
+                $('#category-discount-price-mix-switch').prop('disabled', !isCategoryTarget);
+            };
+
             $('#target-select').select2({
                 placeholder: '-- Molimo odaberite --',
                 minimumResultsForSearch: Infinity
             });
+            toggleCategoryDiscountPriceMix();
             $('#target-select').on('change', function (e) {
+                toggleCategoryDiscountPriceMix();
                 Livewire.emit('groupUpdated', e.currentTarget.value);
             });
 

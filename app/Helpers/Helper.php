@@ -755,6 +755,34 @@ class Helper
      */
     private static function categoryProducts(array $data): Builder
     {
+        $products = static::categoryProductsBaseQuery($data);
+
+        if (static::shouldUseCategoryDiscountPriceMix($data)) {
+            return $products
+                ->withListingSpecial()
+                ->orderByDesc('products.price')
+                ->orderByDesc('products.updated_at')
+                ->limit(12)
+                ->with(['author', 'action'])
+                ->withReviewSummary();
+        }
+
+        return $products
+            ->orderByDesc('products.price')
+            ->orderByDesc('products.updated_at')
+            ->limit(12)
+            ->with(['author', 'action'])
+            ->withReviewSummary();
+    }
+
+
+    /**
+     * @param array $data
+     *
+     * @return Builder
+     */
+    private static function categoryProductsBaseQuery(array $data): Builder
+    {
         $products = (new Product())->newQuery();
 
         $products->active()->available()->hasImage();
@@ -767,12 +795,19 @@ class Helper
             $products->whereRaw('1 = 0');
         }
 
-        return $products->distinct()
-                        ->orderBy('price', 'desc')
-                        ->orderBy('updated_at', 'desc')
-                        ->limit(12)
-                        ->with(['author', 'action'])
-                        ->withReviewSummary();
+        return $products->distinct();
+    }
+
+
+    /**
+     * @param array $data
+     *
+     * @return bool
+     */
+    private static function shouldUseCategoryDiscountPriceMix(array $data): bool
+    {
+        return static::isDescriptionTarget($data, 'category')
+            && (($data['category_discount_price_mix'] ?? null) === 'on');
     }
 
 
