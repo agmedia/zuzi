@@ -8,8 +8,10 @@ use App\Models\Back\Widget\Widget;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -210,6 +212,66 @@ class WidgetCarouselPersistenceTest extends TestCase
             $middlePriceId,
             $lowestPriceId,
         ], array_slice($productIds, 0, 3));
+    }
+
+    public function test_custom_widget_video_is_uploaded_and_persisted(): void
+    {
+        Storage::fake('widget');
+
+        $groupId = $this->createWidgetGroup('custom', 'Slider Index');
+        $request = Request::create('/widget', 'POST', [
+            'title' => 'Video widget',
+            'group_id' => $groupId,
+            'group_template' => 'custom',
+            'url' => '/akcija',
+            'status' => 'on',
+        ], [], [
+            'video_file' => UploadedFile::fake()->create('hero.mp4', 5120, 'video/mp4'),
+        ]);
+
+        $storedWidget = (new Widget())->validateRequest($request)->setUrl()->store();
+        $storedWidget->syncVideo($request);
+        $storedWidget->refresh();
+
+        $this->assertNotNull($storedWidget->video);
+
+        $relativePath = Str::after(
+            $storedWidget->video,
+            trim((string) config('filesystems.disks.widget.url'), '/') . '/'
+        );
+
+        $this->assertTrue(Storage::disk('widget')->exists($relativePath));
+    }
+
+    public function test_custom_widget_front_renders_video_when_present(): void
+    {
+        $groupId = $this->createWidgetGroup('custom', 'Slider Index');
+        $groupSlug = (string) DB::table('widget_groups')->where('id', $groupId)->value('slug');
+
+        DB::table('widgets')->insert([
+            'group_id' => $groupId,
+            'title' => 'Video widget',
+            'subtitle' => 'Loop video',
+            'description' => null,
+            'data' => serialize([]),
+            'image' => 'media/img/widget/demo.jpg',
+            'video' => 'media/img/widget/99/hero.mp4',
+            'link' => null,
+            'link_id' => null,
+            'url' => '/akcija',
+            'badge' => null,
+            'width' => 12,
+            'sort_order' => 0,
+            'status' => 1,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+
+        $output = Helper::setDescription('++' . $groupSlug . '++');
+
+        $this->assertStringContainsString('<video', $output);
+        $this->assertStringContainsString('media/img/widget/99/hero.mp4', $output);
+        $this->assertStringNotContainsString('<img', $output);
     }
 
     private function createWidgetGroup(string $template, string $title): int

@@ -615,6 +615,7 @@ class Helper
                     'color'    => $widget->badge,
                     'url'      => $widget->url,
                     'image'    => $widget->thumb,
+                    'video'    => $widget->video_url,
                     'width'    => $widget->width,
                     'right'    => (isset($data['right']) && $data['right'] == 'on') ? 1 : null,
                     'short_description' => $context['short_description'] ?? null,

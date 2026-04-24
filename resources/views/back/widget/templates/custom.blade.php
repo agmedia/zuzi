@@ -68,6 +68,43 @@
                                 </div>
                             </div>
 
+                            <div class="block mb-3">
+                                <div class="block-header block-header-default" style="border: 1px solid #e9e9e9;">
+                                    <h3 class="block-title">Video</h3>
+                                    <div class="block-options">
+                                        <button type="button" class="btn-block-option" data-toggle="block-option" data-action="content_toggle"><i class="si si-arrow-up"></i></button>
+                                    </div>
+                                </div>
+                                <div class="block-content" style="padding: 20px 0;">
+                                    @if (isset($widget) && $widget->video)
+                                        <div class="row mb-3">
+                                            <div class="col-md-10 offset-md-1">
+                                                <video src="{{ asset($widget->video) }}" autoplay muted loop playsinline controls style="width: 100%; max-height: 320px; border-radius: 10px; background: #111;"></video>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <div class="row">
+                                        <div class="col-md-10 offset-md-1">
+                                            <div class="form-group mb-2">
+                                                <label for="video-input">Upload videa</label>
+                                                <input type="file" class="form-control-file" id="video-input" name="video_file" accept="video/mp4,video/webm,video/quicktime">
+                                                <small class="form-text text-muted">Ako je odabran video, on će se prikazivati na frontu umjesto fotografije. Preporuka: MP4 bez zvuka i po mogućnosti ispod 8 MB radi bržeg učitavanja.</small>
+                                            </div>
+
+                                            @if (isset($widget) && $widget->video)
+                                                <div class="form-group mb-0 mt-3">
+                                                    <div class="custom-control custom-switch custom-control-danger">
+                                                        <input type="checkbox" class="custom-control-input" id="remove-video-switch" name="remove_video">
+                                                        <label class="custom-control-label" for="remove-video-switch">Makni postojeći video</label>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="form-group mb-3">
                                 <label for="title-input">Naslov @include('back.layouts.partials.required-star')</label>
                                 <input type="text" class="form-control" name="title" id="title-input" value="{{ isset($widget->title) ? $widget->title : '' }}" placeholder="">

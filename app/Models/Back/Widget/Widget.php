@@ -6,6 +6,8 @@ use App\Helpers\ImageHelper;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Widget extends Model
 {
@@ -59,6 +61,25 @@ class Widget extends Model
 
 
     /**
+     * @param $value
+     *
+     * @return string|null
+     */
+    public function getVideoUrlAttribute($value)
+    {
+        if (! $this->video) {
+            return null;
+        }
+
+        if (Str::startsWith($this->video, ['http://', 'https://'])) {
+            return $this->video;
+        }
+
+        return config('settings.images_domain') . $this->video;
+    }
+
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function group()
@@ -88,7 +109,8 @@ class Widget extends Model
         // Validate the request.
         $request->validate([
             'group_template' => 'required',
-            'title' => 'required'
+            'title' => 'required',
+            'video_file' => 'nullable|file|mimes:mp4,webm,mov|max:30720',
         ]);
 
         $resolved_target = (string) $request->input('target', $request->input('action_group'));
@@ -277,6 +299,8 @@ class Widget extends Model
         unset($arr['_method']);
         unset($arr['image']);
         unset($arr['image_long']);
+        unset($arr['video_file']);
+        unset($arr['remove_video']);
         unset($arr['action_group']);
 
         if ($this->request->has('action_list')) {
@@ -285,6 +309,29 @@ class Widget extends Model
         }
 
         return serialize($arr);
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return bool
+     */
+    public function syncVideo(Request $request)
+    {
+        if ($request->hasFile('video_file')) {
+            return $this->storeVideo($request);
+        }
+
+        if ($request->boolean('remove_video')) {
+            $this->deleteStoredVideo();
+
+            return $this->update([
+                'video' => null
+            ]);
+        }
+
+        return true;
     }
 
 
@@ -303,5 +350,54 @@ class Widget extends Model
         }
 
         return false;
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return bool
+     */
+    private function storeVideo(Request $request)
+    {
+        $file = $request->file('video_file');
+
+        if (! $file) {
+            return false;
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'mp4');
+        $filename = Str::slug($this->title ?: 'widget-video') . '-' . Str::random(4) . '.' . $extension;
+        $directory = (string) $this->id;
+
+        $this->deleteStoredVideo();
+
+        Storage::disk('widget')->putFileAs($directory, $file, $filename);
+
+        return $this->update([
+            'video' => trim(config('filesystems.disks.widget.url'), '/') . '/' . $directory . '/' . $filename
+        ]);
+    }
+
+
+    /**
+     * @return void
+     */
+    private function deleteStoredVideo()
+    {
+        if (! $this->video) {
+            return;
+        }
+
+        $video = trim((string) (parse_url($this->video, PHP_URL_PATH) ?: $this->video), '/');
+        $diskUrl = trim((string) config('filesystems.disks.widget.url'), '/');
+
+        if ($diskUrl !== '' && Str::startsWith($video, $diskUrl)) {
+            $video = ltrim(Str::after($video, $diskUrl), '/');
+        }
+
+        if ($video !== '') {
+            Storage::disk('widget')->delete($video);
+        }
     }
 }

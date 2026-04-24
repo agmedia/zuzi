@@ -70,6 +70,8 @@ class WidgetController extends Controller
                 $stored->resolveImage($request);
             }
 
+            $stored->syncVideo($request);
+
             $this->flush($stored);
 
             return redirect()->route('widgets')->with(['success' => 'Widget je uspješno snimljen!']);
@@ -139,6 +141,8 @@ class WidgetController extends Controller
             if (Widget::hasImage($request)) {
                 $updated->resolveImage($request);
             }
+
+            $updated->syncVideo($request);
 
             $this->flush($updated);
 

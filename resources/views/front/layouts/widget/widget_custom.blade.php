@@ -20,6 +20,7 @@
     $countdownHours = intdiv($countdownDiff % 86400, 3600);
     $countdownMinutes = intdiv($countdownDiff % 3600, 60);
     $countdownSeconds = $countdownDiff % 60;
+    $homeHeroMediaStyle = 'width: 350px; max-width: 100%; height: 350px; object-fit: cover; border-radius: 10px;';
 @endphp
 
 <section class="tns-carousel mb-3 rounded-3 bg-light shadow widget-touch-carousel">
@@ -60,7 +61,17 @@
 Pogledajte akcije
                                      <i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                         </div>
-                        <div class="p-3"><a  href="{{ url($widget['url']) }}" ><img src="{{ $widget['image'] }}" alt="{{ $widget['title'] }}" width="350" height="350" style="border-radius: 10px;"></a></div>
+                        <div class="p-3">
+                            <a href="{{ url($widget['url']) }}">
+                                @if (! empty($widget['video']))
+                                    <video autoplay loop muted playsinline preload="metadata" poster="{{ $widget['image'] ?? '' }}" style="{{ $homeHeroMediaStyle }}">
+                                        <source src="{{ $widget['video'] }}">
+                                    </video>
+                                @elseif (! empty($widget['image']))
+                                    <img src="{{ $widget['image'] }}" alt="{{ $widget['title'] }}" width="350" height="350" style="{{ $homeHeroMediaStyle }}">
+                                @endif
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
