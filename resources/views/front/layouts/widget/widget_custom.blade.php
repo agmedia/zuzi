@@ -24,7 +24,7 @@
     $homeHeroMediaStyle = 'display: block; width: 100%; aspect-ratio: 1 / 1; height: auto; object-fit: cover; border-radius: 10px;';
 @endphp
 
-<section class="tns-carousel mb-3 rounded-3 bg-light shadow widget-touch-carousel">
+<section class="tns-carousel mb-3 rounded-3 bg-light shadow widget-touch-carousel widget-custom-hero-carousel">
     <div class="tns-carousel-inner" data-carousel-options='@json($homeHeroCarouselOptions)'>
         @foreach($data as  $widget)
 
@@ -65,7 +65,7 @@ Pogledajte akcije
                         <div class="p-3">
                             <a href="{{ url($widget['url']) }}" style="{{ $homeHeroMediaWrapStyle }}">
                                 @if (! empty($widget['video']))
-                                    <video autoplay loop muted playsinline preload="metadata" poster="{{ $widget['image'] ?? '' }}" style="{{ $homeHeroMediaStyle }}">
+                                    <video class="js-widget-custom-video" autoplay loop muted playsinline webkit-playsinline preload="auto" poster="{{ $widget['image'] ?? '' }}" disablepictureinpicture style="{{ $homeHeroMediaStyle }}">
                                         <source src="{{ $widget['video'] }}">
                                     </video>
                                 @elseif (! empty($widget['image']))
@@ -93,6 +93,68 @@ Pogledajte akcije
             if (firstBtn) {
                 firstBtn.focus();
             }
+
+            const carousels = document.querySelectorAll('.widget-custom-hero-carousel');
+
+            const syncCarouselVideos = (carousel) => {
+                const videos = carousel.querySelectorAll('.js-widget-custom-video');
+
+                videos.forEach((video) => {
+                    const slide = video.closest('.tns-item');
+                    const isActive = !slide || slide.classList.contains('tns-slide-active');
+
+                    video.muted = true;
+                    video.defaultMuted = true;
+                    video.playsInline = true;
+
+                    if (isActive) {
+                        const playPromise = video.play();
+
+                        if (playPromise && typeof playPromise.catch === 'function') {
+                            playPromise.catch(() => {});
+                        }
+                    } else {
+                        video.pause();
+                    }
+                });
+            };
+
+            carousels.forEach((carousel) => {
+                const sync = () => {
+                    window.requestAnimationFrame(() => syncCarouselVideos(carousel));
+                };
+
+                sync();
+
+                carousel.querySelectorAll('.js-widget-custom-video').forEach((video) => {
+                    ['loadedmetadata', 'loadeddata', 'canplay'].forEach((eventName) => {
+                        video.addEventListener(eventName, sync);
+                    });
+                });
+
+                const items = carousel.querySelectorAll('.tns-item');
+
+                if (items.length) {
+                    const observer = new MutationObserver((mutations) => {
+                        if (mutations.some((mutation) => mutation.attributeName === 'class')) {
+                            sync();
+                        }
+                    });
+
+                    items.forEach((item) => {
+                        observer.observe(item, {
+                            attributes: true,
+                            attributeFilter: ['class'],
+                        });
+                    });
+                }
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    carousels.forEach((carousel) => syncCarouselVideos(carousel));
+                }
+            });
         });
     </script>
 @endpush
