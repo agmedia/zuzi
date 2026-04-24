@@ -4,6 +4,7 @@
         $reviewsAverage = $reviewsCount ? round((float) ($product->reviews_avg_stars ?? 0), 1) : 0;
         $cardLayout = $cardLayout ?? null;
         $isCartShelfLayout = $cardLayout === 'cart-shelf';
+        $cartShelfBadgeText = trim((string) ($cartShelfBadgeText ?? ''));
         $productCategories = $product->relationLoaded('categories') ? $product->categories : collect();
         $isBookmarkerProduct = $productCategories->contains(function ($category) {
             return (string) data_get($category, 'slug') === 'bookmarkeri';
@@ -60,6 +61,10 @@
                         @endfor
                     </div>
                 </div>
+            @endif
+
+            @if ($isCartShelfLayout && $cartShelfBadgeText !== '')
+                <div class="cart-shelf-card__context-label">{{ $cartShelfBadgeText }}</div>
             @endif
 
             <div class="@if($isCartShelfLayout) cart-shelf-card__price-group @else mt-auto @endif">

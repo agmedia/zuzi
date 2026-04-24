@@ -101,6 +101,20 @@
             margin-top: auto;
         }
 
+        .cart-shelf-card__context-label {
+            display: inline-flex;
+            align-items: center;
+            align-self: flex-start;
+            margin: 0.15rem 0 0.65rem;
+            padding: 0.3rem 0.55rem;
+            border-radius: 999px;
+            background: rgba(229, 0, 119, 0.08);
+            color: #9f1c63;
+            font-size: 0.72rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
         .cart-shelf-card--bookmarkers .cart-shelf-card__image-link {
             background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         }
@@ -221,8 +235,8 @@
         <section class="mt-4 pt-2 cart-shelf-section">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <div>
-                    <h2 class="h4 mb-1">S obzirom na vašu košaricu, preporučujemo</h2>
-                    <p class="text-muted mb-0">Odabrali smo slične naslove od 10 do 15 € koje kupci često dodaju prije završetka kupnje.</p>
+                    <h2 class="h4 mb-1">Dodaj još nešto uz svoju narudžbu</h2>
+                    <p class="text-muted mb-0">Kupci često dodaju i ove naslove prije završetka kupnje.</p>
                 </div>
             </div>
 
@@ -230,7 +244,11 @@
                 <div class="tns-carousel-inner" data-carousel-options='@json($cartRecommendationCarouselOptions)'>
                     @foreach ($cartRecommendations as $product)
                         <div>
-                            @include('front.catalog.category.product', ['product' => $product, 'cardLayout' => 'cart-shelf'])
+                            @include('front.catalog.category.product', [
+                                'product' => $product,
+                                'cardLayout' => 'cart-shelf',
+                                'cartShelfBadgeText' => 'Često dodano uz ovu narudžbu',
+                            ])
                         </div>
                     @endforeach
                 </div>
