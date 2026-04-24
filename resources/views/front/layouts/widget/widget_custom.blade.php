@@ -20,7 +20,8 @@
     $countdownHours = intdiv($countdownDiff % 86400, 3600);
     $countdownMinutes = intdiv($countdownDiff % 3600, 60);
     $countdownSeconds = $countdownDiff % 60;
-    $homeHeroMediaStyle = 'width: 350px; max-width: 100%; height: 350px; object-fit: cover; border-radius: 10px;';
+    $homeHeroMediaWrapStyle = 'width: min(350px, 100%);';
+    $homeHeroMediaStyle = 'display: block; width: 100%; aspect-ratio: 1 / 1; height: auto; object-fit: cover; border-radius: 10px;';
 @endphp
 
 <section class="tns-carousel mb-3 rounded-3 bg-light shadow widget-touch-carousel">
@@ -62,7 +63,7 @@ Pogledajte akcije
                                      <i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                         </div>
                         <div class="p-3">
-                            <a href="{{ url($widget['url']) }}">
+                            <a href="{{ url($widget['url']) }}" style="{{ $homeHeroMediaWrapStyle }}">
                                 @if (! empty($widget['video']))
                                     <video autoplay loop muted playsinline preload="metadata" poster="{{ $widget['image'] ?? '' }}" style="{{ $homeHeroMediaStyle }}">
                                         <source src="{{ $widget['video'] }}">
