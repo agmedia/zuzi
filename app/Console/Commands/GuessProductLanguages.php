@@ -235,13 +235,6 @@ class GuessProductLanguages extends Command
             ];
         }
 
-        if (! $is_regional && ! $is_foreign_branch) {
-            return [
-                'language' => 'Hrvatski',
-                'rule' => 'default_croatian_outside_special_categories',
-            ];
-        }
-
         if ($this->hasAnyGroup($origin_groups, ['serbian']) && $year !== null && $year < 1990) {
             return [
                 'language' => 'Hrvatskosrbski',
@@ -298,6 +291,13 @@ class GuessProductLanguages extends Command
             return [
                 'language' => null,
                 'skip_reason' => 'ambiguous_origin',
+            ];
+        }
+
+        if (! $is_regional && ! $is_foreign_branch) {
+            return [
+                'language' => 'Hrvatski',
+                'rule' => 'default_croatian_outside_special_categories',
             ];
         }
 
