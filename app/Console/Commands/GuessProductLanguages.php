@@ -256,10 +256,10 @@ class GuessProductLanguages extends Command
             ];
         }
 
-        if ($this->hasAnyGroup($origin_groups, ['serbian']) && $year !== null && $year >= 1990) {
+        if ($this->hasAnyGroup($origin_groups, ['serbian']) && ($year === null || $year >= 1990)) {
             return [
                 'language' => 'Srpski',
-                'rule' => 'serbian_origin_modern',
+                'rule' => $year === null ? 'serbian_origin_unknown_year' : 'serbian_origin_modern',
             ];
         }
 
