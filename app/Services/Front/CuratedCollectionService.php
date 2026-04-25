@@ -14,6 +14,7 @@ class CuratedCollectionService
 {
     private const EXCLUDED_ORDER_STATUSES = [5, 7, 8];
     private const MONTHLY_RANKING_LIMIT = 480;
+    private const HOMEPAGE_FEATURED_PRODUCTS_LIMIT = 10;
     private const CANONICAL_MIN_SCORE = 140;
     private const CANONICAL_SEED_MIN_COVERAGE = 0.5;
     private const EXCLUDED_TITLE_PATTERNS = [
@@ -36,8 +37,8 @@ class CuratedCollectionService
 
     public function clearHomepageWidgetState(): void
     {
-        $this->forgetCacheKey('homepage-widget');
-        $this->forgetCacheKey('featured-products');
+        $this->forgetCacheKey($this->homepageWidgetCacheSuffix());
+        $this->forgetCacheKey($this->featuredProductsCacheSuffix());
         $this->forgetCacheKey('monthly-ranking.orders');
         $this->forgetCacheKey('monthly-ranking.quantity');
 
@@ -54,7 +55,7 @@ class CuratedCollectionService
     public function homepageWidgetData(): array
     {
         return Cache::remember(
-            $this->cacheKey('homepage-widget'),
+            $this->cacheKey($this->homepageWidgetCacheSuffix()),
             now()->addMinutes(30),
             function () {
                 $collections = collect([
@@ -353,10 +354,12 @@ class CuratedCollectionService
     private function resolveFeaturedProducts(): Collection
     {
         return Cache::remember(
-            $this->cacheKey('featured-products'),
+            $this->cacheKey($this->featuredProductsCacheSuffix()),
             now()->addMinutes(30),
             function () {
-                $rankedProducts = $this->resolveMonthlyRanking('quantity')->take(5)->values();
+                $rankedProducts = $this->resolveMonthlyRanking('quantity')
+                    ->take(self::HOMEPAGE_FEATURED_PRODUCTS_LIMIT)
+                    ->values();
 
                 if ($rankedProducts->isEmpty()) {
                     return Product::query()
@@ -370,7 +373,7 @@ class CuratedCollectionService
                         })
                         ->with(['action'])
                         ->withReviewSummary()
-                        ->popular(5)
+                        ->popular(self::HOMEPAGE_FEATURED_PRODUCTS_LIMIT)
                         ->get()
                         ->map(function (Product $product, int $index) {
                             return [
@@ -791,6 +794,18 @@ class CuratedCollectionService
     private function forgetCacheKey(string $suffix): void
     {
         Cache::forget($this->cacheKey($suffix));
+    }
+
+
+    private function homepageWidgetCacheSuffix(): string
+    {
+        return 'homepage-widget.featured-' . self::HOMEPAGE_FEATURED_PRODUCTS_LIMIT;
+    }
+
+
+    private function featuredProductsCacheSuffix(): string
+    {
+        return 'featured-products.limit-' . self::HOMEPAGE_FEATURED_PRODUCTS_LIMIT;
     }
 
 
