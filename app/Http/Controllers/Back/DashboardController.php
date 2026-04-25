@@ -25,17 +25,13 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Bouncer;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Throwable;
 
 class DashboardController extends Controller
 {
-    private const LANGUAGE_TOOLS_EMAIL = 'tomislav@agmedia.hr';
-
     /**
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
@@ -80,93 +76,14 @@ class DashboardController extends Controller
             ->orderBy('year', 'desc')
             ->pluck('year');
 
-        $showLanguageTools = $this->canUseLanguageTools();
-
         return view('back.dashboard', compact(
             'data',
             'orders',
             'products',
             'this_year',
             'last_year',
-            'yearsWithOrders',
-            'showLanguageTools'
+            'yearsWithOrders'
         ));
-    }
-
-    public function runLanguageTool(Request $request)
-    {
-        abort_unless($this->canUseLanguageTools(), 403);
-
-        $request->validate([
-            'action' => ['required', 'string', 'in:preview_conservative,preview_aggressive,write_aggressive_sql,apply_aggressive'],
-        ]);
-
-        if (function_exists('set_time_limit')) {
-            @set_time_limit(0);
-        }
-
-        if (function_exists('ignore_user_abort')) {
-            @ignore_user_abort(true);
-        }
-
-        $label = '';
-        $options = ['--compact' => true];
-        $success = 'Komanda za jezike je uspješno pokrenuta.';
-
-        switch ($request->input('action')) {
-            case 'preview_conservative':
-                $label = 'Pregled jezika: konzervativni prolaz';
-                $options['--force'] = true;
-                $success = 'Konzervativni pregled jezika je dovršen.';
-                break;
-
-            case 'preview_aggressive':
-                $label = 'Pregled jezika: agresivni prolaz';
-                $options['--aggressive'] = true;
-                $options['--force'] = true;
-                $success = 'Agresivni pregled jezika je dovršen.';
-                break;
-
-            case 'write_aggressive_sql':
-                $label = 'SQL patch: agresivni prolaz';
-                $options['--aggressive'] = true;
-                $options['--force'] = true;
-                $options['--write-sql'] = 'database/041_set_product_languages_aggressive.sql';
-                $success = 'Agresivni SQL patch je generiran.';
-                break;
-
-            case 'apply_aggressive':
-                $label = 'Primjena jezika: agresivni prolaz';
-                $options['--aggressive'] = true;
-                $options['--apply'] = true;
-                $success = 'Agresivna primjena jezika je dovršena.';
-                break;
-        }
-
-        try {
-            Artisan::call('products:guess-languages', $options);
-
-            return redirect()
-                ->route('dashboard')
-                ->with([
-                    'success' => $success,
-                    'language_tool_title' => $label,
-                    'language_tool_output' => $this->sanitizeLanguageToolOutput(Artisan::output()),
-                ]);
-        } catch (Throwable $e) {
-            Log::error('Dashboard language tool failed.', [
-                'user_id' => auth()->id(),
-                'user_email' => auth()->user()->email ?? null,
-                'action' => $request->input('action'),
-                'message' => $e->getMessage(),
-            ]);
-
-            return redirect()
-                ->route('dashboard')
-                ->with([
-                    'error' => 'Pokretanje jezične komande nije uspjelo: ' . $e->getMessage(),
-                ]);
-        }
     }
 
     /**
@@ -531,22 +448,6 @@ class DashboardController extends Controller
             ->get();
 
         return response()->json($data);
-    }
-
-    private function canUseLanguageTools(): bool
-    {
-        if (! auth()->check()) {
-            return false;
-        }
-
-        return Str::lower((string) auth()->user()->email) === self::LANGUAGE_TOOLS_EMAIL;
-    }
-
-    private function sanitizeLanguageToolOutput(?string $output): string
-    {
-        $clean = preg_replace('/\e\[[\d;]*m/', '', (string) $output);
-
-        return trim((string) $clean);
     }
 
 }

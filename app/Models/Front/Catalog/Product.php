@@ -658,6 +658,10 @@ class Product extends Model
             $query->where('letter', $request->input('letter'));
         }
 
+        if ($request->has('language')) {
+            $query->where('language', $request->input('language'));
+        }
+
         if ($request->boolean('akcija')) {
             $query->withListingSpecial();
         }

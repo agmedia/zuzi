@@ -20,86 +20,6 @@
     <div class="content">
         @include('back.layouts.partials.session')
 
-        @if($showLanguageTools)
-            <div class="block block-rounded">
-                <div class="block-header block-header-default">
-                    <h3 class="block-title">Jezik Artikala</h3>
-                </div>
-                <div class="block-content">
-                    <p class="text-muted font-size-sm">
-                        Ovi alati su vidljivi samo korisniku <strong>tomislav@agmedia.hr</strong>. Ne diraju već upisani
-                        jezik, osim ako kasnije ručno ne dodamo force opciju.
-                    </p>
-
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <form action="{{ route('dashboard.language-tools.run') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="action" value="preview_conservative">
-                                <button type="submit" class="btn btn-alt-info btn-block">
-                                    Pregled Osnovni
-                                </button>
-                                <div class="font-size-sm text-muted mt-2">
-                                    Samo kategorije, mjesto izdavanja i godina.
-                                </div>
-                            </form>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <form action="{{ route('dashboard.language-tools.run') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="action" value="preview_aggressive">
-                                <button type="submit" class="btn btn-alt-warning btn-block">
-                                    Pregled Agresivni
-                                </button>
-                                <div class="font-size-sm text-muted mt-2">
-                                    Dodaje i sigurniji tekstualni prolaz za strane naslove.
-                                </div>
-                            </form>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <form action="{{ route('dashboard.language-tools.run') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="action" value="write_aggressive_sql">
-                                <button type="submit" class="btn btn-alt-primary btn-block">
-                                    Snimi Agresivni SQL
-                                </button>
-                                <div class="font-size-sm text-muted mt-2">
-                                    Najsigurnija opcija za veliki broj artikala. Sprema patch u `database`.
-                                </div>
-                            </form>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <form action="{{ route('dashboard.language-tools.run') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="action" value="apply_aggressive">
-                                <button
-                                    type="submit"
-                                    class="btn btn-alt-success btn-block"
-                                    onclick="return confirm('Primijeniti agresivni prolaz za jezik na sve artikle bez upisanog jezika?');"
-                                >
-                                    Primijeni Agresivni
-                                </button>
-                                <div class="font-size-sm text-muted mt-2">
-                                    Upisuje jezik samo tamo gdje je polje trenutno prazno.
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    @if(session('language_tool_output'))
-                        <div class="block block-rounded block-bordered mt-3">
-                            <div class="block-header block-header-default">
-                                <h3 class="block-title">{{ session('language_tool_title', 'Rezultat komande') }}</h3>
-                            </div>
-                            <div class="block-content">
-                                <pre class="language-tool-output">{{ session('language_tool_output') }}</pre>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        @endif
-
         @if( auth()->user()->id != '1716')
             <!-- Quick Overview -->
         <div class="row row-deck">
@@ -332,13 +252,6 @@
         .chart-container.small { height: 200px; }
         .chart-container.medium { height: 280px; }
         .chart-container.large { height: 400px; }
-        .language-tool-output {
-            max-height: 440px;
-            margin-bottom: 0;
-            overflow: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
     </style>
 @endpush
 

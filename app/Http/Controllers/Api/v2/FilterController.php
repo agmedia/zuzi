@@ -173,7 +173,7 @@ class FilterController extends Controller
         $cache_string = '';
         $request_data = $this->buildProductRequestData($params);
 
-        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'akcija', 'sort', 'price_min', 'price_max', 'preserve_order'] as $key) {
+        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'language', 'akcija', 'sort', 'price_min', 'price_max', 'preserve_order'] as $key) {
             if (isset($params[$key]) && $params[$key] !== '') {
                 $cache_string .= $key . '=' . $params[$key];
             }
@@ -235,6 +235,7 @@ class FilterController extends Controller
                 'conditions' => [],
                 'bindings' => [],
                 'letters' => [],
+                'languages' => [],
                 'action_available' => false,
             ]);
         }
@@ -261,6 +262,10 @@ class FilterController extends Controller
                     $this->resolveToolbarBaseQuery($params, ['letter', 'sort']),
                     'letter',
                     ['Latinica', 'Ćirilica', 'Gotica', 'Arapsko', 'Glagoljica']
+                ),
+                'languages' => $this->resolveDistinctProductValues(
+                    $this->resolveToolbarBaseQuery($params, ['language', 'sort']),
+                    'language'
                 ),
                 'action_available' => $this->resolveActionProductsAvailability(
                     $this->resolveToolbarBaseQuery($params, ['akcija', 'sort'])
@@ -340,7 +345,7 @@ class FilterController extends Controller
     {
         $request_data = [];
 
-        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'akcija', 'sort', 'price_min', 'price_max', 'preserve_order'] as $key) {
+        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'language', 'akcija', 'sort', 'price_min', 'price_max', 'preserve_order'] as $key) {
             if (in_array($key, $except, true)) {
                 continue;
             }
@@ -516,6 +521,7 @@ class FilterController extends Controller
             'condition' => (string) ($params['condition'] ?? ''),
             'binding' => (string) ($params['binding'] ?? ''),
             'letter' => (string) ($params['letter'] ?? ''),
+            'language' => (string) ($params['language'] ?? ''),
             'akcija' => (string) ($params['akcija'] ?? ''),
             'price_min' => (string) ($params['price_min'] ?? ''),
             'price_max' => (string) ($params['price_max'] ?? ''),

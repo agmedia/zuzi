@@ -5,6 +5,11 @@
             <div class="catalog-toolbar__desktop d-none d-xl-flex align-items-center">
                 <div class="catalog-toolbar__filters">
                     <div class="catalog-toolbar__filter-scroll">
+                        <select v-if="facetLanguages.length" class="form-select catalog-toolbar__select" v-model="language" aria-label="Filtriraj po jeziku" @change="applyToolbarFilters">
+                            <option value="">Jezik</option>
+                            <option v-for="option in facetLanguages" :key="'desktop-language-' + option" :value="option">{{ option }}</option>
+                        </select>
+
                         <select v-if="facetConditions.length" class="form-select catalog-toolbar__select" v-model="condition" aria-label="Filtriraj po stanju" @change="applyToolbarFilters">
                             <option value="">Stanje</option>
                             <option v-for="option in facetConditions" :key="'desktop-condition-' + option" :value="option">{{ option }}</option>
@@ -13,11 +18,6 @@
                         <select v-if="facetBindings.length" class="form-select catalog-toolbar__select" v-model="binding" aria-label="Filtriraj po uvezu" @change="applyToolbarFilters">
                             <option value="">Uvez</option>
                             <option v-for="option in facetBindings" :key="'desktop-binding-' + option" :value="option">{{ option }}</option>
-                        </select>
-
-                        <select v-if="facetLetters.length" class="form-select catalog-toolbar__select" v-model="letter" aria-label="Filtriraj po pismu" @change="applyToolbarFilters">
-                            <option value="">Pismo</option>
-                            <option v-for="option in facetLetters" :key="'desktop-letter-' + option" :value="option">{{ option }}</option>
                         </select>
 
                         <label
@@ -106,7 +106,7 @@
                     </select>
 
                     <span class="catalog-toolbar__summary">
-                        Ukupno {{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }} artikala
+                        Ukupno {{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }}
                     </span>
                 </div>
             </div>
@@ -135,7 +135,7 @@
                     </select>
 
                     <span class="catalog-toolbar__summary">
-                        Ukupno {{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }} artikala
+                        Ukupno {{ products.total ? Number(products.total).toLocaleString('hr-HR') : 0 }}
                     </span>
                 </div>
 
@@ -158,6 +158,11 @@
 
                             <div class="catalog-toolbar__drawer-body">
                                 <div class="catalog-toolbar__mobile-grid">
+                                    <select v-if="facetLanguages.length" class="form-select catalog-toolbar__select" v-model="language" aria-label="Filtriraj po jeziku" @change="applyToolbarFilters">
+                                        <option value="">Jezik</option>
+                                        <option v-for="option in facetLanguages" :key="'mobile-language-' + option" :value="option">{{ option }}</option>
+                                    </select>
+
                                     <select v-if="facetConditions.length" class="form-select catalog-toolbar__select" v-model="condition" aria-label="Filtriraj po stanju" @change="applyToolbarFilters">
                                         <option value="">Stanje</option>
                                         <option v-for="option in facetConditions" :key="'mobile-condition-' + option" :value="option">{{ option }}</option>
@@ -387,10 +392,12 @@
                 condition: '',
                 binding: '',
                 letter: '',
+                language: '',
                 akcija: false,
                 facetConditions: [],
                 facetBindings: [],
                 facetLetters: [],
+                facetLanguages: [],
                 actionFilterAvailable: false,
                 productsRequestToken: 0,
                 sorting: '',
@@ -431,11 +438,12 @@
                 return this.facetConditions.length
                     || this.facetBindings.length
                     || this.facetLetters.length
+                    || this.facetLanguages.length
                     || this.showActionFilter
                     || (this.author === '' && this.normalizedFacetAuthors.length);
             },
             hasActiveToolbarFilters() {
-                return this.autor || this.nakladnik || this.start || this.end || this.condition || this.binding || this.letter || this.akcija;
+                return this.autor || this.nakladnik || this.start || this.end || this.condition || this.binding || this.letter || this.language || this.akcija;
             },
             normalizedCategorySlug() {
                 return String(this.categorySlug || '').trim().toLowerCase();
@@ -514,6 +522,7 @@
                     this.facetConditions = response.data.conditions || [];
                     this.facetBindings = response.data.bindings || [];
                     this.facetLetters = response.data.letters || [];
+                    this.facetLanguages = response.data.languages || [];
                     this.actionFilterAvailable = Boolean(response.data.action_available);
 
                     if (!this.hasToolbarFilters) {
@@ -606,6 +615,7 @@
                 this.condition = '';
                 this.binding = '';
                 this.letter = '';
+                this.language = '';
                 this.akcija = false;
                 this.closeAuthorDropdown();
                 this.closeMobileFilters();
@@ -651,6 +661,7 @@
                     condition: this.condition,
                     binding: this.binding,
                     letter: this.letter,
+                    language: this.language,
                     akcija: this.akcija ? 1 : '',
                     sort: this.sorting,
                     pojam: this.search_query,
@@ -679,6 +690,7 @@
                 this.condition = params.query.condition ? params.query.condition : '';
                 this.binding = params.query.binding ? params.query.binding : '';
                 this.letter = params.query.letter ? params.query.letter : '';
+                this.language = params.query.language ? params.query.language : '';
                 this.akcija = ['1', 1, true, 'true'].includes(params.query.akcija);
                 this.page = params.query.page ? params.query.page : '';
                 this.search_query = params.query.pojam ? params.query.pojam : '';
@@ -714,6 +726,7 @@
                     condition: this.condition,
                     binding: this.binding,
                     letter: this.letter,
+                    language: this.language,
                     akcija: this.akcija ? 1 : '',
                     sort: this.sorting,
                     price_min: this.priceMin,
@@ -920,7 +933,7 @@
                     return;
                 }
 
-                if (params.nakladnik || params.autor || params.start || params.end || params.condition || params.binding || params.letter || params.akcija) {
+                if (params.nakladnik || params.autor || params.start || params.end || params.condition || params.binding || params.letter || params.language || params.akcija) {
                     robotsMeta.setAttribute('content', 'noindex,nofollow');
                 } else if (this.defaultRobots) {
                     robotsMeta.setAttribute('content', this.defaultRobots);
@@ -1186,6 +1199,13 @@
     border-radius: 999px;
 }
 
+.catalog-toolbar__filter-scroll .catalog-toolbar__select {
+    flex: 0 0 7.5rem;
+    width: 7.5rem;
+    min-width: 7.5rem;
+    padding: 0.7rem 2.5rem 0.7rem 0.85rem;
+}
+
 .catalog-toolbar__select {
     min-width: 150px;
     min-height: 46px;
@@ -1218,14 +1238,14 @@
 }
 
 .catalog-toolbar__select--sort {
-    min-width: 170px;
+    min-width: 150px;
 }
 
 .catalog-toolbar__author-select {
     position: relative;
-    flex: 0 0 150px;
-    min-width: 150px;
-    max-width: 150px;
+    flex: 0 0 130px;
+    min-width: 130px;
+    max-width: 130px;
 }
 
 .catalog-toolbar__author-select--mobile {
@@ -1275,7 +1295,7 @@
     justify-content: space-between;
     width: 100%;
     min-height: 46px;
-    padding: 0.7rem 0.95rem 0.7rem 1rem;
+    padding: 0.7rem 0.85rem 0.7rem 0.85rem;
     border: 1px solid #d8e0ea;
     border-radius: 0.45rem;
     background: #fff;
@@ -1383,7 +1403,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.75rem;
+    gap: 0.6rem;
     flex-shrink: 0;
     margin-left: auto;
 }
@@ -1391,7 +1411,7 @@
 .catalog-toolbar__clear,
 .catalog-toolbar__toggle {
     min-height: 46px;
-    padding-inline: 1rem;
+    padding-inline: 0.85rem;
     border-radius: 0.45rem;
     border-color: #d8e0ea;
     background: #fff;
@@ -1433,7 +1453,7 @@
     align-items: center;
     justify-content: center;
     min-height: 46px;
-    padding: 0.45rem 1rem;
+    padding: 0.45rem 0.85rem;
     border: 1px solid #d8e0ea;
     border-radius: 0.45rem;
     background: #fff;
