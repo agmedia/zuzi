@@ -35,6 +35,11 @@
         : 'Ostavite obavijest i javit ćemo vam čim knjiga ponovno bude dostupna.';
     $shippingLabel = null;
     $shippingValue = null;
+    $freeShippingThreshold = (float) config('settings.free_shipping');
+    $freeShippingThresholdText = number_format($freeShippingThreshold, 0, ',', '.');
+    $productSellingPrice = (float) $prod->special();
+    $hasFreeShipping = $productSellingPrice > $freeShippingThreshold;
+    $shippingHelpText = 'Besplatna dostava za narudžbe iznad ' . $freeShippingThresholdText . ' €.';
 
     if ($prod->kat) {
         $shippingLabel = 'Regionalni naslov';
@@ -99,7 +104,7 @@
             background: linear-gradient(135deg, rgba(229, 0, 119, 0.05), rgba(255, 255, 255, 0.98));
             border: 1px solid rgba(229, 0, 119, 0.12);
             border-radius: 1rem;
-            box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08);
+            box-shadow: none;
             overflow: hidden;
         }
 
@@ -179,7 +184,7 @@
             min-height: 2.75rem;
             padding: 0.8rem 1.3rem;
             border-radius: 0.75rem;
-            box-shadow: 0 16px 28px rgba(229, 0, 119, 0.24);
+            box-shadow: none;
             font-weight: 600;
         }
 
@@ -402,6 +407,66 @@
         .product-purchase-meta__help {
             color: #667085;
             font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .product-free-shipping-highlight {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.9rem;
+            margin: 0 0 1.4rem;
+            padding: 1rem 1.05rem;
+            border: 1px solid rgba(229, 0, 119, 0.2);
+            border-radius: 1rem;
+            background: #ffffff;
+            box-shadow: none;
+        }
+
+        .product-free-shipping-highlight__icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.6rem;
+            height: 2.6rem;
+            border-radius: 999px;
+            background: rgba(229, 0, 119, 0.08);
+            color: #e50077;
+            font-size: 1.05rem;
+            box-shadow: none;
+            flex: 0 0 2.6rem;
+        }
+
+        .product-free-shipping-highlight__icon svg {
+            display: block;
+            width: 1.15rem;
+            height: 1.15rem;
+        }
+
+        .product-free-shipping-highlight__content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 0;
+        }
+
+        .product-free-shipping-highlight__eyebrow {
+            color: #e50077;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .product-free-shipping-highlight__title {
+            color: #2f3447;
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .product-free-shipping-highlight__text {
+            color: #667085;
+            font-size: 0.9rem;
             line-height: 1.5;
         }
 
@@ -662,12 +727,27 @@
                 </div>
             @endif
 
+            @if ($hasFreeShipping)
+                <div class="product-free-shipping-highlight" role="status" aria-live="polite">
+                    <span class="product-free-shipping-highlight__icon">
+                        <svg aria-hidden="true" focusable="false" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="currentColor" d="M624 352h-16V243.9c0-12.7-5.1-24.9-14.1-33.9l-73.9-73.9c-9-9-21.2-14.1-33.9-14.1H432V80c0-26.5-21.5-48-48-48H48C21.5 32 0 53.5 0 80v272c0 17.7 14.3 32 32 32h16c0 53 43 96 96 96s96-43 96-96h160c0 53 43 96 96 96s96-43 96-96h32c17.7 0 32-14.3 32-32s-14.3-32-32-32zM144 416c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32zm352 0c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32zm48-160H432V176h54.1l57.9 57.9V256z"/>
+                        </svg>
+                    </span>
+                    <div class="product-free-shipping-highlight__content">
+                        <span class="product-free-shipping-highlight__eyebrow">Besplatna dostava</span>
+                        <strong class="product-free-shipping-highlight__title">Za ovaj naslov dostava je besplatna.</strong>
+                        <span class="product-free-shipping-highlight__text">Naslov prelazi prag za besplatnu dostavu od {{ $freeShippingThresholdText }} €.</span>
+                    </div>
+                </div>
+            @endif
+
             @if ($shippingValue)
                 <div class="product-purchase-meta">
                     <div class="product-purchase-meta__item">
                         <span class="product-purchase-meta__eyebrow">{{ $shippingLabel }}</span>
                         <strong class="product-purchase-meta__value">{{ $shippingValue }}</strong>
-                        <span class="product-purchase-meta__help">Besplatna dostava za narudžbe iznad {{ config('settings.free_shipping') }} €.</span>
+                        <span class="product-purchase-meta__help">{{ $shippingHelpText }}</span>
                     </div>
                 </div>
             @endif
@@ -723,7 +803,6 @@
                            <div>{{ $shipping_method->data->price }}€ </div>
                        </div>
                    @endforeach
-                       <div class="d-flex row justify-content-between mt-2"><div class="col-md-12"><div role="alert" class="alert alert-info d-flex  mb-1 "><div class="alert-icon"><i class="ci-truck"></i></div> Besplatna dostava za narudžbe iznad {{ config('settings.free_shipping') }}€</div></div></div>
                </div>
                <small class="mt-2"></small>
 
@@ -974,7 +1053,7 @@
                            @if ($showReviewPromoButton)
                                <button
                                    id="open-review-form"
-                                   class="review-promo-banner__cta btn btn-primary btn-shadow"
+                                   class="review-promo-banner__cta btn btn-primary"
                                    type="button"
                                    data-open-text="Napišite prvi komentar"
                                >
