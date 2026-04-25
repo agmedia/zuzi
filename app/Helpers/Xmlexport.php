@@ -64,6 +64,7 @@ class Xmlexport
                 'pages' => $product->pages,
                 'dimensions' => $product->dimensions,
                 'origin' => $product->origin,
+                'language' => $product->language,
                 'letter' => $product->letter,
                 'condition' => $product->condition,
                 'binding' => $product->binding,
@@ -99,8 +100,8 @@ class Xmlexport
         if ($product->dimensions) {
             $str .= 'Dimenzije: ' . $product->dimensions . '<br>';
         }
-        if ($product->origin) {
-            $str .= 'Jezik: ' . $product->origin . '<br>';
+        if ($product->language) {
+            $str .= 'Jezik: ' . $product->language . '<br>';
         }
         if ($product->letter) {
             $str .= 'Pismo: ' . $product->letter . '<br>';

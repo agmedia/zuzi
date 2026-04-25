@@ -267,6 +267,11 @@ class ProductHistory extends Model
             $this->changed .= '<li>Promjenjeno pismo: <b>' . $this->old['letter'] . '</b> u <b>' . $this->new['letter'] . '</b></li>';
         }
 
+        // language changed
+        if (($this->old['language'] ?? null) != ($this->new['language'] ?? null)) {
+            $this->changed .= '<li>Promjenjen jezik: <b>' . ($this->old['language'] ?? '') . '</b> u <b>' . ($this->new['language'] ?? '') . '</b></li>';
+        }
+
         // condition changed
         if ($this->old['condition'] != $this->new['condition']) {
             $this->changed .= '<li>Promjenjeno stanje: <b>' . $this->old['condition'] . '</b> u <b>' . $this->new['condition'] . '</b></li>';

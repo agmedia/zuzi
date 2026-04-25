@@ -210,6 +210,15 @@ class Breadcrumb
                 ];
             }
 
+            if ($prod->language) {
+                $schema['inLanguage'] = $prod->language;
+                $additionalProperties[] = [
+                    '@type' => 'PropertyValue',
+                    'name' => 'Jezik',
+                    'value' => $prod->language,
+                ];
+            }
+
             if ($prod->letter) {
                 $additionalProperties[] = [
                     '@type' => 'PropertyValue',

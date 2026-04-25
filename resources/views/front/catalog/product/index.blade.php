@@ -727,9 +727,9 @@
            <div class="accordion-collapse collapse" id="localStore" data-bs-parent="#productPanels">
                <div class="accordion-body fs-sm">
 
-
+                   @php($productLanguage = $prod->language ?: ($prod->origin === 'Engleski' ? $prod->origin : null))
                    @foreach($payment_methods as $payment_method)
-                       @if($prod->origin == 'Engleski' and $payment_method->code == 'cod' )
+                       @if($productLanguage == 'Engleski' and $payment_method->code == 'cod' )
 
                        @else
                            <div class="d-flex justify-content-between border-bottom py-2">
@@ -841,6 +841,8 @@
                <div class="col-lg-5 col-sm-5 ">
                    <h3 class="h6">Dodatne informacije</h3>
                    <ul class="list-unstyled fs-sm pb-2">
+                       @php($productLanguage = $prod->language ?: ($prod->origin === 'Engleski' ? $prod->origin : null))
+                       @php($productOrigin = $prod->origin === 'Engleski' && empty($prod->language) ? null : $prod->origin)
 
 
                        @if ($prod->author)
@@ -854,8 +856,8 @@
                        @if ($prod->binding)
                            <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Uvez:</span><span>{{ $prod->binding  }}</span></li>
                         @endif
-                       @if ($prod->origin)
-                           <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Mjesto izdavanja:</span><span>{{ $prod->origin  }}</span></li>
+                       @if ($productOrigin)
+                           <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Mjesto izdavanja:</span><span>{{ $productOrigin }}</span></li>
                        @endif
                         @if ($prod->year)
                            <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Godina izdanja:</span><span>{{ $prod->year }}</span></li>
@@ -866,6 +868,9 @@
                            @if ($prod->letter)
                                <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Pismo:</span><span>{{ $prod->letter }}</span></li>
                            @endif
+                       @if ($productLanguage)
+                           <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Jezik:</span><span>{{ $productLanguage }}</span></li>
+                       @endif
                        @if ($prod->dimensions)
                            <li class="d-flex justify-content-between pb-2 border-bottom"><span class="text-muted">Dimenzije:</span><span>{{ $prod->dimensions  }}</span></li>
                        @endif

@@ -64,6 +64,7 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
         Route::get('/chart/month', [DashboardController::class, 'chartByMonth'])->name('chart.month');
         Route::get('/chart/day', [DashboardController::class, 'chartByDay'])->name('chart.day');
+        Route::post('/language-tools', [DashboardController::class, 'runLanguageTool'])->name('language-tools.run');
     });
     Route::get('/dashboard/chart/range', [DashboardController::class, 'chartByRange'])->name('dashboard.chart.range');
 

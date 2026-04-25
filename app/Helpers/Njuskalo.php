@@ -143,7 +143,7 @@ class Njuskalo
         $kv = [
             'Stranica'  => $product->pages,
             'Dimenzije' => $product->dimensions,
-            'Jezik'     => $product->origin,
+            'Jezik'     => $product->language,
             'Pismo'     => $product->letter,
             'Stanje'    => $product->condition,
             'Uvez'      => $product->binding,

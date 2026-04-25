@@ -223,7 +223,7 @@
                             </div>
 
                             <div class="form-group row items-push mb-4">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label for="letter-select">Pismo</label>
                                     <select class="js-select2 form-control" id="letter-select" name="letter" style="width: 100%;" data-placeholder="Odaberite ili upišite pismo">
                                         <option value="" {{ ! isset($product) ? 'selected' : '' }}></option>
@@ -234,7 +234,18 @@
                                         @endif
                                     </select>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <label for="language-select">Jezik</label>
+                                    <select class="js-select2 form-control" id="language-select" name="language" style="width: 100%;" data-placeholder="Odaberite ili upišite jezik">
+                                        <option value="" {{ ! isset($product) ? 'selected' : '' }}></option>
+                                        @if ($data['languages'])
+                                            @foreach ($data['languages'] as $language)
+                                                <option value="{{ $language }}" {{ ((isset($product)) and ($language == $product->language)) ? 'selected' : '' }}>{{ $language }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
                                     <label for="dm-post-edit-slug">Stanje</label>
                                     <select class="js-select2 form-control" id="condition-select" name="condition" style="width: 100%;" data-placeholder="Odaberite ili upišite stanje">
                                         <option></option>
@@ -245,7 +256,7 @@
                                         @endif
                                     </select>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label for="dm-post-edit-slug">Uvez</label>
                                     <select class="js-select2 form-control" id="binding-select" name="binding" style="width: 100%;" data-placeholder="Odaberite ili upišite uvez">
                                         <option></option>
@@ -396,6 +407,9 @@
                 tags: true
             });
             $('#letter-select').select2({
+                tags: true
+            });
+            $('#language-select').select2({
                 tags: true
             });
             $('#binding-select').select2({

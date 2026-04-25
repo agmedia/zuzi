@@ -323,6 +323,7 @@ class Product extends Model
             'dimensions'       => $this->request->dimensions,
             'origin'           => $this->request->origin,
             'letter'           => $this->request->letter,
+            'language'         => $this->request->language,
             'condition'        => $this->request->condition,
             'binding'          => $this->request->binding,
             'year'             => $this->request->year,
@@ -371,6 +372,7 @@ class Product extends Model
             'categories' => (new Category())->getList(false),
             'images'     => ProductImage::getAdminList($this->id),
             'letters'    => Settings::get('product', 'letter_styles'),
+            'languages'  => Settings::get('product', 'language_styles'),
             'conditions' => Settings::get('product', 'condition_styles'),
             'bindings'   => Settings::get('product', 'binding_styles'),
             'taxes'      => Settings::get('tax', 'list')
@@ -383,9 +385,16 @@ class Product extends Model
      */
     public function checkSettings()
     {
-        Settings::setProduct('letter_styles', $this->request->letter);
-        Settings::setProduct('condition_styles', $this->request->condition);
-        Settings::setProduct('binding_styles', $this->request->binding);
+        foreach ([
+            'letter_styles' => $this->request->letter,
+            'language_styles' => $this->request->language,
+            'condition_styles' => $this->request->condition,
+            'binding_styles' => $this->request->binding,
+        ] as $key => $value) {
+            if (filled($value)) {
+                Settings::setProduct($key, $value);
+            }
+        }
 
         return $this;
     }
