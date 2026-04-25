@@ -181,9 +181,9 @@ class GuessProductLanguages extends Command
     {
         return DB::table('products as p')
             ->leftJoin('product_category as pc', 'pc.product_id', '=', 'p.id')
-            ->select('p.id', 'p.sku', 'p.name', 'p.origin', 'p.year', 'p.language')
+            ->select('p.id', 'p.sku', 'p.name', 'p.origin', 'p.year', 'p.language', 'p.letter')
             ->selectRaw("GROUP_CONCAT(DISTINCT pc.category_id ORDER BY pc.category_id SEPARATOR ',') AS category_ids")
-            ->groupBy('p.id', 'p.sku', 'p.name', 'p.origin', 'p.year', 'p.language')
+            ->groupBy('p.id', 'p.sku', 'p.name', 'p.origin', 'p.year', 'p.language', 'p.letter')
             ->orderBy('p.id')
             ->cursor()
             ->map(function ($row) {
@@ -200,6 +200,7 @@ class GuessProductLanguages extends Command
                     'origin' => $row->origin ? (string) $row->origin : null,
                     'year' => $row->year ? (string) $row->year : null,
                     'language' => $row->language ? (string) $row->language : null,
+                    'letter' => $row->letter ? (string) $row->letter : null,
                     'category_ids' => $category_ids,
                 ];
             });
@@ -291,6 +292,13 @@ class GuessProductLanguages extends Command
             return [
                 'language' => null,
                 'skip_reason' => 'ambiguous_origin',
+            ];
+        }
+
+        if (($product['letter'] ?? null) === 'Ćirilica') {
+            return [
+                'language' => $year !== null && $year < 1990 ? 'Hrvatskosrbski' : 'Srpski',
+                'rule' => $year !== null && $year < 1990 ? 'cyrillic_pre_1990' : 'cyrillic_modern',
             ];
         }
 
