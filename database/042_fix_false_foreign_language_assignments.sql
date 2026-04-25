@@ -1,0 +1,33 @@
+-- Korekcija sumnjivih foreign-language pogodaka nakon suzavanja tekstualne heuristike.
+-- Generirano 2026-04-25 nad postojecim upisanim jezicima, konzervativno:
+-- - ne dira Engleski / Bosanski / Srpski / Slovenski / Hrvatski / Hrvatskosrbski
+-- - prebacuje ocite false positive na Engleski ili Njemački
+-- - ostale nesigurne false positive prazni
+
+START TRANSACTION;
+
+UPDATE `products`
+SET `language` = 'Engleski', `updated_at` = NOW()
+WHERE `id` IN (
+    7468,41355,41982,44077,47894,49206,49423,49434,49639,49710,51393,53374,53375,
+    60540,61186,61219,62415,62455,62572,64094,64840,71836,75476,75550,75558,75613,
+    81157,87313,87372,87395,87460,87486,87495,87606,89591,89822,90027,90282,90299,
+    90321,90324,90355,90356,90396,90541,90564,90618,90636,90643,90658,90824
+);
+
+UPDATE `products`
+SET `language` = 'Njemački', `updated_at` = NOW()
+WHERE `id` IN (55927);
+
+UPDATE `products`
+SET `language` = NULL, `updated_at` = NOW()
+WHERE `id` IN (
+    1893,14713,14714,14715,14716,14717,14718,18550,18567,18569,18570,18572,18971,
+    20620,20653,20658,20660,20661,20662,20663,20664,20665,20666,20683,20911,37291,
+    42369,42401,42410,42424,42447,42471,42529,42609,42618,42625,42702,42704,42715,
+    42720,42729,42740,42757,42758,42761,42786,42788,42794,42797,42799,42832,42837,
+    42842,42843,42847,55310,59784,61213,63178,74241,74245,74253,74282,74292,74365,
+    76508,76509,78501,78508,78514,87734,87949,90863
+);
+
+COMMIT;

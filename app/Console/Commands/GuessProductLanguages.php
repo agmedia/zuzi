@@ -679,25 +679,37 @@ class GuessProductLanguages extends Command
     private function explicitLanguageSignals(): array
     {
         return [
-            'Engleski' => ['ENGLISH', 'ENGLESK'],
-            'Njemački' => ['GERMAN', 'DEUTSCH', 'NJEMACK', 'NEMACK'],
-            'Francuski' => ['FRENCH', 'FRANCUSK'],
-            'Talijanski' => ['ITALIAN', 'TALIJANSK'],
-            'Španjolski' => ['SPANISH', 'SPANJOLSK'],
-            'Ruski' => ['RUSSIAN', 'RUSK'],
-            'Slovenski' => ['SLOVENIAN', 'SLOVENSK', 'SLOVENE'],
-            'Češki' => ['CZECH', 'CESK'],
-            'Srpski' => ['SERBIAN', 'SRPSK'],
-            'Bosanski' => ['BOSNIAN', 'BOSANSK'],
-            'Mađarski' => ['HUNGARIAN', 'MADARSK'],
-            'Poljski' => ['POLISH', 'POLJSK'],
-            'Portugalski' => ['PORTUGUESE', 'PORTUGALSK'],
-            'Švedski' => ['SWEDISH', 'SVEDSK'],
-            'Norveški' => ['NORWEGIAN', 'NORVESK'],
-            'Turski' => ['TURKISH', 'TURSK'],
-            'Albanski' => ['ALBANIAN', 'ALBANSK'],
-            'Slovački' => ['SLOVAK', 'SLOVACK'],
+            'Engleski' => $this->buildContextualLanguageSignals('ENGLESK', ['ENGLISH LANGUAGE', 'IN ENGLISH']),
+            'Njemački' => $this->buildContextualLanguageSignals('NJEMACK', ['DEUTSCH', 'GERMAN LANGUAGE', 'IN GERMAN', 'NEMACKI JEZIK', 'NA NEMACKOM', 'NEMACKO IZDANJE']),
+            'Francuski' => $this->buildContextualLanguageSignals('FRANCUSK', ['FRENCH LANGUAGE', 'IN FRENCH']),
+            'Talijanski' => $this->buildContextualLanguageSignals('TALIJANSK', ['ITALIAN LANGUAGE', 'IN ITALIAN']),
+            'Španjolski' => $this->buildContextualLanguageSignals('SPANJOLSK', ['SPANISH LANGUAGE', 'IN SPANISH']),
+            'Ruski' => $this->buildContextualLanguageSignals('RUSK', ['RUSSIAN LANGUAGE', 'IN RUSSIAN']),
+            'Slovenski' => $this->buildContextualLanguageSignals('SLOVENSK', ['SLOVENIAN LANGUAGE', 'IN SLOVENIAN']),
+            'Češki' => $this->buildContextualLanguageSignals('CESK', ['CZECH LANGUAGE', 'IN CZECH']),
+            'Srpski' => $this->buildContextualLanguageSignals('SRPSK', ['SERBIAN LANGUAGE', 'IN SERBIAN']),
+            'Bosanski' => $this->buildContextualLanguageSignals('BOSANSK', ['BOSNIAN LANGUAGE', 'IN BOSNIAN']),
+            'Mađarski' => $this->buildContextualLanguageSignals('MADARSK', ['HUNGARIAN LANGUAGE', 'IN HUNGARIAN']),
+            'Poljski' => $this->buildContextualLanguageSignals('POLJSK', ['POLISH LANGUAGE', 'IN POLISH']),
+            'Portugalski' => $this->buildContextualLanguageSignals('PORTUGALSK', ['PORTUGUESE LANGUAGE', 'IN PORTUGUESE']),
+            'Švedski' => $this->buildContextualLanguageSignals('SVEDSK', ['SWEDISH LANGUAGE', 'IN SWEDISH']),
+            'Norveški' => $this->buildContextualLanguageSignals('NORVESK', ['NORWEGIAN LANGUAGE', 'IN NORWEGIAN']),
+            'Turski' => $this->buildContextualLanguageSignals('TURSK', ['TURKISH LANGUAGE', 'IN TURKISH']),
+            'Albanski' => $this->buildContextualLanguageSignals('ALBANSK', ['ALBANIAN LANGUAGE', 'IN ALBANIAN']),
+            'Slovački' => $this->buildContextualLanguageSignals('SLOVACK', ['SLOVAK LANGUAGE', 'IN SLOVAK']),
         ];
+    }
+
+    private function buildContextualLanguageSignals(string $stem, array $extra = []): array
+    {
+        return array_values(array_unique(array_merge([
+            'NA ' . $stem . 'OM',
+            $stem . 'I JEZIK',
+            $stem . 'OM JEZIKU',
+            $stem . 'O IZDANJE',
+            'IZDANJE NA ' . $stem . 'OM',
+            'TEKST NA ' . $stem . 'OM',
+        ], $extra)));
     }
 
     private function scoreTextLanguages(string $normalized_text): array
