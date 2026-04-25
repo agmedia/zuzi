@@ -9,20 +9,13 @@
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(15, 23, 42, 0.06);
-            border-radius: 1.5rem;
+            border-radius: 1rem;
             background: var(--curated-surface, linear-gradient(135deg, #fff5ea 0%, #fffaf5 100%));
-            box-shadow: 0 1.2rem 3rem rgba(15, 23, 42, 0.08);
+            box-shadow: 0 0.15rem 0.5rem rgba(15, 23, 42, 0.04);
         }
 
         .curated-landing__hero::after {
-            content: "";
-            position: absolute;
-            inset: auto -8% -40% auto;
-            width: 18rem;
-            height: 18rem;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.55);
-            pointer-events: none;
+            content: none;
         }
 
         .curated-landing__eyebrow {
@@ -42,24 +35,48 @@
         .curated-landing__meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-top: 1.25rem;
+            gap: 0.6rem;
+            margin-top: 0.9rem;
         }
 
         .curated-landing__meta span {
             display: inline-flex;
             align-items: center;
-            padding: 0.55rem 0.8rem;
+            padding: 0.45rem 0.72rem;
             border-radius: 999px;
             background: rgba(255, 255, 255, 0.72);
             color: #344054;
-            font-size: 0.92rem;
+            font-size: 0.88rem;
             font-weight: 600;
+        }
+
+        .curated-landing__title {
+            font-size: 1.7rem;
+            line-height: 1.1;
+        }
+
+        .curated-landing__lead,
+        .curated-landing__body {
+            max-width: 72rem;
+            font-size: 0.98rem;
+            line-height: 1.55;
+        }
+
+        .curated-landing__lead {
+            color: #4b5563;
+        }
+
+        .curated-landing__body {
+            color: #6b7280;
         }
 
         @media (max-width: 767.98px) {
             .curated-landing__hero {
-                border-radius: 1.1rem;
+                border-radius: 0.95rem;
+            }
+
+            .curated-landing__title {
+                font-size: 1.45rem;
             }
         }
     </style>
@@ -74,14 +91,14 @@
     </nav>
 
     <section
-        class="curated-landing__hero p-4 p-lg-5 mb-4"
+        class="curated-landing__hero p-3 p-lg-4 mb-4"
         style="--curated-accent: {{ $collection['accent'] }}; --curated-surface: {{ $collection['surface'] }};"
     >
         <div class="position-relative" style="z-index: 1;">
             <span class="curated-landing__eyebrow">{{ $collection['badge'] }}</span>
-            <h1 class="display-6 font-title mt-3 mb-3">{{ $collection['title'] }}</h1>
-            <p class="lead mb-2">{{ $collection['lead'] }}</p>
-            <p class="text-muted mb-0" style="max-width: 52rem;">{{ $collection['body'] }}</p>
+            <h1 class="curated-landing__title h2 font-title mt-2 mb-2">{{ $collection['title'] }}</h1>
+            <p class="curated-landing__lead fs-md mb-1">{{ $collection['lead'] }}</p>
+            <p class="curated-landing__body fs-md mb-0">{{ $collection['body'] }}</p>
 
             <div class="curated-landing__meta">
                 <span>{{ $collection['count_label'] }}</span>

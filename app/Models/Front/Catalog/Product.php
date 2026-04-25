@@ -696,11 +696,11 @@ class Product extends Model
             }
 
             if ($sort == 'price_up') {
-                $query->orderBy('price');
+                $query->orderByRaw($currentListingPriceSql . ' asc');
             }
 
             if ($sort == 'price_down') {
-                $query->orderBy('price', 'desc');
+                $query->orderByRaw($currentListingPriceSql . ' desc');
             }
 
             if ($sort == 'naziv_up') {

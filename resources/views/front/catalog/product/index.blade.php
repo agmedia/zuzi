@@ -87,6 +87,13 @@
             touch-action: pan-y pinch-zoom;
         }
 
+        .product-gallery .gallery-item::before,
+        .product-gallery .gallery-item::after,
+        .product-gallery .gallery-item .gallery-item-caption {
+            display: none !important;
+            opacity: 0 !important;
+        }
+
         .review-promo-banner {
             position: relative;
             background: linear-gradient(135deg, rgba(229, 0, 119, 0.05), rgba(255, 255, 255, 0.98));

@@ -76,31 +76,19 @@
         .gift-guide-shell {
             position: relative;
             overflow: hidden;
-            border-radius: 1.1rem;
+            border-radius: 1rem;
             border: 1px solid rgba(223, 229, 238, 0.9);
-            box-shadow: 0 0.85rem 2rem rgba(43, 52, 69, 0.08);
+            box-shadow: 0 0.2rem 0.65rem rgba(53, 56, 74, 0.04);
         }
 
         .gift-guide-shell {
-            padding: 1.1rem 1.15rem 1.15rem;
+            padding: 0.95rem 1rem 1rem;
             color: #2b2f45;
-            background:
-                radial-gradient(circle at top right, rgba(229, 0, 119, 0.12), transparent 19rem),
-                radial-gradient(circle at left bottom, rgba(191, 159, 76, 0.08), transparent 18rem),
-                linear-gradient(135deg, #ffffff 0%, #fafbfe 56%, #fff3f8 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #fbfbfd 58%, #fff6fa 100%);
         }
 
         .gift-guide-shell::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
-
-        .gift-guide-shell::before {
-            background:
-                linear-gradient(90deg, rgba(255, 255, 255, 0.44) 0%, transparent 24%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 100%);
+            content: none;
         }
 
         .gift-guide-shell > * {
@@ -128,51 +116,52 @@
 
         .gift-guide-shell__title {
             color: #24273d;
-            font-size: clamp(1.8rem, 2.6vw, 2.85rem);
-            line-height: 1;
-            letter-spacing: -0.04em;
+            font-size: clamp(1.4rem, 2vw, 1.95rem);
+            line-height: 1.08;
+            letter-spacing: -0.03em;
         }
 
         .gift-guide-shell__lead {
             color: #30344b;
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-weight: 700;
+            line-height: 1.55;
         }
 
         .gift-guide-shell__body {
             color: #676c80;
-            font-size: 0.92rem;
-            line-height: 1.55;
+            font-size: 0.98rem;
+            line-height: 1.6;
         }
 
         .gift-guide-shell__current {
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
-            margin-top: 0.85rem;
+            margin-top: 0.7rem;
             padding: 0.45rem 0.72rem;
             border-radius: 999px;
             background: rgba(75, 86, 107, 0.08);
             color: #4b566b;
-            font-size: 0.86rem;
+            font-size: 0.9rem;
         }
 
         .gift-guide-selector {
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 0.65rem;
-            margin-top: 1rem;
+            gap: 0.55rem;
+            margin-top: 0.85rem;
         }
 
         .gift-guide-recipient {
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 0.35rem;
+            gap: 0.25rem;
             min-width: 0;
-            min-height: 7.4rem;
-            padding: 0.85rem 0.9rem;
-            border-radius: 0.95rem;
+            min-height: 5.75rem;
+            padding: 0.75rem 0.85rem;
+            border-radius: 0.85rem;
             border: 1px solid #e1e7ef;
             background: rgba(255, 255, 255, 0.84);
             color: #2b2f45;
@@ -189,16 +178,16 @@
 
         .gift-guide-recipient.is-active {
             border-color: rgba(229, 0, 119, 0.22);
-            background: linear-gradient(135deg, rgba(229, 0, 119, 0.08), rgba(255, 255, 255, 0.98));
-            box-shadow: 0 0.8rem 1.4rem rgba(229, 0, 119, 0.08);
+            background: rgba(255, 243, 248, 0.92);
+            box-shadow: 0 0.14rem 0.45rem rgba(229, 0, 119, 0.06);
         }
 
         .gift-guide-recipient__title {
             min-width: 0;
             color: #2b2f45;
-            font-size: 0.98rem;
+            font-size: 0.95rem;
             font-weight: 700;
-            line-height: 1.2;
+            line-height: 1.25;
         }
 
         .gift-guide-recipient.is-active .gift-guide-recipient__title {
@@ -207,7 +196,7 @@
 
         .gift-guide-recipient__meta {
             color: #6d7287;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             line-height: 1.4;
         }
 
@@ -215,7 +204,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 0.45rem;
-            margin-top: 0.85rem;
+            margin-top: 0.75rem;
         }
 
         .gift-guide-category-pill {
@@ -249,15 +238,15 @@
 
         .gift-guide-products__title {
             color: #21243a;
-            font-size: clamp(1.55rem, 2.6vw, 2.35rem);
-            line-height: 1.05;
+            font-size: clamp(1.5rem, 2.2vw, 2rem);
+            line-height: 1.12;
             letter-spacing: -0.03em;
         }
 
         .gift-guide-products__body {
             color: #64667a;
-            font-size: 0.98rem;
-            line-height: 1.65;
+            font-size: 1rem;
+            line-height: 1.6;
         }
 
         @media only screen and (min-width: 1200px) {
@@ -274,8 +263,12 @@
 
         @media only screen and (max-width: 767px) {
             .gift-guide-shell {
-                padding: 1rem;
-                border-radius: 1rem;
+                padding: 0.9rem;
+                border-radius: 0.95rem;
+            }
+
+            .gift-guide-shell__title {
+                font-size: clamp(1.3rem, 7vw, 1.7rem);
             }
 
             .gift-guide-selector {
@@ -283,7 +276,7 @@
             }
 
             .gift-guide-recipient {
-                min-height: 6.8rem;
+                min-height: 5.25rem;
             }
         }
 

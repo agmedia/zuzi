@@ -117,12 +117,20 @@ class CuratedCollectionService
 
         $definition = $definitions[$slug];
         $snapshot = $this->homepageSnapshotCollection($slug);
+        $useSnapshotCountLabel = (bool) ($definition['use_snapshot_count_label'] ?? true);
 
         return array_merge($definition, [
             'slug' => $slug,
-            'url' => route('catalog.route.curated', ['collection' => $slug]),
-            'count' => data_get($snapshot, 'count'),
-            'count_label' => data_get($snapshot, 'count_label', $definition['home_count_label'] ?? ''),
+            'url' => $definition['home_url'] ?? route('catalog.route.curated', ['collection' => $slug]),
+            'badge' => $definition['home_badge'] ?? $definition['badge'],
+            'eyebrow' => $definition['home_eyebrow'] ?? $definition['eyebrow'],
+            'title' => $definition['home_title'] ?? $definition['title'],
+            'description' => $definition['home_description'] ?? $definition['description'],
+            'cta' => $definition['home_cta'] ?? $definition['cta'],
+            'count' => $useSnapshotCountLabel ? data_get($snapshot, 'count') : null,
+            'count_label' => $useSnapshotCountLabel
+                ? data_get($snapshot, 'count_label', $definition['home_count_label'] ?? '')
+                : ($definition['home_count_label'] ?? data_get($snapshot, 'count_label', '')),
         ]);
     }
 
@@ -137,7 +145,14 @@ class CuratedCollectionService
                 'type' => 'price',
                 'eyebrow' => 'Brzi ulov',
                 'badge' => 'Do 5 €',
-                'home_count_label' => 'Povoljni ulovi',
+                'home_count_label' => 'Brza kupnja',
+                'use_snapshot_count_label' => false,
+                'home_url' => route('catalog.route.curated', ['collection' => 'brzi-izbor']),
+                'home_badge' => 'Brzi izbor',
+                'home_eyebrow' => 'UZMI ODMAH',
+                'home_title' => 'Knjige koje se najčešće dodaju u košaricu',
+                'home_description' => 'Bez puno razmišljanja - naslovi koje kupci uzimaju u par klikova',
+                'home_cta' => 'Dodaj u košaricu',
                 'title' => 'Uhvati knjige do 5 €',
                 'description' => 'Mali iznos, brz klik i osjećaj da ste odlično prošli',
                 'lead' => 'Najpovoljniji naslovi koji se uzimaju odmah.',
@@ -155,7 +170,14 @@ class CuratedCollectionService
                 'type' => 'price',
                 'eyebrow' => 'Top vrijednost',
                 'badge' => 'Od 5 do 10 €',
-                'home_count_label' => 'Top raspon',
+                'use_snapshot_count_label' => false,
+                'home_url' => url('savjeti-za-poklone'),
+                'home_badge' => 'Poklon ideje',
+                'home_eyebrow' => 'SIGURAN IZBOR',
+                'home_title' => 'Ne znaš što kupiti? Ovo prolazi uvijek',
+                'home_description' => 'Najčešći izbor za poklon - bez rizika i razmišljanja',
+                'home_cta' => 'Pronađi poklon',
+                'home_count_label' => 'Poklon vodič',
                 'title' => 'Najbolji ulovi od 5 do 10 €',
                 'description' => 'Savršen raspon za još bolji ulov bez teške odluke na checkoutu',
                 'lead' => 'Pogodi cijenu koja najlakše pretvara pregled u kupnju.',
@@ -185,6 +207,25 @@ class CuratedCollectionService
                 'meta_title' => Seo::appendBrand('Kupci ovo biraju prvi'),
                 'meta_description' => Seo::description(null, 'Pogledaj koje knjige kupci ovog mjeseca najčešće naručuju i kreni od aktualnih hitova.'),
                 'metric_note' => '',
+            ],
+            'brzi-izbor' => [
+                'type' => 'monthly_ranking',
+                'metric' => 'orders',
+                'eyebrow' => 'UZMI ODMAH',
+                'badge' => 'Brzi izbor',
+                'home_count_label' => 'Brza kupnja',
+                'title' => 'Knjige koje se najčešće dodaju u košaricu',
+                'description' => 'Bez puno razmišljanja - naslovi koje kupci uzimaju u par klikova',
+                'lead' => 'Naslovi koji najbrže završe u košarici kad kupci žele brzu i sigurnu odluku.',
+                'body' => 'Pregledaj knjige koje kupci najčešće ubacuju u košaricu i kreni od izbora koji najlakše pretvara pregled u kupnju.',
+                'cta' => 'Dodaj u košaricu',
+                'accent' => '#e50077',
+                'surface' => 'linear-gradient(135deg, #fff2f8 0%, #fff9fc 100%)',
+                'preserve_order' => false,
+                'default_sort' => 'price_down',
+                'meta_title' => Seo::appendBrand('Knjige koje se najčešće dodaju u košaricu'),
+                'meta_description' => Seo::description(null, 'Pregledaj naslove koje kupci najčešće dodaju u košaricu i kreni od izbora koji najbrže vode do kupnje.'),
+                'metric_note' => 'Popis prati aktualni interes kupaca, a stranica otvara skuplje artikle prve.',
             ],
             'verdens-100-klasici' => [
                 'type' => 'canonical_list',
@@ -269,8 +310,8 @@ class CuratedCollectionService
             'count' => $count,
             'count_label' => $this->formatCountLabel($count),
             'ids_json' => $ids->toJson(),
-            'preserve_order' => true,
-            'default_sort' => '',
+            'preserve_order' => (bool) ($definition['preserve_order'] ?? true),
+            'default_sort' => (string) ($definition['default_sort'] ?? ''),
             'meta_pill' => $definition['metric_note'] ?? 'Ažurira se prema rezultatima tekućeg mjeseca.',
         ]);
 

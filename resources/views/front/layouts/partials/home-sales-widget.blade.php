@@ -16,8 +16,9 @@
     ];
     $homeSalesCollectionIcons = [
         'knjige-do-5-eura' => 'fa-bolt',
-        'knjige-od-5-do-10-eura' => 'fa-gem',
+        'knjige-od-5-do-10-eura' => 'fa-gift',
         'najpopularnije-ovaj-mjesec' => 'fa-star',
+        'brzi-izbor' => 'fa-bolt',
         'verdens-100-klasici' => 'fa-book-open',
         'najprodavanije-ovaj-mjesec' => 'fa-fire',
     ];
@@ -54,56 +55,51 @@
                                             class="home-sales-hub__featured h-100 text-decoration-none"
                                             href="{{ url($featuredProduct->url) }}"
                                         >
-                                            <div class="row g-0 align-items-center h-100">
-                                                <div class="col-sm-5">
-                                                    <div class="home-sales-hub__featured-image-wrap">
-                                                        <img
-                                                            class="home-sales-hub__featured-image"
-                                                            src="{{ $featuredProduct->thumb }}"
-                                                            alt="Naslovnica knjige {{ $featuredProduct->name }}"
-                                                            width="320"
-                                                            height="380"
-                                                            loading="lazy"
-                                                        >
-                                                    </div>
+                                            <div class="home-sales-hub__featured-inner h-100">
+                                                <div class="home-sales-hub__featured-image-wrap">
+                                                    <img
+                                                        class="home-sales-hub__featured-image"
+                                                        src="{{ $featuredProduct->thumb }}"
+                                                        alt="Naslovnica knjige {{ $featuredProduct->name }}"
+                                                        width="320"
+                                                        height="380"
+                                                        loading="lazy"
+                                                    >
                                                 </div>
 
-                                                <div class="col-sm-7">
-                                                    <div class="home-sales-hub__featured-copy">
-                                                        <span class="home-sales-hub__featured-badge">
-                                                            Bestseller #{{ data_get($featuredProductData, 'position') }} ovog mjeseca
-                                                        </span>
+                                                <div class="home-sales-hub__featured-copy">
+                                                    <span class="home-sales-hub__featured-badge">
+                                                        Bestseller #{{ data_get($featuredProductData, 'position') }} ovog mjeseca
+                                                    </span>
 
-                                                        <h3 class="h4 mb-2">{{ $featuredProduct->name }}</h3>
-                                                        <p class="text-muted mb-3">Naslov koji kupci trenutno grabe bez puno razmišljanja.</p>
+                                                    <h3 class="home-sales-hub__featured-title h5 mb-2">{{ $featuredProduct->name }}</h3>
 
-                                                        @if ($featuredReviewsCount)
-                                                        <div class="d-flex align-items-center mb-2">
-                                                            <div class="star-rating" aria-label="Ocjena {{ number_format($featuredReviewsAverage, 1) }} od 5">
-                                                                @for ($i = 0; $i < 5; $i++)
-                                                                    @if (floor($featuredReviewsAverage) - $i >= 1)
-                                                                        <i class="star-rating-icon ci-star-filled active"></i>
-                                                                    @else
-                                                                        <i class="star-rating-icon ci-star"></i>
-                                                                    @endif
-                                                                @endfor
-                                                            </div>
+                                                    @if ($featuredReviewsCount)
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <div class="star-rating" aria-label="Ocjena {{ number_format($featuredReviewsAverage, 1) }} od 5">
+                                                            @for ($i = 0; $i < 5; $i++)
+                                                                @if (floor($featuredReviewsAverage) - $i >= 1)
+                                                                    <i class="star-rating-icon ci-star-filled active"></i>
+                                                                @else
+                                                                    <i class="star-rating-icon ci-star"></i>
+                                                                @endif
+                                                            @endfor
                                                         </div>
-                                                        @endif
-
-                                                        <div class="home-sales-hub__featured-price mt-3">
-                                                            @if ($featuredProduct->main_price > $featuredProduct->main_special)
-                                                                <small class="text-muted d-block"><s>{{ $featuredProduct->main_price_text }}</s></small>
-                                                                <strong>{{ $featuredProduct->main_special_text }}</strong>
-                                                            @else
-                                                                <strong>{{ $featuredProduct->main_price_text }}</strong>
-                                                            @endif
-                                                        </div>
-
-                                                        <span class="home-sales-hub__featured-cta home-sales-hub__cta-button btn btn-outline-primary btn-sm mt-3">
-                                                            Pogledaj artikl <i class="ci-arrow-right ms-1"></i>
-                                                        </span>
                                                     </div>
+                                                    @endif
+
+                                                    <div class="home-sales-hub__featured-price mt-2">
+                                                        @if ($featuredProduct->main_price > $featuredProduct->main_special)
+                                                            <small class="text-muted d-block"><s>{{ $featuredProduct->main_price_text }}</s></small>
+                                                            <strong>{{ $featuredProduct->main_special_text }}</strong>
+                                                        @else
+                                                            <strong>{{ $featuredProduct->main_price_text }}</strong>
+                                                        @endif
+                                                    </div>
+
+                                                    <span class="home-sales-hub__featured-cta home-sales-hub__cta-button btn btn-outline-primary btn-sm mt-3">
+                                                        Pogledaj artikl <i class="ci-arrow-right ms-1"></i>
+                                                    </span>
                                                 </div>
                                             </div>
                                         </a>

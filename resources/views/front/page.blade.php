@@ -169,27 +169,20 @@
             isolation: isolate;
             height: 100%;
             color: inherit;
-            background:
-                radial-gradient(circle at left center, rgba(226, 232, 240, 0.72) 0%, rgba(226, 232, 240, 0.28) 24%, rgba(226, 232, 240, 0) 56%),
-                linear-gradient(115deg, #f4f5f7 0%, #fafbfc 42%, #ffffff 100%);
+            background: linear-gradient(115deg, #f4f5f7 0%, #fafbfc 42%, #ffffff 100%);
             border-radius: inherit;
         }
 
         .home-sales-hub__featured::after {
-            content: "";
-            position: absolute;
-            inset: auto -12% -26% auto;
-            width: 12rem;
-            height: 12rem;
-            border-radius: 999px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.36) 46%, rgba(255, 255, 255, 0) 74%);
-            pointer-events: none;
-            z-index: 0;
+            content: none;
         }
 
-        .home-sales-hub__featured > .row {
+        .home-sales-hub__featured-inner {
             position: relative;
             z-index: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
         }
 
         .home-sales-hub__featured-slider {
@@ -232,26 +225,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100%;
-            padding: 1rem;
+            padding: 1.5rem 1.25rem 0.75rem;
             background: transparent;
         }
 
         .home-sales-hub__featured-image {
             width: 100%;
-            max-width: 250px;
+            max-width: 185px;
             height: auto;
-            border-radius: 1rem;
-            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 0.8rem;
+            border: 0;
             box-shadow: none;
         }
 
         .home-sales-hub__featured-copy {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            height: 100%;
-            padding: 1.5rem 1.5rem 3.25rem 0.75rem;
+            justify-content: flex-start;
+            flex: 1 1 auto;
+            align-items: center;
+            padding: 0.35rem 1.4rem 3.25rem;
+            text-align: center;
         }
 
         .home-sales-hub__featured-badge {
@@ -262,10 +256,16 @@
             border-radius: 999px;
             background: #fff0f7;
             color: #e50077;
-            font-size: 0.8rem;
+            font-size: 0.74rem;
             font-weight: 700;
             letter-spacing: 0.04em;
             text-transform: uppercase;
+        }
+
+        .home-sales-hub__featured-title {
+            max-width: 19rem;
+            font-size: 1.2rem;
+            line-height: 1.25;
         }
 
         .home-sales-hub__featured-copy h3,
@@ -275,7 +275,7 @@
         }
 
         .home-sales-hub__featured-price strong {
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 700;
         }
 
@@ -295,6 +295,10 @@
 
         .home-sales-hub__cta-button i {
             font-size: 0.95rem;
+        }
+
+        .home-sales-hub__featured-cta {
+            align-self: center;
         }
 
         .home-sales-hub__featured-slider .tns-nav {
@@ -324,7 +328,7 @@
 
         .home-sales-hub__featured-slider .tns-controls {
             position: absolute;
-            top: 50%;
+            top: 11rem;
             right: 0;
             left: 0;
             z-index: 4;
@@ -342,8 +346,8 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 2.4rem;
-            height: 2.4rem;
+            width: 2.2rem;
+            height: 2.2rem;
             border: 1px solid rgba(15, 23, 42, 0.08);
             border-radius: 999px;
             background: #fff;
@@ -367,15 +371,7 @@
         }
 
         .home-sales-hub__card::after {
-            content: "";
-            position: absolute;
-            inset: auto -12% -28% auto;
-            width: 11rem;
-            height: 11rem;
-            border-radius: 999px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.45) 42%, rgba(255, 255, 255, 0) 72%);
-            pointer-events: none;
-            opacity: 0.95;
+            content: none;
         }
 
         .home-sales-hub__card-body {
@@ -579,11 +575,19 @@
             }
 
             .home-sales-hub__featured-copy {
-                padding: 0 1rem 2.75rem;
+                padding: 0.2rem 1rem 2.75rem;
             }
 
             .home-sales-hub__featured-price strong {
                 font-size: 1.25rem;
+            }
+
+            .home-sales-hub__featured-title {
+                font-size: 1.05rem;
+            }
+
+            .home-sales-hub__featured-slider .tns-controls {
+                top: 9rem;
             }
 
             .home-sales-hub__card-body {

@@ -180,10 +180,11 @@ class GuessProductLanguages extends Command
     private function products(): LazyCollection
     {
         return DB::table('products as p')
+            ->leftJoin('publishers as pub', 'pub.id', '=', 'p.publisher_id')
             ->leftJoin('product_category as pc', 'pc.product_id', '=', 'p.id')
-            ->select('p.id', 'p.sku', 'p.name', 'p.origin', 'p.year', 'p.language', 'p.letter')
+            ->select('p.id', 'p.sku', 'p.name', 'p.origin', 'p.year', 'p.language', 'p.letter', 'pub.title as publisher')
             ->selectRaw("GROUP_CONCAT(DISTINCT pc.category_id ORDER BY pc.category_id SEPARATOR ',') AS category_ids")
-            ->groupBy('p.id', 'p.sku', 'p.name', 'p.origin', 'p.year', 'p.language', 'p.letter')
+            ->groupBy('p.id', 'p.sku', 'p.name', 'p.origin', 'p.year', 'p.language', 'p.letter', 'pub.title')
             ->orderBy('p.id')
             ->cursor()
             ->map(function ($row) {
@@ -201,6 +202,7 @@ class GuessProductLanguages extends Command
                     'year' => $row->year ? (string) $row->year : null,
                     'language' => $row->language ? (string) $row->language : null,
                     'letter' => $row->letter ? (string) $row->letter : null,
+                    'publisher' => $row->publisher ? (string) $row->publisher : null,
                     'category_ids' => $category_ids,
                 ];
             });
@@ -213,6 +215,13 @@ class GuessProductLanguages extends Command
         $is_regional = isset($category_lookup[self::REGIONAL_CATEGORY_ID]);
         $is_foreign_branch = $this->hasForeignBranch($product);
         $year = $this->resolveYear($product['year']);
+
+        if ($this->isLagunaPublisher($product['publisher'] ?? null)) {
+            return [
+                'language' => $year !== null && $year < 1990 ? 'Hrvatskosrbski' : 'Srpski',
+                'rule' => $year !== null && $year < 1990 ? 'laguna_publisher_pre_1990' : 'laguna_publisher_modern',
+            ];
+        }
 
         $foreign_category_languages = [];
 
@@ -666,6 +675,15 @@ class GuessProductLanguages extends Command
         }
 
         return count(array_intersect($product['category_ids'], array_keys(self::FOREIGN_CATEGORY_LANGUAGE_MAP))) > 0;
+    }
+
+    private function isLagunaPublisher(?string $publisher): bool
+    {
+        if (! $publisher) {
+            return false;
+        }
+
+        return Str::contains(Str::lower($publisher), 'laguna');
     }
 
     private function detectExplicitLanguages(string $normalized_text): array
