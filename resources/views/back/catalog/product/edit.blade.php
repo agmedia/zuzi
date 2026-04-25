@@ -236,11 +236,16 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label for="language-select">Jezik</label>
+                                    @php($selectedLanguage = old('language', isset($product) ? $product->language : ''))
+                                    @php($languageOptions = collect($data['languages'] ?? []))
+                                    @if (filled($selectedLanguage) && ! $languageOptions->contains($selectedLanguage))
+                                        @php($languageOptions = $languageOptions->prepend($selectedLanguage))
+                                    @endif
                                     <select class="js-select2 form-control" id="language-select" name="language" style="width: 100%;" data-placeholder="Odaberite ili upišite jezik">
-                                        <option value="" {{ ! isset($product) ? 'selected' : '' }}></option>
-                                        @if ($data['languages'])
-                                            @foreach ($data['languages'] as $language)
-                                                <option value="{{ $language }}" {{ ((isset($product)) and ($language == $product->language)) ? 'selected' : '' }}>{{ $language }}</option>
+                                        <option value="" {{ blank($selectedLanguage) ? 'selected' : '' }}></option>
+                                        @if ($languageOptions->isNotEmpty())
+                                            @foreach ($languageOptions as $language)
+                                                <option value="{{ $language }}" {{ $language == $selectedLanguage ? 'selected' : '' }}>{{ $language }}</option>
                                             @endforeach
                                         @endif
                                     </select>

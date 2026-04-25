@@ -16,7 +16,7 @@ return new class extends Migration
         }
 
         Schema::table('products', function (Blueprint $table) {
-            $table->string('language')->nullable()->after('letter');
+            $table->string('language')->nullable();
         });
     }
 

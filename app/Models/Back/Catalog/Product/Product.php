@@ -372,11 +372,33 @@ class Product extends Model
             'categories' => (new Category())->getList(false),
             'images'     => ProductImage::getAdminList($this->id),
             'letters'    => Settings::get('product', 'letter_styles'),
-            'languages'  => Settings::get('product', 'language_styles'),
+            'languages'  => $this->getLanguageOptions(),
             'conditions' => Settings::get('product', 'condition_styles'),
             'bindings'   => Settings::get('product', 'binding_styles'),
             'taxes'      => Settings::get('tax', 'list')
         ];
+    }
+
+    private function getLanguageOptions(): array
+    {
+        $configured = collect(Settings::get('product', 'language_styles') ?: [])
+            ->map(fn ($value) => trim((string) $value))
+            ->filter();
+
+        $stored = self::query()
+            ->whereNotNull('language')
+            ->where('language', '!=', '')
+            ->distinct()
+            ->orderBy('language')
+            ->pluck('language')
+            ->map(fn ($value) => trim((string) $value))
+            ->filter();
+
+        return $configured
+            ->merge($stored)
+            ->unique()
+            ->values()
+            ->all();
     }
 
 

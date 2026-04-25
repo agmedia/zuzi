@@ -1,35 +1,26 @@
--- Live patch za products language.
--- Dodaje nullable language kolonu na products ako još ne postoji.
+-- Live patch za products.language
+-- Dodaje nullable language kolonu ako jos ne postoji.
+--
+-- Napomena:
+-- `products` ima FULLTEXT index (`ft_products_search`), pa MySQL za ADD COLUMN
+-- ne moze koristiti ALGORITHM=INSTANT i radi rebuild tablice.
+-- Ako baza opet vrati #1114 "The table is full", problem je slobodan disk/tmp prostor,
+-- a ne sama sintaksa ovog patcha.
 
-SET @db := DATABASE();
-
-DROP PROCEDURE IF EXISTS add_column_if_missing;
-DELIMITER $$
-CREATE PROCEDURE add_column_if_missing(
-    IN p_table  VARCHAR(64),
-    IN p_column VARCHAR(64),
-    IN p_ddl    TEXT
-)
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = @db
-          AND TABLE_NAME   = p_table
-          AND COLUMN_NAME  = p_column
-    ) THEN
-        SET @sql := p_ddl;
-        PREPARE stmt FROM @sql;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
-    END IF;
-END$$
-DELIMITER ;
-
-CALL add_column_if_missing(
-    'products',
-    'language',
-    'ALTER TABLE `products` ADD COLUMN `language` VARCHAR(255) NULL AFTER `letter`'
+SET @has_language := (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'products'
+      AND COLUMN_NAME = 'language'
 );
 
-DROP PROCEDURE IF EXISTS add_column_if_missing;
+SET @sql := IF(
+    @has_language = 0,
+    'ALTER TABLE `products` ADD COLUMN `language` VARCHAR(191) NULL',
+    'SELECT ''products.language already exists'' AS info'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
