@@ -31,6 +31,11 @@ class Product extends Model
      */
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
+    public function getIsbnAttribute($value)
+    {
+        return $value ?: ($this->attributes['ean'] ?? null);
+    }
+
     /**
      * @var string[]
      */

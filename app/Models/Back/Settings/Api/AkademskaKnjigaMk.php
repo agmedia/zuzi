@@ -160,6 +160,7 @@ class AkademskaKnjigaMk
                         'sku'                  => $data['bookId'],
                         'polica'               => null,
                         'isbn'                 => $data['ISBN'],
+                        'ean'                  => $data['ISBN'],
                         'description'          => $data['description'],
                         'slug'                 => Helper::resolveSlug($data, 'title'),
                         'price'                => $item->price,

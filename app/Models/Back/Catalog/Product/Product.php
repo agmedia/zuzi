@@ -48,6 +48,11 @@ class Product extends Model
      */
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
+    public function getIsbnAttribute($value)
+    {
+        return $value ?: ($this->attributes['ean'] ?? null);
+    }
+
     /**
      * @var Request
      */
@@ -292,6 +297,8 @@ class Product extends Model
      */
     private function getModelArray(bool $insert = true): array
     {
+        $isbn = trim((string) $this->request->isbn) ?: null;
+
         if ($insert) {
             $slug = $this->resolveSlug();
         } else {
@@ -304,7 +311,9 @@ class Product extends Model
             'publisher_id'     => $this->resolveRelationId($this->request->publisher_id, config('settings.unknown_publisher')),
             'action_id'        => $this->request->action ?: 0,
             'name'             => $this->request->name,
+            'isbn'             => $isbn,
             'sku'              => $this->request->sku,
+            'ean'              => $isbn,
             'polica'           => $this->request->polica,
             'description'      => $this->cleanHTML($this->request->description),
             'slug'             => $slug,
@@ -463,6 +472,7 @@ class Product extends Model
             $query->where(function (Builder $query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%')
                       ->orWhere('sku', 'like', '%' . $search . '%')
+                      ->orWhere('isbn', 'like', '%' . $search . '%')
                       ->orWhere('polica', 'like', '%' . $search . '%')
                       ->orWhere('year', 'like', $search);
             });
@@ -539,6 +549,7 @@ class Product extends Model
         return $query->select([
             'id',
             'name',
+            'isbn',
             'sku',
             'url',
             'image',
