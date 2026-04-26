@@ -2,12 +2,12 @@
 
 namespace App\Http\Livewire\Front\Partials;
 
+use App\Helpers\Helper;
 use App\Helpers\Query;
 use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Category;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -257,7 +257,7 @@ class CatalogFilter extends Component
         if ($this->group) {
             if ( ! $this->category && ! $this->subcategory) {
                 $response = [];
-                $categories = Cache::remember($cacheKeyPrefix . $this->group, config('cache.life'), function () {
+                $categories = Helper::rememberCache($cacheKeyPrefix . $this->group, config('cache.life'), function () {
                     return Category::where('group', $this->group)->where('parent_id', 0)->sortByName()->with('subcategories')->withCount('products')->get()->toArray();
                 });
 
@@ -275,7 +275,7 @@ class CatalogFilter extends Component
 
             //
             if ($this->category && ! $this->subcategory) {
-                $item = Cache::remember($cacheKeyPrefix . $this->category->id, config('cache.life'), function () {
+                $item = Helper::rememberCache($cacheKeyPrefix . $this->category->id, config('cache.life'), function () {
                     return Category::where('parent_id', $this->category->id)->sortByName()->with('subcategories')->withCount('products')->get()->toArray();
                 });
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\Front;
 
+use App\Helpers\Helper;
 use App\Models\Front\Catalog\Product;
 use App\Models\Seo;
 use Illuminate\Support\Collection;
@@ -54,7 +55,7 @@ class CuratedCollectionService
      */
     public function homepageWidgetData(): array
     {
-        return Cache::remember(
+        return Helper::rememberCache(
             $this->cacheKey($this->homepageWidgetCacheSuffix()),
             now()->addMinutes(30),
             function () {
@@ -87,7 +88,7 @@ class CuratedCollectionService
 
         $definition = $definitions[$slug];
 
-        return Cache::remember(
+        return Helper::rememberCache(
             $this->cacheKey('collection.' . $slug),
             now()->addMinutes(30),
             function () use ($definition, $slug) {
@@ -353,7 +354,7 @@ class CuratedCollectionService
      */
     private function resolveFeaturedProducts(): Collection
     {
-        return Cache::remember(
+        return Helper::rememberCache(
             $this->cacheKey($this->featuredProductsCacheSuffix()),
             now()->addMinutes(30),
             function () {
@@ -419,7 +420,7 @@ class CuratedCollectionService
      */
     private function resolveMonthlyRanking(string $metric): Collection
     {
-        return Cache::remember(
+        return Helper::rememberCache(
             $this->cacheKey('monthly-ranking.' . $metric),
             now()->addMinutes(30),
             function () use ($metric) {

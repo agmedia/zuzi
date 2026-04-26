@@ -37,7 +37,7 @@ class HomeController extends Controller
      */
     public function index(Request $request, CuratedCollectionService $curatedCollectionService)
     {
-        $page = Cache::remember('page.homepage', config('cache.life'), function () {
+        $page = Helper::rememberCache('page.homepage', config('cache.life'), function () {
             return Page::where('slug', 'homepage')->first();
         });
 

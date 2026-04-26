@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Helpers\Helper;
 use App\Models\Front\Catalog\Product;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -398,7 +398,7 @@ class ProductRecommendationService
             $seedProductIds->sort()->implode('-')
         );
 
-        return Cache::remember($cacheKey, now()->addMinutes(20), function () use ($seedProductIds) {
+        return Helper::rememberCache($cacheKey, now()->addMinutes(20), function () use ($seedProductIds) {
             $matchingOrders = DB::table('order_products as seed_order_product')
                 ->join('orders as orders', 'orders.id', '=', 'seed_order_product.order_id')
                 ->whereIn('seed_order_product.product_id', $seedProductIds)
@@ -445,7 +445,7 @@ class ProductRecommendationService
 
     private function resolveMonthlyBestsellerMetrics(): Collection
     {
-        return Cache::remember('product-recommendations.monthly-bestsellers', now()->addMinutes(30), function () {
+        return Helper::rememberCache('product-recommendations.monthly-bestsellers', now()->addMinutes(30), function () {
             $query = DB::table('order_products as order_product')
                 ->join('orders as orders', 'orders.id', '=', 'order_product.order_id')
                 ->join('products as products', 'products.id', '=', 'order_product.product_id')

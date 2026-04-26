@@ -28,6 +28,13 @@ use Illuminate\Support\Facades\DB;
 
 class Helper
 {
+    /**
+     * Prevent duplicate cache fallback warnings within the same request.
+     *
+     * @var array<string, bool>
+     */
+    private static array $reportedCacheFallbacks = [];
+
     public static function normalizeCoupon(?string $coupon = null): string
     {
         return Str::upper(trim((string) $coupon));
@@ -504,7 +511,7 @@ class Helper
             })
             ->implode('|');
 
-        $renderedWidget = Cache::remember(
+        $renderedWidget = static::rememberCache(
             'wg.' . $wg->id . '.' . md5(serialize($context) . '|' . (optional($wg->updated_at)->timestamp ?? 0) . '|' . $widgetsSignature),
             static::resolvedWidgetCacheTtl($wg),
             function () use ($wg, $context) {
@@ -876,11 +883,7 @@ class Helper
      */
     public static function resolveCache(string $tag): ?object
     {
-        if (self::supportsCacheTags()) {
-            return Cache::tags([$tag]);
-        }
-
-        return self::cacheFallback($tag);
+        return self::cacheRepository($tag);
     }
 
 
@@ -892,11 +895,57 @@ class Helper
      */
     public static function flushCache(string $tag, string $key)
     {
-        if (self::supportsCacheTags()) {
-            return Cache::tags([$tag])->forget($key);
+        return self::cacheRepository($tag)->forget($key);
+    }
+
+
+    public static function rememberCache(string $key, $ttl, \Closure $callback)
+    {
+        return self::rememberUsingStore(Cache::getFacadeRoot(), $key, $ttl, $callback);
+    }
+
+
+    public static function rememberUsingStore(object $cache, string $key, $ttl, \Closure $callback)
+    {
+        $sentinel = new \stdClass();
+
+        try {
+            $cached = $cache->get($key, $sentinel);
+
+            if ($cached !== $sentinel) {
+                return $cached;
+            }
+        } catch (\Throwable $e) {
+            self::reportCacheFallback('read', $key, $e);
         }
 
-        return self::cacheFallback($tag)->forget($key);
+        $value = $callback();
+
+        try {
+            $cache->put($key, $value, $ttl);
+        } catch (\Throwable $e) {
+            self::reportCacheFallback('write', $key, $e);
+        }
+
+        return $value;
+    }
+
+
+    public static function forgetCache(string $key): bool
+    {
+        return self::forgetUsingStore(Cache::getFacadeRoot(), $key);
+    }
+
+
+    public static function forgetUsingStore(object $cache, string $key): bool
+    {
+        try {
+            return (bool) $cache->forget($key);
+        } catch (\Throwable $e) {
+            self::reportCacheFallback('forget', $key, $e);
+
+            return false;
+        }
     }
 
 
@@ -906,28 +955,32 @@ class Helper
     }
 
 
-    private static function cacheFallback(string $tag): object
+    private static function cacheRepository(string $tag): object
     {
-        return new class(Cache::getFacadeRoot(), $tag) {
+        $supportsTags = self::supportsCacheTags();
+        $cache = $supportsTags ? Cache::tags([$tag]) : Cache::getFacadeRoot();
+
+        return new class($cache, $tag, ! $supportsTags) {
             public function __construct(
                 private object $cache,
-                private string $tag
+                private string $tag,
+                private bool $prefixKeys
             ) {
             }
 
             public function remember(string $key, $ttl, \Closure $callback)
             {
-                return $this->cache->remember($this->prefix($key), $ttl, $callback);
+                return Helper::rememberUsingStore($this->cache, $this->prefix($key), $ttl, $callback);
             }
 
             public function forget(string $key)
             {
-                return $this->cache->forget($this->prefix($key));
+                return Helper::forgetUsingStore($this->cache, $this->prefix($key));
             }
 
             public function __call(string $method, array $arguments)
             {
-                if (isset($arguments[0]) && is_string($arguments[0])) {
+                if ($this->prefixKeys && isset($arguments[0]) && is_string($arguments[0])) {
                     $arguments[0] = $this->prefix($arguments[0]);
                 }
 
@@ -936,9 +989,28 @@ class Helper
 
             private function prefix(string $key): string
             {
-                return $this->tag . ':' . $key;
+                return $this->prefixKeys ? $this->tag . ':' . $key : $key;
             }
         };
+    }
+
+
+    private static function reportCacheFallback(string $operation, string $key, \Throwable $e): void
+    {
+        $signature = implode('|', [$operation, get_class($e), $e->getMessage()]);
+
+        if (isset(self::$reportedCacheFallbacks[$signature])) {
+            return;
+        }
+
+        self::$reportedCacheFallbacks[$signature] = true;
+
+        Log::warning('Cache fallback engaged after cache store failure.', [
+            'operation' => $operation,
+            'key' => $key,
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
+        ]);
     }
 
 

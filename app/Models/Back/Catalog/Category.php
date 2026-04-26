@@ -2,6 +2,7 @@
 
 namespace App\Models\Back\Catalog;
 
+use App\Helpers\Helper;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductCategory;
 use Carbon\Carbon;
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
@@ -98,7 +98,7 @@ class Category extends Model
      */
     public function getList(bool $full = true): Collection
     {
-        return Cache::remember($this->getListCacheKey($full), now()->addMinutes(30), function () use ($full) {
+        return Helper::rememberCache($this->getListCacheKey($full), now()->addMinutes(30), function () use ($full) {
             $topCategories = $this->newQuery()
                                   ->where('parent_id', 0)
                                   ->orderBy('group')

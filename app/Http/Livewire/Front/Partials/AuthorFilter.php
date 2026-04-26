@@ -2,9 +2,9 @@
 
 namespace App\Http\Livewire\Front\Partials;
 
+use App\Helpers\Helper;
 use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Publisher;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 /**
@@ -216,11 +216,11 @@ class AuthorFilter extends Component
     private function cache(string $model)
     {
         if ($this->category) {
-            return Cache::remember('category_list.' . $this->{$model}->id . '.' . $this->category->id, config('cache.life'), function () use ($model) {
+            return Helper::rememberCache('category_list.' . $this->{$model}->id . '.' . $this->category->id, config('cache.life'), function () use ($model) {
                 return $this->{$model}->categories($this->category->id);
             });
         } else {
-            return Cache::remember('category_list.' . $this->{$model}->id . '.0', config('cache.life'), function () use ($model) {
+            return Helper::rememberCache('category_list.' . $this->{$model}->id . '.0', config('cache.life'), function () use ($model) {
                 return $this->{$model}->categories();
             });
         }

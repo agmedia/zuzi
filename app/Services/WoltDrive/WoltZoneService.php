@@ -2,7 +2,7 @@
 
 namespace App\Services\WoltDrive;
 
-use Illuminate\Support\Facades\Cache;
+use App\Helpers\Helper;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
@@ -86,7 +86,7 @@ class WoltZoneService
             $sig = File::lastModified($this->kmlPath) . ':' . File::size($this->kmlPath);
         }
 
-        return Cache::remember($cacheKey . ':' . $sig, 86400, function () {
+        return Helper::rememberCache($cacheKey . ':' . $sig, 86400, function () {
             $polys = $this->parseKmlToPolygons($this->kmlPath);
             Log::debug('[WOLT] KML loaded', [
                 'path' => $this->kmlPath,
