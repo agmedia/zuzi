@@ -794,7 +794,7 @@ class CuratedCollectionService
 
     private function forgetCacheKey(string $suffix): void
     {
-        Cache::forget($this->cacheKey($suffix));
+        Helper::forgetCache($this->cacheKey($suffix));
     }
 
 
