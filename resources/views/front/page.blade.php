@@ -639,7 +639,7 @@
                       </span>
                   </div>
                   <small class="d-block mb-0 home-promo-copy">
-                      <strong>Broj 1 online knjižara i antikvarijat u Hrvatskoj</strong> s više od
+                      <strong><a href="https://www.zuzi.hr/blog/antikvarijat-i-knjizara-zuzi-shop-najbolji-samostalni-antikvarijat-i-knjizara-u-2023-godini"><u>Broj 1 online knjižara i antikvarijat u Hrvatskoj</u></a></strong> s više od
                       <strong>84.000 artikala</strong>. BOX NOW dostava za samo <strong>0,99 €</strong>.
                   </small>
               </div>
