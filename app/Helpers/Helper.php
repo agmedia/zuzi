@@ -905,6 +905,24 @@ class Helper
     }
 
 
+    public static function hasCache(string $key): bool
+    {
+        return self::hasUsingStore(Cache::getFacadeRoot(), $key);
+    }
+
+
+    public static function hasUsingStore(object $cache, string $key): bool
+    {
+        try {
+            return (bool) $cache->has($key);
+        } catch (\Throwable $e) {
+            self::reportCacheFallback('read', $key, $e);
+
+            return false;
+        }
+    }
+
+
     public static function rememberUsingStore(object $cache, string $key, $ttl, \Closure $callback)
     {
         $sentinel = new \stdClass();
@@ -928,6 +946,42 @@ class Helper
         }
 
         return $value;
+    }
+
+
+    public static function addCache(string $key, $value, $ttl, bool $fallback = false): bool
+    {
+        return self::addUsingStore(Cache::getFacadeRoot(), $key, $value, $ttl, $fallback);
+    }
+
+
+    public static function addUsingStore(object $cache, string $key, $value, $ttl, bool $fallback = false): bool
+    {
+        try {
+            return (bool) $cache->add($key, $value, $ttl);
+        } catch (\Throwable $e) {
+            self::reportCacheFallback('write', $key, $e);
+
+            return $fallback;
+        }
+    }
+
+
+    public static function putCache(string $key, $value, $ttl): bool
+    {
+        return self::putUsingStore(Cache::getFacadeRoot(), $key, $value, $ttl);
+    }
+
+
+    public static function putUsingStore(object $cache, string $key, $value, $ttl): bool
+    {
+        try {
+            return (bool) $cache->put($key, $value, $ttl);
+        } catch (\Throwable $e) {
+            self::reportCacheFallback('write', $key, $e);
+
+            return false;
+        }
     }
 
 

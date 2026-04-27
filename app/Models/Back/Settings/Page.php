@@ -2,12 +2,12 @@
 
 namespace App\Models\Back\Settings;
 
+use App\Helpers\Helper;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -99,7 +99,7 @@ class Page extends Model
         ]);
 
         if ($id) {
-            Cache::forget('page.homepage');
+            Helper::forgetCache('page.homepage');
 
             return $this->find($id);
         }
@@ -133,7 +133,7 @@ class Page extends Model
         ]);
 
         if ($id) {
-            Cache::forget('page.homepage');
+            Helper::forgetCache('page.homepage');
 
             return $this->find($this->id);
         }

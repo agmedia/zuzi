@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Back\Settings\App;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Settings\Faq;
 use App\Models\Back\Settings\Settings;
 use App\Helpers\Country;
 use App\Models\Front\Checkout\GeoZone;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class GeoZoneController extends Controller
 {
@@ -82,7 +82,7 @@ class GeoZoneController extends Controller
         }
 
         if ($stored) {
-            Cache::forget('geo_zones');
+            Helper::forgetCache('geo_zones');
 
             return redirect()->route('geozones')->with(['success' => 'Geo zone was succesfully saved!']);
         }
@@ -105,7 +105,7 @@ class GeoZoneController extends Controller
         $geo_zone = $geo_zones->where('id', $geozone)->first();
 
         if (isset($geo_zone->state)) {
-            Cache::forget('geo_zones');
+            Helper::forgetCache('geo_zones');
 
             $geo_zone->state = json_decode(json_encode($geo_zone->state), true);
         } else {
@@ -140,7 +140,7 @@ class GeoZoneController extends Controller
         }
 
         if ($stored) {
-            Cache::forget('geo_zones');
+            Helper::forgetCache('geo_zones');
 
             return redirect()->route('geozones')->with(['success' => 'Geo zone was succesfully deleted!']);
         }

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Back\Widget;
 
+use App\Helpers\Helper;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Widget\Widget;
 use App\Models\Back\Widget\WidgetGroup;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class WidgetController extends Controller
@@ -177,8 +177,8 @@ class WidgetController extends Controller
     {
         $widget_group = WidgetGroup::where('id', $widget->group_id)->first();
 
-        Cache::forget('wg.' . $widget_group->id);
-        Cache::forget('wg.' . $widget_group->slug);
+        Helper::forgetCache('wg.' . $widget_group->id);
+        Helper::forgetCache('wg.' . $widget_group->slug);
     }
 
 

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Back\Settings\App;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Settings\Faq;
 use App\Models\Back\Settings\Settings;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
@@ -41,7 +41,7 @@ class PaymentController extends Controller
         $updated = Settings::setListItem('payment', 'list.' . $request->data['code'], $request->data);
 
         if ($updated) {
-            Cache::forget('payment_list');
+            Helper::forgetCache('payment_list');
 
             return response()->json(['success' => 'Način plaćanja je uspješno snimljen.']);
         }

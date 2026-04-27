@@ -7,7 +7,6 @@ use App\Helpers\Helper;
 use App\Models\Back\Settings\Faq;
 use App\Models\Back\Settings\Settings;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -165,10 +164,10 @@ class CurrencyController extends Controller
      */
     public function cleanCache()
     {
-        Cache::forget('currency_list');
-        Cache::forget('currency_main');
-        Cache::forget('currency_secondary');
-        Cache::forget('currency_symbol');
+        Helper::forgetCache('currency_list');
+        Helper::forgetCache('currency_main');
+        Helper::forgetCache('currency_secondary');
+        Helper::forgetCache('currency_symbol');
         Helper::flushCache('settings', 'currencylist');
         Helper::flushCache('settings', 'currency');
 

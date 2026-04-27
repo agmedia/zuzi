@@ -137,8 +137,8 @@ class Category extends Model
      */
     public static function forgetAdminListCache(): void
     {
-        Cache::forget(static::getListCacheKey(true));
-        Cache::forget(static::getListCacheKey(false));
+        Helper::forgetCache(static::getListCacheKey(true));
+        Helper::forgetCache(static::getListCacheKey(false));
     }
 
 

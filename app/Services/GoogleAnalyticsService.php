@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Helpers\Helper;
 use App\Models\Back\Orders\Order;
 use App\Models\TagManager;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -34,7 +34,7 @@ class GoogleAnalyticsService
             return false;
         }
 
-        if (! Cache::add($this->pendingCacheKey($order->id), true, now()->addMinutes(10))) {
+        if (! Helper::addCache($this->pendingCacheKey($order->id), true, now()->addMinutes(10), true)) {
             return true;
         }
 
@@ -63,7 +63,7 @@ class GoogleAnalyticsService
                     ->post($endpoint, $payload);
 
                 if ($response->successful()) {
-                    Cache::put($sentKey, true, now()->addDays(30));
+                    Helper::putCache($sentKey, true, now()->addDays(30));
 
                     return;
                 }
@@ -79,7 +79,7 @@ class GoogleAnalyticsService
                     'message'  => $exception->getMessage(),
                 ]);
             } finally {
-                Cache::forget($pendingKey);
+                Helper::forgetCache($pendingKey);
             }
         })->afterResponse();
 
@@ -89,13 +89,13 @@ class GoogleAnalyticsService
 
     public function wasPurchaseSent(int $orderId): bool
     {
-        return Cache::has($this->sentCacheKey($orderId));
+        return Helper::hasCache($this->sentCacheKey($orderId));
     }
 
 
     private function isPurchasePending(int $orderId): bool
     {
-        return Cache::has($this->pendingCacheKey($orderId));
+        return Helper::hasCache($this->pendingCacheKey($orderId));
     }
 
 

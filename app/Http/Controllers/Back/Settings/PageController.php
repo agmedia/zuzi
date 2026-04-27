@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Back\Settings;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Settings\Page;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class PageController extends Controller
@@ -128,7 +128,7 @@ class PageController extends Controller
      */
     private function flush(Page $page): void
     {
-        Cache::forget('page.' . $page->id);
-        Cache::forget('page.' . $page->slug);
+        Helper::forgetCache('page.' . $page->id);
+        Helper::forgetCache('page.' . $page->slug);
     }
 }
