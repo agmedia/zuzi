@@ -2,15 +2,23 @@
 
 @section('content')
     @php($expiresAt = \Illuminate\Support\Carbon::make($promoAction->date_end))
+    @php($isUnfinishedOrder = (int) $order->order_status_id === (int) config('settings.order.status.unfinished'))
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
             <td class="ag-mail-tableset" style="padding-bottom: 8px;">
                 <h2 style="margin: 0 0 16px; font-size: 28px; line-height: 1.3; color: #1f2937;">Bok 👋</h2>
 
-                <p style="margin: 0 0 14px; font-size: 16px; line-height: 1.8; color: #4b5563;">
-                    hvala ti na kupnji na Zuzi 📚<br>
-                    tvoja narudžba je upravo ono što volimo vidjeti - još jedan ljubitelj knjiga ❤️
-                </p>
+                @if ($isUnfinishedOrder)
+                    <p style="margin: 0 0 14px; font-size: 16px; line-height: 1.8; color: #4b5563;">
+                        primijetili smo da si ostavio/la nekoliko odličnih naslova u svojoj košarici 📚<br>
+                        Šteta bi bilo da ti netko drugi uzme ono što si već odabrao/la 😉
+                    </p>
+                @else
+                    <p style="margin: 0 0 14px; font-size: 16px; line-height: 1.8; color: #4b5563;">
+                        hvala ti na kupnji na Zuzi 📚<br>
+                        tvoja narudžba je upravo ono što volimo vidjeti - još jedan ljubitelj knjiga ❤️
+                    </p>
+                @endif
 
                 <p style="margin: 0; font-size: 16px; line-height: 1.8; color: #4b5563;">
                     Imamo nešto za tebe 👇

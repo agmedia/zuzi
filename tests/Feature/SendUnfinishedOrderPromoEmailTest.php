@@ -47,10 +47,17 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         $this->assertSame('2026-05-04 10:00:00', Carbon::make($action->date_end)->format('Y-m-d H:i:s'));
 
         Mail::assertSent(UnfinishedOrderPromo::class, function (UnfinishedOrderPromo $mail) use ($orderId, $action) {
+            $rendered = view('emails.unfinished-order-promo', [
+                'order' => $mail->order,
+                'promoAction' => $mail->promoAction,
+            ])->render();
+
             return $mail->hasTo('promo@example.com')
                 && (int) $mail->order->id === $orderId
                 && (int) $mail->promoAction->id === (int) $action->id
-                && $mail->build()->subject === 'Tvoja nagrada čeka 🎁 (vrijedi još kratko)';
+                && $mail->build()->subject === 'Tvoja nagrada čeka 🎁 (vrijedi još kratko)'
+                && str_contains($rendered, 'primijetili smo da si ostavio/la nekoliko odličnih naslova u svojoj košarici')
+                && str_contains($rendered, 'Šteta bi bilo da ti netko drugi uzme ono što si već odabrao/la');
         });
 
         $this->assertDatabaseHas('order_history', [
@@ -95,7 +102,14 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         $this->assertSame(15.0, (float) $action->discount);
         $this->assertSame(15, strlen((string) $action->coupon));
         Mail::assertSent(UnfinishedOrderPromo::class, function (UnfinishedOrderPromo $mail) {
-            return $mail->build()->subject === 'Tvoja nagrada čeka 🎁 (vrijedi još kratko)';
+            $rendered = view('emails.unfinished-order-promo', [
+                'order' => $mail->order,
+                'promoAction' => $mail->promoAction,
+            ])->render();
+
+            return $mail->build()->subject === 'Tvoja nagrada čeka 🎁 (vrijedi još kratko)'
+                && str_contains($rendered, 'hvala ti na kupnji na Zuzi')
+                && ! str_contains($rendered, 'primijetili smo da si ostavio/la nekoliko odličnih naslova u svojoj košarici');
         });
     }
 
