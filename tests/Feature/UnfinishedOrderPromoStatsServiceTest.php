@@ -51,6 +51,39 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_it_does_not_count_promos_used_on_unfinished_orders(): void
+    {
+        Carbon::setTestNow('2026-04-27 14:45:00');
+
+        $unfinishedTitle = $this->createPromoAction(35756, 10, '2026-04-27 09:00:00');
+        $finishedTitle = $this->createPromoAction(35757, 15, '2026-04-27 10:00:00');
+
+        $this->createUsedPromoOrder(
+            $unfinishedTitle,
+            42.34,
+            -2.66,
+            '2026-04-27 11:00:00',
+            (int) config('settings.order.status.unfinished')
+        );
+
+        $this->createUsedPromoOrder(
+            $finishedTitle,
+            56.34,
+            -4.48,
+            '2026-04-27 12:00:00'
+        );
+
+        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData();
+
+        $this->assertSame(2, $stats['summary']['sent_count']);
+        $this->assertSame(1, $stats['summary']['used_count']);
+        $this->assertSame(50.0, $stats['summary']['conversion_rate']);
+        $this->assertSame(56.34, $stats['summary']['revenue_total']);
+        $this->assertSame(4.48, $stats['summary']['discount_total']);
+
+        Carbon::setTestNow();
+    }
+
     private function createPromoAction(int $orderId, int $discount, string $createdAt): string
     {
         $title = 'Promo za nedovrsenu narudzbu #' . $orderId;
@@ -79,12 +112,18 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
         return $title;
     }
 
-    private function createUsedPromoOrder(string $title, float $total, float $discountValue, string $createdAt): void
+    private function createUsedPromoOrder(
+        string $title,
+        float $total,
+        float $discountValue,
+        string $createdAt,
+        int $statusId = 4
+    ): void
     {
         $orderId = DB::table('orders')->insertGetId([
             'user_id' => 0,
             'affiliate_id' => 0,
-            'order_status_id' => 4,
+            'order_status_id' => $statusId,
             'invoice' => null,
             'total' => $total,
             'payment_fname' => 'Test',

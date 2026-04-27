@@ -133,7 +133,17 @@ class UnfinishedOrderPromoStatsService
                 }
             )
             ->join('orders', 'orders.id', '=', 'totals.order_id')
+            ->whereNotIn('orders.order_status_id', $this->excludedOrderStatuses())
             ->where('totals.code', 'special');
+    }
+
+    private function excludedOrderStatuses(): array
+    {
+        return array_values(array_filter([
+            config('settings.order.status.canceled'),
+            config('settings.order.status.declined'),
+            config('settings.order.status.unfinished'),
+        ], static fn ($status) => $status !== null));
     }
 
     private function resolveRate(int $usedCount, int $sentCount): float
