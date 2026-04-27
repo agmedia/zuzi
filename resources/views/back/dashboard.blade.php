@@ -191,7 +191,7 @@
                 </div>
                 <div class="block-content">
                     <div class="row">
-                        <div class="col-12 col-md-4 col-xl-2 mb-3">
+                        <div class="col-12 col-md-6 col-xl-3 mb-3">
                             <div class="block block-rounded text-center h-100">
                                 <div class="block-content py-3">
                                     <div class="font-size-sm text-muted text-uppercase">Poslano</div>
@@ -199,7 +199,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-md-4 col-xl-2 mb-3">
+                        <div class="col-12 col-md-6 col-xl-3 mb-3">
                             <div class="block block-rounded text-center h-100">
                                 <div class="block-content py-3">
                                     <div class="font-size-sm text-muted text-uppercase">Iskorišteno</div>
@@ -207,15 +207,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-md-4 col-xl-2 mb-3">
-                            <div class="block block-rounded text-center h-100">
-                                <div class="block-content py-3">
-                                    <div class="font-size-sm text-muted text-uppercase">Neiskorišteno</div>
-                                    <div class="font-size-h3 font-w600 mt-1">{{ number_format($promoStats['summary']['unused_count'], 0, ',', '.') }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-4 col-xl-2 mb-3">
+                        <div class="col-12 col-md-6 col-xl-3 mb-3">
                             <div class="block block-rounded text-center h-100">
                                 <div class="block-content py-3">
                                     <div class="font-size-sm text-muted text-uppercase">Konverzija</div>
@@ -223,21 +215,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-md-4 col-xl-2 mb-3">
+                        <div class="col-12 col-md-6 col-xl-3 mb-3">
                             <div class="block block-rounded text-center h-100">
                                 <div class="block-content py-3">
-                                    <div class="font-size-sm text-muted text-uppercase">Promet iz kupona</div>
+                                    <div class="font-size-sm text-muted text-uppercase">Promet</div>
                                     <div class="font-size-h3 font-w600 mt-1">{{ \App\Helpers\Currency::main($promoStats['summary']['revenue_total'], true) }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-4 col-xl-2 mb-3">
-                            <div class="block block-rounded text-center h-100">
-                                <div class="block-content py-3">
-                                    <div class="font-size-sm text-muted text-uppercase">Prosj. kupnja s kuponom</div>
-                                    <div class="font-size-h3 font-w600 mt-1">
-                                        {{ $promoStats['summary']['used_count'] ? \App\Helpers\Currency::main($promoStats['summary']['average_revenue_per_used'], true) : '—' }}
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -253,14 +235,14 @@
 
                     <div class="row mt-4">
                         <div class="col-12">
-                            <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between mb-3 font-size-sm text-muted">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 font-size-sm text-muted promo-stats-meta">
+                                <div>
+                                    Neiskorišteno:
+                                    <strong>{{ number_format($promoStats['summary']['unused_count'], 0, ',', '.') }}</strong>
+                                </div>
                                 <div>
                                     Ukupni odobreni popust:
                                     <strong>{{ \App\Helpers\Currency::main($promoStats['summary']['discount_total'], true) }}</strong>
-                                </div>
-                                <div>
-                                    Prosj. odobreni popust po kupnji:
-                                    <strong>{{ $promoStats['summary']['used_count'] ? \App\Helpers\Currency::main($promoStats['summary']['average_discount_per_used'], true) : '—' }}</strong>
                                 </div>
                                 <div>
                                     Najbolji popust:
@@ -370,6 +352,7 @@
         .chart-container.medium { height: 280px; }
         .chart-container.large { height: 400px; }
         .chart-container.promo-wide { height: 340px; }
+        .promo-stats-meta { gap: .5rem 1.5rem; }
     </style>
 @endpush
 
