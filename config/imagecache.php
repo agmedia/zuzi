@@ -59,6 +59,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Dedicated Cache Store
+    |--------------------------------------------------------------------------
+    |
+    | Image transformations store large binary payloads, so keep them on the
+    | file cache by default instead of inheriting the app-wide Redis store.
+    |
+    */
+
+    'cache_driver' => env('IMAGECACHE_DRIVER', 'file'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Image Cache Lifetime
     |--------------------------------------------------------------------------
     |

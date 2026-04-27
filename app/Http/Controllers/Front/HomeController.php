@@ -202,11 +202,14 @@ class HomeController extends Controller
     {
         $src = $this->resolveReadableImageSource($request->input('src'));
 
-        $cacheimage = Image::cache(function($image) use ($src) {
-            $image->make($src);
-        }, config('imagecache.lifetime'));
-
-        return Image::make($cacheimage)->response();
+        return $this->respondWithCachedImage(
+            function ($image) use ($src) {
+                $image->make($src);
+            },
+            function () use ($src) {
+                return Image::make($src);
+            }
+        );
     }
 
 
@@ -220,12 +223,39 @@ class HomeController extends Controller
         $src = $this->resolveReadableImageSource($request->input('src'));
         [$width, $height] = $this->resolveThumbDimensions($request->input('size'));
 
-        $cacheimage = Image::cache(function($image) use ($src, $width, $height) {
-            $image->make($src)->resize($width, $height);
+        return $this->respondWithCachedImage(
+            function ($image) use ($src, $width, $height) {
+                $image->make($src)->resize($width, $height);
+            },
+            function () use ($src, $width, $height) {
+                return Image::make($src)->resize($width, $height);
+            }
+        );
+    }
 
-        }, config('imagecache.lifetime'));
 
-        return Image::make($cacheimage)->response();
+    private function respondWithCachedImage(\Closure $cacheCallback, \Closure $fallbackCallback)
+    {
+        try {
+            $cachedImage = Image::cache($cacheCallback, config('imagecache.lifetime'));
+
+            return Image::make($cachedImage)->response();
+        } catch (\Throwable $e) {
+            $this->reportImageCacheFallback($e);
+
+            return $fallbackCallback()->response();
+        }
+    }
+
+
+    private function reportImageCacheFallback(\Throwable $e): void
+    {
+        Log::warning('Image cache fallback engaged after cache store failure.', [
+            'route' => request()->path(),
+            'query' => md5((string) request()->getQueryString()),
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
+        ]);
     }
 
 
