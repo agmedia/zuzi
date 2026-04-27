@@ -12,6 +12,7 @@ class UnfinishedOrderPromoStatsService
     {
         $promoActionsQuery = $this->promoActionsQuery();
         $usedPromoOrdersQuery = $this->usedPromoOrdersQuery();
+        $byDiscount = $this->buildDiscountBreakdown();
 
         $sentCount = (clone $promoActionsQuery)->count();
         $usedCount = (clone $usedPromoOrdersQuery)
@@ -27,12 +28,16 @@ class UnfinishedOrderPromoStatsService
             'summary' => [
                 'sent_count' => $sentCount,
                 'used_count' => $usedCount,
+                'unused_count' => max($sentCount - $usedCount, 0),
                 'conversion_rate' => $this->resolveRate($usedCount, $sentCount),
                 'revenue_total' => $revenueTotal,
                 'discount_total' => $discountTotal,
+                'average_revenue_per_used' => $this->resolveAverage($revenueTotal, $usedCount),
+                'average_discount_per_used' => $this->resolveAverage($discountTotal, $usedCount),
+                'best_discount' => $this->resolveBestDiscount($byDiscount),
             ],
             'chart' => $this->buildChartData(),
-            'by_discount' => $this->buildDiscountBreakdown(),
+            'by_discount' => $byDiscount,
         ];
     }
 
@@ -153,5 +158,39 @@ class UnfinishedOrderPromoStatsService
         }
 
         return round(($usedCount / $sentCount) * 100, 1);
+    }
+
+    private function resolveAverage(float $total, int $count): float
+    {
+        if ($count === 0) {
+            return 0.0;
+        }
+
+        return round($total / $count, 2);
+    }
+
+    private function resolveBestDiscount(array $rows): ?array
+    {
+        return collect($rows)
+            ->filter(fn (array $row) => $row['sent_count'] > 0)
+            ->reduce(function (?array $best, array $row) {
+                if ($best === null) {
+                    return $row;
+                }
+
+                if ($row['conversion_rate'] !== $best['conversion_rate']) {
+                    return $row['conversion_rate'] > $best['conversion_rate'] ? $row : $best;
+                }
+
+                if ($row['used_count'] !== $best['used_count']) {
+                    return $row['used_count'] > $best['used_count'] ? $row : $best;
+                }
+
+                if ($row['revenue_total'] !== $best['revenue_total']) {
+                    return $row['revenue_total'] > $best['revenue_total'] ? $row : $best;
+                }
+
+                return $row['discount'] < $best['discount'] ? $row : $best;
+            });
     }
 }

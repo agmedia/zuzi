@@ -27,9 +27,14 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
 
         $this->assertSame(3, $stats['summary']['sent_count']);
         $this->assertSame(2, $stats['summary']['used_count']);
+        $this->assertSame(1, $stats['summary']['unused_count']);
         $this->assertSame(66.7, $stats['summary']['conversion_rate']);
         $this->assertSame(130.0, $stats['summary']['revenue_total']);
         $this->assertSame(15.0, $stats['summary']['discount_total']);
+        $this->assertSame(65.0, $stats['summary']['average_revenue_per_used']);
+        $this->assertSame(7.5, $stats['summary']['average_discount_per_used']);
+        $this->assertSame(20, $stats['summary']['best_discount']['discount']);
+        $this->assertSame(100.0, $stats['summary']['best_discount']['conversion_rate']);
 
         $byDiscount = collect($stats['by_discount'])->keyBy('discount');
 
@@ -77,9 +82,13 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
 
         $this->assertSame(2, $stats['summary']['sent_count']);
         $this->assertSame(1, $stats['summary']['used_count']);
+        $this->assertSame(1, $stats['summary']['unused_count']);
         $this->assertSame(50.0, $stats['summary']['conversion_rate']);
         $this->assertSame(56.34, $stats['summary']['revenue_total']);
         $this->assertSame(4.48, $stats['summary']['discount_total']);
+        $this->assertSame(56.34, $stats['summary']['average_revenue_per_used']);
+        $this->assertSame(4.48, $stats['summary']['average_discount_per_used']);
+        $this->assertSame(15, $stats['summary']['best_discount']['discount']);
 
         Carbon::setTestNow();
     }
