@@ -10,6 +10,8 @@ use App\Mail\StatusCanceled;
 use App\Mail\StatusCompleted;
 use App\Mail\StatusPaid;
 use App\Mail\StatusReady;
+use App\Mail\UnfinishedOrderPromo;
+use App\Models\Back\Marketing\Action;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderHistory;
 use App\Models\Back\Settings\Settings;
@@ -18,6 +20,8 @@ use App\Models\Front\Checkout\Shipping\Glsstari;
 use App\Models\Front\Checkout\Shipping\HP;
 use App\Models\Front\Loyalty;
 use App\Services\GiftVoucherService;
+use App\Services\UnfinishedOrderPromoService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -36,8 +40,29 @@ class OrderController extends Controller
     {
         $orders   = $order->filter($request)->paginate(config('settings.pagination.back'))->appends(request()->query());
         $statuses = Settings::get('order', 'statuses');
+        $promoService = app(UnfinishedOrderPromoService::class);
+        $sentPromoActions = collect();
 
-        return view('back.order.index', compact('orders', 'statuses'));
+        if ($orders->count()) {
+            $promoTitles = $orders->getCollection()
+                ->map(fn (Order $listedOrder) => $promoService->titleForOrder($listedOrder))
+                ->values();
+
+            $promoActions = Action::query()
+                ->whereIn('title', $promoTitles)
+                ->where('group', 'total')
+                ->get()
+                ->keyBy('title');
+
+            $sentPromoActions = $orders->getCollection()
+                ->mapWithKeys(function (Order $listedOrder) use ($promoActions, $promoService) {
+                    $action = $promoActions->get($promoService->titleForOrder($listedOrder));
+
+                    return $action ? [$listedOrder->id => $action] : [];
+                });
+        }
+
+        return view('back.order.index', compact('orders', 'statuses', 'sentPromoActions'));
     }
 
 
@@ -275,6 +300,99 @@ class OrderController extends Controller
                 Mail::to($order->payment_email)->send(new StatusCompleted($order));
             });
         }
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function api_send_unfinished_promo(Request $request, UnfinishedOrderPromoService $unfinishedOrderPromoService)
+    {
+        if (! auth()->check()) {
+            return response()->json(['error' => 'Niste autorizirani.'], 403);
+        }
+
+        $request->validate([
+            'order_id' => 'required|integer',
+            'discount' => 'required|integer|in:10,15,20',
+        ]);
+
+        /** @var Order|null $order */
+        $order = Order::query()->find($request->input('order_id'));
+        $discount = (int) $request->input('discount');
+
+        if (! $order) {
+            return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
+        }
+
+        if (! filled($order->payment_email)) {
+            return response()->json(['error' => 'Narudžba nema e-mail adresu kupca.'], 422);
+        }
+
+        $existingPromoAction = $unfinishedOrderPromoService->findForOrder($order);
+
+        if ($existingPromoAction) {
+            return response()->json(['error' => 'Promo mail je već poslan za ovu narudžbu.'], 422);
+        }
+
+        try {
+            $promoAction = $unfinishedOrderPromoService->issueForOrder($order, $discount);
+        } catch (\Throwable $e) {
+            Log::error('Failed to issue unfinished order promo coupon.', [
+                'order_id' => $order->id,
+                'payment_email' => $order->payment_email,
+                'discount' => $discount,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Greška..! Generiranje promo koda nije uspjelo.'], 422);
+        }
+
+        try {
+            Mail::to($order->payment_email)->send(new UnfinishedOrderPromo($order, $promoAction));
+        } catch (\Throwable $e) {
+            try {
+                $promoAction->delete();
+            } catch (\Throwable $deleteException) {
+                Log::warning('Failed to rollback unfinished order promo coupon after email failure.', [
+                    'order_id' => $order->id,
+                    'coupon' => $promoAction->coupon ?? null,
+                    'error' => $deleteException->getMessage(),
+                ]);
+            }
+
+            Log::error('Failed to send unfinished order promo email.', [
+                'order_id' => $order->id,
+                'payment_email' => $order->payment_email,
+                'coupon' => $promoAction->coupon ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Greška..! Slanje promo maila nije uspjelo.'], 422);
+        }
+
+        try {
+            $expiresAt = Carbon::make($promoAction->date_end);
+            OrderHistory::store($order->id, new Request([
+                'status' => 0,
+                'comment' => 'Poslan promo email za nedovrsenu narudzbu. Kod: '
+                    . $promoAction->coupon
+                    . '. Popust: -'
+                    . (int) $promoAction->discount
+                    . '%.'
+                    . '. Vrijedi do: '
+                    . ($expiresAt ? $expiresAt->format('d.m.Y H:i') : ''),
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to store unfinished order promo email history.', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json(['message' => 'Promo mail je uspješno poslan.']);
     }
 
 

@@ -100,7 +100,7 @@
                             <th class="text-center">Artikli</th>
                             <th class="text-right">Vrijednost</th>
                             <th class="text-center font-size-sm" style="width: 80px;">Pošalji</th>
-                            <th class="text-right font-size-sm" style="width: 100px;">Detalji</th>
+                            <th class="text-right font-size-sm" style="width: 240px;">Detalji</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -145,7 +145,7 @@
                                         @elseif ($order->shipping_code == 'hp_paketomat')
                                             <button type="button" class="btn btn-light btn-sm" onclick="sendHPPak({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
                                         @elseif ($order->shipping_code == 'wolt_drive')
-                                            <button type="button" class="btn btn-primary btn-sm" onclick="sendWolt({{ $order->id }})">
+                                            <button type="button" class="btn btn-primary btn-sm" data-wolt-btn="{{ $order->id }}" onclick="sendWolt({{ $order->id }})">
                                                 <i class="fa fa-motorcycle ml-1"></i> Wolt
                                             </button>
                                         @else
@@ -154,7 +154,35 @@
                                     @endif
                                 </td>
                                 <td class="text-right">
-                                    <a class="btn btn-sm btn-alt-secondary" href="{{ route('orders.show', ['order' => $order]) }}">
+                                    @php($sentPromoAction = $sentPromoActions->get($order->id))
+                                    @php($canSendUnfinishedPromo = ! $sentPromoAction && filled($order->payment_email))
+
+                                    @if ($sentPromoAction)
+                                        <div class="d-inline-flex flex-column align-items-end mr-1">
+                                            <span class="badge badge-success">Poslano -{{ (int) $sentPromoAction->discount }}%</span>
+                                            <span class="text-muted small mt-1">{{ \Illuminate\Support\Carbon::make($sentPromoAction->created_at)->format('d.m.Y H:i') }}</span>
+                                        </div>
+                                    @elseif ($canSendUnfinishedPromo)
+                                        <div class="btn-group mr-1">
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-alt-primary dropdown-toggle"
+                                                data-toggle="dropdown"
+                                                aria-haspopup="true"
+                                                aria-expanded="false"
+                                                data-unfinished-promo-btn="{{ $order->id }}"
+                                                title="Pošalji promo mail"
+                                            >
+                                                <i class="fa fa-fw fa-envelope mr-1"></i><span class="d-none d-xl-inline">Mail</span>
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, 10)">Pošalji -10%</a>
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, 15)">Pošalji -15%</a>
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, 20)">Pošalji -20%</a>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    <a class="btn btn-sm btn-alt-secondary mr-1" href="{{ route('orders.show', ['order' => $order]) }}">
                                         <i class="fa fa-fw fa-eye"></i>
                                     </a>
                                     <a class="btn btn-sm btn-alt-info" href="{{ route('orders.edit', ['order' => $order]) }}">
@@ -279,6 +307,38 @@
             btn.innerHTML = isLoading
                 ? '<i class="fa fa-spinner fa-spin"></i> Slanje...'
                 : '<i class="fa fa-motorcycle ml-1"></i> Wolt';
+        }
+
+        function sendUnfinishedPromo(order_id, discount) {
+            setUnfinishedPromoBtnLoading(order_id, true);
+            axios.post("{{ route('api.order.send.unfinished-promo') }}", { order_id, discount })
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({
+                            timer: 1500,
+                            text: response.data.message,
+                        }).then(() => {
+                            location.reload();
+                        });
+
+                    } else {
+                        errorToast.fire(response.data.error || 'Greška prilikom slanja promo maila.');
+                    }
+                })
+                .catch(error => {
+                    errorToast.fire(error?.response?.data?.error || 'Greška prilikom slanja promo maila.');
+                })
+                .finally(() => setUnfinishedPromoBtnLoading(order_id, false));
+        }
+
+        function setUnfinishedPromoBtnLoading(orderId, isLoading) {
+            const btn = document.querySelector(`[data-unfinished-promo-btn="${orderId}"]`);
+            if (!btn) return;
+
+            btn.disabled = isLoading;
+            btn.innerHTML = isLoading
+                ? '<i class="fa fa-spinner fa-spin mr-1"></i><span class="d-none d-xl-inline">Slanje...</span>'
+                : '<i class="fa fa-fw fa-envelope mr-1"></i><span class="d-none d-xl-inline">Mail</span>';
         }
 
 
