@@ -12,6 +12,7 @@ class UnfinishedOrderPromoService
 {
     public const ALLOWED_DISCOUNTS = [10, 15, 20];
     public const VALID_FOR_DAYS = 7;
+    private const COUPON_SUFFIX_LENGTH = 7;
 
     public function issueForOrder(Order $order, int $discount): Action
     {
@@ -63,7 +64,7 @@ class UnfinishedOrderPromoService
     private function generateUniqueCode(int $discount): string
     {
         do {
-            $code = 'HVALA' . $discount . '-' . Str::upper(Str::random(8));
+            $code = 'HVALA' . $discount . '-' . Str::upper(Str::random(self::COUPON_SUFFIX_LENGTH));
         } while (
             Action::query()->where('coupon', $code)->exists()
             || GiftVoucher::query()->where('code', $code)->exists()

@@ -374,6 +374,15 @@ class OrderController extends Controller
         }
 
         try {
+            $actionData = is_array($promoAction->data) ? $promoAction->data : [];
+            $actionData['sent_at'] = now()->toDateTimeString();
+            $actionData['sent_count'] = (int) ($actionData['sent_count'] ?? 0) + 1;
+
+            $promoAction->forceFill([
+                'data' => json_encode($actionData),
+                'updated_at' => now(),
+            ])->save();
+
             $expiresAt = Carbon::make($promoAction->date_end);
             OrderHistory::store($order->id, new Request([
                 'status' => 0,

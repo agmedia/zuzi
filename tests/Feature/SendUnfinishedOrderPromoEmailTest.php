@@ -43,6 +43,7 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         $this->assertSame(1, (int) $action->quantity);
         $this->assertSame(1, (int) $action->status);
         $this->assertTrue(str_starts_with((string) $action->coupon, 'HVALA10-'));
+        $this->assertSame(15, strlen((string) $action->coupon));
         $this->assertSame('2026-05-04 10:00:00', Carbon::make($action->date_end)->format('Y-m-d H:i:s'));
 
         Mail::assertSent(UnfinishedOrderPromo::class, function (UnfinishedOrderPromo $mail) use ($orderId, $action) {
@@ -91,6 +92,7 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
 
         $this->assertNotNull($action);
         $this->assertSame(15.0, (float) $action->discount);
+        $this->assertSame(15, strlen((string) $action->coupon));
         Mail::assertSent(UnfinishedOrderPromo::class, 1);
     }
 

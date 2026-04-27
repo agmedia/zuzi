@@ -160,7 +160,7 @@
                                     @if ($sentPromoAction)
                                         <div class="d-inline-flex flex-column align-items-end mr-1">
                                             <span class="badge badge-success">Poslano -{{ (int) $sentPromoAction->discount }}%</span>
-                                            <span class="text-muted small mt-1">{{ \Illuminate\Support\Carbon::make($sentPromoAction->created_at)->format('d.m.Y H:i') }}</span>
+                                            <span class="text-muted small mt-1">{{ \Illuminate\Support\Carbon::make(data_get($sentPromoAction->data, 'sent_at', $sentPromoAction->created_at))->format('d.m.Y H:i') }}</span>
                                         </div>
                                     @elseif ($canSendUnfinishedPromo)
                                         <div class="btn-group mr-1">
