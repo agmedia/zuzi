@@ -49,7 +49,8 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         Mail::assertSent(UnfinishedOrderPromo::class, function (UnfinishedOrderPromo $mail) use ($orderId, $action) {
             return $mail->hasTo('promo@example.com')
                 && (int) $mail->order->id === $orderId
-                && (int) $mail->promoAction->id === (int) $action->id;
+                && (int) $mail->promoAction->id === (int) $action->id
+                && $mail->build()->subject === 'Tvoja nagrada čeka 🎁 (vrijedi još kratko)';
         });
 
         $this->assertDatabaseHas('order_history', [
@@ -93,7 +94,9 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         $this->assertNotNull($action);
         $this->assertSame(15.0, (float) $action->discount);
         $this->assertSame(15, strlen((string) $action->coupon));
-        Mail::assertSent(UnfinishedOrderPromo::class, 1);
+        Mail::assertSent(UnfinishedOrderPromo::class, function (UnfinishedOrderPromo $mail) {
+            return $mail->build()->subject === 'Tvoja nagrada čeka 🎁 (vrijedi još kratko)';
+        });
     }
 
     public function test_unfinished_order_promo_email_cannot_be_sent_twice_for_same_order(): void

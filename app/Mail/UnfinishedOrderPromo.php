@@ -30,7 +30,7 @@ class UnfinishedOrderPromo extends Mailable
 
     public function build()
     {
-        return $this->subject('Hvala na kupnji - evo 10% za sljedecu kupnju')
+        return $this->subject('Tvoja nagrada čeka 🎁 (vrijedi još kratko)')
             ->view('emails.unfinished-order-promo');
     }
 }
