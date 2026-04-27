@@ -20,6 +20,7 @@ use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\Checkout\Shipping\HP;
+use App\Services\UnfinishedOrderPromoStatsService;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -37,6 +38,8 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        $promoStats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData();
+
         $data['today'] = Order::whereDate('created_at', Carbon::today())
             ->whereNotIn('order_status_id', [7, 5, 8])
             ->count();
@@ -82,7 +85,8 @@ class DashboardController extends Controller
             'products',
             'this_year',
             'last_year',
-            'yearsWithOrders'
+            'yearsWithOrders',
+            'promoStats'
         ));
     }
 

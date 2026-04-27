@@ -184,6 +184,86 @@
 
                 </div>
             </div>
+
+            <div class="block block-rounded mt-4">
+                <div class="block-header block-header-default">
+                    <h3 class="block-title">Promo kodovi za nedovršene narudžbe</h3>
+                </div>
+                <div class="block-content">
+                    <div class="row">
+                        <div class="col-12 col-md-3 mb-3">
+                            <div class="block block-rounded text-center h-100">
+                                <div class="block-content py-3">
+                                    <div class="font-size-sm text-muted text-uppercase">Poslano</div>
+                                    <div class="font-size-h3 font-w600 mt-1">{{ number_format($promoStats['summary']['sent_count'], 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3 mb-3">
+                            <div class="block block-rounded text-center h-100">
+                                <div class="block-content py-3">
+                                    <div class="font-size-sm text-muted text-uppercase">Iskorišteno</div>
+                                    <div class="font-size-h3 font-w600 mt-1">{{ number_format($promoStats['summary']['used_count'], 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3 mb-3">
+                            <div class="block block-rounded text-center h-100">
+                                <div class="block-content py-3">
+                                    <div class="font-size-sm text-muted text-uppercase">Konverzija</div>
+                                    <div class="font-size-h3 font-w600 mt-1">{{ number_format($promoStats['summary']['conversion_rate'], 1, ',', '.') }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3 mb-3">
+                            <div class="block block-rounded text-center h-100">
+                                <div class="block-content py-3">
+                                    <div class="font-size-sm text-muted text-uppercase">Promet iz kupona</div>
+                                    <div class="font-size-h3 font-w600 mt-1">{{ \App\Helpers\Currency::main($promoStats['summary']['revenue_total'], true) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-xl-8">
+                            <div class="chart-container medium">
+                                <canvas id="unfinishedPromoChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-xl-4">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-vcenter font-size-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Popust</th>
+                                        <th class="text-center">Poslano</th>
+                                        <th class="text-center">Kupnje</th>
+                                        <th class="text-center">Konv.</th>
+                                        <th class="text-right">Promet</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach ($promoStats['by_discount'] as $row)
+                                        <tr>
+                                            <td><strong>-{{ $row['discount'] }}%</strong></td>
+                                            <td class="text-center">{{ number_format($row['sent_count'], 0, ',', '.') }}</td>
+                                            <td class="text-center">{{ number_format($row['used_count'], 0, ',', '.') }}</td>
+                                            <td class="text-center">{{ number_format($row['conversion_rate'], 1, ',', '.') }}%</td>
+                                            <td class="text-right">{{ \App\Helpers\Currency::main($row['revenue_total'], true) }}</td>
+                                        </tr>
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="font-size-sm text-muted">
+                                Ukupni odobreni popust: <strong>{{ \App\Helpers\Currency::main($promoStats['summary']['discount_total'], true) }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         @endif
 
         <!-- Top Products and Latest Orders -->
@@ -404,6 +484,54 @@
         $('#chart-year').val(now.getFullYear());
         $('#chart-month').val(now.getMonth() + 1);
         loadMonth(now.getFullYear(), now.getMonth() + 1);
+
+        const unfinishedPromoChartData = @json($promoStats['chart']);
+        const unfinishedPromoChartCanvas = document.getElementById('unfinishedPromoChart');
+
+        if (unfinishedPromoChartCanvas) {
+            new Chart(unfinishedPromoChartCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: unfinishedPromoChartData.labels,
+                    datasets: [
+                        {
+                            label: 'Poslano',
+                            data: unfinishedPromoChartData.sent,
+                            borderColor: 'rgba(236, 72, 153, 1)',
+                            backgroundColor: 'rgba(236, 72, 153, .18)',
+                            fill: true,
+                            tension: 0,
+                            lineTension: 0
+                        },
+                        {
+                            label: 'Kupnje s kuponom',
+                            data: unfinishedPromoChartData.used,
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            backgroundColor: 'rgba(16, 185, 129, .12)',
+                            fill: false,
+                            tension: 0,
+                            lineTension: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                precision: 0
+                            }
+                        }]
+                    }
+                }
+            });
+        }
 
 
         // =====================

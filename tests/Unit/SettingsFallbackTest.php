@@ -56,5 +56,6 @@ class SettingsFallbackTest extends TestCase
     {
         $this->assertFalse(Currency::secondary());
         $this->assertSame('10,00 €', Currency::main(10, true));
+        $this->assertSame('0,00 €', Currency::main(0, true));
     }
 }
