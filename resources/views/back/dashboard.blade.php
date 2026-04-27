@@ -187,7 +187,7 @@
 
             <div class="block block-rounded mt-4">
                 <div class="block-header block-header-default">
-                    <h3 class="block-title">Promo kodovi za nedovršene narudžbe</h3>
+                    <h3 class="block-title">Promo kodovi</h3>
                 </div>
                 <div class="block-content">
                     <div class="row">
