@@ -16,6 +16,7 @@ use App\Services\GiftWrapService;
 use Darryldecode\Cart\CartCondition;
 use Illuminate\Cache\TaggableStore;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -28,6 +29,9 @@ use Illuminate\Support\Facades\DB;
 
 class Helper
 {
+    private const RANDOMIZED_PRODUCT_POOL_MULTIPLIER = 6;
+    private const RANDOMIZED_PRODUCT_POOL_MINIMUM = 24;
+
     /**
      * Prevent duplicate cache fallback warnings within the same request.
      *
@@ -410,24 +414,101 @@ class Helper
      */
     public static function getRelated($cat = null, $subcat = null)
     {
+        $limit = 10;
         $related = collect();
 
         if ($subcat) {
-            $related = $subcat->products()->inRandomOrder()->take(10)->get();
+            $related = static::sampleOrderedProducts($subcat->products(), $limit);
 
         } else {
             if ($cat) {
-                $related = $cat->products()->inRandomOrder()->take(10)->get();
+                $related = static::sampleOrderedProducts($cat->products(), $limit);
             }
         }
 
         if ($related->count() < 9) {
             $related = $related->concat(
-                Product::query()->inRandomOrder()->take(10 - $related->count())->get()
-            );
+                static::sampleProductsByIdWindow(
+                    Product::query()->active()->hasStock(),
+                    $limit - $related->count(),
+                    $related->pluck('id')->all()
+                )
+            )->unique('id')->values();
         }
 
         return $related;
+    }
+
+    private static function sampleOrderedProducts(Builder|Relation $query, int $limit): Collection
+    {
+        if ($limit < 1) {
+            return collect();
+        }
+
+        $candidatePool = max(
+            $limit * self::RANDOMIZED_PRODUCT_POOL_MULTIPLIER,
+            self::RANDOMIZED_PRODUCT_POOL_MINIMUM
+        );
+
+        return (clone $query)
+            ->limit($candidatePool)
+            ->get()
+            ->shuffle()
+            ->take($limit)
+            ->values();
+    }
+
+    private static function sampleProductsByIdWindow(Builder|Relation $query, int $limit, array $excludeProductIds = []): Collection
+    {
+        if ($limit < 1) {
+            return collect();
+        }
+
+        $candidatePool = max(
+            $limit * self::RANDOMIZED_PRODUCT_POOL_MULTIPLIER,
+            self::RANDOMIZED_PRODUCT_POOL_MINIMUM
+        );
+
+        $query = clone $query;
+        $model = $query instanceof Relation ? $query->getRelated() : $query->getModel();
+        $keyName = $model->getKeyName();
+        $keyColumn = $model->qualifyColumn($keyName);
+
+        if ($excludeProductIds !== []) {
+            $query->whereNotIn($keyColumn, $excludeProductIds);
+        }
+
+        $maxId = (int) ((clone $query)->max($keyColumn) ?? 0);
+
+        if ($maxId < 1) {
+            return collect();
+        }
+
+        $pivotId = random_int(1, $maxId);
+
+        $candidates = (clone $query)
+            ->reorder()
+            ->where($keyColumn, '>=', $pivotId)
+            ->orderBy($keyColumn)
+            ->limit($candidatePool)
+            ->get();
+
+        if ($candidates->count() < $candidatePool) {
+            $candidates = $candidates->concat(
+                (clone $query)
+                    ->reorder()
+                    ->where($keyColumn, '<', $pivotId)
+                    ->orderBy($keyColumn)
+                    ->limit($candidatePool - $candidates->count())
+                    ->get()
+            );
+        }
+
+        return $candidates
+            ->unique($keyName)
+            ->shuffle()
+            ->take($limit)
+            ->values();
     }
 
 
