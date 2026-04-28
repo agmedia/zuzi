@@ -35,7 +35,7 @@
                     <a class="btn btn-primary btn-shadow" href="{{ $aboutUrl }}">
                         O nama <i class="ci-arrow-right ms-1"></i>
                     </a>
-                    <a class="btn btn-dark btn-shadow" href="{{ $aboutUrl }}">
+                    <a class="btn btn-dark btn-shadow" href="https://www.zuzi.hr/kontakt">
                         Kontaktirajte nas <i class="ci-arrow-right ms-1"></i>
                     </a>
                 </div>
