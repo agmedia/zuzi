@@ -61,6 +61,7 @@ class CatalogRouteController extends Controller
             }
 
             $prod->loadMissing(['images', 'author', 'publisher', 'action']);
+            $prod = Product::attachListingBadges(collect([$prod]))->first() ?: $prod;
 
             DB::table('products')
                 ->where('id', $prod->id)
@@ -98,6 +99,7 @@ class CatalogRouteController extends Controller
                     ->inRandomOrder()
                     ->take(8)
                     ->get();
+                $authorProducts = Product::attachListingBadges($authorProducts);
             }
 
             $hasKnownPublisher = $prod->publisher_id
@@ -115,6 +117,7 @@ class CatalogRouteController extends Controller
                     ->inRandomOrder()
                     ->take(8)
                     ->get();
+                $publisherProducts = Product::attachListingBadges($publisherProducts);
             }
 
             $relatedIds = collect(Helper::getRelated($cat, $subcat))
@@ -135,6 +138,7 @@ class CatalogRouteController extends Controller
                     ->get()
                     ->sortBy(fn ($item) => $relatedIds->search($item->id))
                     ->values();
+                $relatedProducts = Product::attachListingBadges($relatedProducts);
             }
 
             return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme', 'shipping_methods', 'payment_methods', 'gdl', 'reviews', 'authorProducts', 'publisherProducts', 'relatedProducts', 'relatedBlogReview'));

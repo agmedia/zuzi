@@ -46,10 +46,16 @@ Vue.component('pagination', require('./../filter/components/Pagination/LaravelVu
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
+const vuexStore = new Vuex.Store(store);
+
+if (vuexStore.state && vuexStore.state.service && typeof vuexStore.state.service.setStore === 'function') {
+    vuexStore.state.service.setStore(vuexStore);
+}
+
 const app = new Vue({
     el: '#agapp',
     router,
-    store: new Vuex.Store(store)
+    store: vuexStore
 });
 
 

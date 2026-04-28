@@ -263,14 +263,32 @@
                     <div style="position:absolute; top:.75rem; left:.75rem; right:.75rem; z-index:5; display:flex; justify-content:space-between; align-items:flex-start;">
                         <span class="badge rounded-pill bg-zuzi fw-700 badge-shadow" style="position:static;" v-if="product.special">-{{ ($store.state.service.getDiscountAmount(product.price, product.special)) }}%</span>
                         <span v-else></span>
-                        <span
-                            class="badge rounded-pill badge-shadow"
-                            v-if="product.delivery_24h"
-                            style="position:static; background:#e50077; color:#fff;"
-                        ><i class="ci-delivery me-1"></i>24 sata</span>
+                        <div class="catalog-grid-card__badges">
+                            <span
+                                class="badge rounded-pill badge-shadow catalog-grid-card__delivery-badge"
+                                v-if="product.delivery_24h"
+                                :title="deliveryTooltip"
+                                :aria-label="deliveryTooltip"
+                            ><i class="ci-delivery me-1"></i>Dostava 24h</span>
+                        </div>
                     </div>
-                       <a class="card-img-top catalog-grid-card__image-link d-block overflow-hidden text-center" :class="{ 'catalog-grid-card__image-link--bookmarkers': isBookmarkerListing }" :href="origin + product.url">
+                       <a class="card-img-top catalog-grid-card__image-link d-block overflow-hidden text-center position-relative" :class="{ 'catalog-grid-card__image-link--bookmarkers': isBookmarkerListing }" :href="origin + product.url">
                            <img class="catalog-grid-card__image" :class="{ 'catalog-grid-card__image--bookmarkers': isBookmarkerListing }" loading="lazy" :src="resolveProductImage(product)" width="250" height="300" :alt="product.name">
+                           <span
+                               v-if="getSalesBadgeType(product)"
+                               class="catalog-grid-card__badge-circle catalog-grid-card__badge-circle--bottom badge-shadow"
+                               :title="getSalesBadgeTooltip(product)"
+                               :aria-label="getSalesBadgeTooltip(product)"
+                           >
+                               <svg
+                                   :viewBox="getSalesBadgeViewBox(product)"
+                                   :class="{ 'catalog-grid-card__badge-icon--popular': getSalesBadgeType(product) === 'popular' }"
+                                   aria-hidden="true"
+                                   focusable="false"
+                               >
+                                   <path :d="getSalesBadgeIconPath(product)" :transform="getSalesBadgeTransform(product)" fill="currentColor"></path>
+                               </svg>
+                           </span>
                     </a>
                     <div class="card-body catalog-grid-card__body py-2 d-flex flex-column">
                         <h3 class="product-title catalog-grid-card__title fs-sm mt-2 mb-1"><a :href="origin + product.url">{{ product.name }}</a></h3>
@@ -414,6 +432,14 @@
                 defaultRobots: '',
                 search_zero_result: false,
                 navigation_zero_result: false,
+                deliveryTooltip: 'Dostava unutar 24 sata.',
+                bestSellerTooltip: 'Bestseller',
+                popularTooltip: 'Popularno',
+                bestSellerIconPath: 'M528 0c8.7998 0 16-7.2002 16-16v-32c0-8.7998-7.2002-16-16-16h-416c-8.7998 0-16 7.2002-16 16v32c0 8.7998 7.2002 16 16 16h416zM592 320c26.5 0 48-21.5 48-48s-21.5-48-48-48c-2.59961 0-5.2002 .400391-7.7002 .799805l-72.2998-192.8h-384l-72.2998 192.8c-2.5-.399414-5.10059-.799805-7.7002-.799805c-26.5 0-48 21.5-48 48s21.5996 48 48.0996 48s48-21.5 48-48c0-7.09961-1.69922-13.7998-4.39941-19.7998l72.2998-43.4004c15.2998-9.2002 35.2998-4 44.2002 11.6006l81.5 142.6c-10.7002 8.7998-17.7002 22-17.7002 37c0 26.5 21.5 48 48 48s48-21.5 48-48c0-15-7-28.2002-17.7002-37l81.5-142.6c8.90039-15.6006 28.7998-20.8008 44.2002-11.6006l72.4004 43.4004c-2.80078 6.09961-4.40039 12.7002-4.40039 19.7998c0 26.5 21.5 48 48 48z',
+                popularIconPath: 'M259.3 17.8 194 150.2 47.9 171.5c-26.2 3.8-36.7 36-17.7 54.6l105.7 103-25 145.5c-4.5 26.3 23.2 46 46.4 33.7L288 439.6l130.7 68.7c23.2 12.2 50.9-7.4 46.4-33.7l-25-145.5 105.7-103c19-18.5 8.5-50.8-17.7-54.6L382 150.2 316.7 17.8c-11.7-23.6-45.6-23.9-57.4 0Z',
+                bestSellerIconViewBox: '0 0 640 512',
+                popularIconViewBox: '0 0 576 512',
+                bestSellerIconTransform: 'translate(0 512) scale(1 -1)',
             }
         },
         computed: {
@@ -805,6 +831,75 @@
 
             /**
              *
+             * @param product
+             * @return {string}
+             */
+            getSalesBadgeType(product) {
+                if (!product) {
+                    return '';
+                }
+
+                if (product.sales_badge_type) {
+                    return String(product.sales_badge_type);
+                }
+
+                if (product.is_best_seller) {
+                    return 'bestseller';
+                }
+
+                if (product.is_popular) {
+                    return 'popular';
+                }
+
+                return '';
+            },
+
+            /**
+             *
+             * @param product
+             * @return {string}
+             */
+            getSalesBadgeTooltip(product) {
+                return this.getSalesBadgeType(product) === 'bestseller'
+                    ? this.bestSellerTooltip
+                    : this.popularTooltip;
+            },
+
+            /**
+             *
+             * @param product
+             * @return {string}
+             */
+            getSalesBadgeIconPath(product) {
+                return this.getSalesBadgeType(product) === 'bestseller'
+                    ? this.bestSellerIconPath
+                    : this.popularIconPath;
+            },
+
+            /**
+             *
+             * @param product
+             * @return {string}
+             */
+            getSalesBadgeViewBox(product) {
+                return this.getSalesBadgeType(product) === 'bestseller'
+                    ? this.bestSellerIconViewBox
+                    : this.popularIconViewBox;
+            },
+
+            /**
+             *
+             * @param product
+             * @return {string|null}
+             */
+            getSalesBadgeTransform(product) {
+                return this.getSalesBadgeType(product) === 'bestseller'
+                    ? this.bestSellerIconTransform
+                    : null;
+            },
+
+            /**
+             *
              * @return {string}
              */
             getSchemaUrl() {
@@ -1170,6 +1265,50 @@
 .catalog-toolbar__desktop {
     gap: 1rem;
     min-width: 0;
+}
+
+.catalog-grid-card__badges {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+}
+
+.catalog-grid-card__badge-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 999px;
+    border: 1px solid rgba(229, 0, 119, 0.28);
+    background: rgba(255, 255, 255, 0.98);
+    color: #e50077;
+    box-shadow: 0 0.35rem 0.9rem rgba(31, 45, 61, 0.18);
+    line-height: 1;
+}
+
+.catalog-grid-card__badge-circle--bottom {
+    position: absolute;
+    left: 0.55rem;
+    bottom: 0.55rem;
+    z-index: 3;
+}
+
+.catalog-grid-card__badge-circle svg {
+    display: block;
+    width: 0.88rem;
+    height: 0.88rem;
+}
+
+.catalog-grid-card__badge-circle svg.catalog-grid-card__badge-icon--popular {
+    width: 0.76rem;
+    height: 0.76rem;
+}
+
+.catalog-grid-card__delivery-badge {
+    position: static;
+    background: #e50077;
+    color: #fff;
 }
 
 .catalog-toolbar__filters {

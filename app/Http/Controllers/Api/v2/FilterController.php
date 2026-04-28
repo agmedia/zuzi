@@ -218,6 +218,8 @@ class FilterController extends Controller
                                        ->paginate(config('settings.pagination.front'));*/
         }
 
+        $products->setCollection(Product::attachListingBadges($products->getCollection()));
+
         return response()->json($products);
     }
 

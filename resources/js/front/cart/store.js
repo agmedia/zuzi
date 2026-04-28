@@ -18,6 +18,17 @@ let messages = {
 
 
 class AgService {
+    constructor() {
+        this.vuexStore = null;
+    }
+
+    setStore(storeInstance) {
+        this.vuexStore = storeInstance;
+    }
+
+    getStore() {
+        return this.vuexStore;
+    }
 
     /**
      *
@@ -155,16 +166,18 @@ class AgService {
     }
 
     ensureSettingsLoaded() {
-        if (typeof store === 'undefined' || !store || !store.state) {
+        const storeInstance = this.getStore();
+
+        if (!storeInstance || !storeInstance.state) {
             this.getSettings();
             return;
         }
 
-        if (store.state.settings || store.state.settingsRequest) {
+        if (storeInstance.state.settings || storeInstance.state.settingsRequest) {
             return;
         }
 
-        store.dispatch('getSettings');
+        storeInstance.dispatch('getSettings');
     }
 
     /**
@@ -242,13 +255,15 @@ class AgService {
      * @returns {string}
      */
     formatMainPrice(price) {
-        if (!store.state.settings) {
+        const storeInstance = this.getStore();
+
+        if (!storeInstance || !storeInstance.state || !storeInstance.state.settings) {
             this.ensureSettingsLoaded();
 
             return Number(price).toFixed(2) + ' €';
         }
 
-        return this.resolvePrice(store.state.settings['currency.list'], price);
+        return this.resolvePrice(storeInstance.state.settings['currency.list'], price);
     }
 
     /**
@@ -297,13 +312,15 @@ class AgService {
      * @returns {string}
      */
     formatSecondaryPrice(price) {
-        if (!store.state.settings) {
+        const storeInstance = this.getStore();
+
+        if (!storeInstance || !storeInstance.state || !storeInstance.state.settings) {
             this.ensureSettingsLoaded();
 
             return '';
         }
 
-        return this.resolvePrice(store.state.settings['currency.list'], price, false);
+        return this.resolvePrice(storeInstance.state.settings['currency.list'], price, false);
     }
 
     /**
@@ -368,7 +385,7 @@ class AgStorage {
 const storage = new AgStorage();
 const initialCart = storage.getCart() || storage_cart.cart;
 
-let store = {
+const store = {
     state: {
         storage: storage,
         service: new AgService(),
@@ -544,7 +561,8 @@ let store = {
          * @param context
          */
         flushCart(context) {
-            context.state.cart = context.state.storage.setCart(storage_cart.cart);
+            context.state.storage.setCart(storage_cart.cart);
+            context.commit('setCart', storage_cart.cart);
         },
 
         /**

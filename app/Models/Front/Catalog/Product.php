@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Bouncer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -20,6 +21,13 @@ use Illuminate\Support\Facades\Log;
  */
 class Product extends Model
 {
+    public const LISTING_POPULAR_MIN_SOLD_QUANTITY = 5;
+
+    public const LISTING_BESTSELLER_TOP_PRODUCTS_LIMIT = 15;
+
+    private const LISTING_BADGE_EXCLUDED_ORDER_STATUSES = [5, 7, 8];
+
+    private const LISTING_BADGE_CACHE_MINUTES = 30;
 
     /**
      * @var string
@@ -237,6 +245,108 @@ class Product extends Model
     public function scopeWithReviewSummary(Builder $query): Builder
     {
         return $query->withCount('reviews')->withAvg('reviews', 'stars');
+    }
+
+
+    private static function listingBadgeSalesQuery()
+    {
+        return DB::table('order_products as order_product')
+            ->join('orders as orders', 'orders.id', '=', 'order_product.order_id')
+            ->whereNotIn('orders.order_status_id', self::LISTING_BADGE_EXCLUDED_ORDER_STATUSES);
+    }
+
+
+    /**
+     * Resolve popular product IDs for the current listing page in one grouped query.
+     */
+    public static function listingPopularIds($productIds, ?int $minSoldQuantity = null): Collection
+    {
+        $productIds = collect($productIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($productIds->isEmpty()) {
+            return collect();
+        }
+
+        $minSoldQuantity = max((int) ($minSoldQuantity ?? self::LISTING_POPULAR_MIN_SOLD_QUANTITY), 1);
+        $cacheKey = 'catalog.listing-popular-ids.' . $minSoldQuantity . '.' . md5($productIds->implode(','));
+
+        return Helper::rememberCache(
+            $cacheKey,
+            now()->addMinutes(self::LISTING_BADGE_CACHE_MINUTES),
+            function () use ($productIds, $minSoldQuantity) {
+                return static::listingBadgeSalesQuery()
+                    ->selectRaw('order_product.product_id as product_id')
+                    ->whereIn('order_product.product_id', $productIds->all())
+                    ->groupBy('order_product.product_id')
+                    ->havingRaw('SUM(order_product.quantity) >= ?', [$minSoldQuantity])
+                    ->pluck('product_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->values();
+            }
+        );
+    }
+
+
+    /**
+     * Resolve premium bestseller IDs across the catalog in one cached grouped query.
+     */
+    public static function listingBestsellerIds(?int $limit = null): Collection
+    {
+        $limit = max((int) ($limit ?? self::LISTING_BESTSELLER_TOP_PRODUCTS_LIMIT), 1);
+        $cacheKey = 'catalog.listing-bestseller-top-ids.' . $limit;
+
+        return Helper::rememberCache(
+            $cacheKey,
+            now()->addMinutes(self::LISTING_BADGE_CACHE_MINUTES),
+            function () use ($limit) {
+                return static::listingBadgeSalesQuery()
+                    ->selectRaw('order_product.product_id as product_id, SUM(order_product.quantity) as sold_quantity')
+                    ->groupBy('order_product.product_id')
+                    ->orderByDesc('sold_quantity')
+                    ->orderBy('product_id')
+                    ->limit($limit)
+                    ->pluck('product_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->values();
+            }
+        );
+    }
+
+
+    /**
+     * Attach lightweight listing badge flags to the current collection.
+     */
+    public static function attachListingBadges(
+        Collection $products,
+        ?int $minSoldQuantity = null,
+        ?int $bestsellerLimit = null
+    ): Collection
+    {
+        if ($products->isEmpty()) {
+            return $products;
+        }
+
+        $popularLookup = static::listingPopularIds($products->pluck('id'), $minSoldQuantity)
+            ->flip();
+
+        $bestsellerLookup = static::listingBestsellerIds($bestsellerLimit)
+            ->flip();
+
+        return $products->map(function ($product) use ($popularLookup, $bestsellerLookup) {
+            $productId = (int) $product->id;
+            $isBestSeller = $bestsellerLookup->has($productId);
+            $isPopular = $popularLookup->has($productId);
+
+            $product->setAttribute('is_best_seller', $isBestSeller);
+            $product->setAttribute('is_popular', $isPopular);
+            $product->setAttribute('sales_badge_type', $isBestSeller ? 'bestseller' : ($isPopular ? 'popular' : null));
+
+            return $product;
+        });
     }
 
 

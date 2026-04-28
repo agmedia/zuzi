@@ -205,6 +205,8 @@ class ProductCategoryList extends Component
             ->withReviewSummary()
             ->paginate(config('settings.pagination.front'));
 
+        $products->setCollection(Product::attachListingBadges($products->getCollection()));
+
         return view('livewire.front.product-category-list', [
             'products' => $products
         ]);

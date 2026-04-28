@@ -222,7 +222,8 @@ class Blog extends Model
             return collect();
         }
 
-        return Product::query()
+        return Product::attachListingBadges(
+            Product::query()
             ->active()
             ->hasStock()
             ->with(['author', 'action'])
@@ -231,6 +232,7 @@ class Blog extends Model
             ->get()
             ->sortBy(fn (Product $product) => $ids->search($product->id))
             ->values()
-            ->take($limit);
+            ->take($limit)
+        );
     }
 }

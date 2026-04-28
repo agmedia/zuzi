@@ -680,6 +680,10 @@ class Helper
                 $tablename = 'reviews';
             }
 
+            if (($tablename ?? null) === 'product' && isset($items) && $items instanceof \Illuminate\Support\Collection) {
+                $items = Product::attachListingBadges($items);
+            }
+
             $widgets = [
                 'title'      => $widget->title,
                 'subtitle'   => $widget->subtitle,

@@ -6,18 +6,22 @@
     $aboutHeroBody = 'Zuzi je danas jedna od najvećih online knjižara i antikvarijata u Hrvatskoj, s više od 84.000 naslova i istinskom ljubavlju prema knjigama.';
 @endphp
 
-<section class="mb-4">
-    <style>
-        .home-about-widget__image {
-            display: block;
-            width: 562px;
-            height: auto;
-            max-width: 100%;
-            max-height: 450px;
-            border-radius: 15px;
-        }
-    </style>
+@once
+    @push('css_after')
+        <style>
+            .home-about-widget__image {
+                display: block;
+                width: 562px;
+                height: auto;
+                max-width: 100%;
+                max-height: 450px;
+                border-radius: 15px;
+            }
+        </style>
+    @endpush
+@endonce
 
+<section class="mb-4">
     <div class="card border-0 shadow-sm overflow-hidden">
         <div class="row g-0 align-items-center">
             <div class="col-lg-6">
@@ -46,7 +50,6 @@
                         loading="lazy"
                         width="562"
                         height="450"
-                        style="border-radius:10px"
                     >
                 </div>
             </div>
