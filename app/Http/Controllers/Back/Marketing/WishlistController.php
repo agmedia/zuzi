@@ -79,9 +79,10 @@ class WishlistController extends Controller
         $wishlists = $query->orderBy('created_at', 'desc')->paginate(20);
         $statsProducts = null;
         $statsProductPurchaseStats = [];
+        $statsSummary = null;
 
         if ($activeTab === 'stats') {
-            $statsProducts = Wishlist::query()
+            $statsProductsQuery = Wishlist::query()
                 ->sent()
                 ->whereNotNull('sent_at')
                 ->select('product_id')
@@ -103,14 +104,20 @@ class WishlistController extends Controller
                     });
                 })
                 ->groupBy('product_id')
-                ->orderByDesc('sent_entries_count')
+                ->orderByDesc('sent_entries_count');
+
+            $statsProductIds = (clone $statsProductsQuery)->pluck('product_id');
+
+            $statsProductPurchaseStats = $this->wishlistPurchaseStatsService
+                ->getForProductIds($statsProductIds);
+
+            $statsSummary = $this->wishlistPurchaseStatsService->summarize($statsProductPurchaseStats);
+
+            $statsProducts = $statsProductsQuery
                 ->with(['product' => function ($q) {
                     $q->select('id', 'name', 'sku', 'image', 'url', 'quantity', 'status', 'price', 'special', 'special_from', 'special_to');
                 }])
                 ->paginate(20);
-
-            $statsProductPurchaseStats = $this->wishlistPurchaseStatsService
-                ->getForProductIds($statsProducts->getCollection()->pluck('product_id'));
         }
 
         return view('back.marketing.wishlist.index', compact(
@@ -118,7 +125,8 @@ class WishlistController extends Controller
             'topProducts',
             'stockFilter',
             'statsProducts',
-            'statsProductPurchaseStats'
+            'statsProductPurchaseStats',
+            'statsSummary'
         ));
     }
 

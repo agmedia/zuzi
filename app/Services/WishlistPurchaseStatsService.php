@@ -157,6 +157,29 @@ class WishlistPurchaseStatsService
     }
 
 
+    public function summarize(array $statsByProduct): array
+    {
+        $rows = collect($statsByProduct);
+
+        $sentEntriesCount = (int) $rows->sum('sent_entries_count');
+        $convertedEntriesCount = (int) $rows->sum('converted_entries_count');
+        $matchedUnitsCount = (int) $rows->sum('matched_units_count');
+        $matchedRevenueTotal = round((float) $rows->sum('matched_revenue_total'), 2);
+        $productsWithSalesCount = (int) $rows->filter(function (array $row) {
+            return (int) ($row['matched_units_count'] ?? 0) > 0;
+        })->count();
+
+        return [
+            'sent_entries_count' => $sentEntriesCount,
+            'converted_entries_count' => $convertedEntriesCount,
+            'matched_units_count' => $matchedUnitsCount,
+            'matched_revenue_total' => $matchedRevenueTotal,
+            'products_with_sales_count' => $productsWithSalesCount,
+            'conversion_rate' => $this->resolveRate($convertedEntriesCount, $sentEntriesCount),
+        ];
+    }
+
+
     private function sentEntriesQuery(Collection $productIds)
     {
         return DB::table('wishlist as w')

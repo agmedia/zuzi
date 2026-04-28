@@ -333,6 +333,38 @@
                                     </form>
                                 </div>
 
+                                <div class="block block-rounded">
+                                    <div class="block-header block-header-default">
+                                        <h3 class="block-title">Skupni Pregled</h3>
+                                    </div>
+                                    <div class="block-content">
+                                        <div class="table-responsive">
+                                            <table class="table table-borderless table-striped table-vcenter">
+                                                <tbody>
+                                                <tr>
+                                                    <th style="width: 35%;">Poslano wishlist mailova</th>
+                                                    <td class="text-right font-w600">{{ data_get($statsSummary, 'sent_entries_count', 0) }}</td>
+                                                    <th style="width: 35%;">Prijava s kupnjom nakon maila</th>
+                                                    <td class="text-right font-w600">{{ data_get($statsSummary, 'converted_entries_count', 0) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Prodanih komada</th>
+                                                    <td class="text-right font-w600">{{ data_get($statsSummary, 'matched_units_count', 0) }}</td>
+                                                    <th>Prihod nakon maila</th>
+                                                    <td class="text-right font-w600">{{ \App\Helpers\Currency::main(data_get($statsSummary, 'matched_revenue_total', 0), true) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Artikala s barem jednom kupnjom</th>
+                                                    <td class="text-right font-w600">{{ data_get($statsSummary, 'products_with_sales_count', 0) }}</td>
+                                                    <th>Konverzija prijava</th>
+                                                    <td class="text-right font-w600">{{ number_format((float) data_get($statsSummary, 'conversion_rate', 0), 1, ',', '.') }}%</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="table-responsive">
                                     <table class="table table-borderless table-striped table-vcenter">
                                         <thead>
