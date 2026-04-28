@@ -23,7 +23,7 @@ class Product extends Model
 {
     public const LISTING_POPULAR_MIN_SOLD_QUANTITY = 5;
 
-    public const LISTING_BESTSELLER_TOP_PRODUCTS_LIMIT = 15;
+    public const LISTING_BESTSELLER_TOP_PRODUCTS_LIMIT = 10;
 
     private const LISTING_BADGE_EXCLUDED_ORDER_STATUSES = [5, 7, 8];
 
