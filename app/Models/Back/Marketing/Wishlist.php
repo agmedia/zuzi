@@ -169,41 +169,78 @@ class Wishlist extends Model
 
         $list = Wishlist::active()->unsent()->basic()->get();
         $ids = $list->unique('product_id')->pluck('product_id');
-        $products = Product::query()->whereIn('id', $ids)->available()->basicData()->get();
+        $products = Product::query()
+            ->select('id', 'name', 'url', 'image', 'price', 'special', 'quantity', 'special_from', 'special_to')
+            ->whereIn('id', $ids)
+            ->available()
+            ->get();
 
         foreach ($products as $product) {
-            $emails = $list->where('product_id', $product->id)->pluck('email');
-
-            foreach ($emails as $email) {
-                dispatch(function () use ($email, $product) {
-                    Mail::to($email)->send(new WishlistArrived($product));
-                });
-
-                $wishlistEntry = Wishlist::query()->where('product_id', $product->id)->where('email', $email)->where('sent', 0)->first();
-
-                if ($wishlistEntry) {
-                    $sentAt = now();
-
-                    $wishlistEntry->update([
-                        'sent' => 1,
-                        'status' => 0,
-                        'sent_at' => $sentAt,
-                    ]);
-
-                    Log::info('__Wishlist Notification Sent', [
-                        'wishlist_id' => $wishlistEntry->id,
-                        'product_id' => $product->id,
-                        'email' => $email,
-                        'sent_at' => $sentAt->toDateTimeString(),
-                    ]);
-                }
-            }
+            static::sendPendingNotificationsForProduct($product);
         }
 
         $log_end = microtime(true);
         Log::info('__Check Wishlist - Total Execution Time: ' . number_format(($log_end - $log_start), 2, ',', '.') . ' sec.');
 
         return 1;
+    }
+
+
+    public static function sendPendingNotificationsForProduct(Product $product): int
+    {
+        if ((int) $product->quantity === 0) {
+            return 0;
+        }
+
+        $entries = static::query()
+            ->active()
+            ->unsent()
+            ->where('product_id', $product->id)
+            ->get();
+
+        $sentCount = 0;
+
+        foreach ($entries as $wishlistEntry) {
+            if (static::sendNotificationForEntry($wishlistEntry, $product, 'manual_or_cron_batch')) {
+                $sentCount++;
+            }
+        }
+
+        return $sentCount;
+    }
+
+
+    public static function sendNotificationForEntry(Wishlist $wishlistEntry, Product $product, string $source = 'manual_single'): bool
+    {
+        if (
+            (int) $product->quantity === 0 ||
+            (int) $wishlistEntry->sent === 1 ||
+            (int) $wishlistEntry->status !== 1
+        ) {
+            return false;
+        }
+
+        dispatch(function () use ($wishlistEntry, $product) {
+            Mail::to($wishlistEntry->email)->send(new WishlistArrived($product));
+        });
+
+        $sentAt = now();
+
+        $wishlistEntry->update([
+            'sent' => 1,
+            'status' => 0,
+            'sent_at' => $sentAt,
+        ]);
+
+        Log::info('__Wishlist Notification Sent', [
+            'wishlist_id' => $wishlistEntry->id,
+            'product_id' => $product->id,
+            'email' => $wishlistEntry->email,
+            'sent_at' => $sentAt->toDateTimeString(),
+            'source' => $source,
+        ]);
+
+        return true;
     }
 
 }

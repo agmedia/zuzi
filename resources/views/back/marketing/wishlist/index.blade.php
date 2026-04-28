@@ -54,7 +54,7 @@
                                         {{-- zadrži aktivni tab --}}
                                         <input type="hidden" name="tab" value="wishlists">
                                         <div class="form-group row">
-                                            <div class="col-md-9">
+                                            <div class="col-md-8">
                                                 <div class="input-group">
                                                     <input type="text"
                                                            class="form-control"
@@ -69,6 +69,21 @@
                                                 </div>
                                                 <div class="form-text small">
                                                     Pretraži po nazivu ili šifri artikla.
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="wishlist-stock-filter" class="small text-muted">Filtriraj stanje</label>
+                                                <div class="input-group">
+                                                    <select class="form-control" id="wishlist-stock-filter" name="stock">
+                                                        <option value="">Svi artikli</option>
+                                                        <option value="in-stock" {{ ($stockFilter ?? request('stock')) === 'in-stock' ? 'selected' : '' }}>Samo na stanju</option>
+                                                        <option value="out-of-stock" {{ ($stockFilter ?? request('stock')) === 'out-of-stock' ? 'selected' : '' }}>Samo bez zalihe</option>
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="fa fa-filter"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -88,6 +103,7 @@
                                             <th>Status</th>
                                             <th>Dodano</th>
                                             <th>Poslano</th>
+                                            <th class="text-right">Akcija</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -121,10 +137,26 @@
                                                 </td>
                                                 <td>{{ optional($w->created_at)->format('d.m.Y H:i') ?? '---' }}</td>
                                                 <td>{{ optional($w->sent_at)->format('d.m.Y H:i') ?? '---' }}</td>
+                                                <td class="text-right text-nowrap">
+                                                    @if((int) $w->sent === 1)
+                                                        <button type="button" class="btn btn-sm btn-alt-secondary" disabled>Već poslano</button>
+                                                    @elseif($w->product && (int) $w->product->quantity !== 0)
+                                                        <form method="POST" action="{{ route('wishlists.items.send', ['wishlist' => $w->id]) }}" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit"
+                                                                    class="btn btn-sm btn-alt-success"
+                                                                    onclick="return confirm('Poslati wishlist obavijest ovom korisniku?');">
+                                                                Pošalji korisniku
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <button type="button" class="btn btn-sm btn-alt-secondary" disabled>Nema zalihe</button>
+                                                    @endif
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8">Nema zapisa u listi želja.</td>
+                                                <td colspan="9">Nema zapisa u listi želja.</td>
                                             </tr>
                                         @endforelse
                                         </tbody>
@@ -141,7 +173,28 @@
                     @if ($activeTab === 'top-products')
                         <div class="tab-pane fade show active" id="tab-top-products" role="tabpanel">
                             <div class="block-content pt-3">
-                                {{-- (Ako jednog dana dodaš filtere i ovdje, ne zaboravi hidden tab input) --}}
+                                <div class="bg-body-dark p-3 mb-3">
+                                    <form method="get" action="{{ route('wishlists') }}">
+                                        <input type="hidden" name="tab" value="top-products">
+                                        <div class="form-group row mb-0">
+                                            <div class="col-md-4">
+                                                <label for="stock-filter" class="small text-muted">Filtriraj stanje</label>
+                                                <div class="input-group">
+                                                    <select class="form-control" id="stock-filter" name="stock">
+                                                        <option value="">Svi artikli</option>
+                                                        <option value="in-stock" {{ ($stockFilter ?? request('stock')) === 'in-stock' ? 'selected' : '' }}>Samo na stanju</option>
+                                                        <option value="out-of-stock" {{ ($stockFilter ?? request('stock')) === 'out-of-stock' ? 'selected' : '' }}>Samo bez zalihe</option>
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="fa fa-filter"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
 
                                 <div class="table-responsive">
                                     <table class="table table-borderless table-striped">
@@ -152,6 +205,7 @@
                                             <th>Cijena</th>
                                             <th>Stanje</th>
                                             <th class="text-right">Broj aktivnih prijava</th>
+                                            <th class="text-right">Akcija</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -201,10 +255,24 @@
                                                         {{ $item->total }}
                                                     @endif
                                                 </td>
+                                                <td class="text-right text-nowrap">
+                                                    @if($item->product && (int) $item->product->quantity !== 0)
+                                                        <form method="POST" action="{{ route('wishlists.products.send', ['product' => $item->product_id]) }}" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit"
+                                                                    class="btn btn-sm btn-alt-success"
+                                                                    onclick="return confirm('Poslati wishlist obavijesti za ovaj artikl?');">
+                                                                Pošalji mailove
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <button type="button" class="btn btn-sm btn-alt-secondary" disabled>Nema zalihe</button>
+                                                    @endif
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="5">Nema zapisa za najtraženije artikle.</td>
+                                                <td colspan="6">Nema zapisa za najtraženije artikle.</td>
                                             </tr>
                                         @endforelse
                                         </tbody>

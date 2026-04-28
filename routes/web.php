@@ -162,6 +162,8 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::prefix('admin')->middleware(['auth'])->group(function () {
         Route::get('/wishlists', [WishlistController::class, 'index'])->name('wishlists');
         Route::get('/wishlists/product/{product}', [WishlistController::class, 'showProduct'])->name('wishlists.products.show');
+        Route::post('/wishlists/product/{product}/send', [WishlistController::class, 'sendProduct'])->name('wishlists.products.send');
+        Route::post('/wishlists/item/{wishlist}/send', [WishlistController::class, 'sendWishlist'])->name('wishlists.items.send');
     });
 
     // WIDGETS
