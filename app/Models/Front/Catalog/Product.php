@@ -683,6 +683,10 @@ class Product extends Model
 
         $sort = $request->input('sort');
         $isActionListing = $request->input('group') === 'snizenja';
+        $isFullOfferListing = $request->input('group') === \Illuminate\Support\Str::slug(config('settings.group_path'))
+            && ! $request->filled('cat')
+            && ! $request->filled('subcat');
+        $isCategoryListing = $request->filled('group') && ! $isActionListing && ! $isFullOfferListing;
         $preserveOrder = ! $sort && $request->boolean('preserve_order') && $orderedIds->isNotEmpty();
 
         if ($sort) {
@@ -712,7 +716,7 @@ class Product extends Model
             }
         } elseif ($preserveOrder) {
             $query->orderByRaw('FIELD(id, ' . $orderedIds->implode(',') . ')');
-        } elseif ($isActionListing) {
+        } elseif ($isActionListing || $isCategoryListing) {
             $query->orderBy('viewed', 'desc')->orderBy('created_at', 'desc');
         } else {
             $query->orderBy('created_at', 'desc');

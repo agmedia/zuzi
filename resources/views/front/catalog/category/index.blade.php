@@ -48,6 +48,7 @@
         && ($group ?? null) === 'kategorija-proizvoda'
         && ! (isset($cat) && $cat)
         && ! (isset($subcat) && $subcat);
+    $defaultListingSort = $isActionListing ? 'popular' : ($isFullOfferListing ? 'novi' : (Route::currentRouteName() === 'catalog.route' ? 'popular' : ''));
     $groupHeading = 'Knjige';
 
     if ($isFullOfferListing) {
@@ -374,7 +375,7 @@
                            author="{{ isset($author) ? $author['slug'] : null }}"
                            publisher="{{ isset($publisher) ? $publisher['slug'] : null }}"
                            preserve-order="{{ Route::currentRouteName() === 'pretrazi' && ! empty($ids) ? '1' : '' }}"
-                           default-sort="{{ $isActionListing ? 'popular' : ($isFullOfferListing ? 'novi' : '') }}">
+                           default-sort="{{ $defaultListingSort }}">
             </products-view>
 
 
