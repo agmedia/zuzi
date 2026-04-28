@@ -41,6 +41,12 @@
                             Najtraženiji artikli
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ $activeTab === 'stats' ? 'active' : '' }}"
+                           href="{{ route('wishlists', array_merge(request()->except('page'), ['tab' => 'stats'])) }}">
+                            Statistike
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="tab-content">
@@ -281,6 +287,101 @@
                                     {{-- Paginacija zadržava aktivni tab i sve upite --}}
                                     {{ $topProducts->appends(array_merge(request()->query(), ['tab' => 'top-products']))->links() }}
                                 </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($activeTab === 'stats')
+                        <div class="tab-pane fade show active" id="tab-stats" role="tabpanel">
+                            <div class="block-content pt-3">
+                                <div class="bg-body-dark p-3 mb-3">
+                                    <form method="get" action="{{ route('wishlists') }}">
+                                        <input type="hidden" name="tab" value="stats">
+                                        <div class="form-group row mb-0">
+                                            <div class="col-md-6">
+                                                <label for="stats-search" class="small text-muted">Pretraži artikl</label>
+                                                <div class="input-group">
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           id="stats-search"
+                                                           name="search"
+                                                           value="{{ request()->input('search') }}"
+                                                           placeholder="Naziv ili šifra artikla">
+                                                    <div class="input-group-append">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="fa fa-search"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="stats-stock-filter" class="small text-muted">Filtriraj stanje</label>
+                                                <div class="input-group">
+                                                    <select class="form-control" id="stats-stock-filter" name="stock">
+                                                        <option value="">Svi artikli</option>
+                                                        <option value="in-stock" {{ ($stockFilter ?? request('stock')) === 'in-stock' ? 'selected' : '' }}>Samo na stanju</option>
+                                                        <option value="out-of-stock" {{ ($stockFilter ?? request('stock')) === 'out-of-stock' ? 'selected' : '' }}>Samo bez zalihe</option>
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="fa fa-filter"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-borderless table-striped table-vcenter">
+                                        <thead>
+                                        <tr>
+                                            <th>Naziv artikla</th>
+                                            <th>Šifra</th>
+                                            <th class="text-right">Poslano</th>
+                                            <th class="text-right">Kupci nakon maila</th>
+                                            <th class="text-right">Narudžbe</th>
+                                            <th class="text-right">Komada</th>
+                                            <th class="text-right">Prihod</th>
+                                            <th class="text-right">Konverzija</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @forelse ($statsProducts ?? [] as $item)
+                                            @php($stats = $statsProductPurchaseStats[$item->product_id] ?? [])
+                                            <tr>
+                                                <td>
+                                                    @if($item->product)
+                                                        <a class="font-w600" href="{{ route('wishlists.products.show', ['product' => $item->product_id]) }}">
+                                                            {{ $item->product->name }}
+                                                        </a>
+                                                    @else
+                                                        ---
+                                                    @endif
+                                                </td>
+                                                <td>{{ optional($item->product)->sku ?? '---' }}</td>
+                                                <td class="text-right">{{ data_get($stats, 'sent_entries_count', (int) ($item->sent_entries_count ?? 0)) }}</td>
+                                                <td class="text-right">{{ data_get($stats, 'converted_entries_count', 0) }}</td>
+                                                <td class="text-right">{{ data_get($stats, 'matched_orders_count', 0) }}</td>
+                                                <td class="text-right">{{ data_get($stats, 'matched_units_count', 0) }}</td>
+                                                <td class="text-right text-nowrap">{{ \App\Helpers\Currency::main(data_get($stats, 'matched_revenue_total', 0), true) }}</td>
+                                                <td class="text-right">{{ number_format((float) data_get($stats, 'conversion_rate', 0), 1, ',', '.') }}%</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="8">Nema podataka za statistiku wishlist mailova.</td>
+                                            </tr>
+                                        @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="small text-muted mt-3">
+                                    Statistika kupnje je procjena na temelju istog e-maila, istog artikla i narudžbe nastale nakon slanja wishlist maila.
+                                </div>
+
+                                {{ optional($statsProducts)->appends(array_merge(request()->query(), ['tab' => 'stats']))->links() }}
                             </div>
                         </div>
                     @endif

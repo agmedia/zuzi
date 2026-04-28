@@ -26,6 +26,10 @@
     <div class="content">
         @include('back.layouts.partials.session')
 
+        <div class="alert alert-info" role="alert">
+            Statistika kupnje je procjena na temelju istog e-maila, istog artikla i narudžbe nastale nakon slanja wishlist maila.
+        </div>
+
         <div class="row row-deck">
             <div class="col-md-8">
                 <div class="block block-rounded h-100">
@@ -131,6 +135,31 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-12">
+                        <div class="block block-rounded">
+                            <div class="block-content block-content-full text-center">
+                                <div class="font-size-h2 font-w700 text-success">{{ data_get($purchaseStats, 'matched_orders_count', 0) }}</div>
+                                <div class="font-size-sm text-muted text-uppercase">Kupnji nakon maila</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="block block-rounded">
+                            <div class="block-content block-content-full text-center">
+                                <div class="font-size-h2 font-w700">{{ data_get($purchaseStats, 'matched_units_count', 0) }}</div>
+                                <div class="font-size-sm text-muted text-uppercase">Kupljenih komada</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="block block-rounded">
+                            <div class="block-content block-content-full text-center">
+                                <div class="font-size-h2 font-w700">{{ \App\Helpers\Currency::main(data_get($purchaseStats, 'matched_revenue_total', 0), true) }}</div>
+                                <div class="font-size-sm text-muted text-uppercase">Prihod nakon maila</div>
+                                <div class="small text-muted mt-1">{{ number_format((float) data_get($purchaseStats, 'conversion_rate', 0), 1, ',', '.') }}% konverzije</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -149,6 +178,7 @@
                             <th>Status</th>
                             <th>Datum prijave</th>
                             <th>Poslano</th>
+                            <th>Kupnja nakon maila</th>
                             <th class="text-right">Akcija</th>
                         </tr>
                         </thead>
@@ -178,6 +208,20 @@
                                 </td>
                                 <td>{{ optional($entry->created_at)->format('d.m.Y H:i') ?? '---' }}</td>
                                 <td>{{ optional($entry->sent_at)->format('d.m.Y H:i') ?? '---' }}</td>
+                                <td>
+                                    @php($entryStats = $entryPurchaseStats[$entry->id] ?? ['matched_orders_count' => 0, 'first_order_at' => null])
+
+                                    @if(data_get($entryStats, 'matched_orders_count', 0) > 0)
+                                        <div class="font-w600 text-success">{{ data_get($entryStats, 'matched_orders_count', 0) }} nar.</div>
+                                        <div class="small text-muted">
+                                            od {{ optional(\Illuminate\Support\Carbon::parse(data_get($entryStats, 'first_order_at')))->format('d.m.Y H:i') ?? '---' }}
+                                        </div>
+                                    @elseif((int) $entry->sent === 1)
+                                        <span class="small text-muted">Nema kupnje</span>
+                                    @else
+                                        <span class="small text-muted">Nije poslano</span>
+                                    @endif
+                                </td>
                                 <td class="text-right text-nowrap">
                                     @if((int) $entry->sent === 1)
                                         <button type="button" class="btn btn-sm btn-alt-secondary" disabled>Već poslano</button>
@@ -197,7 +241,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6">Nema prijava za ovu knjigu.</td>
+                                <td colspan="7">Nema prijava za ovu knjigu.</td>
                             </tr>
                         @endforelse
                         </tbody>
