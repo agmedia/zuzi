@@ -3,6 +3,7 @@
 namespace App\Models\Back\Marketing;
 
 use App\Mail\WishlistArrived;
+use App\Models\User;
 use App\Models\Front\Catalog\Product;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -95,6 +96,12 @@ class Wishlist extends Model
     public function product()
     {
         return $this->belongsTo(\App\Models\Front\Catalog\Product::class, 'product_id');
+    }
+
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
 

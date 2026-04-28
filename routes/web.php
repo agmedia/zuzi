@@ -161,6 +161,7 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
 
     Route::prefix('admin')->middleware(['auth'])->group(function () {
         Route::get('/wishlists', [WishlistController::class, 'index'])->name('wishlists');
+        Route::get('/wishlists/product/{product}', [WishlistController::class, 'showProduct'])->name('wishlists.products.show');
     });
 
     // WIDGETS

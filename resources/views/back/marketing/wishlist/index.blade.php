@@ -149,15 +149,38 @@
                                         <tr>
                                             <th>Naziv artikla</th>
                                             <th>Šifra</th>
+                                            <th>Cijena</th>
                                             <th>Stanje</th>
-                                            <th class="text-right">Broj prijava</th>
+                                            <th class="text-right">Broj aktivnih prijava</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         @forelse ($topProducts as $item)
                                             <tr>
-                                                <td>{{ optional($item->product)->name ?? '---' }}</td>
+                                                <td>
+                                                    @if($item->product)
+                                                        <a class="font-w600" href="{{ route('wishlists.products.show', ['product' => $item->product_id]) }}">
+                                                            {{ $item->product->name }}
+                                                        </a>
+                                                    @else
+                                                        ---
+                                                    @endif
+                                                </td>
                                                 <td>{{ optional($item->product)->sku ?? '---' }}</td>
+                                                <td class="text-nowrap">
+                                                    @if($item->product)
+                                                        @php($hasSpecialPrice = $item->product->special() && (float) $item->product->special() < (float) $item->product->price)
+
+                                                        @if($hasSpecialPrice)
+                                                            <div class="font-w600">{{ $item->product->main_special_text }}</div>
+                                                            <div class="small text-muted"><s>{{ $item->product->main_price_text }}</s></div>
+                                                        @else
+                                                            <div class="font-w600">{{ $item->product->main_price_text }}</div>
+                                                        @endif
+                                                    @else
+                                                        ---
+                                                    @endif
+                                                </td>
                                                 <td>
                                                     @if($item->product)
                                                         @if((int) $item->product->quantity !== 0)
@@ -169,11 +192,19 @@
                                                         ---
                                                     @endif
                                                 </td>
-                                                <td class="text-right">{{ $item->total }}</td>
+                                                <td class="text-right">
+                                                    @if($item->product)
+                                                        <a class="font-w600" href="{{ route('wishlists.products.show', ['product' => $item->product_id]) }}">
+                                                            {{ $item->total }}
+                                                        </a>
+                                                    @else
+                                                        {{ $item->total }}
+                                                    @endif
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4">Nema zapisa za najtraženije artikle.</td>
+                                                <td colspan="5">Nema zapisa za najtraženije artikle.</td>
                                             </tr>
                                         @endforelse
                                         </tbody>
