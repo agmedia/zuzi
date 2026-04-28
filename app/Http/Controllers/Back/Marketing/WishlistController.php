@@ -36,6 +36,13 @@ class WishlistController extends Controller
         }
 
         $query
+            ->when($stockFilter === 'unsent', function ($wishlistQuery) {
+                $wishlistQuery->where('sent', 0)
+                    ->where('status', 1)
+                    ->whereHas('product', function ($productQuery) {
+                        $productQuery->where('quantity', '!=', 0);
+                    });
+            })
             ->when($stockFilter === 'in-stock', function ($wishlistQuery) {
                 $wishlistQuery->whereHas('product', function ($productQuery) {
                     $productQuery->where('quantity', '!=', 0);
@@ -57,6 +64,11 @@ class WishlistController extends Controller
                 $wishlistQuery->whereHas('product', function ($productQuery) use ($search) {
                     $productQuery->where('name', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%");
+                });
+            })
+            ->when($stockFilter === 'unsent', function ($wishlistQuery) {
+                $wishlistQuery->whereHas('product', function ($productQuery) {
+                    $productQuery->where('quantity', '!=', 0);
                 });
             })
             ->when($stockFilter === 'in-stock', function ($wishlistQuery) {

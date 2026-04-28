@@ -82,6 +82,7 @@
                                                 <div class="input-group">
                                                     <select class="form-control" id="wishlist-stock-filter" name="stock">
                                                         <option value="">Svi artikli</option>
+                                                        <option value="unsent" {{ ($stockFilter ?? request('stock')) === 'unsent' ? 'selected' : '' }}>Nije poslano</option>
                                                         <option value="in-stock" {{ ($stockFilter ?? request('stock')) === 'in-stock' ? 'selected' : '' }}>Samo na stanju</option>
                                                         <option value="out-of-stock" {{ ($stockFilter ?? request('stock')) === 'out-of-stock' ? 'selected' : '' }}>Samo bez zalihe</option>
                                                     </select>
@@ -188,6 +189,7 @@
                                                 <div class="input-group">
                                                     <select class="form-control" id="stock-filter" name="stock">
                                                         <option value="">Svi artikli</option>
+                                                        <option value="unsent" {{ ($stockFilter ?? request('stock')) === 'unsent' ? 'selected' : '' }}>Nije poslano</option>
                                                         <option value="in-stock" {{ ($stockFilter ?? request('stock')) === 'in-stock' ? 'selected' : '' }}>Samo na stanju</option>
                                                         <option value="out-of-stock" {{ ($stockFilter ?? request('stock')) === 'out-of-stock' ? 'selected' : '' }}>Samo bez zalihe</option>
                                                     </select>
