@@ -186,12 +186,18 @@ class Glsstari
 
         //Service calling:
         $response = $client->PrepareLabels($request);
+        $prepareLabelsResult = $response->PrepareLabelsResult ?? null;
+        $prepareLabelsErrors = json_decode(json_encode($prepareLabelsResult->PrepareLabelsError ?? []), true) ?: [];
+        $parcelInfoList = json_decode(json_encode($prepareLabelsResult->ParcelInfoList ?? []), true) ?: [];
 
         $parcelIdList = [];
-        if ($response != null && count((array) $response->PrepareLabelsResult->PrepareLabelsError) == 0 && count((array) $response->PrepareLabelsResult->ParcelInfoList) > 0) {
-            $parcelIdList[] = $response->PrepareLabelsResult->ParcelInfoList->ParcelInfo->ParcelId;
-            $order->update(['printed' => 1]);
+        if ($response != null && count($prepareLabelsErrors) == 0 && count($parcelInfoList) > 0) {
+            $parcelId = data_get($parcelInfoList, 'ParcelInfo.ParcelId');
 
+            if ($parcelId) {
+                $parcelIdList[] = $parcelId;
+                $order->update(['printed' => 1]);
+            }
         }
 
         //Test request:
@@ -199,7 +205,9 @@ class Glsstari
             'Password'        => $password,
             'ParcelIdList'    => $parcelIdList,
             'PrintPosition'   => 1,
-            'ShowPrintDialog' => 0);
+            'ShowPrintDialog' => 0,
+            'PrepareLabelsError' => $prepareLabelsErrors,
+            'ParcelInfoList' => $parcelInfoList);
 
         return $getPrintedLabelsRequest;
     }

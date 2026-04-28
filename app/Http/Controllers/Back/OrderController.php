@@ -471,16 +471,26 @@ class OrderController extends Controller
      */
     public function api_send_glsstari(Request $request)
     {
-        $request->validate(['order_id' => 'required']);
+        $request->validate(['order_id' => 'required|integer']);
 
-        $order = Order::where('id', $request->input('order_id'))->first();
+        $order = Order::query()->find($request->input('order_id'));
+
+        if (! $order) {
+            return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
+        }
 
         $gls   = new Glsstari($order);
         $label = $gls->resolve();
+        $parcelId = data_get($label, 'ParcelIdList.0');
 
-        if (isset($label['ParcelIdList'])) {
-            return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $label['ParcelIdList'][0]]);
+        if ($parcelId) {
+            return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $parcelId]);
         }
+
+        Log::warning('GLS stari shipment did not return a parcel ID.', [
+            'order_id' => $order->id,
+            'label' => $label,
+        ]);
 
         return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
     }
