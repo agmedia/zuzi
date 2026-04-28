@@ -185,41 +185,36 @@
         stroke: #e50077;
     }
 
-    #cookie-consent-floating-button {
-        position: fixed !important;
-        left: 1rem !important;
-        bottom: 5rem !important;
-        z-index: 9500 !important;
+    .cookie-consent-trigger {
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
         width: 3rem;
         height: 3rem;
-        border: 1px solid rgba(229, 0, 119, 0.16);
-        border-radius: 999px;
+        padding: 0;
+        border: 0;
+        border-radius: 0.75rem;
         background: #e50077;
-        box-shadow: 0 16px 38px rgba(229, 0, 119, 0.26);
+        box-shadow: 0 0.5rem 1rem rgba(229, 0, 119, 0.18);
         transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-        visibility: visible !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
+        color: #ffffff !important;
     }
 
-    #cookie-consent-floating-button:hover {
-        transform: translateY(-1px) scale(1.04);
+    .cookie-consent-trigger:hover {
+        transform: translateY(-1px);
         background: #c70064;
-        box-shadow: 0 20px 42px rgba(229, 0, 119, 0.32);
+        box-shadow: 0 0.75rem 1.5rem rgba(229, 0, 119, 0.28);
     }
 
-    #cookie-consent-floating-button:focus-visible {
+    .cookie-consent-trigger:focus-visible {
         outline: 3px solid rgba(229, 0, 119, 0.28);
         outline-offset: 3px;
     }
 
-    #cookie-consent-floating-button img {
+    .cookie-consent-trigger img {
         display: block;
-        width: 1.5rem;
-        height: 1.5rem;
+        width: 1.125rem;
+        height: 1.125rem;
         flex-shrink: 0;
     }
 
@@ -228,12 +223,6 @@
         #cc-main .cm__footer {
             padding-left: 1.2rem;
             padding-right: 1.2rem;
-        }
-    }
-
-    @media (max-width: 767.98px) {
-        #cookie-consent-floating-button {
-            display: none !important;
         }
     }
 </style>

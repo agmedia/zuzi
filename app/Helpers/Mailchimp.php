@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use GuzzleHttp\Exception\RequestException;
 use MailchimpMarketing\ApiClient;
+use MailchimpMarketing\ApiException;
 
 /**
  *
@@ -45,7 +46,7 @@ class Mailchimp
      *
      * @return mixed
      */
-    public function campaign(string $campaign_id = null)
+    public function campaign(?string $campaign_id = null)
     {
         if ($campaign_id) {
             return $this->mailchimp->campaigns->get($campaign_id);
@@ -60,7 +61,7 @@ class Mailchimp
      *
      * @return mixed
      */
-    public function list(string $list_id = null)
+    public function list(?string $list_id = null)
     {
         if ($list_id) {
             return $this->mailchimp->lists->getList($list_id);
@@ -78,7 +79,7 @@ class Mailchimp
      *
      * @return mixed
      */
-    public function addMemberToList(string $list_id, string $email, string $f_name = null, string $l_name = null)
+    public function addMemberToList(string $list_id, string $email, ?string $f_name = null, ?string $l_name = null)
     {
         try {
             $user_hash = md5(strtolower($email));
@@ -92,10 +93,21 @@ class Mailchimp
                     "LNAME" => $l_name,
                 ]
             ]);
-        } catch (RequestException $exception) {
-            ag_log($exception->getResponse()->getReasonPhrase(), 'error');
+        } catch (ApiException|RequestException $exception) {
+            $response = method_exists($exception, 'getResponse') ? $exception->getResponse() : null;
+
+            if ($response) {
+                ag_log($response->getReasonPhrase(), 'error');
+                ag_log((string) $response->getBody(), 'error');
+            }
+
             ag_log($exception->getMessage(), 'error');
-            ag_log($exception->getResponse()->getBody(), 'error');
+
+            return false;
+        } catch (\Throwable $exception) {
+            ag_log($exception->getMessage(), 'error');
+
+            return false;
         }
     }
 }

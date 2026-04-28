@@ -247,6 +247,7 @@ class CheckoutController extends Controller
 
         if ($order->isValid()) {
             $selected_loyalty = intval(session(config('session.cart') . '_loyalty', 0));
+            $subscribe_to_newsletter = (bool) CheckoutSession::getNewsletter();
 
             app(GoogleAnalyticsService::class)->dispatchPurchaseFromRequest($order->getOrder(), $request);
 
@@ -254,9 +255,13 @@ class CheckoutController extends Controller
 
             $order->sendEmails()
                 ->decreaseCartItems(false)
-                ->addLoyaltyPoints($selected_loyalty)
-                // ->addCustomerToMailchimp()
-                ->forgetCheckoutCache();
+                ->addLoyaltyPoints($selected_loyalty);
+
+            if ($subscribe_to_newsletter) {
+                $order->addCustomerToMailchimp();
+            }
+
+            $order->forgetCheckoutCache();
 
             $this->shoppingCart()
                 ->flush()

@@ -33,6 +33,7 @@ use App\Http\Controllers\Front\CheckoutController;
 use App\Http\Controllers\Front\CustomerController;
 use App\Http\Controllers\Front\GiftVoucherController;
 use App\Http\Controllers\Front\HomeController;
+use App\Http\Controllers\Front\NewsletterController;
 use App\Http\Responses\LogoutResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -370,6 +371,7 @@ Route::get('/logout', function (Request $request) {
 });
 Route::get('/kontakt', [HomeController::class, 'contact'])->name('kontakt');
 Route::post('/kontakt/posalji', [HomeController::class, 'sendContactMessage'])->name('poruka');
+Route::post('/newsletter/prijava', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
 Route::get('/faq', [CatalogRouteController::class, 'faq'])->name('faq');
 Route::get('/poklon-bon', [GiftVoucherController::class, 'create'])->name('poklon.bon');
 Route::post('/poklon-bon', [GiftVoucherController::class, 'store'])->name('poklon.bon.store');

@@ -16,14 +16,6 @@
     $cookieDescription = $cookieMessage;
 @endphp
 
-<button
-    type="button"
-    id="cookie-consent-floating-button"
-    aria-label="Cookie postavke"
->
-    <img src="{{ asset('media/img/cookie-svg.svg') }}" alt="" width="24" height="24" loading="lazy" />
-</button>
-
 <script>
     window.cookieAnalyticsAllowed = window.cookieAnalyticsAllowed === true;
     window.cookieMarketingAllowed = window.cookieMarketingAllowed === true;
@@ -162,7 +154,7 @@
         };
     })();
 
-    const runCookieConsent = () => {
+    const runCookieConsent = ({ showConsentIfNeeded = true } = {}) => {
         if (!window.CookieConsent || typeof window.CookieConsent.run !== 'function') {
             return;
         }
@@ -176,7 +168,7 @@
         window.CookieConsent.run(cookieConsentConfig);
         syncGoogleConsent();
 
-        if (!window.CookieConsent.validConsent()) {
+        if (showConsentIfNeeded && !window.CookieConsent.validConsent()) {
             window.CookieConsent.show();
         }
     };
@@ -189,17 +181,35 @@
             });
     };
 
-    const cookieFloatingButton = document.getElementById('cookie-consent-floating-button');
-    if (cookieFloatingButton) {
-        cookieFloatingButton.addEventListener('click', () => {
-            ensureCookieConsentAssets().then(() => {
-                runCookieConsent();
+    const openCookiePreferences = () => {
+        ensureCookieConsentAssets().then(() => {
+            runCookieConsent({ showConsentIfNeeded: false });
+
+            window.setTimeout(() => {
                 if (window.CookieConsent && typeof window.CookieConsent.showPreferences === 'function') {
                     window.CookieConsent.showPreferences();
+                    return;
                 }
-            });
+
+                if (window.CookieConsent && typeof window.CookieConsent.show === 'function') {
+                    window.CookieConsent.show();
+                }
+            }, 60);
         });
-    }
+    };
+
+    document.addEventListener('click', (event) => {
+        const trigger = event.target.closest('[data-cookie-consent-trigger]');
+
+        if (!trigger) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        openCookiePreferences();
+    });
 
     const hasStoredCookieConsent = () => document.cookie.split(';').some((entry) => entry.trim().startsWith('cc_cookie='));
 

@@ -89,6 +89,8 @@ class Checkout extends Component
 
     public $giftVoucherOnly = false;
 
+    public $newsletter = false;
+
 
     public $comment = '';
     public $view_comment = false;
@@ -163,6 +165,10 @@ class Checkout extends Component
             $this->comment = CheckoutSession::getComment();
         }
 
+        if (CheckoutSession::hasNewsletter()) {
+            $this->newsletter = (bool) CheckoutSession::getNewsletter();
+        }
+
         $this->secondary_price = Currency::secondary() ? Currency::secondary()->value : false;
 
         $this->checkCart();
@@ -187,6 +193,13 @@ class Checkout extends Component
         $this->comment = $value;
 
         CheckoutSession::setComment($this->comment);
+    }
+
+    public function updatedNewsletter($value)
+    {
+        $this->newsletter = (bool) $value;
+
+        CheckoutSession::setNewsletter($this->newsletter);
     }
 
     public function updatedAddress($value, $key)
@@ -247,6 +260,7 @@ class Checkout extends Component
     public function changeStep(string $step = '')
     {
         $this->checkCart();
+        CheckoutSession::setNewsletter((bool) $this->newsletter);
 
         if ($this->giftVoucherOnly && ! $this->shipping) {
             $this->shipping = GiftVoucherService::SHIPPING_CODE;
@@ -356,7 +370,7 @@ class Checkout extends Component
         $this->shipping = $shipping;
         $this->checkShipping($shipping);
         CheckoutSession::setShipping($shipping);
-        if($shipping = 'gls_eu'){
+        if ($shipping == 'gls_eu') {
             CheckoutSession::setComment('');
         }
         return redirect()->route('naplata', ['step' => 'dostava']);

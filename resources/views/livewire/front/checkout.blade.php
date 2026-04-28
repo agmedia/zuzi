@@ -240,6 +240,12 @@
                 </div>
             </div>
         </div>
+
+        <div class="form-check pt-2">
+            <input class="form-check-input" type="checkbox" id="checkout-newsletter" wire:model.defer="newsletter">
+            <label class="form-check-label" for="checkout-newsletter">Prijavi me na newsletter</label>
+            <div class="form-text">Želim primati nove naslove, posebne primjerke i preporuke iz antikvarijata.</div>
+        </div>
         </div>
         <div class="d-flex pt-4 mt-3">
             <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100" href="{{ route('kosarica') }}"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na košaricu</span><span class="d-inline d-sm-none">Povratak</span></a></div>
@@ -426,48 +432,108 @@
 
 
 @push('js_after')
-    {{--    <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">--}}
-    {{--    <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>--}}
-
-    <!--
-Listening to changes. The web component fires a CustomEvent
-every time the user selects a new location.
--->
-   <script>
-        var el = document.getElementById('test-map');
-        el.addEventListener('change', (e) => {
-            console.log(e.detail);
-            alert('Odabrali ste:' + e.detail.name);
-
-            document.getElementById('comment').value = e.detail.contact.address + ', ' + e.detail.contact.city + '_' + e.detail.id;
-            document.getElementById("comment").dispatchEvent(new Event('input'));
-        });
-    </script>
-    <!--
-    Javascript to initialize the custom element, it can be placed anywhere.
-    -->
- <script type="module"
-            src="https://map.gls-croatia.com/widget/gls-dpm.js"></script>
+    <script type="module" src="https://map.gls-croatia.com/widget/gls-dpm.js"></script>
 
     <script type="text/javascript">
+        (function () {
+            var livewireHookRegistered = false;
 
+            function updateCheckoutComment(value) {
+                var commentField = document.getElementById('comment');
 
-        var _bn_map_widget_config = {
-            type: "popup",
-            partnerId: 123,
-            parentElement: "#boxnowmap",
-            afterSelect: function (selected) {
-                if(selected.boxnowLockerPostalCode !== 'undefined'){
-                    document.getElementById('comment').value = selected.boxnowLockerPostalCode + ', ' + selected.boxnowLockerAddressLine1 + '_' + selected.boxnowLockerId;
-
-                    document.getElementById("comment").dispatchEvent(new Event('input'));
-
+                if (!commentField) {
+                    return;
                 }
 
-
+                commentField.value = value;
+                commentField.dispatchEvent(new Event('input', { bubbles: true }));
             }
-        };
-        (function (d) { var e = d.createElement("script"); e.src = "https://widget-cdn.boxnow.hr/map-widget/client/v5.js"; e.async = true; e.defer = true; d.getElementsByTagName("head")[0].appendChild(e); })(document);
+
+            function initGlsParcelLockerMap() {
+                var glsMap = document.getElementById('test-map');
+
+                if (!glsMap || glsMap.dataset.listenerAttached === '1') {
+                    return;
+                }
+
+                glsMap.dataset.listenerAttached = '1';
+                glsMap.addEventListener('change', function (event) {
+                    if (!event.detail || !event.detail.contact) {
+                        return;
+                    }
+
+                    updateCheckoutComment(
+                        event.detail.contact.address + ', ' + event.detail.contact.city + '_' + event.detail.id
+                    );
+                });
+            }
+
+            function initBoxNowMap() {
+                var boxNowContainer = document.getElementById('boxnowmap');
+
+                if (!boxNowContainer) {
+                    return;
+                }
+
+                window._bn_map_widget_config = {
+                    type: 'popup',
+                    partnerId: 123,
+                    parentElement: '#boxnowmap',
+                    afterSelect: function (selected) {
+                        if (!selected || !selected.boxnowLockerPostalCode || !selected.boxnowLockerAddressLine1 || !selected.boxnowLockerId) {
+                            return;
+                        }
+
+                        updateCheckoutComment(
+                            selected.boxnowLockerPostalCode + ', ' + selected.boxnowLockerAddressLine1 + '_' + selected.boxnowLockerId
+                        );
+                    }
+                };
+
+                if (document.querySelector('script[data-boxnow-widget="1"]')) {
+                    return;
+                }
+
+                var script = document.createElement('script');
+                script.src = 'https://widget-cdn.boxnow.hr/map-widget/client/v5.js';
+                script.async = true;
+                script.defer = true;
+                script.dataset.boxnowWidget = '1';
+                document.head.appendChild(script);
+            }
+
+            function initCheckoutPickupWidgets() {
+                initGlsParcelLockerMap();
+                initBoxNowMap();
+            }
+
+            function registerLivewireHook() {
+                if (
+                    livewireHookRegistered ||
+                    !window.Livewire ||
+                    typeof window.Livewire.hook !== 'function'
+                ) {
+                    return;
+                }
+
+                livewireHookRegistered = true;
+                window.Livewire.hook('message.processed', function () {
+                    initCheckoutPickupWidgets();
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initCheckoutPickupWidgets, { once: true });
+            } else {
+                initCheckoutPickupWidgets();
+            }
+
+            registerLivewireHook();
+            document.addEventListener('livewire:load', function () {
+                initCheckoutPickupWidgets();
+                registerLivewireHook();
+            });
+        })();
     </script>
 
 

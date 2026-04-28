@@ -159,17 +159,9 @@
 
         <a class="btn-social bs-light bg-primary bs-instagram me-2 mb-2" href="https://www.instagram.com/zuzishop.knjizara"><i class="ci-instagram"></i></a>
 
-        <button
-            type="button"
-            class="btn btn-sm btn-primary newsletter-fab me-2 mb-2"
-            data-bs-toggle="modal"
-            data-bs-target="#newsletterModal">
-            <i class="ci-mail"></i> Newsletter
+        <button type="button" class="btn-social cookie-consent-trigger me-2 mb-2" aria-label="Cookie postavke" data-cookie-consent-trigger>
+            <img src="{{ asset('media/img/cookie-svg.svg') }}" alt="" width="18" height="18" loading="lazy" />
         </button>
-
-
-
-
 
     </div>
 </aside>

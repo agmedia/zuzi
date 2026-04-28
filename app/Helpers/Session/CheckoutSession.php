@@ -145,6 +145,50 @@ class CheckoutSession
     /*******************************************************************************
      *                                Copyright : AGmedia                           *
      *                              email: filip@agmedia.hr                         *
+     *******************************************************************************/
+
+    /**
+     * NEWSLETTER
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Session\SessionManager|\Illuminate\Session\Store|mixed
+     */
+    public static function getNewsletter()
+    {
+        return session(static::$session_string . '.newsletter');
+    }
+
+
+    /**
+     * @return bool
+     */
+    public static function hasNewsletter()
+    {
+        return session()->has(static::$session_string . '.newsletter');
+    }
+
+
+    /**
+     * @param bool $value
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Session\SessionManager|\Illuminate\Session\Store|mixed
+     */
+    public static function setNewsletter(bool $value)
+    {
+        return session([static::$session_string . '.newsletter' => $value]);
+    }
+
+
+    /**
+     * @return bool
+     */
+    public static function forgetNewsletter()
+    {
+        return session()->forget(static::$session_string . '.newsletter');
+    }
+
+    /*******************************************************************************
+     *                                Copyright : AGmedia                           *
+     *                              email: filip@agmedia.hr                         *
 
     /*******************************************************************************
      *                                Copyright : AGmedia                           *
@@ -334,6 +378,7 @@ class CheckoutSession
         CheckoutSession::forgetPayment();
         CheckoutSession::forgetShipping();
         CheckoutSession::forgetComment();
+        CheckoutSession::forgetNewsletter();
     }
 
 }

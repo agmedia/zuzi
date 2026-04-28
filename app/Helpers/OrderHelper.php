@@ -41,7 +41,7 @@ class OrderHelper
     /**
      * @param string|int|null $order_id
      */
-    public function __construct(string|int $order_id = null)
+    public function __construct(string|int|null $order_id = null)
     {
         if ($order_id) {
             $this->order_id = $order_id;
@@ -294,11 +294,15 @@ class OrderHelper
      *
      * @return $this
      */
-    public function addCustomerToMailchimp(string $email_column = 'payment', string $audience_id = null)
+    public function addCustomerToMailchimp(string $email_column = 'payment', ?string $audience_id = null)
     {
         if ($this->getOrder()) {
-           $mailchimp   = new Mailchimp();
+            $mailchimp = new Mailchimp();
             $audience_id = $audience_id ?: config('services.mailchimp.audience_id');
+
+            if (! $audience_id || ! $this->getEmail($email_column)) {
+                return $this;
+            }
 
             $mailchimp->addMemberToList(
                 $audience_id,
@@ -308,7 +312,7 @@ class OrderHelper
             );
         }
 
-       // return $this;
+        return $this;
     }
 
 

@@ -22,6 +22,7 @@
 
         <div class="px-lg-5 pt-2 pb-4">
             <div class="mx-auto px-3" >
+                @include('front.layouts.partials.newsletter-signup')
 
                 <div class="row pt-3 ">
                     <div class="col-lg-3 col-sm-6 col-6 mb-grid-gutter">
@@ -149,6 +150,3 @@
 
 
 @endif
-
-
-
