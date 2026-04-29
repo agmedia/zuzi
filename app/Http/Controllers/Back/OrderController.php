@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use App\Services\WoltDrive\WoltDriveService;
 
 class OrderController extends Controller
@@ -316,7 +317,7 @@ class OrderController extends Controller
 
         $request->validate([
             'order_id' => 'required|integer',
-            'discount' => 'required|integer|in:10,15,20',
+            'discount' => ['required', 'integer', Rule::in(UnfinishedOrderPromoService::ALLOWED_DISCOUNTS)],
         ]);
 
         /** @var Order|null $order */

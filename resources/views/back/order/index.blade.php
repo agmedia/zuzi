@@ -176,9 +176,9 @@
                                                 <i class="fa fa-fw fa-envelope mr-1"></i><span class="d-none d-xl-inline">Mail</span>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-right">
-                                                <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, 10)">Pošalji -10%</a>
-                                                <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, 15)">Pošalji -15%</a>
-                                                <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, 20)">Pošalji -20%</a>
+                                                @foreach (\App\Services\UnfinishedOrderPromoService::ALLOWED_DISCOUNTS as $discount)
+                                                    <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, {{ $discount }})">Pošalji -{{ $discount }}%</a>
+                                                @endforeach
                                             </div>
                                         </div>
                                     @endif

@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class UnfinishedOrderPromoService
 {
-    public const ALLOWED_DISCOUNTS = [10, 15, 20];
+    public const ALLOWED_DISCOUNTS = [5, 10, 15, 20];
     public const VALID_FOR_DAYS = 7;
     private const COUPON_SUFFIX_LENGTH = 7;
 

@@ -38,6 +38,10 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
 
         $byDiscount = collect($stats['by_discount'])->keyBy('discount');
 
+        $this->assertSame(0, $byDiscount[5]['sent_count']);
+        $this->assertSame(0, $byDiscount[5]['used_count']);
+        $this->assertSame(0.0, $byDiscount[5]['revenue_total']);
+
         $this->assertSame(1, $byDiscount[10]['sent_count']);
         $this->assertSame(1, $byDiscount[10]['used_count']);
         $this->assertSame(50.0, $byDiscount[10]['revenue_total']);
