@@ -205,6 +205,44 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
         $this->assertSame(0, $stats['summary']['used_count']);
     }
 
+    public function test_it_resolves_old_promos_from_order_history_when_status_changed_later(): void
+    {
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+        $paidStatus = (int) config('settings.order.status.paid');
+
+        $this->createSourceOrder(35831, $paidStatus, '2026-04-12 08:00:00');
+        $this->createOrderHistoryEntry(35831, 1, '2026-04-12 08:00:00');
+        $this->createOrderHistoryEntry(35831, $unfinishedStatus, '2026-04-20 09:00:00');
+
+        $title = $this->createPromoAction(35831, 10, '2026-04-20 10:00:00');
+
+        DB::table('orders')
+            ->where('id', 35831)
+            ->update([
+                'order_status_id' => $paidStatus,
+                'updated_at' => Carbon::parse('2026-04-21 12:00:00'),
+            ]);
+
+        $this->createOrderHistoryEntry(35831, $paidStatus, '2026-04-21 12:00:00');
+        $this->createUsedPromoOrder($title, 44.0, -4.4, '2026-04-22 10:00:00');
+
+        $unfinishedStats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $actionStats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $this->assertSame(1, $unfinishedStats['summary']['sent_count']);
+        $this->assertSame(1, $unfinishedStats['summary']['used_count']);
+        $this->assertSame(0, $actionStats['summary']['sent_count']);
+    }
+
     private function createSourceOrder(int $orderId, int $statusId, string $createdAt): void
     {
         DB::table('orders')->insert([
@@ -240,6 +278,18 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
             'tracking_code' => '',
             'shipped' => false,
             'printed' => false,
+            'created_at' => Carbon::parse($createdAt),
+            'updated_at' => Carbon::parse($createdAt),
+        ]);
+    }
+
+    private function createOrderHistoryEntry(int $orderId, int $statusId, string $createdAt): void
+    {
+        DB::table('order_history')->insert([
+            'order_id' => $orderId,
+            'user_id' => 1,
+            'status' => $statusId,
+            'comment' => '',
             'created_at' => Carbon::parse($createdAt),
             'updated_at' => Carbon::parse($createdAt),
         ]);

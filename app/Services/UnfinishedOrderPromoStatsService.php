@@ -92,11 +92,17 @@ class UnfinishedOrderPromoStatsService
         $sourceOrderStatuses = $this->sourceOrderStatuses(
             $actions->pluck('source_order_id')->filter()->unique()->values()
         );
+        $historyStatuses = $this->sourceOrderHistoryStatuses($actions);
 
         return $actions
-            ->map(function ($action) use ($sourceOrderStatuses) {
+            ->map(function ($action) use ($sourceOrderStatuses, $historyStatuses) {
                 if ($action->source_order_status_id === null && $action->source_order_id !== null) {
-                    $resolvedStatusId = $sourceOrderStatuses->get($action->source_order_id);
+                    $resolvedStatusId = $historyStatuses->get($action->id);
+
+                    if ($resolvedStatusId === null) {
+                        $resolvedStatusId = $sourceOrderStatuses->get($action->source_order_id);
+                    }
+
                     $action->source_order_status_id = $resolvedStatusId !== null ? (int) $resolvedStatusId : null;
                 }
 
@@ -140,7 +146,6 @@ class UnfinishedOrderPromoStatsService
                     'order_total' => (float) ($first->order_total ?? 0),
                     'discount_total' => abs((float) ($first->discount_value ?? 0)),
                     'redeemed_at' => Carbon::parse($first->redeemed_at),
-                    'action_created_at' => $action->created_at,
                 ];
             })
             ->values();
@@ -156,7 +161,7 @@ class UnfinishedOrderPromoStatsService
             ->map(fn (Collection $group) => $group->count());
 
         $usedByDay = $usedPromos
-            ->groupBy(fn ($promo) => $promo->action_created_at->format('Y-m-d'))
+            ->groupBy(fn ($promo) => $promo->redeemed_at->format('Y-m-d'))
             ->map(fn (Collection $group) => $group->count());
 
         $labels = [];
@@ -264,6 +269,38 @@ class UnfinishedOrderPromoStatsService
         return DB::table('orders')
             ->whereIn('id', $orderIds->all())
             ->pluck('order_status_id', 'id');
+    }
+
+    private function sourceOrderHistoryStatuses(Collection $actions): Collection
+    {
+        $orderIds = $actions->pluck('source_order_id')->filter()->unique()->values();
+
+        if ($orderIds->isEmpty()) {
+            return collect();
+        }
+
+        $historyByOrderId = DB::table('order_history')
+            ->whereIn('order_id', $orderIds->all())
+            ->where('status', '>', 0)
+            ->orderBy('order_id')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('order_id');
+
+        return $actions->mapWithKeys(function ($action) use ($historyByOrderId) {
+            if ($action->source_order_id === null) {
+                return [$action->id => null];
+            }
+
+            $history = $historyByOrderId->get($action->source_order_id, collect())
+                ->filter(function ($row) use ($action) {
+                    return Carbon::parse($row->created_at)->lte($action->created_at);
+                })
+                ->last();
+
+            return [$action->id => $history ? (int) $history->status : null];
+        });
     }
 
     private function matchesSegment(?int $statusId, string $segment): bool
