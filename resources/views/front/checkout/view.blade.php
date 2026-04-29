@@ -161,14 +161,17 @@
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Opći uvjeti korištenja</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">{{ $termsPage->title ?? 'Opći uvjeti korištenja' }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    @foreach ($uvjeti_kupnje as $uvjet)
-                        {!! $uvjet->description !!}
-
-                    @endforeach
+                    @if(!empty($termsPage?->description))
+                        {!! $termsPage->description !!}
+                    @else
+                        @foreach ($uvjeti_kupnje as $uvjet)
+                            {!! $uvjet->description !!}
+                        @endforeach
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zatvori</button>

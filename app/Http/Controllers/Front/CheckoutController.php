@@ -15,6 +15,7 @@ use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\Back\Orders\Order as AdminOrderModel;
 use App\Models\TagManager;
 use App\Models\Front\Loyalty;
+use App\Models\Front\Page;
 use App\Services\GoogleAnalyticsService;
 use App\Services\GiftVoucherService;
 use App\Services\ProductRecommendationService;
@@ -158,8 +159,9 @@ class CheckoutController extends Controller
         }
 
         $data['payment_form'] = $order->resolvePaymentForm();
+        $termsPage = Page::query()->select('id', 'title', 'description')->find(1);
 
-        return view('front.checkout.view', compact('data'));
+        return view('front.checkout.view', compact('data', 'termsPage'));
     }
 
 
