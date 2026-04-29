@@ -31,9 +31,11 @@
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff5fa; border: 1px solid #f7c2dd; border-radius: 10px;">
                     <tr>
                         <td style="padding: 22px 20px; font-size: 15px; line-height: 1.8; color: #373f50;">
+
                             <p style="margin: 0 0 10px;">
-                                🎁 <strong>TVOJA NAGRADA: -{{ (int) $promoAction->discount }}% na sljedeću kupnju</strong>
+                                🎁 <strong>TVOJA NAGRADA: -{{ (int) $promoAction->discount }}% na sve artikle</strong>
                             </p>
+
                             <p style="margin: 0 0 10px;">
                                 Kod: <strong>{{ $promoAction->coupon }}</strong>
                             </p>
