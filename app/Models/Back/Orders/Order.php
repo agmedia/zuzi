@@ -4,9 +4,11 @@ namespace App\Models\Back\Orders;
 
 use App\Helpers\Mailchimp;
 use App\Helpers\Session\CheckoutSession;
+use App\Models\Back\Marketing\Action;
 use App\Models\GiftVoucher;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Users\Client;
+use App\Services\GiftVoucherService;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -407,6 +409,16 @@ class Order extends Model
             $query->whereHas('products', function (Builder $query) {
                 $query->where('product_id', 0)
                       ->where('name', 'like', 'Zamatanje%');
+            });
+        }
+
+        if ($request->boolean('gift_code')) {
+            $query->whereHas('totals', function (Builder $query) {
+                $query->where('code', 'special')
+                    ->whereIn('title', Action::query()
+                        ->select('title')
+                        ->where('group', 'total')
+                        ->where('coupon', 'like', GiftVoucherService::COUPON_PREFIX . '%'));
             });
         }
 

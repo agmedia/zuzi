@@ -16,14 +16,24 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
     {
         Carbon::setTestNow('2026-04-27 14:45:00');
 
-        $firstTitle = $this->createPromoAction(35731, 10, '2026-04-25 10:00:00');
-        $secondTitle = $this->createPromoAction(35732, 15, '2026-04-26 12:00:00');
-        $thirdTitle = $this->createPromoAction(35733, 20, '2026-04-27 09:00:00');
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35731, $unfinishedStatus, '2026-04-25 08:00:00');
+        $this->createSourceOrder(35732, $unfinishedStatus, '2026-04-26 08:00:00');
+        $this->createSourceOrder(35733, $unfinishedStatus, '2026-04-27 08:00:00');
+
+        $firstTitle = $this->createPromoAction(35731, 10, '2026-04-25 10:00:00', $unfinishedStatus);
+        $secondTitle = $this->createPromoAction(35732, 15, '2026-04-26 12:00:00', $unfinishedStatus);
+        $thirdTitle = $this->createPromoAction(35733, 20, '2026-04-27 09:00:00', $unfinishedStatus);
 
         $this->createUsedPromoOrder($firstTitle, 50, -5, '2026-04-26 08:30:00');
         $this->createUsedPromoOrder($thirdTitle, 80, -10, '2026-04-27 11:15:00');
 
-        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData();
+        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
+            'year' => 2026,
+            'month' => 4,
+        ]);
 
         $this->assertSame(3, $stats['summary']['sent_count']);
         $this->assertSame(2, $stats['summary']['used_count']);
@@ -64,15 +74,20 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
     {
         Carbon::setTestNow('2026-04-27 14:45:00');
 
-        $unfinishedTitle = $this->createPromoAction(35756, 10, '2026-04-27 09:00:00');
-        $finishedTitle = $this->createPromoAction(35757, 15, '2026-04-27 10:00:00');
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35756, $unfinishedStatus, '2026-04-27 08:00:00');
+        $this->createSourceOrder(35757, $unfinishedStatus, '2026-04-27 08:30:00');
+
+        $unfinishedTitle = $this->createPromoAction(35756, 10, '2026-04-27 09:00:00', $unfinishedStatus);
+        $finishedTitle = $this->createPromoAction(35757, 15, '2026-04-27 10:00:00', $unfinishedStatus);
 
         $this->createUsedPromoOrder(
             $unfinishedTitle,
             42.34,
             -2.66,
             '2026-04-27 11:00:00',
-            (int) config('settings.order.status.unfinished')
+            $unfinishedStatus
         );
 
         $this->createUsedPromoOrder(
@@ -82,7 +97,11 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
             '2026-04-27 12:00:00'
         );
 
-        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData();
+        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
+            'year' => 2026,
+            'month' => 4,
+        ]);
 
         $this->assertSame(2, $stats['summary']['sent_count']);
         $this->assertSame(1, $stats['summary']['used_count']);
@@ -97,9 +116,148 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
-    private function createPromoAction(int $orderId, int $discount, string $createdAt): string
+    public function test_it_builds_dashboard_statistics_for_non_unfinished_promos(): void
+    {
+        $newStatus = (int) config('settings.order.status.new');
+        $paidStatus = (int) config('settings.order.status.paid');
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35801, $newStatus, '2026-04-21 08:00:00');
+        $this->createSourceOrder(35802, $paidStatus, '2026-04-22 08:00:00');
+        $this->createSourceOrder(35803, $unfinishedStatus, '2026-04-23 08:00:00');
+
+        $newOrderTitle = $this->createPromoAction(35801, 10, '2026-04-21 09:00:00', $newStatus);
+        $paidOrderTitle = $this->createPromoAction(35802, 15, '2026-04-22 09:00:00', $paidStatus);
+        $this->createPromoAction(35803, 20, '2026-04-23 09:00:00', $unfinishedStatus);
+
+        $this->createUsedPromoOrder($newOrderTitle, 75.00, -7.50, '2026-04-24 10:00:00');
+        $this->createUsedPromoOrder($paidOrderTitle, 0, 0, '2026-04-25 10:00:00', (int) config('settings.order.status.canceled'));
+
+        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $this->assertSame(2, $stats['summary']['sent_count']);
+        $this->assertSame(1, $stats['summary']['used_count']);
+        $this->assertSame(1, $stats['summary']['unused_count']);
+        $this->assertSame(50.0, $stats['summary']['conversion_rate']);
+        $this->assertSame(75.0, $stats['summary']['revenue_total']);
+        $this->assertSame(7.5, $stats['summary']['discount_total']);
+        $this->assertSame(10, $stats['summary']['best_discount']['discount']);
+    }
+
+    public function test_it_filters_statistics_by_selected_month_and_year(): void
+    {
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35811, $unfinishedStatus, '2026-03-15 08:00:00');
+        $this->createSourceOrder(35812, $unfinishedStatus, '2026-04-16 08:00:00');
+
+        $marchTitle = $this->createPromoAction(35811, 10, '2026-03-15 09:00:00', $unfinishedStatus);
+        $aprilTitle = $this->createPromoAction(35812, 15, '2026-04-16 09:00:00', $unfinishedStatus);
+
+        $this->createUsedPromoOrder($marchTitle, 40.0, -4.0, '2026-03-20 10:00:00');
+
+        $marchStats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
+            'year' => 2026,
+            'month' => 3,
+        ]);
+
+        $aprilStats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $this->assertSame(1, $marchStats['summary']['sent_count']);
+        $this->assertSame(1, $marchStats['summary']['used_count']);
+        $this->assertSame(40.0, $marchStats['summary']['revenue_total']);
+        $this->assertSame(31, count($marchStats['chart']['labels']));
+
+        $this->assertSame(1, $aprilStats['summary']['sent_count']);
+        $this->assertSame(0, $aprilStats['summary']['used_count']);
+        $this->assertSame(0.0, $aprilStats['summary']['revenue_total']);
+        $this->assertSame(30, count($aprilStats['chart']['labels']));
+
+        $aprilByDiscount = collect($aprilStats['by_discount'])->keyBy('discount');
+        $this->assertSame(1, $aprilByDiscount[15]['sent_count']);
+        $this->assertSame(0, $aprilByDiscount[15]['used_count']);
+    }
+
+    public function test_it_prefers_stored_status_snapshot_for_segment_resolution(): void
+    {
+        $newStatus = (int) config('settings.order.status.new');
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35821, $unfinishedStatus, '2026-04-10 08:00:00');
+        $this->createPromoAction(35821, 10, '2026-04-10 09:00:00', $newStatus);
+
+        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $this->assertSame(1, $stats['summary']['sent_count']);
+        $this->assertSame(0, $stats['summary']['used_count']);
+    }
+
+    private function createSourceOrder(int $orderId, int $statusId, string $createdAt): void
+    {
+        DB::table('orders')->insert([
+            'id' => $orderId,
+            'user_id' => 0,
+            'affiliate_id' => 0,
+            'order_status_id' => $statusId,
+            'invoice' => null,
+            'total' => 25,
+            'payment_fname' => 'Izvor',
+            'payment_lname' => 'Narudžba',
+            'payment_address' => 'Test ulica 1',
+            'payment_zip' => '10000',
+            'payment_city' => 'Zagreb',
+            'payment_phone' => null,
+            'payment_email' => 'source@example.com',
+            'payment_method' => 'Kartice',
+            'payment_code' => 'corvus',
+            'payment_card' => null,
+            'payment_installment' => 0,
+            'shipping_fname' => 'Izvor',
+            'shipping_lname' => 'Narudžba',
+            'shipping_address' => 'Test ulica 1',
+            'shipping_zip' => '10000',
+            'shipping_city' => 'Zagreb',
+            'shipping_phone' => null,
+            'shipping_email' => 'source@example.com',
+            'shipping_method' => 'Dostava',
+            'shipping_code' => 'gls',
+            'company' => '',
+            'oib' => '',
+            'comment' => null,
+            'tracking_code' => '',
+            'shipped' => false,
+            'printed' => false,
+            'created_at' => Carbon::parse($createdAt),
+            'updated_at' => Carbon::parse($createdAt),
+        ]);
+    }
+
+    private function createPromoAction(int $orderId, int $discount, string $createdAt, ?int $sourceStatusId = null): string
     {
         $title = 'Promo za nedovrsenu narudzbu #' . $orderId;
+
+        $data = [
+            'source' => 'unfinished_order_promo',
+            'order_id' => $orderId,
+            'discount' => $discount,
+        ];
+
+        if ($sourceStatusId !== null) {
+            $data['source_order_status_id'] = $sourceStatusId;
+        }
 
         DB::table('product_actions')->insert([
             'title' => $title,
@@ -109,11 +267,7 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
             'links' => json_encode(['total']),
             'date_start' => Carbon::parse($createdAt),
             'date_end' => Carbon::parse($createdAt)->addDays(7),
-            'data' => json_encode([
-                'source' => 'unfinished_order_promo',
-                'order_id' => $orderId,
-                'discount' => $discount,
-            ]),
+            'data' => json_encode($data),
             'coupon' => 'HVALA' . $discount . '-ABCDE' . $discount,
             'quantity' => 1,
             'lock' => 0,

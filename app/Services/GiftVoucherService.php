@@ -21,6 +21,8 @@ class GiftVoucherService
     public const CART_ITEM_ID = 'gift-voucher';
     public const SHIPPING_CODE = 'gift_voucher_email';
     public const DEFAULT_IMAGE = 'media/img/zuzi-logo.webp';
+    public const COUPON_PREFIX = 'ZUZI-GIFT-';
+    public const ACTION_TITLE_PREFIX = 'Poklon bon #';
 
     public static function availableAmounts(): array
     {
@@ -293,7 +295,7 @@ class GiftVoucherService
             if (! $giftVoucher->code || ! $giftVoucher->action_id) {
                 $code = static::generateUniqueCode();
                 $actionId = Action::query()->insertGetId([
-                    'title' => 'Poklon bon #' . $order->id,
+                    'title' => static::ACTION_TITLE_PREFIX . $order->id,
                     'type' => 'F',
                     'discount' => $giftVoucher->amount,
                     'group' => 'total',
@@ -369,7 +371,7 @@ class GiftVoucherService
     private static function generateUniqueCode(): string
     {
         do {
-            $code = 'ZUZI-GIFT-' . Str::upper(Str::random(8));
+            $code = static::COUPON_PREFIX . Str::upper(Str::random(8));
         } while (
             GiftVoucher::query()->where('code', $code)->exists()
             || Action::query()->where('coupon', $code)->exists()

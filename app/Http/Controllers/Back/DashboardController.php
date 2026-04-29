@@ -36,9 +36,53 @@ class DashboardController extends Controller
     /**
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
-        $promoStats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData();
+        $promoStatsService = app(UnfinishedOrderPromoStatsService::class);
+        $promoYears = $promoStatsService->getAvailableYears();
+
+        if (empty($promoYears)) {
+            $promoYears = [(int) now()->format('Y')];
+        }
+
+        $promoYear = (int) $request->query('promo_year', $promoYears[0]);
+        if (! in_array($promoYear, $promoYears, true)) {
+            $promoYear = $promoYears[0];
+        }
+
+        $promoMonth = (int) $request->query('promo_month', now()->format('n'));
+        if ($promoMonth < 1 || $promoMonth > 12) {
+            $promoMonth = (int) now()->format('n');
+        }
+
+        $promoActiveTab = $request->query('promo_tab', UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED);
+        if (! in_array($promoActiveTab, [
+            UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
+            UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED,
+        ], true)) {
+            $promoActiveTab = UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED;
+        }
+
+        $promoStats = [
+            'filters' => [
+                'years' => $promoYears,
+                'year' => $promoYear,
+                'month' => $promoMonth,
+                'active_tab' => $promoActiveTab,
+            ],
+            'tabs' => [
+                UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => $promoStatsService->getDashboardData([
+                    'segment' => UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
+                    'year' => $promoYear,
+                    'month' => $promoMonth,
+                ]),
+                UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED => $promoStatsService->getDashboardData([
+                    'segment' => UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED,
+                    'year' => $promoYear,
+                    'month' => $promoMonth,
+                ]),
+            ],
+        ];
 
         $data['today'] = Order::whereDate('created_at', Carbon::today())
             ->whereNotIn('order_status_id', [7, 5, 8])

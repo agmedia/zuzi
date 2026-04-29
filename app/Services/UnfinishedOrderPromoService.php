@@ -30,6 +30,8 @@ class UnfinishedOrderPromoService
             'data' => json_encode([
                 'source' => 'unfinished_order_promo',
                 'order_id' => (int) $order->id,
+                'source_order_status_id' => (int) $order->order_status_id,
+                'source_order_status_title' => (string) optional($order->status)->title,
                 'discount' => $discount,
             ]),
             'coupon' => $this->generateUniqueCode($discount),

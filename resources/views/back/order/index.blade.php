@@ -34,15 +34,27 @@
                         </select>
                     </div>
                 </div>--}}
-                <div class="block-options d-flex align-items-center">
-                    <a class="btn {{ request()->boolean('gift_wrap') ? 'btn-primary' : 'btn-light' }} mr-2"
-                       href="javascript:setPageURL('gift_wrap', '{{ request()->boolean('gift_wrap') ? '' : '1' }}')">
-                        <i class="fa fa-gift mr-1"></i>
-                        Poklon zamatanje
-                    </a>
+                <div class="block-options d-flex align-items-center flex-nowrap">
+                    <div class="d-flex align-items-center flex-nowrap mr-2">
+                        <a class="btn {{ request()->boolean('gift_wrap') ? 'btn-primary' : 'btn-light' }} d-inline-flex align-items-center justify-content-center mr-2 px-2 px-sm-3"
+                           title="Poklon zamatanje"
+                           aria-label="Poklon zamatanje"
+                           href="javascript:setPageURL('gift_wrap', '{{ request()->boolean('gift_wrap') ? '' : '1' }}')">
+                            <i class="fa fa-gift mr-sm-1"></i>
+                            <span class="d-none d-sm-inline">Poklon zamatanje</span>
+                        </a>
+                        <a class="btn {{ request()->boolean('gift_code') ? 'btn-primary' : 'btn-light' }} d-inline-flex align-items-center justify-content-center px-2 px-sm-3"
+                           title="Iskorišten poklon kod"
+                           aria-label="Iskorišten poklon kod"
+                           href="javascript:setPageURL('gift_code', '{{ request()->boolean('gift_code') ? '' : '1' }}')">
+                            <i class="fa fa-tag mr-sm-1"></i>
+                            <span class="d-none d-sm-inline">Iskorišten poklon kod</span>
+                        </a>
+                    </div>
                     <div class="dropdown">
-                        <button type="button" class="btn btn-light" id="dropdown-ecom-filters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Filtriraj
+                        <button type="button" class="btn btn-light d-inline-flex align-items-center justify-content-center px-2 px-sm-3" id="dropdown-ecom-filters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Filtriraj">
+                            <i class="fa fa-filter mr-sm-1"></i>
+                            <span class="d-none d-sm-inline">Filtriraj</span>
                             <i class="fa fa-angle-down ml-1"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown-ecom-filters">
@@ -66,6 +78,9 @@
                     @endif
                     @if (request()->boolean('gift_wrap'))
                         <input type="hidden" name="gift_wrap" value="1">
+                    @endif
+                    @if (request()->boolean('gift_code'))
+                        <input type="hidden" name="gift_code" value="1">
                     @endif
                     <div class="form-group">
                         <div class="form-group">

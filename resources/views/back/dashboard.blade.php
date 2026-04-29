@@ -185,101 +185,92 @@
                 </div>
             </div>
 
+            @php
+                $promoMonths = [
+                    1 => 'Siječanj',
+                    2 => 'Veljača',
+                    3 => 'Ožujak',
+                    4 => 'Travanj',
+                    5 => 'Svibanj',
+                    6 => 'Lipanj',
+                    7 => 'Srpanj',
+                    8 => 'Kolovoz',
+                    9 => 'Rujan',
+                    10 => 'Listopad',
+                    11 => 'Studeni',
+                    12 => 'Prosinac',
+                ];
+                $promoTabLabels = [
+                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => 'Nedovršene',
+                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED => 'Akcije',
+                ];
+                $promoChartIds = [
+                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => 'unfinishedPromoChart',
+                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED => 'nonUnfinishedPromoChart',
+                ];
+            @endphp
             <div class="block block-rounded mt-4">
-                <div class="block-header block-header-default">
+                <div class="block-header block-header-default flex-wrap">
                     <h3 class="block-title">Promo kodovi</h3>
+
+                    <form action="{{ route('dashboard') }}" method="get" id="promo-filters-form" class="w-100 mt-3 mt-md-0">
+                        <input type="hidden" name="promo_tab" id="promo-tab-input" value="{{ $promoStats['filters']['active_tab'] }}">
+
+                        <div class="row justify-content-md-end">
+                            <div class="col-12 col-md-4 col-xl-2">
+                                <label class="font-size-sm mb-1">Godina</label>
+                                <select name="promo_year" id="promo-year" class="form-control">
+                                    @foreach($promoStats['filters']['years'] as $year)
+                                        <option value="{{ $year }}" {{ $promoStats['filters']['year'] === (int) $year ? 'selected' : '' }}>{{ $year }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4 col-xl-2">
+                                <label class="font-size-sm mb-1">Mjesec</label>
+                                <select name="promo_month" id="promo-month" class="form-control">
+                                    @foreach($promoMonths as $month => $monthName)
+                                        <option value="{{ $month }}" {{ $promoStats['filters']['month'] === (int) $month ? 'selected' : '' }}>{{ $monthName }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </form>
                 </div>
                 <div class="block-content">
-                    <div class="row">
-                        <div class="col-12 col-md-6 col-xl-3 mb-3">
-                            <div class="block block-rounded text-center h-100">
-                                <div class="block-content py-3">
-                                    <div class="font-size-sm text-muted text-uppercase">Poslano</div>
-                                    <div class="font-size-h3 font-w600 mt-1">{{ number_format($promoStats['summary']['sent_count'], 0, ',', '.') }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6 col-xl-3 mb-3">
-                            <div class="block block-rounded text-center h-100">
-                                <div class="block-content py-3">
-                                    <div class="font-size-sm text-muted text-uppercase">Iskorišteno</div>
-                                    <div class="font-size-h3 font-w600 mt-1">{{ number_format($promoStats['summary']['used_count'], 0, ',', '.') }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6 col-xl-3 mb-3">
-                            <div class="block block-rounded text-center h-100">
-                                <div class="block-content py-3">
-                                    <div class="font-size-sm text-muted text-uppercase">Konverzija</div>
-                                    <div class="font-size-h3 font-w600 mt-1">{{ number_format($promoStats['summary']['conversion_rate'], 1, ',', '.') }}%</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6 col-xl-3 mb-3">
-                            <div class="block block-rounded text-center h-100">
-                                <div class="block-content py-3">
-                                    <div class="font-size-sm text-muted text-uppercase">Promet</div>
-                                    <div class="font-size-h3 font-w600 mt-1">{{ \App\Helpers\Currency::main($promoStats['summary']['revenue_total'], true) }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <ul class="nav nav-tabs" id="promoTabs" role="tablist">
+                        @foreach ($promoTabLabels as $segment => $tabLabel)
+                            <li class="nav-item">
+                                <a
+                                    class="nav-link {{ $promoStats['filters']['active_tab'] === $segment ? 'active' : '' }}"
+                                    id="promo-{{ $segment }}-tab"
+                                    data-toggle="tab"
+                                    href="#promo-{{ $segment }}"
+                                    role="tab"
+                                    aria-controls="promo-{{ $segment }}"
+                                    aria-selected="{{ $promoStats['filters']['active_tab'] === $segment ? 'true' : 'false' }}"
+                                    data-promo-tab="{{ $segment }}"
+                                    data-promo-chart-target="{{ $promoChartIds[$segment] }}"
+                                >
+                                    {{ $tabLabel }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
 
-                    <div class="row mt-2">
-                        <div class="col-12">
-                            <div class="chart-container promo-wide">
-                                <canvas id="unfinishedPromoChart"></canvas>
+                    <div class="tab-content mt-3" id="promoTabsContent">
+                        @foreach ($promoTabLabels as $segment => $tabLabel)
+                            <div
+                                class="tab-pane fade {{ $promoStats['filters']['active_tab'] === $segment ? 'show active' : '' }}"
+                                id="promo-{{ $segment }}"
+                                role="tabpanel"
+                                aria-labelledby="promo-{{ $segment }}-tab"
+                            >
+                                @include('back.dashboard.partials.promo-stats-tab', [
+                                    'stats' => $promoStats['tabs'][$segment],
+                                    'chartId' => $promoChartIds[$segment],
+                                ])
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 font-size-sm text-muted promo-stats-meta">
-                                <div>
-                                    Neiskorišteno:
-                                    <strong>{{ number_format($promoStats['summary']['unused_count'], 0, ',', '.') }}</strong>
-                                </div>
-                                <div>
-                                    Ukupni odobreni popust:
-                                    <strong>{{ \App\Helpers\Currency::main($promoStats['summary']['discount_total'], true) }}</strong>
-                                </div>
-                                <div>
-                                    Najbolji popust:
-                                    @if ($promoStats['summary']['best_discount'])
-                                        <strong>-{{ $promoStats['summary']['best_discount']['discount'] }}%</strong>
-                                        <span>({{ number_format($promoStats['summary']['best_discount']['conversion_rate'], 1, ',', '.') }}% konverzija)</span>
-                                    @else
-                                        <strong>—</strong>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="table-responsive">
-                                <table class="table table-striped table-vcenter font-size-sm">
-                                    <thead>
-                                    <tr>
-                                        <th>Popust</th>
-                                        <th class="text-center">Poslano</th>
-                                        <th class="text-center">Kupnje</th>
-                                        <th class="text-center">Konv.</th>
-                                        <th class="text-right">Promet</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    @foreach ($promoStats['by_discount'] as $row)
-                                        <tr>
-                                            <td><strong>-{{ $row['discount'] }}%</strong></td>
-                                            <td class="text-center">{{ number_format($row['sent_count'], 0, ',', '.') }}</td>
-                                            <td class="text-center">{{ number_format($row['used_count'], 0, ',', '.') }}</td>
-                                            <td class="text-center">{{ number_format($row['conversion_rate'], 1, ',', '.') }}%</td>
-                                            <td class="text-right">{{ \App\Helpers\Currency::main($row['revenue_total'], true) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -506,18 +497,33 @@
         $('#chart-month').val(now.getMonth() + 1);
         loadMonth(now.getFullYear(), now.getMonth() + 1);
 
-        const unfinishedPromoChartData = @json($promoStats['chart']);
-        const unfinishedPromoChartCanvas = document.getElementById('unfinishedPromoChart');
+        const promoChartsData = @json([
+            'unfinishedPromoChart' => $promoStats['tabs'][\App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED]['chart'],
+            'nonUnfinishedPromoChart' => $promoStats['tabs'][\App\Services\UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED]['chart'],
+        ]);
+        const promoChartInstances = {};
 
-        if (unfinishedPromoChartCanvas) {
-            new Chart(unfinishedPromoChartCanvas.getContext('2d'), {
+        function renderPromoChart(canvasId) {
+            const promoChartCanvas = document.getElementById(canvasId);
+            const promoChartData = promoChartsData[canvasId];
+
+            if (!promoChartCanvas || !promoChartData) {
+                return;
+            }
+
+            if (promoChartInstances[canvasId]) {
+                promoChartInstances[canvasId].resize();
+                return;
+            }
+
+            promoChartInstances[canvasId] = new Chart(promoChartCanvas.getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: unfinishedPromoChartData.labels,
+                    labels: promoChartData.labels,
                     datasets: [
                         {
                             label: 'Poslano',
-                            data: unfinishedPromoChartData.sent,
+                            data: promoChartData.sent,
                             borderColor: 'rgba(236, 72, 153, 1)',
                             backgroundColor: 'rgba(236, 72, 153, .18)',
                             fill: true,
@@ -526,7 +532,7 @@
                         },
                         {
                             label: 'Kupnje s kuponom',
-                            data: unfinishedPromoChartData.used,
+                            data: promoChartData.used,
                             borderColor: 'rgba(16, 185, 129, 1)',
                             backgroundColor: 'rgba(16, 185, 129, .12)',
                             fill: false,
@@ -553,6 +559,18 @@
                 }
             });
         }
+
+        renderPromoChart(@json($promoChartIds[$promoStats['filters']['active_tab']] ?? 'unfinishedPromoChart'));
+
+        $('#promoTabs a[data-promo-chart-target]').on('shown.bs.tab', function(event) {
+            const targetTab = $(event.target);
+            $('#promo-tab-input').val(targetTab.data('promoTab'));
+            renderPromoChart(targetTab.data('promoChartTarget'));
+        });
+
+        $('#promo-year, #promo-month').on('change', function() {
+            $('#promo-filters-form').trigger('submit');
+        });
 
 
         // =====================
