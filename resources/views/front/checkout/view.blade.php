@@ -3,6 +3,7 @@
 @section('title', \App\Models\Seo::appendBrand('Pregled narudzbe'))
 @section('description', \App\Models\Seo::description(null, 'Zavrsni pregled i potvrda narudzbe na ' . \App\Models\Seo::brand() . '.'))
 @php($giftVouchers = isset($data['id']) ? \App\Models\GiftVoucher::query()->where('order_id', $data['id'])->get() : collect())
+@php($showsTermsNoticeLink = in_array($data['payment']->code, ['bank', 'cod', 'corvus']))
 
 @push('css_after')
     @livewireStyles
@@ -62,6 +63,17 @@
             <section class="col-lg-8">
                 <div class="card p-3">
                <h2 class="h5 pt-1 pb-3 mb-3">Pregledaj i potvrdi narudžbu</h2>
+               @if($showsTermsNoticeLink)
+                   <div class="alert alert-info d-flex mb-3" role="alert">
+                       <div class="alert-icon">
+                           <i class="ci-announcement"></i>
+                       </div>
+                       <div class="fs-sm">
+                           Vaša narudžba još nije dovršena. Prije kupnje potrebno je prihvatiti
+                           <a class="link-fx text-accent fw-bold js-scroll-to-terms" href="#terms-acceptance"><strong>Opće uvjete korištenja i privatnosti</strong></a>
+                       </div>
+                   </div>
+               @endif
                 <cart-view continueurl="{{ route('index') }}" checkouturl="{{ route('naplata') }}" buttons="false"></cart-view>
 
                 <div class=" pt-4 pb-2">
@@ -169,6 +181,24 @@
 @endsection
 
 @push('js_after')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.js-scroll-to-terms').forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+
+                    const target = Array.from(document.querySelectorAll('.js-terms-acceptance')).find(function (element) {
+                        return element.offsetWidth || element.offsetHeight || element.getClientRects().length;
+                    });
+
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        });
+    </script>
+
     @if ($data['payment']->code == 'keks')
         <script type="text/javascript">
             let refreshTime = 3000;

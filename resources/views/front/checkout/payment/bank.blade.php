@@ -3,23 +3,24 @@
     <input type="hidden" name="provjera" value="{{ $data['order_id'] }}">
 
 
-    <div class="d-block pt-0 pb-2  text-start" >
-        <div class="alert alert-info  d-flex"  role="alert">
-            <div class="alert-icon">
-                <i class="ci-announcement"></i>
+    <div class="js-terms-acceptance" id="terms-acceptance" style="scroll-margin-top: 2rem;">
+        <div class="d-block pt-0 pb-2 text-start">
+            <div class="alert alert-info d-flex" role="alert">
+                <div class="alert-icon">
+                    <i class="ci-announcement"></i>
+                </div>
+                <div><small>Prije kupnje potrebno je prihvatiti Opće uvjete korištenja i privatnosti</small></div>
             </div>
-            <div><small>Prije kupnje potrebno je prihvatiti Opće uvjete korištenja i privatnosti</small></div>
         </div>
 
-    </div>
-
-    <div class="form-check form-check-inline">
-        <label class="form-check-label" for="ex-check-4">{!! __('Slažem se sa :terms_of_service', [
-                                                'terms_of_service' => '<a data-bs-toggle="modal" data-bs-target="#exampleModal" class="link-fx">'.__('Općim uvjetima korištenja i privatnosti').'</a>',
-                                                'privacy_policy' => '<a target="_blank" href="'.route('policy.show').'" class="link-fx">'.__('Privacy Policy').'</a>',
-                                        ]) !!}</label>
-        <input class="form-check-input" type="checkbox" name="terms" id="terms" required>
-        <div class="invalid-feedback" id="terms">Morate se složiti sa Uvjetima kupnje.</div>
+        <div class="form-check form-check-inline">
+            <label class="form-check-label" for="ex-check-4">{!! __('Slažem se sa :terms_of_service', [
+                                                    'terms_of_service' => '<a data-bs-toggle="modal" data-bs-target="#exampleModal" class="link-fx">'.__('Općim uvjetima korištenja i privatnosti').'</a>',
+                                                    'privacy_policy' => '<a target="_blank" href="'.route('policy.show').'" class="link-fx">'.__('Privacy Policy').'</a>',
+                                            ]) !!}</label>
+            <input class="form-check-input" type="checkbox" name="terms" id="terms" required>
+            <div class="invalid-feedback" id="terms">Morate se složiti sa Uvjetima kupnje.</div>
+        </div>
     </div>
 
     <div class="d-flex mt-3">
@@ -33,7 +34,6 @@
     </div>
 
 </form>
-
 
 
 
