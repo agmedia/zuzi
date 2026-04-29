@@ -18,7 +18,17 @@
         <!-- END Left Section -->
 
         <!-- Right Section -->
-        <div>
+        <div class="d-flex align-items-center">
+            <a
+                href="{{ route('wishlists', ['tab' => 'wishlists', 'search' => '', 'stock' => 'unsent']) }}"
+                class="btn btn-dual d-inline-flex align-items-center mr-2"
+                aria-label="Ne poslane liste želja"
+                title="Ne poslane liste želja"
+            >
+                <i class="fa fa-heart text-danger mr-2"></i>
+                <span class="font-w600">{{ $pendingWishlistCount ?? 0 }}</span>
+            </a>
+
             <!-- User Dropdown -->
             <div class="dropdown d-inline-block">
                 <button type="button" class="btn btn-dual" id="page-header-user-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

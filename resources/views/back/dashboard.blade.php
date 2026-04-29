@@ -60,8 +60,42 @@
 
             <!-- Sales Overview Block with Tabs -->
             <div class="block block-rounded mt-4">
-                <div class="block-header block-header-default">
+                <div class="block-header block-header-default sales-header">
                     <h3 class="block-title">Statistika prometa</h3>
+
+                    <div class="sales-filters">
+                        <div class="sales-filter-item">
+                            <select id="chart-year" class="form-control sales-filter-select" aria-label="Godina">
+                                @foreach($yearsWithOrders as $y)
+                                    <option value="{{ $y }}">{{ $y }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="sales-filter-item">
+                            <select id="chart-month" class="form-control sales-filter-select" aria-label="Mjesec">
+                                @php
+                                    $hrMonths = [
+                                        1 => 'Siječanj',
+                                        2 => 'Veljača',
+                                        3 => 'Ožujak',
+                                        4 => 'Travanj',
+                                        5 => 'Svibanj',
+                                        6 => 'Lipanj',
+                                        7 => 'Srpanj',
+                                        8 => 'Kolovoz',
+                                        9 => 'Rujan',
+                                        10 => 'Listopad',
+                                        11 => 'Studeni',
+                                        12 => 'Prosinac',
+                                    ];
+                                @endphp
+
+                                @foreach($hrMonths as $m => $name)
+                                    <option value="{{ $m }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="block-content">
                     <!-- Tabs nav -->
@@ -82,45 +116,7 @@
                         <!-- Tab 1: Mjesečni pregled (po danima) -->
                         <div class="tab-pane fade show active" id="tab-sales" role="tabpanel" aria-labelledby="sales-tab">
                             <div class="row mb-4 mt-3">
-                                <div class="col-md-3">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label>Godina</label>
-                                            <select id="chart-year" class="form-control">
-                                                @foreach($yearsWithOrders as $y)
-                                                    <option value="{{ $y }}">{{ $y }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label>Mjesec</label>
-                                            <select id="chart-month" class="form-control">
-                                                @php
-                                                    $hrMonths = [
-                                                        1 => 'Siječanj',
-                                                        2 => 'Veljača',
-                                                        3 => 'Ožujak',
-                                                        4 => 'Travanj',
-                                                        5 => 'Svibanj',
-                                                        6 => 'Lipanj',
-                                                        7 => 'Srpanj',
-                                                        8 => 'Kolovoz',
-                                                        9 => 'Rujan',
-                                                        10 => 'Listopad',
-                                                        11 => 'Studeni',
-                                                        12 => 'Prosinac',
-                                                    ];
-                                                @endphp
-
-                                                @foreach($hrMonths as $m => $name)
-                                                    <option value="{{ $m }}">{{ $name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- KPI boxevi -->
-                                <div class="col-md-9">
+                                <div class="col-12">
                                     <div class="row">
                                         <!-- Mjesečni promet -->
                                         <div class="col-12 col-md-3 mb-3">
@@ -164,8 +160,6 @@
                                             </div>
                                         </div>
                                     </div>
-
-
                                 </div>
                             </div>
 
@@ -210,24 +204,22 @@
                 ];
             @endphp
             <div class="block block-rounded mt-4">
-                <div class="block-header block-header-default flex-wrap">
+                <div class="block-header block-header-default promo-header">
                     <h3 class="block-title">Promo kodovi</h3>
 
-                    <form action="{{ route('dashboard') }}" method="get" id="promo-filters-form" class="w-100 mt-3 mt-md-0">
+                    <form action="{{ route('dashboard') }}" method="get" id="promo-filters-form" class="promo-filters-form">
                         <input type="hidden" name="promo_tab" id="promo-tab-input" value="{{ $promoStats['filters']['active_tab'] }}">
 
-                        <div class="row justify-content-md-end">
-                            <div class="col-12 col-md-4 col-xl-2">
-                                <label class="font-size-sm mb-1">Godina</label>
-                                <select name="promo_year" id="promo-year" class="form-control">
+                        <div class="promo-filters">
+                            <div class="promo-filter-item">
+                                <select name="promo_year" id="promo-year" class="form-control promo-filter-select" aria-label="Godina">
                                     @foreach($promoStats['filters']['years'] as $year)
                                         <option value="{{ $year }}" {{ $promoStats['filters']['year'] === (int) $year ? 'selected' : '' }}>{{ $year }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-12 col-md-4 col-xl-2">
-                                <label class="font-size-sm mb-1">Mjesec</label>
-                                <select name="promo_month" id="promo-month" class="form-control">
+                            <div class="promo-filter-item">
+                                <select name="promo_month" id="promo-month" class="form-control promo-filter-select" aria-label="Mjesec">
                                     @foreach($promoMonths as $month => $monthName)
                                         <option value="{{ $month }}" {{ $promoStats['filters']['month'] === (int) $month ? 'selected' : '' }}>{{ $monthName }}</option>
                                     @endforeach
@@ -343,7 +335,28 @@
         .chart-container.medium { height: 280px; }
         .chart-container.large { height: 400px; }
         .chart-container.promo-wide { height: 340px; }
+        .sales-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .sales-filters { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; flex-wrap: wrap; margin-left: auto; }
+        .sales-filter-item { flex: 0 0 auto; }
+        .sales-filter-select { min-width: 180px; }
+        .promo-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .promo-filters-form { margin-left: auto; }
+        .promo-filters { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; flex-wrap: wrap; }
+        .promo-filter-item { flex: 0 0 auto; }
+        .promo-filter-select { min-width: 180px; }
         .promo-stats-meta { gap: .5rem 1.5rem; }
+
+        @media (max-width: 767.98px) {
+            .sales-header { align-items: stretch; }
+            .sales-filters { width: 100%; justify-content: stretch; margin-left: 0; }
+            .sales-filter-item { flex: 1 1 100%; }
+            .sales-filter-select { min-width: 0; width: 100%; }
+            .promo-header { align-items: stretch; }
+            .promo-filters-form { width: 100%; margin-left: 0; }
+            .promo-filters { width: 100%; justify-content: stretch; }
+            .promo-filter-item { flex: 1 1 100%; }
+            .promo-filter-select { min-width: 0; width: 100%; }
+        }
     </style>
 @endpush
 

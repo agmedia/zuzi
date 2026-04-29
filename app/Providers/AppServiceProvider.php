@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Helpers\Helper;
+use Illuminate\Support\Facades\DB;
 use App\Models\Front\Page;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
@@ -66,6 +67,9 @@ class AppServiceProvider extends ServiceProvider
 
         View::share('uvjeti_kupnje', $sharedPages['uvjeti_kupnje'] ?? collect());
         View::share('nacini_placanja', $sharedPages['nacini_placanja'] ?? collect());
+        View::composer('back.layouts.partials.topbar', function ($view) {
+            $view->with('pendingWishlistCount', $this->resolvePendingWishlistCount());
+        });
 
         Paginator::useBootstrap();
     }
@@ -76,6 +80,24 @@ class AppServiceProvider extends ServiceProvider
             return Schema::hasTable($table);
         } catch (Throwable $exception) {
             return false;
+        }
+    }
+
+    private function resolvePendingWishlistCount(): int
+    {
+        if (! $this->safeHasTable('wishlist') || ! $this->safeHasTable('products')) {
+            return 0;
+        }
+
+        try {
+            return (int) DB::table('wishlist as w')
+                ->join('products as p', 'p.id', '=', 'w.product_id')
+                ->where('w.sent', 0)
+                ->where('w.status', 1)
+                ->where('p.quantity', '!=', 0)
+                ->count();
+        } catch (Throwable $exception) {
+            return 0;
         }
     }
 }
