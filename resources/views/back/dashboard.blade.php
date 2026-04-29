@@ -201,8 +201,8 @@
                     12 => 'Prosinac',
                 ];
                 $promoTabLabels = [
-                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => 'Nedovršene',
-                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED => 'Akcije',
+                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => 'Akcije',
+                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED => 'Nedovršene',
                 ];
                 $promoChartIds = [
                     \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => 'unfinishedPromoChart',
