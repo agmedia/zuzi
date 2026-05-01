@@ -52,7 +52,7 @@
     $groupHeading = 'Knjige';
 
     if ($isFullOfferListing) {
-        $groupHeading = 'Cjelokupna ponuda';
+        $groupHeading = 'Sve knjige na jednom mjestu';
     } elseif (($group ?? null) === 'snizenja') {
         $groupHeading = 'Snižene knjige';
     } elseif (($group ?? null) === 'zemljovidi-i-vedute') {
@@ -103,7 +103,7 @@
             'Pregledajte knjige iz kategorije ' . $cat->title . ' i izdvojite naslove koji vas zanimaju.'
         );
     } elseif ($isFullOfferListing) {
-        $listingIntro = 'Artikli su sortirani od najnovijih.';
+        $listingIntro = 'Tisuće naslova, top cijene i stalno nove knjige — pronađi nešto za sebe u par klikova.';
     } elseif (($group ?? null) === 'snizenja') {
         $listingIntro = 'Pregledajte aktualno snižene knjige i izdvojena izdanja po povoljnijim cijenama.';
     } elseif (isset($group) && $group) {
