@@ -32,10 +32,8 @@
                     <p class="fs-lg text-dark mb-2">{{ $aboutHeroIntro }}</p>
                     <p class="text-muted mb-4">{{ $aboutHeroBody }}</p>
 
-                    <a class="btn btn-primary btn-shadow" href="{{ $aboutUrl }}">
-                        O nama <i class="ci-arrow-right ms-1"></i>
-                    </a>
-                    <a class="btn btn-dark btn-shadow" href="https://www.zuzi.hr/kategorija-proizvoda/?sort=popular">
+
+                    <a class="btn btn-primary btn-shadow" href="https://www.zuzi.hr/kategorija-proizvoda/?sort=popular">
                         Pogledajte ponudu <i class="ci-arrow-right ms-1"></i>
                     </a>
                 </div>
