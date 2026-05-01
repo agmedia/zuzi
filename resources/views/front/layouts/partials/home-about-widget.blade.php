@@ -1,6 +1,6 @@
 @php
     $aboutUrl = route('catalog.route.page', ['page' => $aboutPage]);
-    $aboutSquareImage = asset('media/onama/zuzi-onana-final.jpg');
+    $aboutSquareImage = asset('media/onama/zuzi-boxnow.jpg');
     $aboutHeroTitle = 'Broj 1 online knjižara i antikvarijat u Hrvatskoj';
     $aboutHeroIntro = 'Više od knjižare. Mjesto gdje počinju dobre priče.';
     $aboutHeroBody = 'Zuzi je danas jedna od najvećih online knjižara i antikvarijata u Hrvatskoj, s više od 84.000 naslova i istinskom ljubavlju prema knjigama.';
@@ -11,10 +11,10 @@
         <style>
             .home-about-widget__image {
                 display: block;
-                width: 562px;
+                width: 430px;
                 height: auto;
                 max-width: 100%;
-                max-height: 450px;
+                max-height: 430px;
                 border-radius: 15px;
             }
         </style>
@@ -48,8 +48,8 @@
                         src="{{ $aboutSquareImage }}"
                         alt="ZUZI Shop knjižara i antikvarijat"
                         loading="lazy"
-                        width="562"
-                        height="450"
+                        width="430"
+                        height="430"
                     >
                 </div>
             </div>
