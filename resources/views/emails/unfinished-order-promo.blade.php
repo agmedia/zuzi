@@ -15,13 +15,18 @@
                     </p>
                 @else
                     <p style="margin: 0 0 14px; font-size: 16px; line-height: 1.8; color: #4b5563;">
-                        hvala ti na kupnji na Zuzi 📚<br>
-                        tvoja narudžba je upravo ono što volimo vidjeti - još jedan ljubitelj knjiga ❤️
+
+                        Hvala ti na nedavnoj kupnji na Zuzi 📚<br>
+                        tvoj izbor nam govori da znaš prepoznati dobru knjigu ❤️<br>
+
+                        Svaka narudžba nam je važna, ali posebno volimo kad netko poput tebe bira baš ono što vrijedi čitati.<br>
+
+
                     </p>
                 @endif
 
                 <p style="margin: 0; font-size: 16px; line-height: 1.8; color: #4b5563;">
-                    Imamo nešto za tebe 👇
+                    Zato imamo nešto malo za tebe 👇
                 </p>
             </td>
         </tr>
