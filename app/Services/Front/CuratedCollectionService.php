@@ -42,6 +42,8 @@ class CuratedCollectionService
         $this->forgetCacheKey($this->featuredProductsCacheSuffix());
         $this->forgetCacheKey('monthly-ranking.orders');
         $this->forgetCacheKey('monthly-ranking.quantity');
+        $this->forgetCacheKey('rolling-30-day-ranking.orders');
+        $this->forgetCacheKey('rolling-30-day-ranking.quantity');
 
         foreach (array_keys($this->definitions()) as $slug) {
             $this->forgetCacheKey('collection.' . $slug);
@@ -198,16 +200,16 @@ class CuratedCollectionService
                 'metric' => 'orders',
                 'eyebrow' => 'Kupci biraju',
                 'badge' => 'Hit izbor',
-                'home_count_label' => 'Ovaj mjesec',
+                'home_count_label' => 'Zadnjih 30 dana',
                 'title' => 'Kupci ovo biraju prvi',
-                'description' => 'Klikni i pregledaj najtraženije naslove mjeseca na jednom mjestu',
+                'description' => 'Klikni i pregledaj najtraženije naslove zadnjih 30 dana na jednom mjestu',
                 'lead' => 'Ovdje su knjige koje kupci sada najviše love.',
-                'body' => 'Klikni i pregledaj najtraženije naslove mjeseca na jednom mjestu.',
+                'body' => 'Klikni i pregledaj najtraženije naslove zadnjih 30 dana na jednom mjestu.',
                 'cta' => 'Pogledaj hitove',
                 'accent' => '#4a6cf7',
                 'surface' => 'linear-gradient(135deg, #eef3ff 0%, #f8fbff 100%)',
                 'meta_title' => Seo::appendBrand('Kupci ovo biraju prvi'),
-                'meta_description' => Seo::description(null, 'Pogledaj koje knjige kupci ovog mjeseca najčešće naručuju i kreni od aktualnih hitova.'),
+                'meta_description' => Seo::description(null, 'Pogledaj koje knjige kupci zadnjih 30 dana najčešće naručuju i kreni od aktualnih hitova.'),
                 'metric_note' => '',
             ],
             'brzi-izbor' => [
@@ -251,15 +253,15 @@ class CuratedCollectionService
                 'metric' => 'quantity',
                 'eyebrow' => 'Top prodaja',
                 'badge' => 'Bestselleri',
-                'title' => 'Bestselleri mjeseca',
+                'title' => 'Bestselleri zadnjih 30 dana',
                 'description' => 'Knjige koje se najbrže prodaju dok ih kupci još stignu uhvatiti.',
                 'lead' => 'Ovo su knjige koje trenutačno nose prodaju.',
-                'body' => 'Uđi među bestsellere mjeseca i provjeri što kupci najbrže grabe.',
+                'body' => 'Uđi među bestsellere zadnjih 30 dana i provjeri što kupci najbrže grabe.',
                 'cta' => 'Pogledaj bestsellere',
                 'accent' => '#f08a24',
                 'surface' => 'linear-gradient(135deg, #fff5ea 0%, #fffaf5 100%)',
-                'meta_title' => Seo::appendBrand('Bestselleri mjeseca'),
-                'meta_description' => Seo::description(null, 'Otkrij bestsellere mjeseca i pregledaj naslove koji se trenutno najbrže prodaju.'),
+                'meta_title' => Seo::appendBrand('Bestselleri zadnjih 30 dana'),
+                'meta_description' => Seo::description(null, 'Otkrij bestsellere zadnjih 30 dana i pregledaj naslove koji se trenutno najbrže prodaju.'),
                 'metric_note' => '',
             ],
         ];
@@ -314,7 +316,7 @@ class CuratedCollectionService
             'ids_json' => $ids->toJson(),
             'preserve_order' => (bool) ($definition['preserve_order'] ?? true),
             'default_sort' => (string) ($definition['default_sort'] ?? ''),
-            'meta_pill' => $definition['metric_note'] ?? 'Ažurira se prema rezultatima tekućeg mjeseca.',
+            'meta_pill' => $definition['metric_note'] ?? 'Ažurira se prema rezultatima zadnjih 30 dana.',
         ]);
 
         $this->persistHomepageSnapshotCollection($slug, $count);
@@ -420,14 +422,16 @@ class CuratedCollectionService
      */
     private function resolveMonthlyRanking(string $metric): Collection
     {
+        [$from, $to] = $this->rankingWindow();
+
         return Helper::rememberCache(
-            $this->cacheKey('monthly-ranking.' . $metric),
+            $this->cacheKey('rolling-30-day-ranking.' . $metric),
             now()->addMinutes(30),
-            function () use ($metric) {
+            function () use ($metric, $from, $to) {
                 $query = DB::table('order_products as order_product')
                     ->join('orders as orders', 'orders.id', '=', 'order_product.order_id')
                     ->join('products as products', 'products.id', '=', 'order_product.product_id')
-                    ->whereBetween('orders.created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                    ->whereBetween('orders.created_at', [$from, $to])
                     ->whereNotIn('orders.order_status_id', self::EXCLUDED_ORDER_STATUSES)
                     ->where('products.status', 1)
                     ->where('products.quantity', '!=', 0)
@@ -469,6 +473,18 @@ class CuratedCollectionService
                     });
             }
         );
+    }
+
+
+    /**
+     * @return array{0: \Illuminate\Support\Carbon, 1: \Illuminate\Support\Carbon}
+     */
+    private function rankingWindow(): array
+    {
+        $to = now();
+        $from = $to->copy()->subDays(30);
+
+        return [$from, $to];
     }
 
 
@@ -831,6 +847,6 @@ class CuratedCollectionService
 
     private function cacheKey(string $suffix): string
     {
-        return 'curated-collections.v6.' . now()->format('Y-m') . '.' . $suffix;
+        return 'curated-collections.v7.' . now()->format('Y-m') . '.' . $suffix;
     }
 }

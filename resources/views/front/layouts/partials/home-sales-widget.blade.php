@@ -30,11 +30,11 @@
             <div>
                 <span class="home-sales-hub__eyebrow">Brzi put do kupnje</span>
                 <h2 class="h3 mb-2 font-title" id="home-sales-hub-title">Knjige koje se najbrže klikaju, biraju i kupuju</h2>
-                <p class="text-muted mb-0">Uhvati povoljne ulove, naslove koje kupci već biraju i bestsellere koji ovog mjeseca najbrže odlaze.</p>
+                <p class="text-muted mb-0">Uhvati povoljne ulove, naslove koje kupci već biraju i bestsellere koji zadnjih 30 dana najbrže odlaze.</p>
             </div>
 
             <a class="btn btn-outline-primary btn-sm align-self-start align-self-lg-center" href="{{ route('catalog.route.curated', ['collection' => 'najprodavanije-ovaj-mjesec']) }}">
-                Top prodaja mjeseca <i class="ci-arrow-right ms-1"></i>
+                Top prodaja zadnjih 30 dana <i class="ci-arrow-right ms-1"></i>
             </a>
         </div>
 
@@ -69,7 +69,7 @@
 
                                                 <div class="home-sales-hub__featured-copy">
                                                     <span class="home-sales-hub__featured-badge">
-                                                        Bestseller #{{ data_get($featuredProductData, 'position') }} ovog mjeseca
+                                                        Bestseller #{{ data_get($featuredProductData, 'position') }} zadnjih 30 dana
                                                     </span>
 
                                                     <h3 class="home-sales-hub__featured-title h5 mb-2">{{ $featuredProduct->name }}</h3>
@@ -196,7 +196,7 @@
                     ];
                 }),
                 url()->current(),
-                'Bestselleri mjeseca'
+                'Bestselleri zadnjih 30 dana'
             );
         @endphp
         <script type="application/ld+json">

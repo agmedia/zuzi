@@ -445,11 +445,13 @@ class ProductRecommendationService
 
     private function resolveMonthlyBestsellerMetrics(): Collection
     {
-        return Helper::rememberCache('product-recommendations.monthly-bestsellers', now()->addMinutes(30), function () {
+        [$from, $to] = $this->bestsellerWindow();
+
+        return Helper::rememberCache('product-recommendations.rolling-30-day-bestsellers', now()->addMinutes(30), function () use ($from, $to) {
             $query = DB::table('order_products as order_product')
                 ->join('orders as orders', 'orders.id', '=', 'order_product.order_id')
                 ->join('products as products', 'products.id', '=', 'order_product.product_id')
-                ->whereBetween('orders.created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->whereBetween('orders.created_at', [$from, $to])
                 ->whereNotIn('orders.order_status_id', self::EXCLUDED_ORDER_STATUSES)
                 ->where('products.status', 1)
                 ->where('products.quantity', '!=', 0)
@@ -478,6 +480,18 @@ class ProductRecommendationService
                     ];
                 });
         });
+    }
+
+
+    /**
+     * @return array{0: \Illuminate\Support\Carbon, 1: \Illuminate\Support\Carbon}
+     */
+    private function bestsellerWindow(): array
+    {
+        $to = now();
+        $from = $to->copy()->subDays(30);
+
+        return [$from, $to];
     }
 
 
