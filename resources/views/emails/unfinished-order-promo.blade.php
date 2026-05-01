@@ -70,7 +70,7 @@
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                     <tr>
                         <td>
-                            <a href="{{ route('index') }}" class="ag-btn" style="width: 220px; color: #ffffff !important;">Pogledaj knjige</a>
+                            <a href="{{ route('index') }}" class="ag-btn" style="width: 220px; color: #ffffff !important;">Iskoristi -20% sada</a>
                         </td>
                     </tr>
                 </table>
