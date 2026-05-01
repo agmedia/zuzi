@@ -27,7 +27,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class HomeController extends Controller
 {
-    private const HOMEPAGE_DESCRIPTION_SNAPSHOT_VERSION = 3;
+    private const HOMEPAGE_DESCRIPTION_SNAPSHOT_VERSION = 4;
     private const HOMEPAGE_DESCRIPTION_SNAPSHOT_FILE = 'app/homepage-description-snapshot.json';
 
     /**
@@ -45,20 +45,16 @@ class HomeController extends Controller
         });
 
         $homeSalesWidget = view('front.layouts.partials.home-sales-widget', $curatedCollectionService->homepageWidgetData())->render();
-        $homeAboutWidget = $aboutPage
-            ? view('front.layouts.partials.home-about-widget', compact('aboutPage'))->render()
-            : '';
-
         $page->description = Helper::setDescription(
             str_replace(
                 ['<!--home-sales-widget-->', '<!--home-about-widget-->'],
-                [$homeSalesWidget, $homeAboutWidget],
+                [$homeSalesWidget, ''],
                 $this->resolveHomepageDescriptionSnapshot($page)
             ),
             ['short_description' => $page->short_description ?? '']
         );
 
-        return view('front.page', compact('page'));
+        return view('front.page', compact('page', 'aboutPage'));
     }
 
 
@@ -435,14 +431,6 @@ class HomeController extends Controller
             $description = preg_replace('/\+\+slider-index\+\+/', '++slider-index++<!--home-sales-widget-->', $description, 1) ?: $description;
         } else {
             $description = '<!--home-sales-widget-->' . $description;
-        }
-
-        if (! str_contains($description, '<!--home-about-widget-->')) {
-            if (str_contains($description, '++blog++')) {
-                $description = preg_replace('/\+\+blog\+\+/', '++blog++<!--home-about-widget-->', $description, 1) ?: $description;
-            } else {
-                $description .= '<!--home-about-widget-->';
-            }
         }
 
         File::ensureDirectoryExists(dirname($path));

@@ -646,6 +646,10 @@
           </div>
       </div>
 
+        @if (!empty($aboutPage))
+            @include('front.layouts.partials.home-about-widget', ['aboutPage' => $aboutPage])
+        @endif
+
         {!! $page->description !!}
 
 

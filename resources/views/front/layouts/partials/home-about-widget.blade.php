@@ -21,7 +21,7 @@
     @endpush
 @endonce
 
-<section class="mb-4">
+<section class="mb-4 mt-2">
     <div class="card border-0 shadow-sm overflow-hidden">
         <div class="row g-0 align-items-center">
             <div class="col-lg-6">
@@ -35,8 +35,8 @@
                     <a class="btn btn-primary btn-shadow" href="{{ $aboutUrl }}">
                         O nama <i class="ci-arrow-right ms-1"></i>
                     </a>
-                    <a class="btn btn-dark btn-shadow" href="https://www.zuzi.hr/kontakt">
-                        Kontaktirajte nas <i class="ci-arrow-right ms-1"></i>
+                    <a class="btn btn-dark btn-shadow" href="https://www.zuzi.hr/kategorija-proizvoda/?sort=popular">
+                        Pogledajte ponudu <i class="ci-arrow-right ms-1"></i>
                     </a>
                 </div>
             </div>
