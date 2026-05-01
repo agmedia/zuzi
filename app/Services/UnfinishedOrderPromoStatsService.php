@@ -9,6 +9,7 @@ use Illuminate\Support\Collection;
 
 class UnfinishedOrderPromoStatsService
 {
+    public const SEGMENT_ALL = 'all';
     public const SEGMENT_UNFINISHED = 'unfinished';
     public const SEGMENT_NON_UNFINISHED = 'non_unfinished';
 
@@ -309,6 +310,10 @@ class UnfinishedOrderPromoStatsService
             return false;
         }
 
+        if ($segment === self::SEGMENT_ALL) {
+            return true;
+        }
+
         $isUnfinished = $statusId === (int) config('settings.order.status.unfinished');
 
         if ($segment === self::SEGMENT_NON_UNFINISHED) {
@@ -347,7 +352,7 @@ class UnfinishedOrderPromoStatsService
 
     private function normalizeSegment(string $segment): string
     {
-        return in_array($segment, [self::SEGMENT_UNFINISHED, self::SEGMENT_NON_UNFINISHED], true)
+        return in_array($segment, [self::SEGMENT_ALL, self::SEGMENT_UNFINISHED, self::SEGMENT_NON_UNFINISHED], true)
             ? $segment
             : self::SEGMENT_UNFINISHED;
     }

@@ -55,33 +55,17 @@ class DashboardController extends Controller
             $promoMonth = (int) now()->format('n');
         }
 
-        $promoActiveTab = $request->query('promo_tab', UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED);
-        if (! in_array($promoActiveTab, [
-            UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
-            UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED,
-        ], true)) {
-            $promoActiveTab = UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED;
-        }
-
         $promoStats = [
             'filters' => [
                 'years' => $promoYears,
                 'year' => $promoYear,
                 'month' => $promoMonth,
-                'active_tab' => $promoActiveTab,
             ],
-            'tabs' => [
-                UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => $promoStatsService->getDashboardData([
-                    'segment' => UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
-                    'year' => $promoYear,
-                    'month' => $promoMonth,
-                ]),
-                UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED => $promoStatsService->getDashboardData([
-                    'segment' => UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED,
-                    'year' => $promoYear,
-                    'month' => $promoMonth,
-                ]),
-            ],
+            'data' => $promoStatsService->getDashboardData([
+                'segment' => UnfinishedOrderPromoStatsService::SEGMENT_ALL,
+                'year' => $promoYear,
+                'month' => $promoMonth,
+            ]),
         ];
 
         $data['today'] = Order::whereDate('created_at', Carbon::today())

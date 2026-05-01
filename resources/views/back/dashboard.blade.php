@@ -194,22 +194,12 @@
                     11 => 'Studeni',
                     12 => 'Prosinac',
                 ];
-                $promoTabLabels = [
-                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => 'Akcije',
-                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED => 'Nedovršene',
-                ];
-                $promoChartIds = [
-                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED => 'unfinishedPromoChart',
-                    \App\Services\UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED => 'nonUnfinishedPromoChart',
-                ];
             @endphp
             <div class="block block-rounded mt-4">
                 <div class="block-header block-header-default promo-header">
                     <h3 class="block-title">Promo kodovi</h3>
 
                     <form action="{{ route('dashboard') }}" method="get" id="promo-filters-form" class="promo-filters-form">
-                        <input type="hidden" name="promo_tab" id="promo-tab-input" value="{{ $promoStats['filters']['active_tab'] }}">
-
                         <div class="promo-filters">
                             <div class="promo-filter-item">
                                 <select name="promo_year" id="promo-year" class="form-control promo-filter-select" aria-label="Godina">
@@ -229,41 +219,10 @@
                     </form>
                 </div>
                 <div class="block-content">
-                    <ul class="nav nav-tabs" id="promoTabs" role="tablist">
-                        @foreach ($promoTabLabels as $segment => $tabLabel)
-                            <li class="nav-item">
-                                <a
-                                    class="nav-link {{ $promoStats['filters']['active_tab'] === $segment ? 'active' : '' }}"
-                                    id="promo-{{ $segment }}-tab"
-                                    data-toggle="tab"
-                                    href="#promo-{{ $segment }}"
-                                    role="tab"
-                                    aria-controls="promo-{{ $segment }}"
-                                    aria-selected="{{ $promoStats['filters']['active_tab'] === $segment ? 'true' : 'false' }}"
-                                    data-promo-tab="{{ $segment }}"
-                                    data-promo-chart-target="{{ $promoChartIds[$segment] }}"
-                                >
-                                    {{ $tabLabel }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-
-                    <div class="tab-content mt-3" id="promoTabsContent">
-                        @foreach ($promoTabLabels as $segment => $tabLabel)
-                            <div
-                                class="tab-pane fade {{ $promoStats['filters']['active_tab'] === $segment ? 'show active' : '' }}"
-                                id="promo-{{ $segment }}"
-                                role="tabpanel"
-                                aria-labelledby="promo-{{ $segment }}-tab"
-                            >
-                                @include('back.dashboard.partials.promo-stats-tab', [
-                                    'stats' => $promoStats['tabs'][$segment],
-                                    'chartId' => $promoChartIds[$segment],
-                                ])
-                            </div>
-                        @endforeach
-                    </div>
+                    @include('back.dashboard.partials.promo-stats-tab', [
+                        'stats' => $promoStats['data'],
+                        'chartId' => 'promoStatsChart',
+                    ])
                 </div>
             </div>
         @endif
@@ -510,26 +469,22 @@
         $('#chart-month').val(now.getMonth() + 1);
         loadMonth(now.getFullYear(), now.getMonth() + 1);
 
-        const promoChartsData = @json([
-            'unfinishedPromoChart' => $promoStats['tabs'][\App\Services\UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED]['chart'],
-            'nonUnfinishedPromoChart' => $promoStats['tabs'][\App\Services\UnfinishedOrderPromoStatsService::SEGMENT_NON_UNFINISHED]['chart'],
-        ]);
-        const promoChartInstances = {};
+        const promoChartData = @json($promoStats['data']['chart']);
+        let promoChartInstance = null;
 
-        function renderPromoChart(canvasId) {
-            const promoChartCanvas = document.getElementById(canvasId);
-            const promoChartData = promoChartsData[canvasId];
+        function renderPromoChart() {
+            const promoChartCanvas = document.getElementById('promoStatsChart');
 
             if (!promoChartCanvas || !promoChartData) {
                 return;
             }
 
-            if (promoChartInstances[canvasId]) {
-                promoChartInstances[canvasId].resize();
+            if (promoChartInstance) {
+                promoChartInstance.resize();
                 return;
             }
 
-            promoChartInstances[canvasId] = new Chart(promoChartCanvas.getContext('2d'), {
+            promoChartInstance = new Chart(promoChartCanvas.getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: promoChartData.labels,
@@ -573,13 +528,7 @@
             });
         }
 
-        renderPromoChart(@json($promoChartIds[$promoStats['filters']['active_tab']] ?? 'unfinishedPromoChart'));
-
-        $('#promoTabs a[data-promo-chart-target]').on('shown.bs.tab', function(event) {
-            const targetTab = $(event.target);
-            $('#promo-tab-input').val(targetTab.data('promoTab'));
-            renderPromoChart(targetTab.data('promoChartTarget'));
-        });
+        renderPromoChart();
 
         $('#promo-year, #promo-month').on('change', function() {
             $('#promo-filters-form').trigger('submit');
