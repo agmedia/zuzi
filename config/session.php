@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'database'),
+    'driver' => env('SESSION_DRIVER', 'file'),
 
     /*
     |--------------------------------------------------------------------------
@@ -113,7 +113,18 @@ return [
     |
     */
 
-    'lottery' => [2, 100],
+    'lottery' => (static function (): array {
+        $default = env('APP_ENV') === 'production' && env('SESSION_DRIVER', 'database') === 'database'
+            ? '0,100'
+            : '2,100';
+
+        $values = preg_split('/\s*,\s*/', (string) env('SESSION_LOTTERY', $default)) ?: [];
+
+        return [
+            (int) ($values[0] ?? 0),
+            max(1, (int) ($values[1] ?? 100)),
+        ];
+    })(),
 
     /*
     |--------------------------------------------------------------------------

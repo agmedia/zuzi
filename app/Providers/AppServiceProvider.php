@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         Schema::defaultStringLength(191);
+
+        $this->registerLocalDebugbar();
     }
 
     /**
@@ -81,6 +83,17 @@ class AppServiceProvider extends ServiceProvider
         } catch (Throwable $exception) {
             return false;
         }
+    }
+
+    private function registerLocalDebugbar(): void
+    {
+        $debugbarServiceProvider = \Barryvdh\Debugbar\ServiceProvider::class;
+
+        if (! $this->app->environment('local') || ! class_exists($debugbarServiceProvider)) {
+            return;
+        }
+
+        $this->app->register($debugbarServiceProvider);
     }
 
     private function resolvePendingWishlistCount(): int
