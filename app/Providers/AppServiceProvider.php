@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Helpers\Helper;
 use Illuminate\Support\Facades\DB;
 use App\Models\Front\Page;
+use App\Http\Kernel as HttpKernel;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -34,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->disableDebugbarOutsideLocal();
+
         if ($this->app->environment('production')) {
             $canonicalUrl = rtrim((string) config('app.url'), '/');
 
@@ -94,6 +97,27 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->register($debugbarServiceProvider);
+    }
+
+    private function disableDebugbarOutsideLocal(): void
+    {
+        if ($this->app->environment('local')) {
+            return;
+        }
+
+        config(['debugbar.enabled' => false]);
+
+        $debugbarMiddleware = \Barryvdh\Debugbar\Middleware\InjectDebugbar::class;
+
+        if (! class_exists($debugbarMiddleware)) {
+            return;
+        }
+
+        $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+
+        if ($kernel instanceof HttpKernel) {
+            $kernel->removeMiddleware($debugbarMiddleware);
+        }
     }
 
     private function resolvePendingWishlistCount(): int

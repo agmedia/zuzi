@@ -66,4 +66,12 @@ class Kernel extends HttpKernel
         'no.customers' => \App\Http\Middleware\RedirectCustomer::class,
         'affiliate.track' => TrackAffiliateLoyaltyUser::class
     ];
+
+    public function removeMiddleware(string $middleware): void
+    {
+        $this->middleware = array_values(array_filter(
+            $this->middleware,
+            static fn (string $configuredMiddleware): bool => $configuredMiddleware !== $middleware
+        ));
+    }
 }

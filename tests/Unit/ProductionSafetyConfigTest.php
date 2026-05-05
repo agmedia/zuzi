@@ -2,6 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Http\Kernel;
+use Barryvdh\Debugbar\Middleware\InjectDebugbar;
+use ReflectionProperty;
 use Tests\TestCase;
 
 class ProductionSafetyConfigTest extends TestCase
@@ -42,5 +45,20 @@ class ProductionSafetyConfigTest extends TestCase
         $this->artisan('sessions:prune-expired')
             ->expectsOutput('Skipping expired session pruning because the session driver is [file].')
             ->assertExitCode(0);
+    }
+
+    public function test_kernel_can_remove_global_middleware(): void
+    {
+        $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+
+        $this->assertInstanceOf(Kernel::class, $kernel);
+
+        $kernel->pushMiddleware(InjectDebugbar::class);
+        $kernel->removeMiddleware(InjectDebugbar::class);
+
+        $middlewareProperty = new ReflectionProperty($kernel, 'middleware');
+        $middlewareProperty->setAccessible(true);
+
+        $this->assertNotContains(InjectDebugbar::class, $middlewareProperty->getValue($kernel));
     }
 }
