@@ -72,17 +72,9 @@ class ProductController extends Controller
             $product = Product::where('id', $request->input('id'))->first();
 
             if ($product) {
-                if ($request->input('value')) {
-                    $product->update([
-                        'status' => 1,
-                        'quantity' => $product->quantity ?: 1
-                    ]);
-                } else {
-                    $product->update([
-                        'status' => 0,
-                        'quantity' => 0
-                    ]);
-                }
+                $product->update([
+                    'status' => $request->boolean('value') ? 1 : 0,
+                ]);
 
                 return response()->json(['success' => 200]);
             }

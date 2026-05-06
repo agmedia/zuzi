@@ -318,7 +318,7 @@ class Product extends Model
             'description'      => $this->cleanHTML($this->request->description),
             'slug'             => $slug,
             'price'            => isset($this->request->price) ? $this->request->price : 0,
-            'quantity'         => $this->request->quantity ?: 0,
+            'quantity'         => $this->resolveQuantity($insert),
             'delivery_24h'     => $this->request->has('delivery_24h') ? 1 : 0,
             'decrease'         => (isset($this->request->decrease) and $this->request->decrease == 'on') ? 0 : 1,
             'tax_id'           => $this->request->tax_id ?: 1,
@@ -348,6 +348,20 @@ class Product extends Model
         }
 
         return $response;
+    }
+
+
+    private function resolveQuantity(bool $insert): int
+    {
+        if ($this->request->has('quantity')) {
+            return max(0, (int) $this->request->input('quantity'));
+        }
+
+        if (! $insert && isset($this->quantity)) {
+            return max(0, (int) $this->quantity);
+        }
+
+        return 0;
     }
 
 

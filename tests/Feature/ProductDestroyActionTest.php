@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -11,6 +13,68 @@ use Tests\TestCase;
 class ProductDestroyActionTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actingAs(User::factory()->create());
+    }
+
+    public function test_changing_product_status_off_keeps_existing_quantity(): void
+    {
+        $productId = $this->createProduct('Status test', 'STATUS-OFF-1', 0, 7, 1);
+
+        $response = $this->postJson('/api/v2/products/change/status', [
+            'id' => $productId,
+            'value' => false,
+        ]);
+
+        $response->assertOk();
+        $response->assertJson(['success' => 200]);
+        $this->assertDatabaseHas('products', [
+            'id' => $productId,
+            'status' => 0,
+            'quantity' => 7,
+        ]);
+    }
+
+    public function test_changing_product_status_requires_admin_authentication(): void
+    {
+        $productId = $this->createProduct('Status auth test', 'STATUS-AUTH-1', 0, 7, 1);
+
+        Auth::logout();
+
+        $response = $this->postJson('/api/v2/products/change/status', [
+            'id' => $productId,
+            'value' => false,
+        ]);
+
+        $response->assertUnauthorized();
+        $this->assertDatabaseHas('products', [
+            'id' => $productId,
+            'status' => 1,
+            'quantity' => 7,
+        ]);
+    }
+
+    public function test_changing_product_status_on_keeps_existing_quantity(): void
+    {
+        $productId = $this->createProduct('Status test zero', 'STATUS-ON-1', 0, 0, 0);
+
+        $response = $this->postJson('/api/v2/products/change/status', [
+            'id' => $productId,
+            'value' => true,
+        ]);
+
+        $response->assertOk();
+        $response->assertJson(['success' => 200]);
+        $this->assertDatabaseHas('products', [
+            'id' => $productId,
+            'status' => 1,
+            'quantity' => 0,
+        ]);
+    }
 
     public function test_destroy_action_keeps_shared_action_records(): void
     {
@@ -93,7 +157,7 @@ class ProductDestroyActionTest extends TestCase
         ]);
     }
 
-    private function createProduct(string $name, string $sku, int $actionId): int
+    private function createProduct(string $name, string $sku, int $actionId, int $quantity = 5, int $status = 1): int
     {
         return (int) DB::table('products')->insertGetId([
             'author_id' => 0,
@@ -107,7 +171,7 @@ class ProductDestroyActionTest extends TestCase
             'url' => '/proizvod/' . Str::slug($name . '-' . $sku),
             'image' => null,
             'price' => 100,
-            'quantity' => 5,
+            'quantity' => $quantity,
             'tax_id' => 1,
             'special' => 90,
             'special_from' => Carbon::now()->subDay(),
@@ -126,7 +190,7 @@ class ProductDestroyActionTest extends TestCase
             'viewed' => 0,
             'sort_order' => 0,
             'push' => 0,
-            'status' => 1,
+            'status' => $status,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);

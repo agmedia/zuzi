@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Back\Settings;
 
 use App\Helpers\Csv;
 use App\Http\Controllers\Controller;
-use App\Models\Back\Settings\Api\AkademskaKnjigaMk;
 use App\Models\Back\Settings\Api\PlavaKrava;
 use App\Models\Back\Settings\Page;
 use Illuminate\Http\Request;
@@ -130,9 +129,6 @@ class ApiController extends Controller
         $class = null;
 
         if (isset($data['target'])) {
-            if ($data['target'] == 'akademska-knjiga-mk') {
-                $class = new AkademskaKnjigaMk();
-            }
             if ($data['target'] == 'plava-krava') {
                 $class = new PlavaKrava();
             }

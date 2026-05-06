@@ -35,55 +35,6 @@
                         <div class="row">
                                 <div class="col-md-8 mb-4">
                                     <div id="accordion2" role="tablist" aria-multiselectable="true">
-                                     <!--   <div class="block block-rounded mb-1">
-                                            <div class="block-header block-header-default" role="tab" id="akademska_knjiga_tab">
-                                                <a class="font-w600" data-toggle="collapse" data-parent="#accordion2" href="#akademska_knjiga" aria-expanded="true" aria-controls="akademska_knjiga">Akademska Knjiga .mk</a>
-                                            </div>
-                                            <div id="akademska_knjiga" class="collapse" role="tabpanel" aria-labelledby="akademska_knjiga_tab">
-                                                <div class="block-content px-1">
-                                                    <div class="row items-push">
-                                                        <div class="col-md-12">
-                                                            <div class="table-responsive">
-                                                                <table class="table table-bordered table-vcenter mb-0">
-                                                                    <tbody>
-                                                                    <tr>
-                                                                        <td style="width: 30%;">
-                                                                            <button type="button" class="btn btn-sm btn-alt-warning" onclick="event.preventDefault(); importTarget('akademska-knjiga-mk', 'check-products', '{{ route('api.api.import') }}');">Provjera Novih
-                                                                                                                                                                                                                                                               Proizvoda
-                                                                            </button>
-                                                                        </td>
-                                                                        <td>
-                                                                            <code>Provjeri ima li novih proizvoda za import...</code>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td style="width: 30%;">
-                                                                            <button type="button" class="btn btn-sm btn-alt-info" onclick="event.preventDefault(); importTarget('akademska-knjiga-mk', 'products', '{{ route('api.api.import') }}');">Import Proizvoda
-                                                                            </button>
-                                                                        </td>
-                                                                        <td>
-                                                                            <code>Import novih proizvoda...</code>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td>
-                                                                            <button type="button" class="btn btn-sm btn-alt-info" onclick="event.preventDefault(); importTarget('akademska-knjiga-mk', 'update-prices-quantities', '{{ route('api.api.import') }}');">Update
-                                                                                                                                                                                                                                                                      Cijena i
-                                                                                                                                                                                                                                                                      Količina
-                                                                            </button>
-                                                                        </td>
-                                                                        <td>
-                                                                            <code>Update cijena i količina...</code>
-                                                                        </td>
-                                                                    </tr>
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>-->
                                         <div class="block block-rounded mb-1">
                                             <div class="block-header block-header-default" role="tab" id="plava_krava_tab">
                                                 <a class="font-w600" data-toggle="collapse" data-parent="#accordion2" href="#plava_krava" aria-expanded="true" aria-controls="plava_krava">Upload from Excel</a>
