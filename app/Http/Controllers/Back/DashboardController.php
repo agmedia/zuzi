@@ -69,14 +69,15 @@ class DashboardController extends Controller
         ];
 
         $data['today'] = Order::whereDate('created_at', Carbon::today())
-            ->whereNotIn('order_status_id', [7, 5, 8])
+            ->dashboardSales()
             ->count();
-        $data['proccess']   = Order::whereIn('order_status_id', [1, 2, 3, 11])->count();
+        $data['proccess']   = Order::whereIn('order_status_id', Order::dashboardProcessingStatusIds())->count();
         $data['finished']   = Order::whereIn('order_status_id', [4, 5, 6, 7])->count();
 
         // broj narudžbi u TEKUĆEM mjesecu
         $data['this_month'] = Order::whereYear('created_at', Carbon::now()->year)
             ->whereMonth('created_at', Carbon::now()->month)
+            ->dashboardSales()
             ->count();
 
         $orders = Order::query()
@@ -441,7 +442,7 @@ class DashboardController extends Controller
             ->selectRaw('DAY(created_at) as day, SUM(total) as total, COUNT(id) as orders')
             ->whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
-            ->whereNotIn('order_status_id', [5, 7, 8]) // isključi statuse
+            ->dashboardSales()
             ->groupBy('day')
             ->orderBy('day')
             ->get();
@@ -456,7 +457,7 @@ class DashboardController extends Controller
         $data = Order::query()
             ->selectRaw('HOUR(created_at) as hour, SUM(total) as total, COUNT(id) as orders')
             ->whereDate('created_at', $date)
-            ->whereNotIn('order_status_id', [5, 7, 8]) // isključi statuse
+            ->dashboardSales()
             ->groupBy('hour')
             ->orderBy('hour')
             ->get();
@@ -475,7 +476,7 @@ class DashboardController extends Controller
                 Carbon::parse($from)->startOfDay(),
                 Carbon::parse($to)->endOfDay()
             ])
-            ->whereNotIn('order_status_id', [5, 7, 8]) // isključi statuse
+            ->dashboardSales()
             ->groupBy('date')
             ->orderBy('date')
             ->get();

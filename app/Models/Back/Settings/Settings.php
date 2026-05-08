@@ -477,6 +477,7 @@ class Settings extends Model
             (object) ['id' => (int) config('settings.order.status.canceled'), 'title' => 'Otkazana', 'sort_order' => 5],
             (object) ['id' => (int) config('settings.order.status.declined'), 'title' => 'Odbijena', 'sort_order' => 6],
             (object) ['id' => (int) config('settings.order.status.ready'), 'title' => 'Spremna', 'sort_order' => 7],
+            (object) ['id' => (int) config('settings.order.status.processing'), 'title' => 'U obradi', 'sort_order' => 8],
         ]);
     }
 

@@ -125,7 +125,43 @@ class Order extends Model
      */
     public function scopeLast($query, $count = 9)
     {
-        return $query->whereIn('order_status_id', [1,2,3,4,9,11])->orderBy('created_at', 'desc')->limit($count);
+        return $query->whereIn('order_status_id', static::latestDashboardStatusIds())->orderBy('created_at', 'desc')->limit($count);
+    }
+
+    public static function dashboardProcessingStatusIds(): array
+    {
+        return array_values(array_unique(array_map('intval', array_filter([
+            config('settings.order.status.new'),
+            2,
+            config('settings.order.status.paid'),
+            config('settings.order.status.processing', 11),
+        ], static fn ($status) => $status !== null))));
+    }
+
+    public static function latestDashboardStatusIds(): array
+    {
+        return array_values(array_unique(array_map('intval', array_filter([
+            config('settings.order.status.new'),
+            2,
+            config('settings.order.status.paid'),
+            config('settings.order.status.send'),
+            9,
+            config('settings.order.status.processing', 11),
+        ], static fn ($status) => $status !== null))));
+    }
+
+    public static function dashboardSalesExcludedStatusIds(): array
+    {
+        return array_values(array_unique(array_map('intval', array_filter([
+            config('settings.order.status.canceled'),
+            config('settings.order.status.declined'),
+            config('settings.order.status.unfinished'),
+        ], static fn ($status) => $status !== null))));
+    }
+
+    public function scopeDashboardSales(Builder $query): Builder
+    {
+        return $query->whereNotIn('order_status_id', static::dashboardSalesExcludedStatusIds());
     }
 
 
@@ -139,7 +175,7 @@ class Order extends Model
     {
         return $query
             ->whereBetween('created_at', [$params['from'], $params['to']])
-            ->whereNotIn('order_status_id', [5, 7, 8]) // isključi statuse
+            ->dashboardSales()
             ->orderBy('created_at')
             ->get()
             ->groupBy(function ($val) use ($params) {

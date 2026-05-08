@@ -109,6 +109,7 @@ return [
             'paid'       => 3,
             'send'       => 4,
             'ready'      => 10,
+            'processing' => 11,
         ],
         'review_request' => [
             'days_after_completed' => 20,
