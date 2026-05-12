@@ -14,7 +14,7 @@
                     <div class="col-lg-6 col-md-8">
                         <form action="{{ route('pretrazi', ['tip' => 'autor']) }}" method="get">
                             <div class="input-group input-group-lg flex-nowrap">
-                                <input type="text" class="form-control rounded-start" name="{{ config('settings.search_keyword') }}" placeholder="Pretražite po nazivu ili autoru">
+                                <input type="text" class="form-control rounded-start" name="{{ config('settings.search_keyword') }}" placeholder="Probaj me — sad sam još bolja 📚">
                                 <button class="btn btn-primary btn-lg fs-base" type="submit"><i class="ci-search"></i></button>
                             </div>
                         </form>
