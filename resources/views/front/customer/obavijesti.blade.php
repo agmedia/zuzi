@@ -7,17 +7,17 @@
         .account-notice-card {
             background: #fff;
             border-radius: .5rem;
-            box-shadow: 0 1rem 3rem rgba(43, 52, 69, .08);
+            box-shadow: 0 .75rem 2rem rgba(43, 52, 69, .06);
             margin-left: auto;
             margin-right: auto;
-            max-width: 780px;
-            padding: 3rem 3.5rem;
+            max-width: 640px;
+            padding: 2.25rem 2.5rem;
             text-align: center;
         }
 
         .account-notice-card__title {
             color: #e50077;
-            font-size: 1.9rem;
+            font-size: 1.45rem;
             font-weight: 700;
             letter-spacing: 0;
             line-height: 1.2;
@@ -25,26 +25,26 @@
 
         .account-notice-card__text {
             color: #161616;
-            font-size: 1.05rem;
+            font-size: .95rem;
             line-height: 1.45;
         }
 
         .account-notice-card__coupon {
-            border: 3px dashed #e50077;
-            margin: 2rem auto;
-            max-width: 650px;
-            padding: 1.9rem 1.5rem;
+            border: 2px dashed #e50077;
+            margin: 1.4rem auto;
+            max-width: 520px;
+            padding: 1.25rem 1.25rem;
         }
 
         .account-notice-card__coupon-label {
             color: #161616;
-            font-size: 1.05rem;
+            font-size: .95rem;
             line-height: 1.3;
         }
 
         .account-notice-card__code {
             color: #e50077;
-            font-size: 2.35rem;
+            font-size: 1.85rem;
             font-weight: 700;
             letter-spacing: 0;
             line-height: 1.2;
@@ -52,42 +52,42 @@
 
         .account-notice-card__discount {
             color: #161616;
-            font-size: 1.05rem;
+            font-size: .95rem;
             font-weight: 700;
             line-height: 1.35;
         }
 
         .account-notice-card__button {
-            font-size: 1.05rem;
+            font-size: .95rem;
             font-weight: 700;
-            min-width: 250px;
-            padding-bottom: .95rem;
-            padding-top: .95rem;
+            min-width: 200px;
+            padding-bottom: .7rem;
+            padding-top: .7rem;
         }
 
         .account-notice-card__date {
             color: #5f6368;
-            font-size: 1rem;
+            font-size: .9rem;
         }
 
         @media (max-width: 575.98px) {
             .account-notice-card {
-                padding: 2rem 1.25rem;
+                padding: 1.75rem 1rem;
             }
 
             .account-notice-card__title {
-                font-size: 1.55rem;
+                font-size: 1.25rem;
             }
 
             .account-notice-card__text,
             .account-notice-card__coupon-label,
             .account-notice-card__discount,
             .account-notice-card__button {
-                font-size: .95rem;
+                font-size: .9rem;
             }
 
             .account-notice-card__code {
-                font-size: 1.9rem;
+                font-size: 1.55rem;
             }
 
             .account-notice-card__button {

@@ -51,7 +51,17 @@
                                 @elseif($row->reference == 'affiliate_referral')
                                     <td class="py-3">Affiliate kupac<br><small>{{ $row->comment }}</small></td>
                                 @elseif ($row->reference == 'product_review')
-                                    <td class="py-3">{{ __('front/cart.loyalty_ref_review') }}  - {{$row->reference()->first()->translation->name }} {{-- staviti naziv proizvoda preko product id --}}</td>
+                                    @php
+                                        $reviewProduct = $row->getReferenceModel()->first();
+                                    @endphp
+                                    <td class="py-3">
+                                        {{ __('front/cart.loyalty_ref_review') }}
+                                        @if($reviewProduct)
+                                            - {{ $reviewProduct->name }}
+                                        @else
+                                            <br><small>Proizvod više nije dostupan.</small>
+                                        @endif
+                                    </td>
                                 @else
                                     <td class="py-3"></td>
                                 @endif
