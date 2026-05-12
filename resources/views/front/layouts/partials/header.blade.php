@@ -47,10 +47,13 @@
                 @php
                     $accountNotice = app(\App\Services\AccountNoticeService::class)->get();
                     $hasAccountNotice = (bool) ($accountNotice['active'] ?? false);
+                    $accountUrl = auth()->user() && auth()->user()->isNotAn('customer')
+                        ? route('dashboard')
+                        : route('moj-racun');
                 @endphp
 
                 @if(auth()->user())
-                    <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2 {{ $hasAccountNotice ? 'account-notice-tool' : '' }}" aria-label="{{ $hasAccountNotice ? 'Imate poruku u korisničkom računu' : 'Moj račun' }}" href="{{ route('moj-racun') }}">
+                    <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2 {{ $hasAccountNotice ? 'account-notice-tool' : '' }}" aria-label="{{ $hasAccountNotice ? 'Imate poruku u korisničkom računu' : 'Moj račun' }}" href="{{ $accountUrl }}">
                         <div class="navbar-tool-icon-box">
                             @if($hasAccountNotice)
                                 <span class="navbar-tool-label account-notice-dot">!</span>
