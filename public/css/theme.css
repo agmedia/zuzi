@@ -19212,6 +19212,44 @@ html:not([dir=rtl]) .range-slider-ui.noUi-horizontal .noUi-handle {
         bottom: 4.5rem;
     }
 }
+
+.account-notice-tool {
+    min-width: 7rem;
+}
+
+.account-notice-tool .navbar-tool-icon-box {
+    flex: 0 0 2.875rem;
+}
+
+.account-notice-tool .account-notice-dot {
+    background-color: #e50077;
+    box-shadow: 0 0 0 2px #373f50;
+    font-size: .65rem;
+    font-weight: 700;
+    height: 1rem;
+    line-height: 1rem;
+    right: .25rem;
+    top: .15rem;
+    width: 1rem;
+}
+
+.account-notice-tool .navbar-tool-text {
+    line-height: 1.1;
+    margin-left: .15rem !important;
+    padding-left: .35rem;
+}
+
+.navbar-dark .account-notice-tool .navbar-tool-text,
+.navbar-dark .account-notice-tool:hover .navbar-tool-text {
+    color: #fff;
+}
+
+.navbar-dark .account-notice-tool .navbar-tool-text > small {
+    color: #ff8fca;
+    font-size: .72rem;
+    font-weight: 600;
+    margin-bottom: .05rem;
+}
 .simplebar-track {
     transition: opacity 0.25s ease-in-out;
     background-color: #e9edf4;

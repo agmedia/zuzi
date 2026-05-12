@@ -1,20 +1,4 @@
 <!-- Navbar-->
-<style>
-    .account-notice-tool .navbar-tool-label {
-        background-color: #e50077;
-        font-weight: 700;
-    }
-
-    .navbar-dark .account-notice-tool .navbar-tool-text,
-    .navbar-dark .account-notice-tool:hover .navbar-tool-text {
-        color: #fff;
-    }
-
-    .navbar-dark .account-notice-tool .navbar-tool-text > small {
-        color: #ff8fca;
-        font-weight: 600;
-    }
-</style>
 <header class="bg-dark shadow-sm fixed-top" data-fixed-element>
     <div class="navbar navbar-expand-lg navbar-dark py-0">
         <div class="container-fluid">
@@ -68,7 +52,7 @@
                     <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2 {{ $hasAccountNotice ? 'account-notice-tool' : '' }}" aria-label="{{ $hasAccountNotice ? 'Imate poruku u korisničkom računu' : 'Moj račun' }}" href="{{ route('moj-racun') }}">
                         <div class="navbar-tool-icon-box">
                             @if($hasAccountNotice)
-                                <span class="navbar-tool-label">!</span>
+                                <span class="navbar-tool-label account-notice-dot">!</span>
                             @endif
                             <i class="navbar-tool-icon ci-user"></i>
                         </div>
