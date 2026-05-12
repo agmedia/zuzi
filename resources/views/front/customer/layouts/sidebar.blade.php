@@ -14,6 +14,12 @@
             <ul class="list-unstyled mb-0 fs-sm">
                 <li class="border-bottom mb-0">
                     <a class="nav-link-style d-flex align-items-center px-4 py-3 {{ request()->routeIs('moj-racun') ? 'active' : '' }}" href="{{ route('moj-racun') }}">
+                        <i class="ci-announcement opacity-60 me-2"></i>Obavijesti
+                    </a>
+                </li>
+
+                <li class="border-bottom mb-0">
+                    <a class="nav-link-style d-flex align-items-center px-4 py-3 {{ request()->routeIs('moj-racun.podaci') ? 'active' : '' }}" href="{{ route('moj-racun.podaci') }}">
                         <i class="ci-user opacity-60 me-2"></i>Moji podaci
                     </a>
                 </li>

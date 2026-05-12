@@ -9,6 +9,7 @@ use App\Http\Controllers\Back\Catalog\ProductController;
 use App\Http\Controllers\Back\Catalog\PublisherController;
 use App\Http\Controllers\Back\DashboardController;
 use App\Http\Controllers\Back\OrderController;
+use App\Http\Controllers\Back\Marketing\AccountNoticeController;
 use App\Http\Controllers\Back\Marketing\ActionController;
 use App\Http\Controllers\Back\Marketing\BlogController;
 use App\Http\Controllers\Back\Marketing\GiftVoucherController as AdminGiftVoucherController;
@@ -149,6 +150,10 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
 
         // POKLON BONOVI
         Route::get('gift-vouchers', [AdminGiftVoucherController::class, 'index'])->name('gift.vouchers');
+
+        // OBAVIJESTI U KORISNIČKOM RAČUNU
+        Route::get('account-notice', [AccountNoticeController::class, 'edit'])->name('account.notice');
+        Route::patch('account-notice', [AccountNoticeController::class, 'update'])->name('account.notice.update');
     });
 
     // KORISNICI
@@ -240,7 +245,8 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
  * CUSTOMER BACK ROUTES
  */
 Route::middleware(['auth:sanctum', 'verified'])->prefix('moj-racun')->group(function () {
-    Route::get('/', [CustomerController::class, 'index'])->name('moj-racun');
+    Route::get('/', [CustomerController::class, 'notifications'])->name('moj-racun');
+    Route::get('/podaci', [CustomerController::class, 'index'])->name('moj-racun.podaci');
     Route::patch('/snimi/{user}', [CustomerController::class, 'save'])->name('moj-racun.snimi');
     Route::get('/narudzbe', [CustomerController::class, 'orders'])->name('moje-narudzbe');
     Route::get('/loyalty', [CustomerController::class, 'loyalty'])->name('loyalty');

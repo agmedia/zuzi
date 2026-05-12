@@ -110,16 +110,20 @@ class Helper
      */
     public static function search(string $target = '', bool $builder = false, bool $api = false)
     {
-        if ($target === '') return false;
+        $raw = trim($target);
+
+        if ($raw === '') {
+            return $builder ? collect(['products' => collect(), 'total' => 0]) : collect()->toJson();
+        }
 
         $response = collect();
-        $raw = trim($target);
 
         // ---------- tokenizacija ----------
         $tokens = collect(preg_split('/[\s\.,\-_\|]+/u', $raw, -1, PREG_SPLIT_NO_EMPTY))
             ->map(fn($t) => \Illuminate\Support\Str::lower($t))
             ->filter(fn($t) => \Illuminate\Support\Str::length($t) >= 2)
             ->unique()
+            ->take(8)
             ->values();
 
         $len = max(1, mb_strlen($raw, 'UTF-8'));
@@ -128,20 +132,36 @@ class Helper
         $has0900     = collect(DB::select("SHOW COLLATION LIKE 'utf8mb4_0900_ai_ci'"))->isNotEmpty();
         $aiCollation = $has0900 ? 'utf8mb4_0900_ai_ci' : 'utf8mb4_unicode_ci';
 
-        // kratki/dugi tokeni (kratke ignoriramo za name)
-        $shortTokens = $tokens->filter(fn($t) => mb_strlen($t,'UTF-8') <= 3)->values();
+        // kratki/dugi tokeni (duge dodatno bodujemo, ali match mora ostati strog)
         $longTokens  = $tokens->filter(fn($t) => mb_strlen($t,'UTF-8') >= 4)->values();
+        $rawLike = '%' . self::escapeLike($raw) . '%';
 
         // ---------- AUTORI (strogi LIKE po tokenima) ----------
         $authorsQ = \App\Models\Front\Catalog\Author::active();
         if ($tokens->isNotEmpty()) {
             foreach ($tokens as $t) {
-                $authorsQ->whereRaw("title COLLATE {$aiCollation} LIKE ?", ['%'.$t.'%']);
+                $authorsQ->whereRaw("title COLLATE {$aiCollation} LIKE ?", ['%' . self::escapeLike($t) . '%']);
             }
         } else {
-            $authorsQ->whereRaw("title COLLATE {$aiCollation} LIKE ?", ['%'.$raw.'%']);
+            $authorsQ->whereRaw("title COLLATE {$aiCollation} LIKE ?", [$rawLike]);
         }
         $authorIds = $authorsQ->limit(200)->pluck('id')->all();
+
+        // ---------- NAKLADNICI (isti strogi princip kao autori) ----------
+        $publishersQ = \App\Models\Front\Catalog\Publisher::active();
+        if ($tokens->isNotEmpty()) {
+            foreach ($tokens as $t) {
+                $publishersQ->whereRaw("title COLLATE {$aiCollation} LIKE ?", ['%' . self::escapeLike($t) . '%']);
+            }
+        } else {
+            $publishersQ->whereRaw("title COLLATE {$aiCollation} LIKE ?", [$rawLike]);
+        }
+        $publisherIds = $publishersQ->limit(200)->pluck('id')->all();
+
+        // Za kombinirane upite tipa "krleza glembajevi": jedan pojam smije biti u autoru,
+        // drugi u naslovu. Prethodno izračunati ID-jevi su jeftiniji od EXISTS subqueryja po tokenu.
+        $authorIdsByToken = self::resolveTitleIdsByToken(\App\Models\Front\Catalog\Author::class, $tokens, $aiCollation);
+        $publisherIdsByToken = self::resolveTitleIdsByToken(\App\Models\Front\Catalog\Publisher::class, $tokens, $aiCollation);
 
         // ---------- SCORE (samo name + sku) ----------
         $scoreParts = [];
@@ -151,57 +171,98 @@ class Helper
             $idsList = implode(',', array_map('intval', $authorIds));
             $scoreParts[] = "CASE WHEN products.author_id IN ($idsList) THEN 1000 ELSE 0 END";
         }
+        if (!empty($publisherIds)) {
+            $idsList = implode(',', array_map('intval', $publisherIds));
+            $scoreParts[] = "CASE WHEN products.publisher_id IN ($idsList) THEN 450 ELSE 0 END";
+        }
 
         // exact fraza u name
         $scoreParts[] = "CASE WHEN products.name COLLATE {$aiCollation} LIKE ? THEN 90 ELSE 0 END";
-        $bindings[]   = '%'.$raw.'%';
+        $bindings[]   = $rawLike;
 
         // početak riječi + contains za DUGE tokene
         foreach ($longTokens as $t) {
+            $tokenLike = '%' . self::escapeLike($t) . '%';
             $scoreParts[] = "CASE WHEN products.name COLLATE {$aiCollation} LIKE ? OR products.name COLLATE {$aiCollation} LIKE ? THEN 28 ELSE 0 END";
-            $bindings[]   = $t.'%';
-            $bindings[]   = '% '.$t.'%';
+            $bindings[]   = self::escapeLike($t).'%';
+            $bindings[]   = '% '.self::escapeLike($t).'%';
             $scoreParts[] = "CASE WHEN products.name COLLATE {$aiCollation} LIKE ? THEN 18 ELSE 0 END";
-            $bindings[]   = '%'.$t.'%';
+            $bindings[]   = $tokenLike;
         }
 
         // sku
         $scoreParts[] = "CASE WHEN products.sku = ? THEN 60 ELSE 0 END";   $bindings[] = $raw;
-        $scoreParts[] = "CASE WHEN products.sku LIKE ? THEN 40 ELSE 0 END"; $bindings[] = '%'.$raw.'%';
+        $scoreParts[] = "CASE WHEN products.sku LIKE ? THEN 40 ELSE 0 END"; $bindings[] = $rawLike;
         foreach ($tokens as $t) {
             $scoreParts[] = "CASE WHEN products.sku LIKE ? THEN 15 ELSE 0 END";
-            $bindings[]   = '%'.$t.'%';
+            $bindings[]   = '%' . self::escapeLike($t) . '%';
         }
 
         // grupni bonus: svi dugi tokeni u name
-        if ($longTokens->isNotEmpty()) {
-            $allAnd = $longTokens->map(fn($t) => "products.name COLLATE {$aiCollation} LIKE ?")->implode(' AND ');
+        if ($tokens->isNotEmpty()) {
+            $allAnd = $tokens->map(fn($t) => "products.name COLLATE {$aiCollation} LIKE ?")->implode(' AND ');
             $scoreParts[] = "CASE WHEN ($allAnd) THEN 40 ELSE 0 END";
-            foreach ($longTokens as $t) { $bindings[] = '%'.$t.'%'; }
+            foreach ($tokens as $t) { $bindings[] = '%' . self::escapeLike($t) . '%'; }
         }
 
         $scoreSql = '('.implode(' + ', $scoreParts).') AS score';
 
-        // ---------- WHERE (bar jedan relevantan match) ----------
-        $whereAny = function($q) use ($raw, $authorIds, $aiCollation, $longTokens) {
+        // ---------- WHERE (za 2+ pojmova svaki pojam mora negdje biti pronađen) ----------
+        $whereMatches = function($q) use ($rawLike, $authorIds, $publisherIds, $aiCollation, $tokens, $authorIdsByToken, $publisherIdsByToken) {
             if (!empty($authorIds)) {
                 $q->orWhereIn('products.author_id', $authorIds);
             }
-            $q->orWhereRaw("products.name COLLATE {$aiCollation} LIKE ?", ['%'.$raw.'%'])
-                ->orWhere('products.sku', 'like', '%'.$raw.'%');
+            if (!empty($publisherIds)) {
+                $q->orWhereIn('products.publisher_id', $publisherIds);
+            }
 
-            if ($longTokens->isNotEmpty()) {
-                foreach ($longTokens as $t) {
-                    $q->orWhereRaw("products.name COLLATE {$aiCollation} LIKE ?", ['%'.$t.'%']);
-                }
+            $q->orWhereRaw("products.name COLLATE {$aiCollation} LIKE ?", [$rawLike])
+                ->orWhere('products.sku', 'like', $rawLike)
+                ->orWhere('products.ean', 'like', $rawLike);
+
+            if ($tokens->isNotEmpty()) {
+                $q->orWhere(function ($tokenQuery) use ($tokens, $aiCollation, $authorIdsByToken, $publisherIdsByToken) {
+                    foreach ($tokens as $t) {
+                        $tokenLike = '%' . self::escapeLike($t) . '%';
+                        $tokenQuery->where(function ($singleTokenQuery) use ($t, $tokenLike, $aiCollation, $authorIdsByToken, $publisherIdsByToken) {
+                            $singleTokenQuery
+                                ->whereRaw("products.name COLLATE {$aiCollation} LIKE ?", [$tokenLike])
+                                ->orWhere('products.sku', 'like', $tokenLike)
+                                ->orWhere('products.ean', 'like', $tokenLike);
+
+                            if (!empty($authorIdsByToken[$t])) {
+                                $singleTokenQuery->orWhereIn('products.author_id', $authorIdsByToken[$t]);
+                            }
+
+                            if (!empty($publisherIdsByToken[$t])) {
+                                $singleTokenQuery->orWhereIn('products.publisher_id', $publisherIdsByToken[$t]);
+                            }
+                        });
+                    }
+                });
             }
         };
 
+        if ($tokens->isEmpty()) {
+            $whereMatches = function($q) use ($rawLike, $authorIds, $publisherIds, $aiCollation) {
+                if (!empty($authorIds)) {
+                    $q->orWhereIn('products.author_id', $authorIds);
+                }
+                if (!empty($publisherIds)) {
+                    $q->orWhereIn('products.publisher_id', $publisherIds);
+                }
+                $q->orWhereRaw("products.name COLLATE {$aiCollation} LIKE ?", [$rawLike])
+                    ->orWhere('products.sku', 'like', $rawLike)
+                    ->orWhere('products.ean', 'like', $rawLike);
+            };
+        }
+
         // ---------- Glavni upit ----------
         $base = \App\Models\Front\Catalog\Product::active()
+            ->hasStock()
             ->select('products.id')
             ->selectRaw($scoreSql, $bindings)
-            ->where(function($q) use ($whereAny) { $whereAny($q); })
+            ->where(function($q) use ($whereMatches) { $whereMatches($q); })
             ->orderByDesc('score')
             ->orderByDesc('products.updated_at');
 
@@ -273,12 +334,13 @@ class Helper
         // Ako nema rezultata, a imamo fuzzy autora -> vrati njegove proizvode + DYM
         if ($totalAll === 0 && $fuzzyAuthorId) {
             $ids = \App\Models\Front\Catalog\Product::active()
+                ->hasStock()
                 ->where('author_id', $fuzzyAuthorId)
                 ->orderByDesc('updated_at')
                 ->limit($limit)
                 ->pluck('products.id');
 
-            $totalAll   = \App\Models\Front\Catalog\Product::active()->where('author_id',$fuzzyAuthorId)->count();
+            $totalAll   = \App\Models\Front\Catalog\Product::active()->hasStock()->where('author_id',$fuzzyAuthorId)->count();
             $suggestion = self::canonicalAuthorDisplay($fuzzyAuthorName);
         }
 
@@ -374,6 +436,48 @@ class Helper
             $str = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $str);
         }
         return $str ?: '';
+    }
+
+    private static function escapeLike(string $value): string
+    {
+        return addcslashes($value, "\\%_");
+    }
+
+    private static function resolveTitleIdsByToken(string $modelClass, Collection $tokens, string $aiCollation): array
+    {
+        $idsByToken = $tokens
+            ->mapWithKeys(fn ($token) => [$token => []])
+            ->all();
+
+        if ($tokens->isEmpty()) {
+            return $idsByToken;
+        }
+
+        $candidates = $modelClass::active()
+            ->select('id', 'title')
+            ->where(function ($query) use ($tokens, $aiCollation) {
+                foreach ($tokens as $token) {
+                    $query->orWhereRaw("title COLLATE {$aiCollation} LIKE ?", ['%' . self::escapeLike($token) . '%']);
+                }
+            })
+            ->limit(3000)
+            ->get();
+
+        $normalizedTokens = $tokens
+            ->mapWithKeys(fn ($token) => [$token => mb_strtolower(self::unaccent($token), 'UTF-8')])
+            ->all();
+
+        foreach ($candidates as $candidate) {
+            $normalizedTitle = mb_strtolower(self::unaccent((string) $candidate->title), 'UTF-8');
+
+            foreach ($normalizedTokens as $token => $normalizedToken) {
+                if ($normalizedToken !== '' && mb_strpos($normalizedTitle, $normalizedToken, 0, 'UTF-8') !== false) {
+                    $idsByToken[$token][] = (int) $candidate->id;
+                }
+            }
+        }
+
+        return $idsByToken;
     }
 
 

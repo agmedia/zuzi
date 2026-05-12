@@ -9,6 +9,7 @@ use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
 use App\Models\Front\Loyalty;
+use App\Services\AccountNoticeService;
 use App\Services\ProductRecommendationService;
 use App\Models\User;
 use App\Models\UserAffiliate;
@@ -17,6 +18,22 @@ use Illuminate\Support\Facades\Crypt;
 
 class CustomerController extends Controller
 {
+
+    /**
+     * Display account notifications after customer login.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function notifications(Request $request, AccountNoticeService $account_notice)
+    {
+        $user = auth()->user();
+        $notice = $account_notice->get();
+        $notice_valid_until = $account_notice->formattedValidUntil($notice);
+
+        UserAffiliate::checkAffiliateName($user);
+
+        return view('front.customer.obavijesti', compact('user', 'notice', 'notice_valid_until'));
+    }
 
     /**
      * Display a listing of the resource.
@@ -100,7 +117,7 @@ class CustomerController extends Controller
         $updated = $user->validateFrontRequest($request)->edit();
 
         if ($updated) {
-            return redirect()->route('moj-racun', ['user' => $updated])->with(['success' => 'Korisnik je uspješno snimljen!']);
+            return redirect()->route('moj-racun.podaci', ['user' => $updated])->with(['success' => 'Korisnik je uspješno snimljen!']);
         }
 
         return redirect()->back()->with(['error' => 'Oops..! Greška prilikom snimanja.']);

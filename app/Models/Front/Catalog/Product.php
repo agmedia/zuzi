@@ -680,8 +680,14 @@ class Product extends Model
 
         $query->active()->hasStock();
 
-        if ($ids && $ids->count() && ! \request()->has('pojam')) {
-            $query->whereIn('id', $ids->unique());
+        if ($ids !== null) {
+            $ids = $ids->map(fn ($id) => (int) $id)->filter()->unique()->values();
+
+            if ($ids->isEmpty()) {
+                $query->whereRaw('0 = 1');
+            } else {
+                $query->whereIn('id', $ids);
+            }
         }
 
         if ($request->has('ids') && $request->input('ids') != '') {
@@ -692,7 +698,11 @@ class Product extends Model
                 ->filter()
                 ->values();
 
-            $query->whereIn('id', $orderedIds->unique());
+            if ($orderedIds->isEmpty()) {
+                $query->whereRaw('0 = 1');
+            } else {
+                $query->whereIn('id', $orderedIds->unique());
+            }
         }
 
         if ($request->has('group')) {
