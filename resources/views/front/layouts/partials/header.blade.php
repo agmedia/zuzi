@@ -1,15 +1,15 @@
 <!-- Navbar-->
-<header class="bg-dark shadow-sm fixed-top" data-fixed-element>
+<header class="site-header bg-dark shadow-sm fixed-top" data-fixed-element>
     <div class="navbar navbar-expand-lg navbar-dark py-0">
         <div class="container-fluid">
             <a class="navbar-brand d-none d-md-block me-1 flex-shrink-0 py-0" href="{{ route('index') }}">
-                <div class="logo-bg" style="background-color:#fff;margin-left:-30px; padding: 0 0 0 30px; ">
+                <div class="logo-bg site-header-logo-bg">
                     <img src="{{ asset('media/img/zuzi-logo.webp') }}" width="90"  alt="Web shop | ZUZI Shop | Prodaja knjiga | Otkup knjiga | Webshop">
                     <span class="arrow"></span>
                 </div>
             </a>
             <a class="navbar-brand pt-0 pb-0 d-md-none me-0" href="{{ route('index') }}">
-                <div class="logo-bg" style="background-color:#fff;margin-left:-30px; padding: 0 0 0 30px; ">
+                <div class="logo-bg site-header-logo-bg site-header-logo-bg-mobile">
                     <img src="{{ asset('media/img/zuzi-logo.webp') }}" width="55" alt="Zuzi Shop">
                     <span class="arrow-mb"></span>
                 </div>

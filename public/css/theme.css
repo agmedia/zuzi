@@ -426,6 +426,12 @@ h1, .h1 {
     left:0.05em;
 }
 
+.site-header-logo-bg {
+    background-color: #fff;
+    margin-left: -30px;
+    padding: 0 0 0 30px;
+}
+
 .bg-bck {
     --cz-bg-opacity: 1;
     background-color: #f6f9fc !important;
@@ -19214,7 +19220,13 @@ html:not([dir=rtl]) .range-slider-ui.noUi-horizontal .noUi-handle {
 }
 
 .account-notice-tool {
-    min-width: 7rem;
+    min-width: auto;
+}
+
+@media (min-width: 992px) {
+    .account-notice-tool {
+        min-width: 7rem;
+    }
 }
 
 .account-notice-tool .navbar-tool-icon-box {
@@ -19249,6 +19261,160 @@ html:not([dir=rtl]) .range-slider-ui.noUi-horizontal .noUi-handle {
     font-size: .72rem;
     font-weight: 600;
     margin-bottom: .05rem;
+}
+
+@media (max-width: 575.98px) {
+    .site-header .container-fluid {
+        flex-wrap: nowrap;
+        padding-left: .5rem;
+        padding-right: .5rem;
+    }
+
+    .site-header .navbar-brand.d-md-none {
+        flex: 0 0 auto;
+        margin-right: .25rem;
+    }
+
+    .site-header-logo-bg-mobile {
+        background-color: transparent;
+        display: flex;
+        align-items: center;
+        margin-left: -.5rem;
+        padding-left: .5rem;
+        padding-right: 2.45rem;
+        position: relative;
+        min-height: 4.25rem;
+    }
+
+    .site-header-logo-bg-mobile::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 2.45rem;
+        bottom: 0;
+        left: 0;
+        background-color: #fff;
+    }
+
+    .site-header-logo-bg-mobile::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 2.45rem;
+        background-color: #fff;
+        clip-path: polygon(0 0, 100% 50%, 0 100%);
+    }
+
+    .site-header-logo-bg-mobile img {
+        position: relative;
+        z-index: 1;
+        width: 58px;
+    }
+
+    .site-header-logo-bg-mobile .arrow-mb {
+        display: none;
+    }
+
+    .site-header .navbar-toolbar {
+        flex-wrap: nowrap;
+        gap: 0;
+        margin-left: auto;
+        min-width: 0;
+    }
+
+    .site-header .navbar-toggler {
+        flex: 0 0 auto;
+        padding: .45rem .35rem;
+    }
+
+    .site-header .navbar-tool {
+        flex: 0 0 auto;
+    }
+
+    .site-header .navbar-tool-icon-box {
+        width: 2.375rem;
+        height: 2.375rem;
+        line-height: 2.125rem;
+    }
+
+    .site-header .account-notice-tool .navbar-tool-icon-box {
+        flex-basis: 2.375rem;
+    }
+
+    .site-header .account-notice-tool .navbar-tool-text {
+        display: none;
+    }
+
+    .site-header .navbar-tool-icon {
+        line-height: 2.375rem;
+    }
+
+    .site-header .navbar-tool .navbar-tool-label {
+        top: -.2rem;
+        right: -.15rem;
+    }
+}
+
+@media (min-width: 360px) and (max-width: 575.98px) {
+    .site-header .account-notice-tool .navbar-tool-text {
+        display: block;
+        margin-left: 0 !important;
+        max-width: 2.5rem;
+        padding-left: .1rem;
+        font-size: 0;
+        line-height: .9;
+    }
+
+    .site-header .account-notice-tool .navbar-tool-text > small,
+    .site-header .account-notice-tool .navbar-tool-text > .small {
+        display: block;
+        margin-bottom: 0;
+        color: #ff8fca;
+        font-size: .72rem;
+        font-weight: 600;
+        line-height: .9;
+        white-space: normal;
+    }
+}
+
+@media (max-width: 359.98px) {
+    .site-header-logo-bg-mobile {
+        min-height: 4rem;
+        padding-right: 2.15rem;
+    }
+
+    .site-header-logo-bg-mobile::before {
+        right: 2.15rem;
+    }
+
+    .site-header-logo-bg-mobile::after {
+        width: 2.15rem;
+    }
+
+    .site-header-logo-bg-mobile img {
+        width: 54px;
+    }
+
+    .site-header .navbar-toggler {
+        padding: .45rem .3rem;
+    }
+
+    .site-header .navbar-tool-icon-box {
+        width: 2.25rem;
+        height: 2.25rem;
+        line-height: 2rem;
+    }
+
+    .site-header .account-notice-tool .navbar-tool-icon-box {
+        flex-basis: 2.25rem;
+    }
+
+    .site-header .navbar-tool-icon {
+        font-size: 1.15rem;
+        line-height: 2.25rem;
+    }
 }
 .simplebar-track {
     transition: opacity 0.25s ease-in-out;
