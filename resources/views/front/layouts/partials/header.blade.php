@@ -90,7 +90,7 @@
                     </a>
                 @endif
 
-                <cart-nav-icon carturl="{{ route('kosarica') }}" checkouturl="{{ route('naplata') }}"></cart-nav-icon>
+                <cart-nav-icon class="site-header-cart" carturl="{{ route('kosarica') }}" checkouturl="{{ route('naplata') }}"></cart-nav-icon>
 
             </div>
         </div>

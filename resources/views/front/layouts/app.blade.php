@@ -50,7 +50,7 @@
 
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="stylesheet" media="screen" href="{{ asset('vendor/simplebar/dist/simplebar.min.css') }}"/>
-    <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.0033') }}">
+    <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.0034') }}">
     <script src="{{ asset('js/jquery/jquery-2.1.1.min.js') }}"></script>
 
 
@@ -288,6 +288,52 @@
 <script src="{{ asset('vendor/lightgallery/lightgallery.min.js') }}"></script>
 <script src="{{ asset('vendor/lightgallery/plugins/fullscreen/lg-fullscreen.min.js') }}"></script>
 <script src="{{ asset('vendor/lightgallery/plugins/zoom/lg-zoom.min.js') }}"></script>
+
+<script>
+    (function () {
+        if (typeof window.lightGallery !== 'function') {
+            return;
+        }
+
+        const originalLightGallery = window.lightGallery;
+
+        window.lightGallery = function (element, options) {
+            const galleryOptions = options || {};
+            const galleryStrings = Object.assign(
+                {
+                    closeGallery: 'Zatvori galeriju',
+                    toggleMaximize: 'Povecaj prikaz',
+                    previousSlide: 'Prethodna slika',
+                    nextSlide: 'Sljedeca slika',
+                    download: 'Preuzmi',
+                    playVideo: 'Pokreni video'
+                },
+                galleryOptions.strings || {},
+                {
+                    closeGallery: 'Zatvori galeriju'
+                }
+            );
+            const mobileSettings = Object.assign(
+                {
+                    controls: false,
+                    download: false,
+                    showCloseIcon: true
+                },
+                galleryOptions.mobileSettings || {},
+                {
+                    showCloseIcon: true
+                }
+            );
+
+            return originalLightGallery.call(this, element, Object.assign({}, galleryOptions, {
+                mobileSettings: mobileSettings,
+                strings: galleryStrings
+            }));
+        };
+
+        Object.assign(window.lightGallery, originalLightGallery);
+    })();
+</script>
 
 
 <!-- Main theme script-->
