@@ -248,6 +248,8 @@ class Checkout extends Component
             $this->setAddress();
 
             session()->flash('login_success', 'Uspješno ste se prijavili na vaš račun...');
+
+            return redirect()->route('naplata', ['step' => $this->step ?: 'podaci']);
         }
 
         session()->flash('error', 'Upisani podaci ne odgovaraju našim korisnicima...');
