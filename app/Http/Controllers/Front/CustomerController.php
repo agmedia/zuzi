@@ -29,10 +29,11 @@ class CustomerController extends Controller
         $user = auth()->user();
         $notice = $account_notice->get();
         $notice_valid_until = $account_notice->formattedValidUntil($notice);
+        $purchaseRecommendations = $this->purchaseRecommendationsForUser($user);
 
         UserAffiliate::checkAffiliateName($user);
 
-        return view('front.customer.obavijesti', compact('user', 'notice', 'notice_valid_until'));
+        return view('front.customer.obavijesti', compact('user', 'notice', 'notice_valid_until', 'purchaseRecommendations'));
     }
 
     /**
@@ -60,31 +61,14 @@ class CustomerController extends Controller
     public function orders(Request $request)
     {
         $user   = auth()->user();
-        $orderQuery = Order::query()
-            ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                    ->orWhere('payment_email', $user->email);
-            });
+        $orderQuery = $this->ordersForUserQuery($user);
 
         $orders = (clone $orderQuery)
             ->with(['products.product', 'products.real', 'totals'])
             ->latest('created_at')
-            ->paginate(config('settings.pagination.front'));
+            ->paginate(10);
 
-        $purchasedProductIds = OrderProduct::query()
-            ->whereIn('order_id', (clone $orderQuery)
-                ->whereNotIn('order_status_id', [5, 7, 8])
-                ->select('id'))
-            ->pluck('product_id')
-            ->map(fn ($id) => (int) $id)
-            ->filter()
-            ->unique()
-            ->values();
-
-        $purchaseRecommendations = app(ProductRecommendationService::class)
-            ->forProductIds($purchasedProductIds);
-
-        return view('front.customer.moje-narudzbe', compact('user', 'orders', 'purchaseRecommendations'));
+        return view('front.customer.moje-narudzbe', compact('user', 'orders'));
     }
 
 
@@ -96,7 +80,9 @@ class CustomerController extends Controller
     public function loyalty(Request $request)
     {
         $user    = auth()->user();
-        $loyalty = Loyalty::where('user_id', $user->id)->get();
+        $loyalty = Loyalty::where('user_id', $user->id)
+            ->latest('created_at')
+            ->paginate(10);
         $points  = Loyalty::hasLoyaltyTotal($user->id);
 
         /*$crypt = encrypt($user->email . '-' . now());
@@ -121,6 +107,33 @@ class CustomerController extends Controller
         }
 
         return redirect()->back()->with(['error' => 'Oops..! Greška prilikom snimanja.']);
+    }
+
+    private function ordersForUserQuery(User $user)
+    {
+        return Order::query()
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('payment_email', $user->email);
+            });
+    }
+
+    private function purchaseRecommendationsForUser(User $user)
+    {
+        $orderQuery = $this->ordersForUserQuery($user);
+
+        $purchasedProductIds = OrderProduct::query()
+            ->whereIn('order_id', (clone $orderQuery)
+                ->whereNotIn('order_status_id', [5, 7, 8])
+                ->select('id'))
+            ->pluck('product_id')
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        return app(ProductRecommendationService::class)
+            ->forProductIds($purchasedProductIds);
     }
 
 }

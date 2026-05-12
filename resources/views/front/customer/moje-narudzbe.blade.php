@@ -1,36 +1,6 @@
 @extends('front.layouts.app')
 @section('title', \App\Models\Seo::appendBrand('Moje narudzbe'))
 @section('description', \App\Models\Seo::description(null, 'Pregled prethodnih narudzbi na korisnickom racunu ' . \App\Models\Seo::brand() . '.'))
-@php
-    $purchaseRecommendationCarouselOptions = [
-        'items' => 2,
-        'gutter' => 16,
-        'controls' => true,
-        'nav' => true,
-        'autoHeight' => false,
-        'mouseDrag' => true,
-        'touch' => true,
-        'swipeAngle' => 30,
-        'preventActionWhenRunning' => true,
-        'preventScrollOnTouch' => 'auto',
-        'responsive' => [
-            0 => ['items' => 2, 'controls' => true, 'nav' => true],
-            480 => ['items' => 2, 'controls' => true, 'nav' => true],
-            720 => ['items' => 3],
-            1140 => ['items' => 4],
-        ],
-    ];
-@endphp
-
-@push('css_after')
-    <style>
-        .purchase-recommendations-carousel .tns-ovh,
-        .purchase-recommendations-carousel .tns-item,
-        .purchase-recommendations-carousel .tns-carousel-inner {
-            touch-action: pan-y pinch-zoom;
-        }
-    </style>
-@endpush
 
 @section('content')
 
@@ -97,77 +67,66 @@
 
     @include('front.customer.layouts.header')
 
-    <section class="pb-5 mb-2 mb-md-4">
-        <div class="row">
-        @include('front.customer.layouts.sidebar')
+    <section class="account-page pb-5 mb-2 mb-md-4">
+        <div class="row account-layout g-4">
+            @include('front.customer.layouts.sidebar')
 
-            <!-- Content  -->
-            <section class="col-lg-8">
-                <!-- Toolbar-->
-                <div class="d-none d-lg-flex justify-content-between align-items-center pt-lg-3 pb-4 pb-lg-5 mb-lg-3">
-                    <h6 class="fs-base text-primary mb-0">Pogledajte povijest svoji narudžbi:</h6>
-                    <form action="{{ route('logout') }}" method="POST" class="mb-0">
-                        @csrf
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="ci-sign-out me-2"></i>Odjava
-                        </button>
-                    </form>
-                </div>
-                <!-- Orders list-->
-                <div class="table-responsive fs-md mb-4">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                        <tr>
-                            <th>Broj narudžbe #</th>
-                            <th>Datum</th>
-                            <th>Status</th>
-                            <th>Ukupno</th>
-                            <th>Narudžba</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @forelse ($orders as $order)
-                            <tr>
-                                <td class="py-3"><a class="nav-link-style fw-medium fs-sm" href="#order-details{{ $order->id }}" data-bs-toggle="modal">{{ $order->id }}</a></td>
-                                <td class="py-3">{{ \Illuminate\Support\Carbon::make($order->created_at)->format('d.m.Y') }}</td>
-                                <td class="py-3"><span class="badge bg-info m-0">{{ optional($order->status)->title ?: 'Nepoznat status' }}</span></td>
-                                <td class="py-3">{{ number_format($order->total, 2, ',', '.') }} €</td>
-                                <td class="py-3"><a class="badge bg-primary text-white m-0 " href="#order-details{{ $order->id }}" data-bs-toggle="modal">Pregled</a></td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td class="text-center font-size-sm" colspan="4">
-                                    <label>Trenutno nemate narudžbi...</label>
-                                </td>
-                            </tr>
-                        @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                {{ $orders->links() }}
-
-                @if(isset($purchaseRecommendations) && $purchaseRecommendations->count())
-                    <section class="mt-4 pt-2">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <section class="col-lg-8 col-xl-9 account-content-column">
+                <div class="account-content-card">
+                    <div class="account-card-header">
+                        <div class="account-card-titlewrap">
+                            <span class="account-card-icon"><i class="ci-bag"></i></span>
                             <div>
-                                <h2 class="h4 mb-1">S obzirom na vaše prethodne kupnje, preporučujemo</h2>
-                                <p class="text-muted mb-0">Odabrali smo slične naslove koje bi vas mogli zanimati na temelju knjiga koje ste već kupovali.</p>
+                                <h2 class="account-card-title">Narudžbe</h2>
+                                <p class="account-card-subtitle">Pregledajte status, iznos i detalje svih prethodnih narudžbi.</p>
                             </div>
                         </div>
+                        <form action="{{ route('logout') }}" method="POST" class="mb-0">
+                            @csrf
+                            <button type="submit" class="btn btn-primary btn-sm account-logout-button">
+                                <i class="ci-sign-out me-2"></i>Odjava
+                            </button>
+                        </form>
+                    </div>
 
-                        <div class="tns-carousel tns-controls-static tns-controls-outside tns-nav-enabled pt-2 purchase-recommendations-carousel">
-                            <div class="tns-carousel-inner" data-carousel-options='@json($purchaseRecommendationCarouselOptions)'>
-                                @foreach ($purchaseRecommendations as $product)
-                                    <div>
-                                        @include('front.catalog.category.product', ['product' => $product])
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </section>
-                @endif
+                    <div class="table-responsive fs-md account-table-shell mb-4">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                            <tr>
+                                <th>Broj narudžbe #</th>
+                                <th>Datum</th>
+                                <th>Status</th>
+                                <th>Ukupno</th>
+                                <th>Narudžba</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @forelse ($orders as $order)
+                                <tr>
+                                    <td class="py-3"><a class="nav-link-style fw-medium fs-sm" href="#order-details{{ $order->id }}" data-bs-toggle="modal">{{ $order->id }}</a></td>
+                                    <td class="py-3">{{ \Illuminate\Support\Carbon::make($order->created_at)->format('d.m.Y') }}</td>
+                                    <td class="py-3"><span class="badge bg-info account-status-badge m-0">{{ optional($order->status)->title ?: 'Nepoznat status' }}</span></td>
+                                    <td class="py-3 fw-medium">{{ number_format($order->total, 2, ',', '.') }} €</td>
+                                    <td class="py-3"><a class="btn btn-sm btn-outline-primary" href="#order-details{{ $order->id }}" data-bs-toggle="modal">Pregled</a></td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td class="p-0 border-0" colspan="5">
+                                        <div class="account-empty-state">
+                                            <div>
+                                                <i class="ci-bag d-block fs-3 mb-3 text-muted"></i>
+                                                <div>Trenutno nemate narudžbi.</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
+                    {{ $orders->links() }}
+                </div>
             </section>
         </div>
     </section>
