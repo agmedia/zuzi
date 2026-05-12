@@ -44,11 +44,12 @@
                     </a>
                 </div>
 
+                @php
+                    $accountNotice = app(\App\Services\AccountNoticeService::class)->get();
+                    $hasAccountNotice = (bool) ($accountNotice['active'] ?? false);
+                @endphp
+
                 @if(auth()->user())
-                    @php
-                        $accountNotice = app(\App\Services\AccountNoticeService::class)->get();
-                        $hasAccountNotice = (bool) ($accountNotice['active'] ?? false);
-                    @endphp
                     <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2 {{ $hasAccountNotice ? 'account-notice-tool' : '' }}" aria-label="{{ $hasAccountNotice ? 'Imate poruku u korisničkom računu' : 'Moj račun' }}" href="{{ route('moj-racun') }}">
                         <div class="navbar-tool-icon-box">
                             @if($hasAccountNotice)
@@ -62,9 +63,19 @@
                         </div>
                     </a>
                 @else
-                    <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2" data-tab-id="pills-signin-tab" aria-label="Prijavi se" href="signin-tab"  role="button" data-bs-toggle="modal" data-bs-target="#signin-modal">
-                        <div class="navbar-tool-icon-box"><i class="navbar-tool-icon ci-user"></i></div>
-                        <div class="navbar-tool-text ms-n3">Prijavi se</div>
+                    <a class="navbar-tool ms-1 ms-lg-0 me-n1 me-lg-2 {{ $hasAccountNotice ? 'account-notice-tool' : '' }}" data-tab-id="pills-signin-tab" aria-label="{{ $hasAccountNotice ? 'Imate poruku. Prijavite se za pregled' : 'Prijavi se' }}" href="signin-tab"  role="button" data-bs-toggle="modal" data-bs-target="#signin-modal">
+                        <div class="navbar-tool-icon-box">
+                            @if($hasAccountNotice)
+                                <span class="navbar-tool-label account-notice-dot">!</span>
+                            @endif
+                            <i class="navbar-tool-icon ci-user"></i>
+                        </div>
+                        <div class="navbar-tool-text ms-n3">
+                            @if($hasAccountNotice)
+                                <small>Imate poruku</small>
+                            @endif
+                            Prijavi se
+                        </div>
                     </a>
                 @endif
 
