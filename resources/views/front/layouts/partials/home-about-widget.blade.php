@@ -28,7 +28,7 @@
                 <div class="card-body p-4 p-xl-5">
 
 
-                    <h2 class="h2 text-primary font-title mb-3">{{ $aboutHeroTitle }}</h2>
+                    <h1 class="h2 text-primary font-title mb-3">{{ $aboutHeroTitle }}</h1>
                     <p class="fs-lg text-dark mb-2">{{ $aboutHeroIntro }}</p>
                     <p class="text-muted mb-4">{{ $aboutHeroBody }}</p>
 
