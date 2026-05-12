@@ -63,7 +63,13 @@
                             <i class="navbar-tool-icon ci-user"></i>
                         </div>
                         <div class="navbar-tool-text ms-n3">
-                            <small>{{ $hasAccountNotice ? 'Imate poruku' : trim(auth()->user()->details->fname . ' ' . auth()->user()->details->lname) }}</small>
+                            <small>
+                                @if($hasAccountNotice)
+                                    <span class="account-notice-word">Imate</span> <span class="account-notice-word">poruku</span>
+                                @else
+                                    {{ trim(auth()->user()->details->fname . ' ' . auth()->user()->details->lname) }}
+                                @endif
+                            </small>
                             Moj Račun
                         </div>
                     </a>
@@ -77,7 +83,7 @@
                         </div>
                         <div class="navbar-tool-text ms-n3">
                             @if($hasAccountNotice)
-                                <small>Imate poruku</small>
+                                <small><span class="account-notice-word">Imate</span> <span class="account-notice-word">poruku</span></small>
                             @endif
                             Prijavi se
                         </div>

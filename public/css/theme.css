@@ -19329,6 +19329,11 @@ html:not([dir=rtl]) .range-slider-ui.noUi-horizontal .noUi-handle {
         padding: .45rem .35rem;
     }
 
+    .site-header .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.8' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        opacity: 1;
+    }
+
     .site-header .navbar-tool {
         flex: 0 0 auto;
     }
@@ -19376,6 +19381,10 @@ html:not([dir=rtl]) .range-slider-ui.noUi-horizontal .noUi-handle {
         font-weight: 600;
         line-height: .9;
         white-space: normal;
+    }
+
+    .site-header .account-notice-tool .account-notice-word {
+        display: block;
     }
 }
 
