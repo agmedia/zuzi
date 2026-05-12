@@ -17,7 +17,7 @@
 
         .account-notice-card__title {
             color: #e50077;
-            font-size: 2.5rem;
+            font-size: 1.9rem;
             font-weight: 700;
             letter-spacing: 0;
             line-height: 1.2;
@@ -25,7 +25,7 @@
 
         .account-notice-card__text {
             color: #161616;
-            font-size: 1.35rem;
+            font-size: 1.05rem;
             line-height: 1.45;
         }
 
@@ -38,13 +38,13 @@
 
         .account-notice-card__coupon-label {
             color: #161616;
-            font-size: 1.35rem;
+            font-size: 1.05rem;
             line-height: 1.3;
         }
 
         .account-notice-card__code {
             color: #e50077;
-            font-size: 3rem;
+            font-size: 2.35rem;
             font-weight: 700;
             letter-spacing: 0;
             line-height: 1.2;
@@ -52,13 +52,13 @@
 
         .account-notice-card__discount {
             color: #161616;
-            font-size: 1.35rem;
+            font-size: 1.05rem;
             font-weight: 700;
             line-height: 1.35;
         }
 
         .account-notice-card__button {
-            font-size: 1.35rem;
+            font-size: 1.05rem;
             font-weight: 700;
             min-width: 250px;
             padding-bottom: .95rem;
@@ -76,18 +76,18 @@
             }
 
             .account-notice-card__title {
-                font-size: 1.9rem;
+                font-size: 1.55rem;
             }
 
             .account-notice-card__text,
             .account-notice-card__coupon-label,
             .account-notice-card__discount,
             .account-notice-card__button {
-                font-size: 1.05rem;
+                font-size: .95rem;
             }
 
             .account-notice-card__code {
-                font-size: 2.15rem;
+                font-size: 1.9rem;
             }
 
             .account-notice-card__button {
