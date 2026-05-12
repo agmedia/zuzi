@@ -147,7 +147,7 @@
     <ul class="nav nav-tabs nav-justified mt-0 mt-lg-5 mb-0" role="tablist" >
         <li class="nav-item"><a class="nav-link fw-medium active" href="#categories" data-bs-toggle="tab" role="tab">Kategorije</a></li>
         <li class="nav-item"><a class="nav-link fw-medium" href="#menu" data-bs-toggle="tab" role="tab">Info</a></li>
-        <li class="nav-item d-lg-none"><a class="nav-link " href="#" data-bs-dismiss="offcanvas" aria-label="Close Navigation" role="tab"><i class="ci-close fs-xs me-2"></i></a></li>
+        <li class="nav-item d-lg-none"><a class="nav-link side-nav-close" href="#" data-bs-dismiss="offcanvas" aria-label="Close Navigation" role="tab"><i class="ci-close fs-xs me-2"></i></a></li>
     </ul>
     <div class="offcanvas-body px-0 pt-3 pb-0" data-simplebar>
         <div class="tab-content">

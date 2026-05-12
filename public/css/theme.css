@@ -19362,6 +19362,49 @@ html:not([dir=rtl]) .range-slider-ui.noUi-horizontal .noUi-handle {
     }
 }
 
+@media (max-width: 991.98px) {
+    #sideNav.offcanvas {
+        max-width: 100vw !important;
+        width: 100vw !important;
+    }
+
+    #sideNav > .nav-tabs {
+        align-items: center;
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+    }
+
+    #sideNav .side-nav-close {
+        align-items: center;
+        background-color: #f3f5f9;
+        border-radius: 50%;
+        color: #373f50 !important;
+        display: inline-flex;
+        height: 3rem;
+        justify-content: center;
+        margin: .35rem .75rem .35rem auto;
+        padding: 0;
+        width: 3rem;
+    }
+
+    #sideNav .side-nav-close i {
+        font-size: 1.25rem !important;
+        margin: 0 !important;
+    }
+
+    #sideNav .side-nav-close:hover,
+    #sideNav .side-nav-close:focus {
+        background-color: #e50077;
+        color: #fff !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .site-header ~ main .page-wrapper {
+        padding-top: 1rem !important;
+    }
+}
+
 @media (min-width: 360px) and (max-width: 575.98px) {
     .site-header .account-notice-tool .navbar-tool-text {
         display: block;
