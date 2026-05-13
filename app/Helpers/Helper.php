@@ -1379,7 +1379,7 @@ class Helper
                     $discount = $discountableTotal - $value;
 
                     $condition = new CartCondition(array(
-                        'name'       => $action->title,
+                        'name'       => $coupon !== '' ? 'Kupon ' . self::normalizeCoupon($coupon) : $action->title,
                         'type'       => 'special',
                         'target'     => 'total', // this condition will be applied to cart's subtotal when getSubTotal() is called.
                         'value'      => '-' . $discount,

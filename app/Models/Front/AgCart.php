@@ -305,6 +305,15 @@ class AgCart extends Model
         $success = Helper::couponEquals(Helper::isCouponUsed($this->cart), $coupon);
 
         if ( ! $success) {
+            if ($this->cart->getTotalQuantity() <= 0 && $this->isValidCouponCode($coupon)) {
+                return [
+                    'success' => true,
+                    'coupon' => $this->coupon,
+                    'cart' => $cart,
+                    'message' => 'Kod je spremljen i automatski će se primijeniti čim dodate artikle u košaricu.',
+                ];
+            }
+
             if ($previousCoupon !== '' && ! Helper::couponEquals($previousCoupon, $coupon)) {
                 session([$this->session_key . '_coupon' => $previousCoupon]);
                 $this->coupon = $previousCoupon;
@@ -330,6 +339,21 @@ class AgCart extends Model
             'coupon' => $this->coupon,
             'cart' => $cart,
         ];
+    }
+
+    private function isValidCouponCode(string $coupon = ''): bool
+    {
+        $coupon = Helper::normalizeCoupon($coupon);
+
+        if ($coupon === '' || ! Schema::hasTable('product_actions')) {
+            return false;
+        }
+
+        return Action::query()
+            ->whereNotNull('coupon')
+            ->where('coupon', '!=', '')
+            ->get()
+            ->contains(fn (Action $action) => $action->isValid($coupon));
     }
 
 

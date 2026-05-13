@@ -314,6 +314,7 @@
                 border: 2px dashed var(--cz-primary);
                 border-radius: .5rem;
                 background: #fffafb;
+                position: relative;
             }
 
             .account-notice-panel__coupon-label {
@@ -328,6 +329,91 @@
                 font-weight: 700;
                 letter-spacing: 0;
                 line-height: 1.2;
+            }
+
+            .account-notice-panel__code-button {
+                appearance: none;
+                background: transparent;
+                border: 0;
+                border-radius: .45rem;
+                cursor: pointer;
+                display: inline-block;
+                padding: .15rem .45rem;
+                transition: background-color .16s ease, color .16s ease, transform .16s ease;
+            }
+
+            .account-notice-panel__code-button:hover,
+            .account-notice-panel__code-button:focus {
+                background: #fde6f3;
+                color: #c70068;
+                outline: 0;
+                transform: translateY(-1px);
+            }
+
+            .account-notice-panel__code-button:focus-visible {
+                box-shadow: 0 0 0 .2rem rgba(229, 0, 119, .16);
+            }
+
+            .account-notice-panel__copy-button {
+                align-items: center;
+                appearance: none;
+                background: #fff;
+                border: 1px solid rgba(229, 0, 119, .24);
+                border-radius: .4rem;
+                color: var(--cz-primary);
+                cursor: pointer;
+                display: inline-flex;
+                height: 2rem;
+                justify-content: center;
+                padding: 0;
+                position: absolute;
+                right: .75rem;
+                top: .75rem;
+                transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+                width: 2rem;
+            }
+
+            .account-notice-panel__copy-button:hover,
+            .account-notice-panel__copy-button:focus {
+                background: #fde6f3;
+                border-color: rgba(229, 0, 119, .45);
+                color: #c70068;
+                outline: 0;
+                transform: translateY(-1px);
+            }
+
+            .account-notice-panel__copy-button:focus-visible {
+                box-shadow: 0 0 0 .2rem rgba(229, 0, 119, .16);
+            }
+
+            .account-notice-panel__copy-icon {
+                display: block;
+                height: 1.1rem;
+                position: relative;
+                width: 1.1rem;
+            }
+
+            .account-notice-panel__copy-icon::before,
+            .account-notice-panel__copy-icon::after {
+                border: 1.8px solid currentColor;
+                border-radius: .12rem;
+                box-sizing: border-box;
+                content: "";
+                height: .85rem;
+                position: absolute;
+                width: .68rem;
+            }
+
+            .account-notice-panel__copy-icon::before {
+                left: .12rem;
+                opacity: .55;
+                top: .22rem;
+            }
+
+            .account-notice-panel__copy-icon::after {
+                background: #fff;
+                left: .32rem;
+                top: .04rem;
             }
 
             .account-notice-panel__discount {

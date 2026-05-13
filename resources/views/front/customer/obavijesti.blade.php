@@ -89,11 +89,30 @@
                             @endif
 
                             <div class="account-notice-panel__coupon">
+                                @if($notice['coupon_code'])
+                                    <button
+                                        type="button"
+                                        class="account-notice-panel__copy-button"
+                                        data-coupon-code="{{ $notice['coupon_code'] }}"
+                                        aria-label="Kopiraj kupon kod {{ $notice['coupon_code'] }}"
+                                        title="Kopiraj kod"
+                                    >
+                                        <span class="account-notice-panel__copy-icon" aria-hidden="true"></span>
+                                    </button>
+                                @endif
                                 @if($notice['coupon_label'])
                                     <div class="account-notice-panel__coupon-label mb-3">{{ $notice['coupon_label'] }}</div>
                                 @endif
                                 @if($notice['coupon_code'])
-                                    <div class="account-notice-panel__code mb-3">{{ $notice['coupon_code'] }}</div>
+                                    <button
+                                        type="button"
+                                        class="account-notice-panel__code account-notice-panel__code-button mb-3 js-account-coupon-code"
+                                        data-coupon-code="{{ $notice['coupon_code'] }}"
+                                        aria-label="Kopiraj kupon kod {{ $notice['coupon_code'] }}"
+                                        title="Kopiraj kod"
+                                    >
+                                        <span>{{ $notice['coupon_code'] }}</span>
+                                    </button>
                                 @endif
                                 @if($notice['discount_text'])
                                     <div class="account-notice-panel__discount">{{ $notice['discount_text'] }}</div>
@@ -105,7 +124,11 @@
                             @endif
 
                             @if($notice['button_text'] && $notice['button_url'])
-                                <a class="btn btn-primary account-notice-panel__button" href="{{ $notice['button_url'] }}">
+                                <a
+                                    class="btn btn-primary account-notice-panel__button"
+                                    href="{{ $notice['button_url'] }}"
+                                    @if($notice['coupon_code']) data-coupon-code="{{ $notice['coupon_code'] }}" data-coupon-navigate="true" @endif
+                                >
                                     {{ $notice['button_text'] }}
                                 </a>
                             @endif
@@ -151,3 +174,145 @@
     </section>
 
 @endsection
+
+@push('js_after')
+    <script>
+        (function () {
+            const copyText = function (text) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    return navigator.clipboard.writeText(text);
+                }
+
+                return new Promise(function (resolve, reject) {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.setAttribute('readonly', '');
+                    textArea.style.position = 'absolute';
+                    textArea.style.left = '-999999px';
+
+                    document.body.prepend(textArea);
+                    textArea.select();
+
+                    try {
+                        document.execCommand('copy') ? resolve() : reject();
+                    } catch (error) {
+                        reject(error);
+                    } finally {
+                        textArea.remove();
+                    }
+                });
+            };
+
+            const showToast = function (type, message) {
+                if (type === 'success' && window.ToastSuccess) {
+                    window.ToastSuccess.fire(message);
+                    return;
+                }
+
+                if (window.ToastWarning) {
+                    window.ToastWarning.fire(message);
+                    return;
+                }
+
+                window.alert(message);
+            };
+
+            const resolveCopyResult = function (copyPromise) {
+                return new Promise(function (resolve) {
+                    let settled = false;
+                    const finish = function (result) {
+                        if (settled) {
+                            return;
+                        }
+
+                        settled = true;
+                        resolve(result);
+                    };
+
+                    copyPromise.then(function () {
+                        finish(true);
+                    }).catch(function () {
+                        finish(false);
+                    });
+
+                    window.setTimeout(function () {
+                        finish(false);
+                    }, 800);
+                });
+            };
+
+            const activateCoupon = function (code) {
+                if (!window.axios) {
+                    return Promise.resolve(null);
+                }
+
+                return window.axios.post('cart/coupon', { coupon: code }, { timeout: 5000 })
+                    .then(function (response) {
+                        return response.data;
+                    })
+                    .catch(function () {
+                        return null;
+                    });
+            };
+
+            const handleCoupon = function (event, trigger) {
+                const code = String(trigger.dataset.couponCode || '').trim().toUpperCase();
+                const shouldNavigate = trigger.dataset.couponNavigate === 'true';
+                const navigateUrl = trigger.getAttribute('href');
+
+                if (!code) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                Promise.all([
+                    resolveCopyResult(copyText(code)),
+                    activateCoupon(code),
+                ]).then(function (results) {
+                    const copied = results[0];
+                    const activation = results[1];
+
+                    if (activation && activation.success) {
+                        showToast('success', copied
+                            ? 'Kod je kopiran i spremljen za košaricu.'
+                            : (activation.message || 'Kod je spremljen za košaricu.')
+                        );
+                    } else if (copied) {
+                        showToast('success', 'Kod je kopiran u međumemoriju.');
+                    } else {
+                        showToast('warning', 'Kod nije bilo moguće kopirati.');
+                    }
+
+                    if (shouldNavigate && navigateUrl) {
+                        window.setTimeout(function () {
+                            window.location.href = navigateUrl;
+                        }, 450);
+                    }
+                });
+            };
+
+            const bindCouponTriggers = function () {
+                document.querySelectorAll('[data-coupon-code]').forEach(function (trigger) {
+                    if (trigger.dataset.couponBound === 'true') {
+                        return;
+                    }
+
+                    trigger.dataset.couponBound = 'true';
+                    trigger.addEventListener('click', function (event) {
+                        handleCoupon(event, trigger);
+                    });
+                });
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bindCouponTriggers);
+            } else {
+                bindCouponTriggers();
+            }
+
+            window.setTimeout(bindCouponTriggers, 0);
+            window.setTimeout(bindCouponTriggers, 500);
+        })();
+    </script>
+@endpush
