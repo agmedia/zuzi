@@ -22,11 +22,39 @@
     $countdownSeconds = $countdownDiff % 60;
     $homeHeroMediaWrapStyle = 'width: min(350px, 100%);';
     $homeHeroMediaStyle = 'display: block; width: 100%; aspect-ratio: 1 / 1; height: auto; object-fit: cover; border-radius: 10px;';
+    $resolveHomeHeroLink = function ($url) {
+        $value = trim((string) $url);
+        $normalized = ltrim($value, '/');
+        $signinLinks = ['?auth=signin', 'auth=signin', '#signin-modal', 'signin-modal', 'login-popup'];
+        $signupLinks = ['?auth=signup', 'auth=signup', '#signup-modal', 'signup-modal', 'register-popup'];
+
+        if (in_array($normalized, $signinLinks, true)) {
+            return [
+                'href' => '#signin-modal',
+                'tab' => 'pills-signin-tab',
+            ];
+        }
+
+        if (in_array($normalized, $signupLinks, true)) {
+            return [
+                'href' => '#signin-modal',
+                'tab' => 'pills-signup-tab',
+            ];
+        }
+
+        return [
+            'href' => url($value),
+            'tab' => null,
+        ];
+    };
 @endphp
 
 <section class="tns-carousel mb-3 rounded-3 bg-light shadow widget-touch-carousel widget-custom-hero-carousel">
     <div class="tns-carousel-inner" data-carousel-options='@json($homeHeroCarouselOptions)'>
         @foreach($data as  $widget)
+            @php
+                $homeHeroLink = $resolveHomeHeroLink($widget['url'] ?? '');
+            @endphp
 
             <div>
                 <div class="pt-3  px-md-5 text-center text-xl-start   px-2 mb-3 " >
@@ -57,13 +85,13 @@
                             <h1 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h1>
 
                             <p class="text-dark  ">{{ $widget['subtitle'] }}</p>
-                            <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2 slider-focus-btn" href="{{ url($widget['url']) }}" role="button">
+                            <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2 slider-focus-btn" href="{{ $homeHeroLink['href'] }}" role="button" @if($homeHeroLink['tab']) data-bs-toggle="modal" data-bs-target="#signin-modal" data-tab-id="{{ $homeHeroLink['tab'] }}" @endif>
 
                                 {{ $widget['button_text'] ?? '' }}
                                      <i class="ci-arrow-right ms-2 me-n1"></i></a></div>
                         </div>
                         <div class="p-3">
-                            <a href="{{ url($widget['url']) }}" style="{{ $homeHeroMediaWrapStyle }}">
+                            <a href="{{ $homeHeroLink['href'] }}" style="{{ $homeHeroMediaWrapStyle }}" @if($homeHeroLink['tab']) data-bs-toggle="modal" data-bs-target="#signin-modal" data-tab-id="{{ $homeHeroLink['tab'] }}" @endif>
                                 @if (! empty($widget['video']))
                                     <video class="js-widget-custom-video" autoplay loop muted playsinline webkit-playsinline preload="auto" poster="{{ $widget['image'] ?? '' }}" disablepictureinpicture style="{{ $homeHeroMediaStyle }}">
                                         <source src="{{ $widget['video'] }}">
