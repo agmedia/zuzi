@@ -808,6 +808,7 @@ class Helper
                 $widgets[] = [
                     'title'    => $widget->title,
                     'subtitle' => $widget->subtitle,
+                    'button_text' => trim((string) ($data['button_text'] ?? '')) ?: 'Pogledajte ponudu',
                     'color'    => $widget->badge,
                     'url'      => $widget->url,
                     'image'    => $widget->thumb,

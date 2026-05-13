@@ -110,6 +110,7 @@ class Widget extends Model
         $request->validate([
             'group_template' => 'required',
             'title' => 'required',
+            'button_text' => 'nullable|string|max:80',
             'video_file' => 'nullable|file|mimes:mp4,webm,mov|max:30720',
         ]);
 
