@@ -189,11 +189,11 @@
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
-        width: 3rem;
-        height: 3rem;
+        width: 2.25rem;
+        height: 2.25rem;
         padding: 0;
         border: 0;
-        border-radius: 0.75rem;
+        border-radius: 0.3125rem;
         background: #e50077;
         box-shadow: 0 0.5rem 1rem rgba(229, 0, 119, 0.18);
         transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
@@ -213,8 +213,8 @@
 
     .cookie-consent-trigger img {
         display: block;
-        width: 1.125rem;
-        height: 1.125rem;
+        width: 1rem;
+        height: 1rem;
         flex-shrink: 0;
     }
 

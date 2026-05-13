@@ -291,7 +291,13 @@
                            </span>
                     </a>
                     <div class="card-body catalog-grid-card__body py-2 d-flex flex-column">
-                        <h3 class="product-title catalog-grid-card__title fs-sm mt-2 mb-1"><a :href="origin + product.url">{{ product.name }}</a></h3>
+                        <div class="d-flex flex-wrap justify-content-between align-items-start pb-1">
+                            <div class="text-muted fs-xs me-1 catalog-grid-card__meta">
+                                <a v-if="getProductAuthorUrl(product)" class="product-meta fw-medium" :href="getProductAuthorUrl(product)">{{ getProductAuthorTitle(product) }}</a>
+                                <span v-else class="product-meta fw-medium">{{ getProductAuthorTitle(product) }}</span>
+                            </div>
+                        </div>
+                        <h3 class="product-title catalog-grid-card__title fs-sm mt-0 mb-1"><a :href="origin + product.url">{{ product.name }}</a></h3>
                         <div v-if="getReviewsCount(product)" class="d-flex align-items-center mb-1">
                             <div class="star-rating" :aria-label="'Ocjena ' + formatReviewAverage(product) + ' od 5'">
                                 <i
@@ -786,6 +792,49 @@
                 }
 
                 return product.image.replace('.webp', '-thumb.webp');
+            },
+
+            /**
+             *
+             * @param product
+             * @return {Object|null}
+             */
+            getProductAuthor(product) {
+                return product && product.author ? product.author : null;
+            },
+
+            /**
+             *
+             * @param product
+             * @return {string}
+             */
+            getProductAuthorTitle(product) {
+                let author = this.getProductAuthor(product);
+
+                if (author && author.title) {
+                    return author.title;
+                }
+
+                return this.isBookmarkerListing ? 'Bookmarker' : 'Nepoznat autor';
+            },
+
+            /**
+             *
+             * @param product
+             * @return {string}
+             */
+            getProductAuthorUrl(product) {
+                let author = this.getProductAuthor(product);
+
+                if (!author || !author.url) {
+                    return '';
+                }
+
+                if (/^https?:\/\//i.test(author.url)) {
+                    return author.url;
+                }
+
+                return this.origin + String(author.url).replace(/^\/+/, '');
             },
 
             /**
@@ -1309,6 +1358,15 @@
     position: static;
     background: #e50077;
     color: #fff;
+}
+
+.catalog-grid-card__meta {
+    display: block;
+    max-width: 100%;
+    min-height: 1.1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .catalog-toolbar__filters {
