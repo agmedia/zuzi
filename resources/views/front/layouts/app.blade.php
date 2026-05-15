@@ -128,6 +128,251 @@
             display: none;
         }
 
+        .page-carousel-widget {
+            position: relative;
+        }
+
+        .page-carousel-widget--background {
+            margin-top: 1.25rem;
+            padding: 2.15rem 1.35rem 1.9rem !important;
+            border: 1px solid rgba(229, 0, 119, 0.14);
+            border-radius: .75rem;
+            background: #fff6fb;
+            box-shadow: 0 1rem 2.5rem rgba(43, 52, 69, .09), inset 0 0 0 1px rgba(255, 255, 255, .72);
+            overflow: hidden;
+        }
+
+        .page-carousel-widget--background::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: .25rem;
+            background: linear-gradient(90deg, #e50077 0%, #ff8abc 42%, #73c7f7 100%);
+        }
+
+        .page-carousel-widget--background::after {
+            content: "";
+            position: absolute;
+            top: .25rem;
+            bottom: 0;
+            left: 0;
+            width: .28rem;
+            background: #e50077;
+            opacity: .7;
+        }
+
+        .page-carousel-widget--container:not(.page-carousel-widget--background) {
+            padding: 1.5rem 1.25rem !important;
+            border: 1px solid rgba(43, 52, 69, .08);
+            border-radius: .75rem;
+            background: #fff;
+            box-shadow: 0 .75rem 2rem rgba(43, 52, 69, .08);
+        }
+
+        .page-carousel-widget__header {
+            gap: 1rem;
+        }
+
+        .review-widget-heading {
+            min-width: 0;
+        }
+
+        .review-widget-cta {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .review-widget-cta .btn {
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .review-widget-quote {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            height: 100%;
+            margin-bottom: 0;
+        }
+
+        .review-widget-card {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: auto !important;
+            min-height: 0 !important;
+            padding: 1.35rem 1.25rem 1.2rem;
+            border: 1px solid rgba(var(--cz-primary-rgb), .08) !important;
+            border-radius: .65rem;
+            background: #fff;
+            overflow: hidden;
+            transition: transform .18s ease, border-color .18s ease;
+        }
+
+        .review-widget-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: .22rem;
+            border-radius: .65rem .65rem 0 0;
+            background: rgba(var(--cz-primary-rgb), .08);
+        }
+
+        .review-widget-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(var(--cz-primary-rgb), .12) !important;
+        }
+
+        .review-widget-product-head {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            margin-bottom: .75rem;
+        }
+
+        .review-widget-product-image-link {
+            display: block !important;
+            flex: 0 0 20% !important;
+            width: 20% !important;
+            max-width: 3.5rem !important;
+            min-width: 2.25rem;
+        }
+
+        .review-widget-product-image {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            aspect-ratio: 2 / 3;
+            object-fit: contain;
+            border-radius: .35rem;
+
+
+        }
+
+        .review-widget-product-copy {
+            flex: 1 1 auto;
+            min-width: 0;
+            padding-top: .1rem;
+        }
+
+        .review-widget-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 0;
+            color: #e50077;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .review-widget-title.mb-2 {
+            margin-bottom: .35rem !important;
+        }
+
+        .review-widget-title:hover {
+            color: #c80068;
+        }
+
+        .review-widget-stars .star-rating {
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .review-widget-stars .star-rating-icon {
+            margin-right: .1rem;
+            color: #f59f56;
+        }
+
+        .review-widget-message {
+            display: -webkit-box !important;
+            -webkit-line-clamp: 8;
+            -webkit-box-orient: vertical;
+            overflow: hidden !important;
+            color: #4b566b;
+            line-height: 1.6;
+            height: auto !important;
+            max-height: 12.8em !important;
+            min-height: 0;
+            text-overflow: ellipsis;
+        }
+
+        .review-widget-card-footer {
+            gap: .75rem;
+            margin-top: 1.15rem !important;
+            border-top: 1px solid rgba(var(--cz-primary-rgb), .1);
+        }
+
+        .review-widget-author {
+            flex: 1 1 0;
+            min-width: 0;
+            color: #373f50;
+            font-weight: 700;
+        }
+
+        .review-widget-author i {
+            color: #e50077;
+        }
+
+        .review-widget-link {
+            color: #e50077;
+            font-size: inherit;
+            font-weight: 700;
+            line-height: 1.2;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .review-widget-link:hover {
+            color: #c80068;
+        }
+
+        .review-widget-masonry {
+            column-count: 4;
+            column-gap: 1.25rem;
+        }
+
+        .review-widget-masonry-item {
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 1rem;
+            break-inside: avoid;
+        }
+
+        @media (max-width: 767.98px) {
+            .page-carousel-widget--background,
+            .page-carousel-widget--container:not(.page-carousel-widget--background) {
+                margin-right: -.25rem;
+                margin-left: -.25rem;
+                padding-right: .95rem !important;
+                padding-left: .95rem !important;
+            }
+
+            .review-widget-cta {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .review-widget-cta .btn {
+                width: 100%;
+            }
+
+            .review-widget-card {
+                height: auto !important;
+                min-height: 0 !important;
+            }
+
+            .review-widget-masonry {
+                column-count: 1;
+            }
+        }
+
     </style>
     @if (config('app.env') == 'production')
         <script>
@@ -463,6 +708,54 @@
             }
         }
     }
+</script>
+
+<script>
+    (function () {
+        if (window.reviewWidgetLoadMoreBound) {
+            return;
+        }
+
+        window.reviewWidgetLoadMoreBound = true;
+
+        document.addEventListener('click', function (event) {
+            var button = event.target.closest('[data-review-load-more]');
+
+            if (!button) {
+                return;
+            }
+
+            var section = button.closest('.review-widget-section');
+            var masonry = section ? section.querySelector('[data-review-masonry]') : null;
+
+            if (!masonry) {
+                return;
+            }
+
+            var batchSize = parseInt(masonry.getAttribute('data-review-batch') || '8', 10);
+            var hiddenItems = Array.prototype.slice.call(masonry.querySelectorAll('[data-review-item][hidden]'));
+            var nextItems = hiddenItems.slice(0, batchSize);
+
+            nextItems.forEach(function (item) {
+                item.removeAttribute('hidden');
+            });
+
+            if (hiddenItems.length <= batchSize) {
+                button.parentElement.hidden = true;
+            }
+
+            if (nextItems[0]) {
+                var targetTop = nextItems[0].getBoundingClientRect().top + window.pageYOffset;
+                var desiredTop = Math.max(0, targetTop - 120);
+                var delta = desiredTop - window.pageYOffset;
+
+                window.scrollBy({
+                    top: Math.max(-80, Math.min(delta, Math.round(window.innerHeight * 0.22))),
+                    behavior: 'smooth'
+                });
+            }
+        });
+    })();
 </script>
 
 @stack('js_after')

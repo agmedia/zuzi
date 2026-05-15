@@ -52,83 +52,37 @@
             992 => ['items' => 3, 'gutter' => 30],
         ],
     ];
+    $isReviewWidget = ($data['tablename'] ?? null) === 'reviews';
+    $hasBackground = ! empty($data['background']);
+    $hasContainer = ! empty($data['container']);
+    $customCss = trim((string) ($data['css'] ?? ''));
+    $reviewInitialLimit = 8;
+    $reviewBatchSize = 8;
+    $reviewItems = $isReviewWidget
+        ? collect($data['items'] ?? [])->sortByDesc('created_at')->values()
+        : collect();
+    $sectionClasses = collect([
+        'page-carousel-widget',
+        'py-0',
+        'pt-5',
+        $customCss ?: null,
+        $hasBackground ? 'page-carousel-widget--background' : null,
+        $hasContainer ? 'page-carousel-widget--container' : null,
+        $isReviewWidget ? 'review-widget-section' : null,
+        $isReviewWidget && $hasBackground ? 'review-widget-section--background' : null,
+    ])->filter()->implode(' ');
 @endphp
-@once
-    @push('css_after')
-        <style>
-            .review-widget-carousel .tns-slider {
-                display: flex;
-                align-items: stretch;
-            }
-
-            .review-widget-carousel .tns-item {
-                display: flex;
-                height: auto !important;
-            }
-
-            .review-widget-carousel .tns-item > * {
-                display: flex;
-                width: 100%;
-            }
-
-            .review-widget-slide {
-                display: flex;
-                flex: 1 1 auto;
-                width: 100%;
-            }
-
-            .review-widget-quote {
-                display: flex;
-                flex-direction: column;
-                flex: 1 1 auto;
-                height: 100%;
-                margin-bottom: 0;
-            }
-
-            .review-widget-card {
-                flex: 1 1 auto;
-                display: flex;
-                flex-direction: column;
-                height: 100%;
-                min-height: 12.5rem;
-            }
-
-            .review-widget-title {
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-                min-height: 2.8rem;
-                font-weight: 700;
-                line-height: 1.4;
-            }
-
-            .review-widget-message {
-                display: -webkit-box;
-                -webkit-line-clamp: 4;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-                line-height: 1.6;
-                min-height: 6.4em;
-            }
-
-            .review-widget-carousel [data-controls] {
-                z-index: 2;
-            }
-
-            @media (max-width: 767.98px) {
-                .review-widget-card {
-                    min-height: 11.5rem;
-                }
-            }
-        </style>
-    @endpush
-@endonce
-<section class=" py-0 pt-5" >
-    <div class="d-flex flex-wrap justify-content-between align-items-center pt-1  pb-3 mb-2">
-        <h2 class="h3 mb-0 pt-0 font-title me-3"> {{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h2>
+<section class="{{ $sectionClasses }}">
+    <div class="page-carousel-widget__header d-flex flex-wrap justify-content-between align-items-center pt-1 pb-3 mb-2">
+        <div class="{{ $isReviewWidget ? 'review-widget-heading' : '' }}">
+            <h2 class="h3 mb-0 pt-0 font-title me-3"> {{ $data['title'] }}  @if($data['subtitle'])  <span class="d-block fw-normal  text-dark opacity-80 mt-1 fs-base">{{ $data['subtitle'] }}</span> @endif</h2>
+        </div>
         @if ($data['tablename'] == 'blog')
             <a class="btn btn-primary btn-sm btn-shadow mt-0" href="/blog"><span class="d-none d-sm-inline-block">Pogledajte sve</span> <i class="ci-arrow-right "></i></a>
+        @elseif ($isReviewWidget)
+            <div class="review-widget-cta">
+                <a class="btn btn-primary btn-sm btn-shadow" href="{{ route('moje-narudzbe') }}">Napiši recenziju</a>
+            </div>
         @endif
     </div>
 
@@ -159,55 +113,90 @@
 
     @elseif ($data['tablename'] == 'reviews')
 
-        <div class="tns-carousel tns-controls-outside widget-touch-carousel widget-card-carousel review-widget-carousel">
-            <div class="tns-carousel-inner" data-carousel-options='@json($reviewWidgetCarouselOptions)'>
-                @foreach ($data['items'] as $review)
-                    @php
-                        $reviewProduct = $review->product;
-                        $reviewProductTitle = $reviewProduct->name ?? 'Obrisan artikl';
-                        $reviewUrl = $reviewProduct && filled($reviewProduct->url)
-                            ? url($reviewProduct->url)
-                            : null;
-                    @endphp
-                    <div class="review-widget-slide">
-                        <blockquote class="mb-2 review-widget-quote">
-                            <div class="card card-body fs-md text-muted border-0 shadow-sm review-widget-card">
-                                @if ($reviewUrl)
-                                    <a class="review-widget-title text-decoration-none mb-2" href="{{ $reviewUrl }}">
-                                        {{ $reviewProductTitle }}
+        <div class="review-widget-masonry" data-review-masonry data-review-batch="{{ $reviewBatchSize }}" style="columns: 15rem 4; column-gap: 1.25rem;">
+            @foreach ($reviewItems as $review)
+                @php
+                    $reviewProduct = $review->product;
+                    $reviewProductTitle = $reviewProduct->name ?? 'Obrisan artikl';
+                    $reviewUrl = $reviewProduct && filled($reviewProduct->url)
+                        ? url($reviewProduct->url)
+                        : null;
+                    $reviewReviewsUrl = $reviewUrl ? $reviewUrl . '#reviews' : null;
+                    $reviewProductImage = null;
+
+                    if ($reviewProduct && filled($reviewProduct->image ?? null)) {
+                        $reviewProductImage = (string) $reviewProduct->image;
+
+                        if (! \Illuminate\Support\Str::contains($reviewProductImage, '-thumb.')) {
+                            $reviewProductImage = preg_replace('/\.(jpe?g|png|webp)$/i', '-thumb.webp', $reviewProductImage);
+                        }
+
+                        if (! \Illuminate\Support\Str::startsWith($reviewProductImage, ['http://', 'https://'])) {
+                            $reviewProductImage = rtrim((string) config('settings.images_domain'), '/') . '/' . ltrim($reviewProductImage, '/');
+                        }
+                    }
+
+                    $reviewProductImageAlt = 'Naslovnica knjige ' . $reviewProductTitle;
+                @endphp
+                <div class="review-widget-masonry-item" data-review-item @if($loop->index >= $reviewInitialLimit) hidden @endif style="display: inline-block; width: 100%; margin-bottom: 1rem; break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid;">
+                    <blockquote class="review-widget-quote">
+                        <div class="card card-body fs-md text-muted shadow review-widget-card">
+                            <div class="review-widget-product-head" style="display: flex; align-items: flex-start; gap: .75rem; margin-bottom: .75rem;">
+                                @if ($reviewProductImage)
+                                    <a class="review-widget-product-image-link" href="{{ $reviewReviewsUrl ?: $reviewUrl }}" style="display: block; flex: 0 0 20%; width: 20%; max-width: 3.5rem; min-width: 2.25rem;">
+                                        <img class="review-widget-product-image" loading="lazy" src="{{ $reviewProductImage }}" alt="{{ $reviewProductImageAlt }}" style="display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: contain;">
                                     </a>
-                                @else
-                                    <div class="review-widget-title text-muted mb-2">{{ $reviewProductTitle }}</div>
                                 @endif
 
-                                <div class="mb-2">
-                                <div class="star-rating"> @for ($i = 0; $i < 5; $i++)
-                                        @if (floor($review->stars) - $i >= 1)
-                                            {{--Full Start--}}
-                                            <i class="star-rating-icon ci-star-filled active"></i>
-                                        @elseif ($review->stars - $i > 0)
-                                            {{--Half Start--}}
-                                            <i class="star-rating-icon ci-star"></i>
-                                        @else
-                                            {{--Empty Start--}}
-                                            <i class="star-rating-icon ci-star"></i>
-                                        @endif
-                                    @endfor
-                                </div>
-                                </div>
+                                <div class="review-widget-product-copy" style="flex: 1 1 auto; min-width: 0; padding-top: .1rem;">
+                                    @if ($reviewReviewsUrl)
+                                        <a class="review-widget-title text-decoration-none mb-1" href="{{ $reviewReviewsUrl }}">
+                                            {{ $reviewProductTitle }}
+                                        </a>
+                                    @else
+                                        <div class="review-widget-title text-muted mb-1">{{ $reviewProductTitle }}</div>
+                                    @endif
 
-                                <div class="review-widget-message">{{ strip_tags($review->message) }}</div>
-                            </div>
-                            <footer class="d-flex justify-content-center align-items-center pt-4 mt-auto">
-                                <div class="ps-3">
-                                    <p class="fs-sm fw-bold text-default mb-n1">{{ $review->fname }} {{ $review->lname }}</p>
+                                    <div class="review-widget-stars">
+                                        <div class="star-rating"> @for ($i = 0; $i < 5; $i++)
+                                            @if (floor($review->stars) - $i >= 1)
+                                                {{--Full Start--}}
+                                                <i class="star-rating-icon ci-star-filled active"></i>
+                                            @elseif ($review->stars - $i > 0)
+                                                {{--Half Start--}}
+                                                <i class="star-rating-icon ci-star"></i>
+                                            @else
+                                                {{--Empty Start--}}
+                                                <i class="star-rating-icon ci-star"></i>
+                                            @endif
+                                        @endfor
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div class="review-widget-message" style="display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6; max-height: 12.8em; text-overflow: ellipsis;">{{ strip_tags($review->message) }}</div>
+                            <footer class="review-widget-card-footer d-flex flex-wrap justify-content-between align-items-center pt-3 mt-auto">
+                                <span class="review-widget-author d-inline-flex align-items-center">
+                                    <i class="ci-user me-2"></i>{{ $review->fname }} {{ $review->lname }}
+                                </span>
+                                @if ($reviewReviewsUrl)
+                                    <a class="review-widget-link text-decoration-none" href="{{ $reviewReviewsUrl }}" style="line-height: 1.2; text-align: right;">Pročitaj više</a>
+                                @endif
                             </footer>
-                        </blockquote>
-                    </div>
+                        </div>
+                    </blockquote>
+                </div>
                 @endforeach
-            </div>
         </div>
+
+        @if ($reviewItems->count() > $reviewInitialLimit)
+            <div class="text-center pt-2">
+                <button class="btn btn-outline-primary" type="button" data-review-load-more>
+                    Vidi još
+                </button>
+            </div>
+        @endif
 
     @else
         <div class="tns-carousel pb-5 widget-touch-carousel widget-card-carousel">

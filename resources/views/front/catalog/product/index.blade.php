@@ -101,25 +101,30 @@
 
         .review-promo-banner {
             position: relative;
-            background: linear-gradient(135deg, rgba(229, 0, 119, 0.05), rgba(255, 255, 255, 0.98));
-            border: 1px solid rgba(229, 0, 119, 0.12);
-            border-radius: 1rem;
-            box-shadow: none;
             overflow: hidden;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 0.4375rem;
+            background: #fff;
+            box-shadow: 0 0.25rem 0.5625rem -0.0625rem rgba(0, 0, 0, 0.03), 0 0.275rem 1.25rem -0.0625rem rgba(0, 0, 0, 0.05);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
 
         .review-promo-banner::before {
             content: "";
             position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
+            inset: 0 auto 0 0;
             width: 4px;
-            background: linear-gradient(180deg, #e50077 0%, #ff6cae 100%);
+            background: #e50077;
+        }
+
+        .review-promo-banner:hover {
+            transform: translateY(-1px);
+            border-color: rgba(15, 23, 42, 0.12);
+            box-shadow: 0 0.3rem 1.525rem -0.375rem rgba(0, 0, 0, 0.1);
         }
 
         .review-promo-banner__body {
-            padding: 1.5rem 1.75rem 1.5rem 1.9rem;
+            padding: 1rem 1.15rem 1rem 1.35rem;
         }
 
         .review-promo-banner__copy {
@@ -128,64 +133,60 @@
         }
 
         .review-promo-banner__copy h3 {
-            color: #2f3447;
-        }
-
-        .review-promo-banner__copy p {
-            color: #667085;
-            max-width: 44rem;
+            color: #2b3445;
+            font-size: 1.2rem;
+            line-height: 1.2;
         }
 
         .review-promo-banner__meta {
-            color: #3c4257;
-            font-size: 1rem;
-            line-height: 1.6;
+            color: #6b7280;
+            font-size: 0.95rem;
+            line-height: 1.45;
             max-width: 42rem;
         }
 
         .review-promo-banner__kicker {
             display: inline-flex;
             align-items: center;
-            gap: 0.45rem;
-            margin-bottom: 0.75rem;
-            padding: 0.4rem 0.85rem;
-            border: 1px solid rgba(229, 0, 119, 0.16);
+            gap: 0.38rem;
+            margin-bottom: 0.45rem;
+            padding: 0.32rem 0.65rem;
+            border: 1px solid rgba(229, 0, 119, 0.12);
             border-radius: 999px;
+            background: #ffffff;
             color: #e50077;
-            background: rgba(255, 255, 255, 0.88);
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
         }
 
         .review-promo-banner__actions {
-            flex: 0 0 auto;
+            flex-shrink: 0;
         }
 
         .review-promo-banner__pill {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-height: 2.35rem;
-            padding: 0.55rem 1rem;
-            border: 1px solid rgba(229, 0, 119, 0.18);
+            min-height: 2rem;
+            padding: 0.42rem 0.8rem;
+            border: 1px solid rgba(229, 0, 119, 0.12);
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.94);
+            background: #fff;
             color: #e50077;
-            font-size: 0.92rem;
-            font-weight: 600;
-            line-height: 1.2;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1;
             white-space: nowrap;
         }
 
         .review-promo-banner__cta {
             min-width: 240px;
-            min-height: 2.75rem;
-            padding: 0.8rem 1.3rem;
-            border-radius: 0.75rem;
+            padding: 0.72rem 0.95rem;
             box-shadow: none;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .blog-review-spotlight {
