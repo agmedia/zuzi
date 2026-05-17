@@ -292,8 +292,8 @@
 
         .product-review-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
-            gap: 0.85rem;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 1rem;
         }
 
         .product-review-card {
