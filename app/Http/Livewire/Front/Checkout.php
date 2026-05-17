@@ -185,7 +185,7 @@ class Checkout extends Component
             }
         }
 
-        $this->changeStep($this->step);
+        $this->changeStep($this->step, false);
     }
 
     public function updatingComment($value)
@@ -259,7 +259,7 @@ class Checkout extends Component
     /**
      * @param string $step
      */
-    public function changeStep(string $step = '')
+    public function changeStep(string $step = '', bool $redirect = true)
     {
         $this->checkCart();
         CheckoutSession::setNewsletter((bool) $this->newsletter);
@@ -288,6 +288,7 @@ class Checkout extends Component
         if (in_array($step, ['dostava', 'placanje']) && $this->cart) {
             $this->setAddress($this->address);
             $this->validate($this->address_rules);
+            $this->selectSingleShippingMethod($this->shippingMethodsForCurrentAddress());
 
             if ($step == 'dostava' && $this->shipping != '') {
                 $this->checkShipping($this->shipping);
@@ -323,6 +324,11 @@ class Checkout extends Component
         $this->step = $step;
 
         CheckoutSession::setStep($step);
+        $this->dispatchBrowserEvent('checkout-step-changed');
+
+        if ($redirect) {
+            return redirect()->route('naplata', ['step' => $step]);
+        }
     }
 
 
@@ -411,15 +417,7 @@ class Checkout extends Component
      */
     public function render()
     {
-        if (trim((string) ($this->address['state'] ?? '')) === '') {
-            $this->address['state'] = self::DEFAULT_COUNTRY;
-        }
-
-        $geo = (new GeoZone())->findState($this->address['state'] ?: 'Croatia');
-
-        if ( ! isset($geo->id)) {
-            $geo->id = 1;
-        }
+        $geo = $this->currentGeoZone();
 
         if ($this->giftVoucherOnly && ! $this->shipping) {
             $this->shipping = GiftVoucherService::SHIPPING_CODE;
@@ -433,8 +431,11 @@ class Checkout extends Component
             }
         }
 
+        $shippingMethods = (new ShippingMethod())->findGeo($geo->id);
+        $this->selectSingleShippingMethod($shippingMethods);
+
         return view('livewire.front.checkout', [
-            'shippingMethods' => (new ShippingMethod())->findGeo($geo->id),
+            'shippingMethods' => $shippingMethods,
             'paymentMethods' => (new PaymentMethod())->findGeo($geo->id)->checkShipping($this->shipping)->resolve(),
             'countries' => Country::list(),
             'cartSubtotal' => $this->cart ? (float) $this->cart->get()['subtotal'] : 0.0,
@@ -576,6 +577,55 @@ class Checkout extends Component
         } else {
             $this->gdl_payment = 'kartica';
         }
+    }
+
+
+    /**
+     * Automatically select shipping when there is only one available option.
+     */
+    private function selectSingleShippingMethod($shippingMethods): void
+    {
+        if ($shippingMethods->count() !== 1) {
+            return;
+        }
+
+        $method = $shippingMethods->first();
+
+        if (! $method || $this->shipping === $method->code) {
+            return;
+        }
+
+        $this->shipping = $method->code;
+        $this->checkShipping($this->shipping);
+        CheckoutSession::setShipping($this->shipping);
+    }
+
+
+    /**
+     * Resolve the shipping methods available for the currently selected country.
+     */
+    private function shippingMethodsForCurrentAddress()
+    {
+        return (new ShippingMethod())->findGeo($this->currentGeoZone()->id);
+    }
+
+
+    /**
+     * Resolve the current checkout geo zone.
+     */
+    private function currentGeoZone(): \stdClass
+    {
+        if (trim((string) ($this->address['state'] ?? '')) === '') {
+            $this->address['state'] = self::DEFAULT_COUNTRY;
+        }
+
+        $geo = (new GeoZone())->findState($this->address['state'] ?: self::DEFAULT_COUNTRY);
+
+        if ( ! isset($geo->id)) {
+            $geo->id = 1;
+        }
+
+        return $geo;
     }
 
 
