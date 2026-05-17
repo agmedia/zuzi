@@ -170,7 +170,8 @@
                                 </td>
                                 <td class="text-right">
                                     @php($sentPromoAction = $sentPromoActions->get($order->id))
-                                    @php($canSendUnfinishedPromo = ! $sentPromoAction && filled($order->payment_email))
+                                    @php($hasAppliedCoupon = $appliedCouponOrderIds->contains((int) $order->id))
+                                    @php($canSendUnfinishedPromo = ! $sentPromoAction && ! $hasAppliedCoupon && filled($order->payment_email))
 
                                     @if ($sentPromoAction)
                                         <div class="d-inline-flex flex-column align-items-end mr-1">

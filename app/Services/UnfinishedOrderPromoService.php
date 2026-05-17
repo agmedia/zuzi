@@ -6,6 +6,8 @@ use App\Models\Back\Marketing\Action;
 use App\Models\Back\Orders\Order;
 use App\Models\GiftVoucher;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class UnfinishedOrderPromoService
@@ -58,9 +60,57 @@ class UnfinishedOrderPromoService
             ->first();
     }
 
+    public function shouldSuppressSendButtonForOrder(Order $order): bool
+    {
+        return $this->orderIdsWithAppliedCoupons(collect([(int) $order->id]))->contains((int) $order->id);
+    }
+
+    public function orderIdsWithAppliedCoupons(Collection $orderIds): Collection
+    {
+        $orderIds = $orderIds
+            ->map(fn ($orderId) => (int) $orderId)
+            ->filter(fn ($orderId) => $orderId > 0)
+            ->unique()
+            ->values();
+
+        if ($orderIds->isEmpty()) {
+            return collect();
+        }
+
+        $couponActionTitles = $this->couponActionTitles();
+
+        return DB::table('order_total as totals')
+            ->whereIn('totals.order_id', $orderIds->all())
+            ->where('totals.code', 'special')
+            ->where(function ($query) use ($couponActionTitles) {
+                $query->where('totals.title', 'like', 'Kupon %');
+
+                if ($couponActionTitles->isNotEmpty()) {
+                    $query->orWhereIn('totals.title', $couponActionTitles->all());
+                }
+            })
+            ->pluck('totals.order_id')
+            ->map(fn ($orderId) => (int) $orderId)
+            ->unique()
+            ->values();
+    }
+
     public function isAllowedDiscount(int $discount): bool
     {
         return in_array($discount, self::ALLOWED_DISCOUNTS, true);
+    }
+
+    private function couponActionTitles(): Collection
+    {
+        return Action::query()
+            ->where('group', 'total')
+            ->whereNotNull('coupon')
+            ->where('coupon', '!=', '')
+            ->pluck('title')
+            ->map(fn ($title) => trim((string) $title))
+            ->filter()
+            ->unique()
+            ->values();
     }
 
     private function generateUniqueCode(int $discount): string

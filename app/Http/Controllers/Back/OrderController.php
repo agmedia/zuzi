@@ -43,6 +43,7 @@ class OrderController extends Controller
         $statuses = Settings::get('order', 'statuses');
         $promoService = app(UnfinishedOrderPromoService::class);
         $sentPromoActions = collect();
+        $appliedCouponOrderIds = collect();
 
         if ($orders->count()) {
             $promoTitles = $orders->getCollection()
@@ -61,9 +62,13 @@ class OrderController extends Controller
 
                     return $action ? [$listedOrder->id => $action] : [];
                 });
+
+            $appliedCouponOrderIds = $promoService->orderIdsWithAppliedCoupons(
+                $orders->getCollection()->pluck('id')
+            );
         }
 
-        return view('back.order.index', compact('orders', 'statuses', 'sentPromoActions'));
+        return view('back.order.index', compact('orders', 'statuses', 'sentPromoActions', 'appliedCouponOrderIds'));
     }
 
 
@@ -336,6 +341,10 @@ class OrderController extends Controller
 
         if ($existingPromoAction) {
             return response()->json(['error' => 'Promo mail je već poslan za ovu narudžbu.'], 422);
+        }
+
+        if ($unfinishedOrderPromoService->shouldSuppressSendButtonForOrder($order)) {
+            return response()->json(['error' => 'Kupac na ovoj narudžbi već koristi kod.'], 422);
         }
 
         try {

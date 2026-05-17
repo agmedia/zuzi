@@ -114,7 +114,7 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
             return $mail->hasTo('promo@example.com')
                 && (int) $mail->order->id === $orderId
                 && (int) $mail->promoAction->id === (int) $action->id
-                && str_contains($rendered, 'TVOJA NAGRADA: -5% na sljedeću kupnju')
+                && str_contains($rendered, 'TVOJA NAGRADA: -5% na sve artikle')
                 && str_contains($rendered, (string) $action->coupon);
         });
 
@@ -157,7 +157,7 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
             ])->render();
 
             return $mail->build()->subject === 'Tvoja nagrada čeka 🎁 (vrijedi još kratko)'
-                && str_contains($rendered, 'hvala ti na kupnji na Zuzi')
+                && str_contains($rendered, 'Hvala ti na nedavnoj kupnji na Zuzi')
                 && ! str_contains($rendered, 'primijetili smo da si ostavio/la nekoliko odličnih naslova u svojoj košarici');
         });
     }
@@ -196,6 +196,43 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_unfinished_order_promo_email_cannot_be_sent_when_order_already_uses_coupon(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+        $orderId = $this->createOrder(config('settings.order.status.unfinished'), 'promo@example.com');
+        $this->addOrderTotal($orderId, 'special', 'Kupon HVALA10-POSTOJI', -2.50);
+
+        $response = $this->actingAs($user)->postJson(route('api.order.send.unfinished-promo'), [
+            'order_id' => $orderId,
+            'discount' => 10,
+        ]);
+
+        $response->assertStatus(422)->assertJson([
+            'error' => 'Kupac na ovoj narudžbi već koristi kod.',
+        ]);
+
+        $this->assertNull(Action::query()
+            ->where('title', 'Promo za nedovrsenu narudzbu #' . $orderId)
+            ->first());
+        Mail::assertNotSent(UnfinishedOrderPromo::class);
+    }
+
+    public function test_orders_index_hides_unfinished_promo_button_when_order_already_uses_coupon(): void
+    {
+        $user = User::factory()->create();
+        $blockedOrderId = $this->createOrder(config('settings.order.status.unfinished'), 'coupon@example.com');
+        $availableOrderId = $this->createOrder(config('settings.order.status.unfinished'), 'available@example.com');
+        $this->addOrderTotal($blockedOrderId, 'special', 'Kupon HVALA10-POSTOJI', -2.50);
+
+        $response = $this->actingAs($user)->get(route('orders'));
+
+        $response->assertOk();
+        $response->assertDontSee('data-unfinished-promo-btn="' . $blockedOrderId . '"', false);
+        $response->assertSee('data-unfinished-promo-btn="' . $availableOrderId . '"', false);
+    }
+
     private function createOrder(int $statusId, string $email): int
     {
         return (int) DB::table('orders')->insertGetId([
@@ -230,6 +267,19 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
             'tracking_code' => '',
             'shipped' => false,
             'printed' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addOrderTotal(int $orderId, string $code, string $title, float $value): void
+    {
+        DB::table('order_total')->insert([
+            'order_id' => $orderId,
+            'code' => $code,
+            'title' => $title,
+            'value' => $value,
+            'sort_order' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
