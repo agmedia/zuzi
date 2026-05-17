@@ -857,7 +857,9 @@
            <div class="accordion-collapse collapse" id="localStore" data-bs-parent="#productPanels">
                <div class="accordion-body fs-sm">
 
-                   @php($productLanguage = $prod->language ?: ($prod->origin === 'Engleski' ? $prod->origin : null))
+                   @php
+                       $productLanguage = $prod->language ?: ($prod->origin === 'Engleski' ? $prod->origin : null);
+                   @endphp
                    @foreach($payment_methods as $payment_method)
                        @if($productLanguage == 'Engleski' and $payment_method->code == 'cod' )
 
@@ -971,8 +973,10 @@
                <div class="col-lg-5 col-sm-5 ">
                    <h3 class="h6">Dodatne informacije</h3>
                    <ul class="list-unstyled fs-sm pb-2">
-                       @php($productLanguage = $prod->language ?: ($prod->origin === 'Engleski' ? $prod->origin : null))
-                       @php($productOrigin = $prod->origin === 'Engleski' && empty($prod->language) ? null : $prod->origin)
+                       @php
+                           $productLanguage = $prod->language ?: ($prod->origin === 'Engleski' ? $prod->origin : null);
+                           $productOrigin = $prod->origin === 'Engleski' && empty($prod->language) ? null : $prod->origin;
+                       @endphp
 
 
                        @if ($prod->author)
@@ -1067,15 +1071,21 @@
 
                    <div class="col-lg-8 col-md-7">
                        @for ($i = 5; $i > 0; $i--)
-                           <div class="d-flex align-items-center mb-2">
-                               <div class="text-nowrap me-3"><span class="d-inline-block align-middle text-muted">{{ $i }}</span><i class="ci-star-filled fs-xs ms-1"></i></div>
-                               <div class="w-100">
-                                   <div class="progress" style="height: 4px;">
-                                       <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $prod->percentreviews($reviews->where('stars', $i)->count(), $reviewsCount) }}%;" aria-valuenow="{{ $prod->percentreviews($reviews->where('stars', $i)->count(), $reviewsCount) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                           @php
+                               $ratingCount = $reviews->where('stars', $i)->count();
+                           @endphp
+
+                           @if ($ratingCount > 0)
+                               <div class="d-flex align-items-center mb-2">
+                                   <div class="text-nowrap me-3"><span class="d-inline-block align-middle text-muted">{{ $i }}</span><i class="ci-star-filled fs-xs ms-1"></i></div>
+                                   <div class="w-100">
+                                       <div class="progress" style="height: 4px;">
+                                           <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $prod->percentreviews($ratingCount, $reviewsCount) }}%;" aria-valuenow="{{ $prod->percentreviews($ratingCount, $reviewsCount) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                       </div>
                                    </div>
+                                   <span class="text-muted ms-3">{{ $ratingCount }}</span>
                                </div>
-                               <span class="text-muted ms-3">{{ $reviews->where('stars', $i)->count() }}</span>
-                           </div>
+                           @endif
                        @endfor
                    </div>
                </div>
