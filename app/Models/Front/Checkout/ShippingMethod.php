@@ -138,6 +138,12 @@ class ShippingMethod
             return 0.0;
         }
 
+        $country_price = self::countryPrice($shipping, self::checkoutCountry());
+
+        if ($country_price !== null) {
+            return $country_price;
+        }
+
         return (float) data_get($shipping, 'data.price', 0);
     }
 
@@ -192,5 +198,62 @@ class ShippingMethod
         $custom_threshold = data_get($shipping, 'data.free_shipping_from');
 
         return $custom_threshold !== null && $custom_threshold !== '';
+    }
+
+
+    /**
+     * Resolve a country-specific shipping price when configured.
+     */
+    private static function countryPrice($shipping, ?string $country): ?float
+    {
+        $country = trim((string) $country);
+
+        if ($country === '') {
+            return null;
+        }
+
+        $prices = data_get($shipping, 'data.country_prices');
+
+        if (empty($prices)) {
+            return null;
+        }
+
+        foreach ((array) $prices as $key => $price) {
+            $price_country = $key;
+            $price_value = $price;
+
+            if (is_array($price)) {
+                $price_country = $price['country'] ?? $key;
+                $price_value = $price['price'] ?? null;
+            } elseif (is_object($price)) {
+                $price_country = $price->country ?? $key;
+                $price_value = $price->price ?? null;
+            }
+
+            if (strcasecmp(trim((string) $price_country), $country) !== 0) {
+                continue;
+            }
+
+            if ($price_value === null || $price_value === '') {
+                return null;
+            }
+
+            return (float) $price_value;
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Resolve the checkout country from the active session address.
+     */
+    private static function checkoutCountry(): ?string
+    {
+        if (! CheckoutSession::hasAddress()) {
+            return null;
+        }
+
+        return data_get(CheckoutSession::getAddress(), 'state');
     }
 }

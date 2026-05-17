@@ -49,6 +49,14 @@
                             </div>
 
                             <div class="form-group mb-4">
+                                <label>Cijene po državi <span class="small text-gray">(Ako je država dodana, koristi se ta cijena.)</span></label>
+                                <div id="gls_world-country-prices"></div>
+                                <button type="button" class="btn btn-sm btn-alt-secondary mt-2" onclick="event.preventDefault(); add_gls_world_country_price();">
+                                    Dodaj državu <i class="fa fa-plus ml-2"></i>
+                                </button>
+                            </div>
+
+                            <div class="form-group mb-4">
                                 <label for="gls_world-short-description">Kratki opis <span class="small text-gray">(Prikazuje se prilikom odabira dostave.)</span></label>
                                 <textarea class="js-maxlength form-control" id="gls_world-short-description" name="data['short_description']" rows="2" maxlength="160" data-always-show="true" data-placement="top"></textarea>
                                 <small class="form-text text-muted">
@@ -103,6 +111,66 @@
                 allowClear: true
             });
         });
+
+        function add_gls_world_country_price(country = '', price = '') {
+            let row = $(`
+                <div class="row gls-world-country-price-row mb-2">
+                    <div class="col-md-7">
+                        <select class="js-select2 form-control gls-world-country-price-country" style="width: 100%;">
+                            <option></option>
+                            @foreach ($countries as $country)
+                                <option value="{{ $country['name'] }}">{{ $country['name'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control gls-world-country-price-value" placeholder="Cijena">
+                    </div>
+                    <div class="col-md-1 text-right">
+                        <button type="button" class="btn btn-sm btn-alt-danger" onclick="event.preventDefault(); remove_gls_world_country_price(this);">
+                            <i class="fa fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `);
+
+            $('#gls_world-country-prices').append(row);
+
+            row.find('.gls-world-country-price-country').val(country).select2({
+                placeholder: 'Država',
+                width: '100%'
+            });
+
+            row.find('.gls-world-country-price-value').val(price);
+        }
+
+        function remove_gls_world_country_price(button) {
+            $(button).closest('.gls-world-country-price-row').remove();
+        }
+
+        function collect_gls_world_country_prices() {
+            let country_prices = {};
+
+            $('#gls_world-country-prices .gls-world-country-price-row').each(function () {
+                let country = $(this).find('.gls-world-country-price-country').val();
+                let price = $(this).find('.gls-world-country-price-value').val();
+
+                if (country && price !== '') {
+                    country_prices[country] = price;
+                }
+            });
+
+            return country_prices;
+        }
+
+        function set_gls_world_country_prices(country_prices = {}) {
+            $('#gls_world-country-prices').empty();
+
+            Object.entries(country_prices || {}).forEach(([country, price]) => {
+                add_gls_world_country_price(country, price);
+            });
+        }
+
         /**
          *
          */
@@ -114,6 +182,7 @@
                     price: $('#gls_world-price').val(),
                     time: $('#gls_world-time').val(),
                     free_shipping_from: $('#gls_world-free-shipping-from').val(),
+                    country_prices: collect_gls_world_country_prices(),
                     short_description: $('#gls_world-short-description').val(),
                     description: $('#gls_world-description').val(),
                 },
@@ -142,14 +211,13 @@
             $('#gls_world-price').val(item.data.price);
             $('#gls_world-time').val(item.data.time);
             $('#gls_world-free-shipping-from').val(item.data.free_shipping_from ?? 100);
+            set_gls_world_country_prices(item.data.country_prices ?? {});
             $('#gls_world-short-description').val(item.data.short_description);
             $('#gls_world-description').val(item.data.description);
             $('#gls_world-sort-order').val(item.sort_order);
             $('#gls_world-code').val(item.code);
 
-            if (item.status) {
-                $('#gls_world-status')[0].checked = item.status ? true : false;
-            }
+            $('#gls_world-status')[0].checked = item.status ? true : false;
         }
     </script>
 @endpush

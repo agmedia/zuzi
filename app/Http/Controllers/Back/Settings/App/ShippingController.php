@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Back\Settings\App;
 
+use App\Helpers\Country;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Settings\Faq;
 use App\Models\Back\Settings\Settings;
@@ -21,10 +22,11 @@ class ShippingController extends Controller
 
         $shippings = Settings::getList('shipping', 'list.%', false);
         $geo_zones = Settings::getList('geo_zone', 'list', false);
+        $countries = Country::list();
 
         //dd($geo_zones);
 
-        return view('back.settings.app.shipping.shipping', compact('shippings', 'geo_zones'));
+        return view('back.settings.app.shipping.shipping', compact('shippings', 'geo_zones', 'countries'));
     }
 
 
