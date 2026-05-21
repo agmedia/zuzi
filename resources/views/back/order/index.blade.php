@@ -35,6 +35,39 @@
                     </div>
                 </div>--}}
                 <div class="block-options d-flex align-items-center flex-nowrap">
+                    <div class="btn-group mr-2">
+                        <button
+                            type="button"
+                            class="btn btn-alt-primary d-inline-flex align-items-center justify-content-center px-2 px-sm-3"
+                            id="bulk-promo-mail-button"
+                            data-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            title="Masovni promo mail"
+                        >
+                            <i class="fa fa-envelope mr-sm-1"></i>
+                            <span class="d-none d-sm-inline">Masovni mail</span>
+                            <i class="fa fa-angle-down ml-1"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right p-3" style="min-width: 260px;">
+                            <div class="form-group mb-3">
+                                <label class="font-size-sm mb-1" for="bulkPromoDelay">Razmak slanja</label>
+                                <select class="form-control form-control-sm" id="bulkPromoDelay">
+                                    <option value="3">3 sekunde</option>
+                                    <option value="5" selected>5 sekundi</option>
+                                    <option value="8">8 sekundi</option>
+                                    <option value="10">10 sekundi</option>
+                                </select>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            @foreach (\App\Services\UnfinishedOrderPromoService::ALLOWED_DISCOUNTS as $discount)
+                                <a class="dropdown-item d-flex align-items-center justify-content-between" href="javascript:void(0)" onclick="sendBulkUnfinishedPromo({{ $discount }})">
+                                    <span>Pošalji promo mail</span>
+                                    <span class="badge badge-primary">-{{ $discount }}%</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
                     <div class="d-flex align-items-center flex-nowrap mr-2">
                         <a class="btn {{ request()->boolean('gift_wrap') ? 'btn-primary' : 'btn-light' }} d-inline-flex align-items-center justify-content-center mr-2 px-2 px-sm-3"
                            title="Poklon zamatanje"
@@ -94,6 +127,15 @@
                 <!-- END Search Form -->
             </div>
             <div class="block-content">
+                <div id="bulkPromoProgress" class="alert alert-info d-none" role="alert">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span id="bulkPromoProgressText" class="font-w600">Slanje mailova...</span>
+                        <span id="bulkPromoProgressCount" class="font-size-sm"></span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div id="bulkPromoProgressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
                 <!-- All Orders Table -->
                 <div class="table-responsive">
                     <table class="table table-borderless table-striped table-vcenter font-size-sm">
@@ -120,11 +162,14 @@
                         </thead>
                         <tbody>
                         @forelse ($orders->sortByDesc('id') as $order)
+                            @php($sentPromoAction = $sentPromoActions->get($order->id))
+                            @php($hasAppliedCoupon = $appliedCouponOrderIds->contains((int) $order->id))
+                            @php($canSendUnfinishedPromo = ! $sentPromoAction && ! $hasAppliedCoupon && filled($order->payment_email))
                             <tr>
                                 <td class="text-center">
                                     <div class="form-group">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="{{ $order->id }}" id="status[{{ $order->id }}]" name="status">
+                                            <input class="form-check-input" type="checkbox" value="{{ $order->id }}" id="status[{{ $order->id }}]" name="status" data-bulk-promo-checkbox data-can-unfinished-promo="{{ $canSendUnfinishedPromo ? '1' : '0' }}">
                                         </div>
                                     </div>
                                 </td>
@@ -169,10 +214,6 @@
                                     @endif
                                 </td>
                                 <td class="text-right">
-                                    @php($sentPromoAction = $sentPromoActions->get($order->id))
-                                    @php($hasAppliedCoupon = $appliedCouponOrderIds->contains((int) $order->id))
-                                    @php($canSendUnfinishedPromo = ! $sentPromoAction && ! $hasAppliedCoupon && filled($order->payment_email))
-
                                     @if ($sentPromoAction)
                                         <div class="d-inline-flex flex-column align-items-end mr-1">
                                             <span class="badge badge-success">Poslano -{{ (int) $sentPromoAction->discount }}%</span>
@@ -208,7 +249,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td class="text-center font-size-sm" colspan="8">
+                                <td class="text-center font-size-sm" colspan="11">
                                     <label>Nema narudžbi...</label>
                                 </td>
                             </tr>
@@ -228,6 +269,8 @@
 @push('js_after')
     <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>
     <script>
+        let bulkPromoSending = false;
+
         $(() => {
             $('#status-select').select2({
                 placeholder: 'Promjenite status'
@@ -326,8 +369,12 @@
         }
 
         function sendUnfinishedPromo(order_id, discount) {
+            if (bulkPromoSending) {
+                return;
+            }
+
             setUnfinishedPromoBtnLoading(order_id, true);
-            axios.post("{{ route('api.order.send.unfinished-promo') }}", { order_id, discount })
+            sendUnfinishedPromoRequest(order_id, discount)
                 .then(response => {
                     if (response.data.message) {
                         successToast.fire({
@@ -347,16 +394,195 @@
                 .finally(() => setUnfinishedPromoBtnLoading(order_id, false));
         }
 
+        function sendUnfinishedPromoRequest(order_id, discount) {
+            return axios.post("{{ route('api.order.send.unfinished-promo') }}", { order_id, discount });
+        }
+
+        async function sendBulkUnfinishedPromo(discount) {
+            if (bulkPromoSending) {
+                return;
+            }
+
+            const selected = getSelectedBulkPromoCheckboxes();
+            const eligible = selected.filter((checkbox) => checkbox.dataset.canUnfinishedPromo === '1');
+            const orderIds = eligible.map((checkbox) => Number(checkbox.value)).filter(Boolean);
+            const skippedCount = selected.length - eligible.length;
+
+            if (!selected.length) {
+                errorToast.fire('Odaberite barem jednu narudžbu.');
+                return;
+            }
+
+            if (!orderIds.length) {
+                errorToast.fire('Nijedna odabrana narudžba nema dostupan promo mail.');
+                return;
+            }
+
+            const delaySeconds = getBulkPromoDelaySeconds();
+            const confirmation = await confirmPopUp.fire({
+                title: 'Poslati promo mailove?',
+                text: `Slanje: ${orderIds.length}. Razmak: ${delaySeconds} sekundi. Popust: -${discount}%.`,
+                type: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Pošalji',
+                cancelButtonText: 'Odustani'
+            });
+
+            if (!confirmation.value) {
+                return;
+            }
+
+            bulkPromoSending = true;
+            setBulkPromoControls(false);
+            setBulkPromoProgress('Priprema slanja...', 0, orderIds.length);
+
+            let sentCount = 0;
+            const failures = [];
+
+            for (let index = 0; index < orderIds.length; index++) {
+                const orderId = orderIds[index];
+
+                setBulkPromoProgress(`Slanje narudžbe #${orderId}`, index, orderIds.length);
+                setUnfinishedPromoBtnLoading(orderId, true);
+
+                try {
+                    const response = await sendUnfinishedPromoRequest(orderId, discount);
+
+                    if (response.data.message) {
+                        sentCount++;
+                        markBulkPromoOrderSent(orderId);
+                    } else {
+                        failures.push(`#${orderId}: ${response.data.error || 'Greška prilikom slanja promo maila.'}`);
+                    }
+                } catch (error) {
+                    failures.push(`#${orderId}: ${error?.response?.data?.error || 'Greška prilikom slanja promo maila.'}`);
+                } finally {
+                    setUnfinishedPromoBtnLoading(orderId, false);
+                }
+
+                setBulkPromoProgress(`Poslano ${sentCount} od ${orderIds.length}`, index + 1, orderIds.length);
+
+                if (index < orderIds.length - 1) {
+                    await wait(delaySeconds * 1000);
+                }
+            }
+
+            bulkPromoSending = false;
+            setBulkPromoControls(true);
+
+            const skippedText = skippedCount ? `<br>Preskočeno: ${skippedCount}` : '';
+            const failuresText = failures.length
+                ? `<br><br><strong>Greške:</strong><br>${failures.slice(0, 8).map(escapeHtml).join('<br>')}`
+                : '';
+
+            Swal.fire({
+                type: failures.length ? 'warning' : 'success',
+                title: 'Slanje završeno',
+                html: `Poslano: ${sentCount}${skippedText}${failuresText}`,
+                confirmButtonText: 'U redu',
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            }).then(() => location.reload());
+        }
+
         function setUnfinishedPromoBtnLoading(orderId, isLoading) {
             const btn = document.querySelector(`[data-unfinished-promo-btn="${orderId}"]`);
             if (!btn) return;
 
-            btn.disabled = isLoading;
+            if (!isLoading && btn.dataset.bulkPromoSent === '1') {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-fw fa-check mr-1"></i><span class="d-none d-xl-inline">Poslano</span>';
+                return;
+            }
+
+            btn.disabled = isLoading || bulkPromoSending;
             btn.innerHTML = isLoading
                 ? '<i class="fa fa-spinner fa-spin mr-1"></i><span class="d-none d-xl-inline">Slanje...</span>'
                 : '<i class="fa fa-fw fa-envelope mr-1"></i><span class="d-none d-xl-inline">Mail</span>';
         }
 
+        function getSelectedBulkPromoCheckboxes() {
+            return Array.from(document.querySelectorAll('input[data-bulk-promo-checkbox]:checked'));
+        }
+
+        function getBulkPromoDelaySeconds() {
+            const delayInput = document.getElementById('bulkPromoDelay');
+            const delaySeconds = Number(delayInput ? delayInput.value : 5);
+
+            return Number.isFinite(delaySeconds) && delaySeconds > 0 ? delaySeconds : 5;
+        }
+
+        function setBulkPromoControls(isEnabled) {
+            const controls = [
+                document.getElementById('bulk-promo-mail-button'),
+                document.getElementById('bulkPromoDelay'),
+                document.getElementById('checkAll'),
+                ...document.querySelectorAll('input[data-bulk-promo-checkbox]'),
+                ...document.querySelectorAll('[data-unfinished-promo-btn]')
+            ].filter(Boolean);
+
+            controls.forEach((control) => {
+                if (control.dataset.bulkPromoSent === '1') {
+                    control.disabled = true;
+                    return;
+                }
+
+                control.disabled = !isEnabled;
+            });
+        }
+
+        function setBulkPromoProgress(text, completed, total) {
+            const progress = document.getElementById('bulkPromoProgress');
+            const progressText = document.getElementById('bulkPromoProgressText');
+            const progressCount = document.getElementById('bulkPromoProgressCount');
+            const progressBar = document.getElementById('bulkPromoProgressBar');
+
+            if (!progress || !progressText || !progressCount || !progressBar) {
+                return;
+            }
+
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            progress.classList.remove('d-none');
+            progressText.textContent = text;
+            progressCount.textContent = total > 0 ? `${completed}/${total}` : '';
+            progressBar.style.width = `${percentage}%`;
+            progressBar.setAttribute('aria-valuenow', percentage);
+        }
+
+        function markBulkPromoOrderSent(orderId) {
+            const checkbox = document.querySelector(`input[data-bulk-promo-checkbox][value="${orderId}"]`);
+
+            if (!checkbox) {
+                return;
+            }
+
+            checkbox.dataset.canUnfinishedPromo = '0';
+            checkbox.checked = false;
+
+            const btn = document.querySelector(`[data-unfinished-promo-btn="${orderId}"]`);
+
+            if (btn) {
+                btn.dataset.bulkPromoSent = '1';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-fw fa-check mr-1"></i><span class="d-none d-xl-inline">Poslano</span>';
+            }
+        }
+
+        function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
         /**
          *
@@ -381,7 +607,7 @@
     </script>
     <script>
         $("#checkAll").click(function () {
-            $('input:checkbox').not(this).prop('checked', this.checked);
+            $('input[data-bulk-promo-checkbox]').prop('checked', this.checked);
         });
     </script>
 
