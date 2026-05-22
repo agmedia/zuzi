@@ -14,6 +14,7 @@ use App\Http\Controllers\Back\Marketing\ActionController;
 use App\Http\Controllers\Back\Marketing\BlogController;
 use App\Http\Controllers\Back\Marketing\GiftVoucherController as AdminGiftVoucherController;
 use App\Http\Controllers\Back\Marketing\ReviewController;
+use App\Http\Controllers\Back\Marketing\StatsController;
 use App\Http\Controllers\Back\Settings\App\CurrencyController;
 use App\Http\Controllers\Back\Settings\App\GeoZoneController;
 use App\Http\Controllers\Back\Settings\App\OrderStatusController;
@@ -150,6 +151,10 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
 
         // POKLON BONOVI
         Route::get('gift-vouchers', [AdminGiftVoucherController::class, 'index'])->name('gift.vouchers');
+
+        // STATISTIKE
+        Route::get('statistics', [StatsController::class, 'index'])->name('marketing.statistics');
+        Route::post('statistics/expired-coupons', [StatsController::class, 'destroyExpiredCoupons'])->name('marketing.statistics.expired-coupons.destroy');
 
         // OBAVIJESTI U KORISNIČKOM RAČUNU
         Route::get('account-notice', [AccountNoticeController::class, 'edit'])->name('account.notice');

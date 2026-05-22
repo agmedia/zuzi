@@ -9,22 +9,27 @@ use Illuminate\Support\Collection;
 
 class UnfinishedOrderPromoStatsService
 {
+    public const SOURCE_ADMIN = 'admin';
+    public const SOURCE_OTHER = 'other';
+
     public const SEGMENT_ALL = 'all';
     public const SEGMENT_UNFINISHED = 'unfinished';
     public const SEGMENT_NON_UNFINISHED = 'non_unfinished';
 
     public function getDashboardData(array $filters = []): array
     {
+        $source = $this->normalizeSource($filters['source'] ?? self::SOURCE_ADMIN);
         $segment = $this->normalizeSegment($filters['segment'] ?? self::SEGMENT_UNFINISHED);
         $year = $this->normalizeYear($filters['year'] ?? now()->year);
         $month = $this->normalizeMonth($filters['month'] ?? now()->month);
 
-        $actions = $this->filteredPromoActions($segment, $year, $month);
+        $actions = $this->filteredPromoActions($source, $segment, $year, $month);
         $usedPromos = $this->usedPromosForActions($actions);
         $byDiscount = $this->buildDiscountBreakdown($actions, $usedPromos);
 
         $sentCount = $actions->count();
         $usedCount = $usedPromos->count();
+        $usedActionCount = $usedPromos->pluck('action_id')->unique()->count();
         $revenueTotal = (float) $usedPromos->sum('order_total');
         $discountTotal = (float) $usedPromos->sum('discount_total');
 
@@ -32,8 +37,8 @@ class UnfinishedOrderPromoStatsService
             'summary' => [
                 'sent_count' => $sentCount,
                 'used_count' => $usedCount,
-                'unused_count' => max($sentCount - $usedCount, 0),
-                'conversion_rate' => $this->resolveRate($usedCount, $sentCount),
+                'unused_count' => max($sentCount - $usedActionCount, 0),
+                'conversion_rate' => $this->resolveRate($usedActionCount, $sentCount),
                 'revenue_total' => $revenueTotal,
                 'discount_total' => $discountTotal,
                 'average_revenue_per_used' => $this->resolveAverage($revenueTotal, $usedCount),
@@ -47,7 +52,7 @@ class UnfinishedOrderPromoStatsService
 
     public function getAvailableYears(): array
     {
-        return $this->basePromoActionsQuery()
+        return $this->allTrackedPromoActionsQuery()
             ->select('actions.created_at')
             ->orderByDesc('actions.created_at')
             ->get()
@@ -59,13 +64,15 @@ class UnfinishedOrderPromoStatsService
             ->all();
     }
 
-    private function filteredPromoActions(string $segment, int $year, int $month): Collection
+    private function filteredPromoActions(string $source, string $segment, int $year, int $month): Collection
     {
-        $actions = $this->basePromoActionsQuery()
+        $actions = $this->basePromoActionsQuery($source)
             ->select([
                 'actions.id',
                 'actions.title',
+                'actions.type',
                 'actions.discount',
+                'actions.coupon',
                 'actions.created_at',
                 'actions.data',
             ])
@@ -79,7 +86,9 @@ class UnfinishedOrderPromoStatsService
                 return (object) [
                     'id' => (int) $row->id,
                     'title' => (string) $row->title,
+                    'type' => (string) $row->type,
                     'discount' => (int) $row->discount,
+                    'coupon' => $this->normalizeCoupon($row->coupon ?? null),
                     'created_at' => Carbon::parse($row->created_at),
                     'source_order_id' => $this->extractSourceOrderId((string) $row->title, $data),
                     'source_order_status_id' => $this->extractSourceOrderStatusId($data),
@@ -88,6 +97,10 @@ class UnfinishedOrderPromoStatsService
 
         if ($actions->isEmpty()) {
             return collect();
+        }
+
+        if ($source === self::SOURCE_OTHER) {
+            return $actions;
         }
 
         $sourceOrderStatuses = $this->sourceOrderStatuses(
@@ -123,30 +136,33 @@ class UnfinishedOrderPromoStatsService
             ->join('orders', 'orders.id', '=', 'totals.order_id')
             ->whereNotIn('orders.order_status_id', $this->excludedOrderStatuses())
             ->where('totals.code', 'special')
-            ->whereIn('totals.title', $actions->pluck('title')->all())
+            ->whereIn('totals.title', $this->totalTitlesForActions($actions)->all())
             ->select([
                 'totals.title',
                 'totals.value as discount_value',
+                'orders.id as order_id',
                 'orders.total as order_total',
                 'orders.created_at as redeemed_at',
             ])
             ->orderBy('orders.created_at')
             ->get();
 
-        $actionByTitle = $actions->keyBy('title');
+        $actionByTotalTitle = $this->actionLookupByTotalTitle($actions);
 
         return $rows
-            ->groupBy('title')
-            ->map(function (Collection $group, string $title) use ($actionByTitle) {
-                $action = $actionByTitle->get($title);
-                $first = $group->first();
+            ->map(function ($row) use ($actionByTotalTitle) {
+                $action = $actionByTotalTitle->get((string) $row->title);
 
                 return (object) [
-                    'title' => $title,
+                    'action_id' => (int) ($action->id ?? 0),
+                    'title' => (string) ($action->title ?? $row->title),
+                    'type' => (string) ($action->type ?? 'P'),
+                    'coupon' => (string) ($action->coupon ?? ''),
                     'discount' => (int) ($action->discount ?? 0),
-                    'order_total' => (float) ($first->order_total ?? 0),
-                    'discount_total' => abs((float) ($first->discount_value ?? 0)),
-                    'redeemed_at' => Carbon::parse($first->redeemed_at),
+                    'order_id' => (int) ($row->order_id ?? 0),
+                    'order_total' => (float) ($row->order_total ?? 0),
+                    'discount_total' => abs((float) ($row->discount_value ?? 0)),
+                    'redeemed_at' => Carbon::parse($row->redeemed_at),
                 ];
             })
             ->values();
@@ -186,23 +202,39 @@ class UnfinishedOrderPromoStatsService
     private function buildDiscountBreakdown(Collection $actions, Collection $usedPromos): array
     {
         $sentByDiscount = $actions
-            ->groupBy('discount')
+            ->groupBy(fn ($action) => $this->discountKey((string) ($action->type ?? 'P'), (int) $action->discount))
             ->map(fn (Collection $group) => $group->count());
 
         $usedByDiscount = $usedPromos
-            ->groupBy('discount');
+            ->groupBy(fn ($promo) => $this->discountKey((string) ($promo->type ?? 'P'), (int) $promo->discount));
 
-        return collect(UnfinishedOrderPromoService::ALLOWED_DISCOUNTS)
-            ->map(function (int $discount) use ($sentByDiscount, $usedByDiscount) {
-                $sentCount = (int) $sentByDiscount->get($discount, 0);
-                $usedRows = $usedByDiscount->get($discount, collect());
+        $discountRows = collect(UnfinishedOrderPromoService::ALLOWED_DISCOUNTS)
+            ->map(fn (int $discount) => ['type' => 'P', 'discount' => $discount])
+            ->merge($actions->map(fn ($action) => [
+                'type' => (string) ($action->type ?? 'P'),
+                'discount' => (int) $action->discount,
+            ]))
+            ->unique(fn (array $row) => $this->discountKey($row['type'], $row['discount']))
+            ->sortBy(fn (array $row) => (strtoupper($row['type']) === 'P' ? '0' : '1') . str_pad((string) $row['discount'], 8, '0', STR_PAD_LEFT))
+            ->values();
+
+        return $discountRows
+            ->map(function (array $discountRow) use ($sentByDiscount, $usedByDiscount) {
+                $type = $discountRow['type'];
+                $discount = $discountRow['discount'];
+                $key = $this->discountKey($type, $discount);
+                $sentCount = (int) $sentByDiscount->get($key, 0);
+                $usedRows = $usedByDiscount->get($key, collect());
                 $usedCount = $usedRows->count();
+                $usedActionCount = $usedRows->pluck('action_id')->unique()->count();
 
                 return [
+                    'type' => $type,
                     'discount' => $discount,
+                    'discount_label' => $this->discountLabel($type, $discount),
                     'sent_count' => $sentCount,
                     'used_count' => $usedCount,
-                    'conversion_rate' => $this->resolveRate($usedCount, $sentCount),
+                    'conversion_rate' => $this->resolveRate($usedActionCount, $sentCount),
                     'revenue_total' => (float) $usedRows->sum('order_total'),
                     'discount_total' => (float) $usedRows->sum('discount_total'),
                 ];
@@ -210,14 +242,86 @@ class UnfinishedOrderPromoStatsService
             ->all();
     }
 
-    private function basePromoActionsQuery()
+    private function discountKey(string $type, int $discount): string
+    {
+        return strtoupper($type ?: 'P') . '|' . $discount;
+    }
+
+    private function discountLabel(string $type, int $discount): string
+    {
+        return strtoupper($type) === 'F' ? $discount . '€' : '-' . $discount . '%';
+    }
+
+    private function basePromoActionsQuery(?string $source = null)
+    {
+        $source = $this->normalizeSource($source ?? self::SOURCE_ADMIN);
+
+        $query = $this->allTrackedPromoActionsQuery();
+
+        if ($source === self::SOURCE_OTHER) {
+            return $query
+                ->where(function ($query) {
+                    $query->whereNull('actions.data')
+                        ->orWhere('actions.data', 'not like', '%"source":"unfinished_order_promo"%');
+                })
+                ->where('actions.title', 'not like', 'Promo za nedovrsenu narudzbu #%');
+        }
+
+        return $query->where(function ($query) {
+            $query->where('actions.data', 'like', '%"source":"unfinished_order_promo"%')
+                ->orWhere('actions.title', 'like', 'Promo za nedovrsenu narudzbu #%');
+        });
+    }
+
+    private function allTrackedPromoActionsQuery()
     {
         return DB::table('product_actions as actions')
             ->where('actions.group', 'total')
-            ->where(function ($query) {
-                $query->where('actions.data', 'like', '%"source":"unfinished_order_promo"%')
-                    ->orWhere('actions.title', 'like', 'Promo za nedovrsenu narudzbu #%');
+            ->whereNotNull('actions.coupon')
+            ->where('actions.coupon', '!=', '')
+            ->where('actions.title', 'not like', GiftVoucherService::ACTION_TITLE_PREFIX . '%')
+            ->where('actions.coupon', 'not like', GiftVoucherService::COUPON_PREFIX . '%');
+    }
+
+    private function totalTitlesForActions(Collection $actions): Collection
+    {
+        return $actions
+            ->flatMap(function ($action) {
+                return array_filter([
+                    (string) $action->title,
+                    $this->couponTotalTitle((string) ($action->coupon ?? '')),
+                ]);
+            })
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
+    private function actionLookupByTotalTitle(Collection $actions): Collection
+    {
+        return $actions
+            ->flatMap(function ($action) {
+                $titles = collect([(string) $action->title]);
+                $couponTitle = $this->couponTotalTitle((string) ($action->coupon ?? ''));
+
+                if ($couponTitle !== '') {
+                    $titles->push($couponTitle);
+                }
+
+                return $titles->mapWithKeys(fn (string $title) => [$title => $action]);
             });
+    }
+
+    private function couponTotalTitle(string $coupon): string
+    {
+        $coupon = $this->normalizeCoupon($coupon);
+
+        return $coupon !== '' ? 'Kupon ' . $coupon : '';
+    }
+
+    private function normalizeCoupon(?string $coupon = null): string
+    {
+        return strtoupper(trim((string) $coupon));
     }
 
     private function decodeActionData($data): array
@@ -348,6 +452,13 @@ class UnfinishedOrderPromoStatsService
         }
 
         return round($total / $count, 2);
+    }
+
+    private function normalizeSource(string $source): string
+    {
+        return in_array($source, [self::SOURCE_ADMIN, self::SOURCE_OTHER], true)
+            ? $source
+            : self::SOURCE_ADMIN;
     }
 
     private function normalizeSegment(string $segment): string

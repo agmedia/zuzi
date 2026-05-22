@@ -20,7 +20,6 @@ use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\Checkout\Shipping\HP;
-use App\Services\UnfinishedOrderPromoStatsService;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -38,36 +37,6 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $promoStatsService = app(UnfinishedOrderPromoStatsService::class);
-        $promoYears = $promoStatsService->getAvailableYears();
-
-        if (empty($promoYears)) {
-            $promoYears = [(int) now()->format('Y')];
-        }
-
-        $promoYear = (int) $request->query('promo_year', $promoYears[0]);
-        if (! in_array($promoYear, $promoYears, true)) {
-            $promoYear = $promoYears[0];
-        }
-
-        $promoMonth = (int) $request->query('promo_month', now()->format('n'));
-        if ($promoMonth < 1 || $promoMonth > 12) {
-            $promoMonth = (int) now()->format('n');
-        }
-
-        $promoStats = [
-            'filters' => [
-                'years' => $promoYears,
-                'year' => $promoYear,
-                'month' => $promoMonth,
-            ],
-            'data' => $promoStatsService->getDashboardData([
-                'segment' => UnfinishedOrderPromoStatsService::SEGMENT_ALL,
-                'year' => $promoYear,
-                'month' => $promoMonth,
-            ]),
-        ];
-
         $data['today'] = Order::whereDate('created_at', Carbon::today())
             ->dashboardSales()
             ->count();
@@ -114,8 +83,7 @@ class DashboardController extends Controller
             'products',
             'this_year',
             'last_year',
-            'yearsWithOrders',
-            'promoStats'
+            'yearsWithOrders'
         ));
     }
 

@@ -120,6 +120,11 @@
                             </a>
                         </li>
                         <li class="nav-main-item">
+                            <a class="nav-main-link{{ request()->routeIs(['marketing.statistics']) ? ' active' : '' }}" href="{{ route('marketing.statistics') }}">
+                                <span class="nav-main-link-name">Statistike</span>
+                            </a>
+                        </li>
+                        <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs(['account.notice', 'account.notice.*']) ? ' active' : '' }}" href="{{ route('account.notice') }}">
                                 <span class="nav-main-link-name">Obavijesti računa</span>
                             </a>

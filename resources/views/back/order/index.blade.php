@@ -96,7 +96,7 @@
                             </a>
                             @foreach ($statuses as $status)
                                 <a class="dropdown-item d-flex align-items-center justify-content-between" href="javascript:setPageURL('status', {{ $status->id }})">
-                                    <span class="badge badge-pill badge-{{ $status->color }}">{{ $status->title }}</span>
+                                    <span class="badge badge-pill badge-{{ $status->color ?? 'secondary' }}">{{ $status->title }}</span>
                                 </a>
                             @endforeach
                         </div>

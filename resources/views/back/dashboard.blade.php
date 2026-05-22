@@ -179,52 +179,6 @@
                 </div>
             </div>
 
-            @php
-                $promoMonths = [
-                    1 => 'Siječanj',
-                    2 => 'Veljača',
-                    3 => 'Ožujak',
-                    4 => 'Travanj',
-                    5 => 'Svibanj',
-                    6 => 'Lipanj',
-                    7 => 'Srpanj',
-                    8 => 'Kolovoz',
-                    9 => 'Rujan',
-                    10 => 'Listopad',
-                    11 => 'Studeni',
-                    12 => 'Prosinac',
-                ];
-            @endphp
-            <div class="block block-rounded mt-4">
-                <div class="block-header block-header-default promo-header">
-                    <h3 class="block-title">Promo kodovi</h3>
-
-                    <form action="{{ route('dashboard') }}" method="get" id="promo-filters-form" class="promo-filters-form">
-                        <div class="promo-filters">
-                            <div class="promo-filter-item">
-                                <select name="promo_year" id="promo-year" class="form-control promo-filter-select" aria-label="Godina">
-                                    @foreach($promoStats['filters']['years'] as $year)
-                                        <option value="{{ $year }}" {{ $promoStats['filters']['year'] === (int) $year ? 'selected' : '' }}>{{ $year }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="promo-filter-item">
-                                <select name="promo_month" id="promo-month" class="form-control promo-filter-select" aria-label="Mjesec">
-                                    @foreach($promoMonths as $month => $monthName)
-                                        <option value="{{ $month }}" {{ $promoStats['filters']['month'] === (int) $month ? 'selected' : '' }}>{{ $monthName }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="block-content">
-                    @include('back.dashboard.partials.promo-stats-tab', [
-                        'stats' => $promoStats['data'],
-                        'chartId' => 'promoStatsChart',
-                    ])
-                </div>
-            </div>
         @endif
 
         <!-- Top Products and Latest Orders -->
@@ -293,28 +247,16 @@
         .chart-container.small { height: 200px; }
         .chart-container.medium { height: 280px; }
         .chart-container.large { height: 400px; }
-        .chart-container.promo-wide { height: 340px; }
         .sales-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
         .sales-filters { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; flex-wrap: wrap; margin-left: auto; }
         .sales-filter-item { flex: 0 0 auto; }
         .sales-filter-select { min-width: 180px; }
-        .promo-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-        .promo-filters-form { margin-left: auto; }
-        .promo-filters { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; flex-wrap: wrap; }
-        .promo-filter-item { flex: 0 0 auto; }
-        .promo-filter-select { min-width: 180px; }
-        .promo-stats-meta { gap: .5rem 1.5rem; }
 
         @media (max-width: 767.98px) {
             .sales-header { align-items: stretch; }
             .sales-filters { width: 100%; justify-content: stretch; margin-left: 0; }
             .sales-filter-item { flex: 1 1 100%; }
             .sales-filter-select { min-width: 0; width: 100%; }
-            .promo-header { align-items: stretch; }
-            .promo-filters-form { width: 100%; margin-left: 0; }
-            .promo-filters { width: 100%; justify-content: stretch; }
-            .promo-filter-item { flex: 1 1 100%; }
-            .promo-filter-select { min-width: 0; width: 100%; }
         }
     </style>
 @endpush
@@ -468,72 +410,6 @@
         $('#chart-year').val(now.getFullYear());
         $('#chart-month').val(now.getMonth() + 1);
         loadMonth(now.getFullYear(), now.getMonth() + 1);
-
-        const promoChartData = @json($promoStats['data']['chart']);
-        let promoChartInstance = null;
-
-        function renderPromoChart() {
-            const promoChartCanvas = document.getElementById('promoStatsChart');
-
-            if (!promoChartCanvas || !promoChartData) {
-                return;
-            }
-
-            if (promoChartInstance) {
-                promoChartInstance.resize();
-                return;
-            }
-
-            promoChartInstance = new Chart(promoChartCanvas.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: promoChartData.labels,
-                    datasets: [
-                        {
-                            label: 'Poslano',
-                            data: promoChartData.sent,
-                            borderColor: 'rgba(236, 72, 153, 1)',
-                            backgroundColor: 'rgba(236, 72, 153, .18)',
-                            fill: true,
-                            tension: 0,
-                            lineTension: 0
-                        },
-                        {
-                            label: 'Kupnje s kuponom',
-                            data: promoChartData.used,
-                            borderColor: 'rgba(16, 185, 129, 1)',
-                            backgroundColor: 'rgba(16, 185, 129, .12)',
-                            fill: false,
-                            tension: 0,
-                            lineTension: 0
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    tooltips: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                precision: 0
-                            }
-                        }]
-                    }
-                }
-            });
-        }
-
-        renderPromoChart();
-
-        $('#promo-year, #promo-month').on('change', function() {
-            $('#promo-filters-form').trigger('submit');
-        });
-
 
         // =====================
         // MJESEČNI PREGLED (ova vs prošla godina)

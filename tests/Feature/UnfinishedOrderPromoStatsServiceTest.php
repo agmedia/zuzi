@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\UnfinishedOrderPromoStatsService;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -114,6 +115,150 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
         $this->assertSame(15, $stats['summary']['best_discount']['discount']);
 
         Carbon::setTestNow();
+    }
+
+    public function test_it_counts_promos_saved_with_coupon_order_total_title(): void
+    {
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35766, $unfinishedStatus, '2026-04-27 08:00:00');
+        $this->createPromoAction(35766, 10, '2026-04-27 09:00:00', $unfinishedStatus);
+
+        $this->createUsedPromoOrder('Kupon HVALA10-ABCDE10', 64.20, -6.42, '2026-04-27 12:00:00');
+
+        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_UNFINISHED,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $this->assertSame(1, $stats['summary']['sent_count']);
+        $this->assertSame(1, $stats['summary']['used_count']);
+        $this->assertSame(0, $stats['summary']['unused_count']);
+        $this->assertSame(64.20, $stats['summary']['revenue_total']);
+        $this->assertSame(6.42, $stats['summary']['discount_total']);
+    }
+
+    public function test_it_separates_admin_sent_promos_from_other_coupon_actions(): void
+    {
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35776, $unfinishedStatus, '2026-04-27 08:00:00');
+        $this->createPromoAction(35776, 10, '2026-04-27 09:00:00', $unfinishedStatus);
+        $this->createOtherCouponAction('Newsletter kod', 'NEWS10', 10, '2026-04-27 10:00:00');
+
+        $this->createUsedPromoOrder('Kupon HVALA10-ABCDE10', 90.00, -9.00, '2026-04-27 12:00:00');
+        $this->createUsedPromoOrder('Kupon NEWS10', 45.00, -4.50, '2026-04-27 13:00:00');
+        $this->createUsedPromoOrder('Kupon NEWS10', 55.00, -5.50, '2026-04-27 14:00:00');
+
+        $adminStats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'source' => UnfinishedOrderPromoStatsService::SOURCE_ADMIN,
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_ALL,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $otherStats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'source' => UnfinishedOrderPromoStatsService::SOURCE_OTHER,
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_ALL,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $this->assertSame(1, $adminStats['summary']['sent_count']);
+        $this->assertSame(1, $adminStats['summary']['used_count']);
+        $this->assertSame(90.0, $adminStats['summary']['revenue_total']);
+
+        $this->assertSame(1, $otherStats['summary']['sent_count']);
+        $this->assertSame(2, $otherStats['summary']['used_count']);
+        $this->assertSame(0, $otherStats['summary']['unused_count']);
+        $this->assertSame(100.0, $otherStats['summary']['conversion_rate']);
+        $this->assertSame(100.0, $otherStats['summary']['revenue_total']);
+
+        $otherByDiscount = collect($otherStats['by_discount'])->keyBy('discount');
+        $this->assertSame(2, $otherByDiscount[10]['used_count']);
+        $this->assertSame(100.0, $otherByDiscount[10]['conversion_rate']);
+    }
+
+    public function test_marketing_statistics_page_renders_split_promo_sections(): void
+    {
+        $user = User::factory()->create();
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35786, $unfinishedStatus, '2026-04-27 08:00:00');
+        $this->createPromoAction(35786, 10, '2026-04-27 09:00:00', $unfinishedStatus);
+        $this->createOtherCouponAction('Newsletter kod', 'NEWS10', 10, '2026-04-27 10:00:00');
+
+        $response = $this->actingAs($user)->get(route('marketing.statistics', [
+            'year' => 2026,
+            'month' => 4,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Kodovi poslani iz admina');
+        $response->assertSee('Ostali promo kodovi');
+        $response->assertSee('Obriši istekle kodove');
+        $response->assertSee('adminPromoStatsChart');
+        $response->assertSee('otherPromoStatsChart');
+    }
+
+    public function test_marketing_statistics_can_delete_expired_coupon_actions(): void
+    {
+        $user = User::factory()->create();
+
+        $expiredId = $this->createOtherCouponAction(
+            'Istekli kupon',
+            'OLD10',
+            10,
+            now()->subDays(10)->format('Y-m-d H:i:s'),
+            now()->subDay()->format('Y-m-d H:i:s')
+        );
+        $activeId = $this->createOtherCouponAction(
+            'Aktivni kupon',
+            'ACTIVE10',
+            10,
+            now()->subDay()->format('Y-m-d H:i:s'),
+            now()->addDay()->format('Y-m-d H:i:s')
+        );
+        $openEndedId = $this->createOtherCouponAction(
+            'Kupon bez isteka',
+            'OPEN10',
+            10,
+            now()->subDay()->format('Y-m-d H:i:s'),
+            null
+        );
+
+        $noCouponId = DB::table('product_actions')->insertGetId([
+            'title' => 'Istekla akcija bez kupona',
+            'type' => 'P',
+            'discount' => 10,
+            'group' => 'total',
+            'links' => json_encode(['total']),
+            'date_start' => now()->subDays(10),
+            'date_end' => now()->subDay(),
+            'data' => null,
+            'coupon' => null,
+            'quantity' => 0,
+            'lock' => 0,
+            'status' => 1,
+            'created_at' => now()->subDays(10),
+            'updated_at' => now()->subDays(10),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('marketing.statistics.expired-coupons.destroy'), [
+            'year' => now()->year,
+            'month' => now()->month,
+        ]);
+
+        $response->assertRedirect(route('marketing.statistics', [
+            'year' => now()->year,
+            'month' => now()->month,
+        ]));
+
+        $this->assertDatabaseMissing('product_actions', ['id' => $expiredId]);
+        $this->assertDatabaseHas('product_actions', ['id' => $activeId]);
+        $this->assertDatabaseHas('product_actions', ['id' => $openEndedId]);
+        $this->assertDatabaseHas('product_actions', ['id' => $noCouponId]);
     }
 
     public function test_it_builds_dashboard_statistics_for_non_unfinished_promos(): void
@@ -327,6 +472,26 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
         ]);
 
         return $title;
+    }
+
+    private function createOtherCouponAction(string $title, string $coupon, int $discount, string $createdAt, $dateEnd = false): int
+    {
+        return (int) DB::table('product_actions')->insertGetId([
+            'title' => $title,
+            'type' => 'P',
+            'discount' => $discount,
+            'group' => 'total',
+            'links' => json_encode(['total']),
+            'date_start' => Carbon::parse($createdAt),
+            'date_end' => $dateEnd === false ? Carbon::parse($createdAt)->addDays(30) : ($dateEnd !== null ? Carbon::parse($dateEnd) : null),
+            'data' => null,
+            'coupon' => $coupon,
+            'quantity' => 0,
+            'lock' => 0,
+            'status' => 1,
+            'created_at' => Carbon::parse($createdAt),
+            'updated_at' => Carbon::parse($createdAt),
+        ]);
     }
 
     private function createUsedPromoOrder(
