@@ -256,9 +256,74 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
         ]));
 
         $this->assertDatabaseMissing('product_actions', ['id' => $expiredId]);
+        $this->assertDatabaseHas('product_action_archives', [
+            'product_action_id' => $expiredId,
+            'coupon' => 'OLD10',
+        ]);
         $this->assertDatabaseHas('product_actions', ['id' => $activeId]);
         $this->assertDatabaseHas('product_actions', ['id' => $openEndedId]);
         $this->assertDatabaseHas('product_actions', ['id' => $noCouponId]);
+    }
+
+    public function test_other_coupon_statistics_keep_archived_deleted_actions(): void
+    {
+        Carbon::setTestNow('2026-05-22 12:00:00');
+
+        $user = User::factory()->create();
+
+        $this->createOtherCouponAction(
+            'Istekli newsletter kupon',
+            'OLD10',
+            10,
+            '2026-05-10 10:00:00',
+            '2026-05-20 10:00:00'
+        );
+
+        $this->actingAs($user)->post(route('marketing.statistics.expired-coupons.destroy'), [
+            'year' => 2026,
+            'month' => 5,
+        ]);
+
+        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'source' => UnfinishedOrderPromoStatsService::SOURCE_OTHER,
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_ALL,
+            'year' => 2026,
+            'month' => 5,
+        ]);
+
+        $this->assertSame(1, $stats['summary']['sent_count']);
+        $this->assertSame(1, collect($stats['by_discount'])->keyBy('discount')[10]['sent_count']);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_it_recovers_admin_promos_from_order_history_after_action_was_deleted(): void
+    {
+        $unfinishedStatus = (int) config('settings.order.status.unfinished');
+
+        $this->createSourceOrder(35796, $unfinishedStatus, '2026-04-27 08:00:00');
+        $title = $this->createPromoAction(35796, 10, '2026-04-27 09:00:00', $unfinishedStatus);
+        $coupon = (string) DB::table('product_actions')->where('title', $title)->value('coupon');
+
+        $this->createPromoHistoryEntry(35796, $coupon, 10, '2026-04-27 09:05:00');
+
+        DB::table('product_actions')->where('coupon', $coupon)->delete();
+
+        $this->createUsedPromoOrder('Kupon ' . $coupon, 72.50, -7.25, '2026-04-28 10:00:00');
+
+        $stats = app(UnfinishedOrderPromoStatsService::class)->getDashboardData([
+            'source' => UnfinishedOrderPromoStatsService::SOURCE_ADMIN,
+            'segment' => UnfinishedOrderPromoStatsService::SEGMENT_ALL,
+            'year' => 2026,
+            'month' => 4,
+        ]);
+
+        $this->assertSame(1, $stats['summary']['sent_count']);
+        $this->assertSame(1, $stats['summary']['used_count']);
+        $this->assertSame(0, $stats['summary']['unused_count']);
+        $this->assertSame(100.0, $stats['summary']['conversion_rate']);
+        $this->assertSame(72.5, $stats['summary']['revenue_total']);
+        $this->assertSame(7.25, $stats['summary']['discount_total']);
     }
 
     public function test_it_builds_dashboard_statistics_for_non_unfinished_promos(): void
@@ -435,6 +500,23 @@ class UnfinishedOrderPromoStatsServiceTest extends TestCase
             'user_id' => 1,
             'status' => $statusId,
             'comment' => '',
+            'created_at' => Carbon::parse($createdAt),
+            'updated_at' => Carbon::parse($createdAt),
+        ]);
+    }
+
+    private function createPromoHistoryEntry(int $orderId, string $coupon, int $discount, string $createdAt): void
+    {
+        DB::table('order_history')->insert([
+            'order_id' => $orderId,
+            'user_id' => 1,
+            'status' => 0,
+            'comment' => 'Poslan promo email za nedovrsenu narudzbu. Kod: '
+                . $coupon
+                . '. Popust: -'
+                . $discount
+                . '%. Vrijedi do: '
+                . Carbon::parse($createdAt)->addDays(7)->format('d.m.Y H:i'),
             'created_at' => Carbon::parse($createdAt),
             'updated_at' => Carbon::parse($createdAt),
         ]);

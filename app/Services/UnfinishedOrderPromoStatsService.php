@@ -5,6 +5,7 @@ namespace App\Services;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Collection;
 
 class UnfinishedOrderPromoStatsService
@@ -52,10 +53,14 @@ class UnfinishedOrderPromoStatsService
 
     public function getAvailableYears(): array
     {
-        return $this->allTrackedPromoActionsQuery()
-            ->select('actions.created_at')
-            ->orderByDesc('actions.created_at')
-            ->get()
+        $years = $this->promoActionYearsFromTable('product_actions');
+
+        if (Schema::hasTable('product_action_archives')) {
+            $years = $years->merge($this->promoActionYearsFromTable('product_action_archives'));
+        }
+
+        return $years
+            ->merge($this->adminPromoHistoryYears())
             ->map(fn ($row) => (int) Carbon::parse($row->created_at)->format('Y'))
             ->filter()
             ->unique()
@@ -66,34 +71,9 @@ class UnfinishedOrderPromoStatsService
 
     private function filteredPromoActions(string $source, string $segment, int $year, int $month): Collection
     {
-        $actions = $this->basePromoActionsQuery($source)
-            ->select([
-                'actions.id',
-                'actions.title',
-                'actions.type',
-                'actions.discount',
-                'actions.coupon',
-                'actions.created_at',
-                'actions.data',
-            ])
-            ->whereYear('actions.created_at', $year)
-            ->whereMonth('actions.created_at', $month)
-            ->orderBy('actions.created_at')
-            ->get()
-            ->map(function ($row) {
-                $data = $this->decodeActionData($row->data ?? null);
-
-                return (object) [
-                    'id' => (int) $row->id,
-                    'title' => (string) $row->title,
-                    'type' => (string) $row->type,
-                    'discount' => (int) $row->discount,
-                    'coupon' => $this->normalizeCoupon($row->coupon ?? null),
-                    'created_at' => Carbon::parse($row->created_at),
-                    'source_order_id' => $this->extractSourceOrderId((string) $row->title, $data),
-                    'source_order_status_id' => $this->extractSourceOrderStatusId($data),
-                ];
-            });
+        $actions = $source === self::SOURCE_ADMIN
+            ? $this->adminPromoActions($year, $month)
+            : $this->storedPromoActions($source, $year, $month);
 
         if ($actions->isEmpty()) {
             return collect();
@@ -123,6 +103,114 @@ class UnfinishedOrderPromoStatsService
                 return $action;
             })
             ->filter(fn ($action) => $this->matchesSegment($action->source_order_status_id, $segment))
+            ->values();
+    }
+
+    private function adminPromoActions(int $year, int $month): Collection
+    {
+        return $this->sortPromoActions(
+            $this->storedPromoActions(self::SOURCE_ADMIN, $year, $month)
+                ->merge($this->adminPromoActionsFromHistory($year, $month))
+                ->unique(fn ($action) => $this->actionIdentity($action))
+        );
+    }
+
+    private function storedPromoActions(string $source, int $year, int $month): Collection
+    {
+        return $this->sortPromoActions(
+            $this->storedPromoActionRows($source, $year, $month)
+                ->map(fn ($row) => $this->mapPromoActionRow($row))
+                ->unique(fn ($action) => $this->actionIdentity($action))
+        );
+    }
+
+    private function storedPromoActionRows(string $source, int $year, int $month): Collection
+    {
+        $rows = $this->promoActionRowsFromTable('product_actions', $source, $year, $month);
+
+        if (Schema::hasTable('product_action_archives')) {
+            $rows = $rows->merge($this->promoActionRowsFromTable('product_action_archives', $source, $year, $month));
+        }
+
+        return $rows;
+    }
+
+    private function promoActionRowsFromTable(string $table, string $source, int $year, int $month): Collection
+    {
+        $select = [
+            'actions.id',
+            'actions.title',
+            'actions.type',
+            'actions.discount',
+            'actions.coupon',
+            'actions.created_at',
+            'actions.data',
+        ];
+
+        if ($table === 'product_action_archives') {
+            $select[] = 'actions.product_action_id';
+        }
+
+        return $this->basePromoActionsQuery($source, $table)
+            ->select($select)
+            ->whereYear('actions.created_at', $year)
+            ->whereMonth('actions.created_at', $month)
+            ->orderBy('actions.created_at')
+            ->get();
+    }
+
+    private function mapPromoActionRow($row): object
+    {
+        $data = $this->decodeActionData($row->data ?? null);
+        $id = (int) ($row->product_action_id ?? $row->id);
+
+        return (object) [
+            'id' => $id !== 0 ? $id : (int) $row->id,
+            'title' => (string) $row->title,
+            'type' => (string) $row->type,
+            'discount' => (int) $row->discount,
+            'coupon' => $this->normalizeCoupon($row->coupon ?? null),
+            'created_at' => Carbon::parse($row->created_at),
+            'source_order_id' => $this->extractSourceOrderId((string) $row->title, $data),
+            'source_order_status_id' => $this->extractSourceOrderStatusId($data),
+        ];
+    }
+
+    private function adminPromoActionsFromHistory(int $year, int $month): Collection
+    {
+        return DB::table('order_history as history')
+            ->select([
+                'history.id',
+                'history.order_id',
+                'history.comment',
+                'history.created_at',
+            ])
+            ->where('history.comment', 'like', 'Poslan promo email za nedovrsenu narudzbu.%Kod:%')
+            ->whereYear('history.created_at', $year)
+            ->whereMonth('history.created_at', $month)
+            ->orderBy('history.created_at')
+            ->get()
+            ->map(function ($row) {
+                $parsed = $this->parseAdminPromoHistoryComment($row->comment ?? null);
+
+                if ($parsed === null) {
+                    return null;
+                }
+
+                $orderId = (int) $row->order_id;
+
+                return (object) [
+                    'id' => -1 * (int) $row->id,
+                    'title' => $this->adminPromoTitleForOrderId($orderId),
+                    'type' => 'P',
+                    'discount' => $parsed['discount'],
+                    'coupon' => $parsed['coupon'],
+                    'created_at' => Carbon::parse($row->created_at),
+                    'source_order_id' => $orderId,
+                    'source_order_status_id' => null,
+                ];
+            })
+            ->filter()
             ->values();
     }
 
@@ -252,11 +340,11 @@ class UnfinishedOrderPromoStatsService
         return strtoupper($type) === 'F' ? $discount . '€' : '-' . $discount . '%';
     }
 
-    private function basePromoActionsQuery(?string $source = null)
+    private function basePromoActionsQuery(?string $source = null, string $table = 'product_actions')
     {
         $source = $this->normalizeSource($source ?? self::SOURCE_ADMIN);
 
-        $query = $this->allTrackedPromoActionsQuery();
+        $query = $this->allTrackedPromoActionsQuery($table);
 
         if ($source === self::SOURCE_OTHER) {
             return $query
@@ -273,14 +361,95 @@ class UnfinishedOrderPromoStatsService
         });
     }
 
-    private function allTrackedPromoActionsQuery()
+    private function allTrackedPromoActionsQuery(string $table = 'product_actions')
     {
-        return DB::table('product_actions as actions')
+        return DB::table($table . ' as actions')
             ->where('actions.group', 'total')
             ->whereNotNull('actions.coupon')
             ->where('actions.coupon', '!=', '')
             ->where('actions.title', 'not like', GiftVoucherService::ACTION_TITLE_PREFIX . '%')
             ->where('actions.coupon', 'not like', GiftVoucherService::COUPON_PREFIX . '%');
+    }
+
+    private function promoActionYearsFromTable(string $table): Collection
+    {
+        return $this->allTrackedPromoActionsQuery($table)
+            ->select('actions.created_at')
+            ->orderByDesc('actions.created_at')
+            ->get();
+    }
+
+    private function adminPromoHistoryYears(): Collection
+    {
+        return DB::table('order_history as history')
+            ->select('history.created_at')
+            ->where('history.comment', 'like', 'Poslan promo email za nedovrsenu narudzbu.%Kod:%')
+            ->orderByDesc('history.created_at')
+            ->get();
+    }
+
+    private function sortPromoActions(Collection $actions): Collection
+    {
+        return $actions
+            ->sortBy(function ($action) {
+                return $action->created_at->format('Y-m-d H:i:s') . '|' . str_pad((string) abs((int) $action->id), 12, '0', STR_PAD_LEFT);
+            })
+            ->values();
+    }
+
+    private function actionIdentity($action): string
+    {
+        $coupon = $this->normalizeCoupon($action->coupon ?? null);
+
+        if ($coupon !== '') {
+            return 'coupon:' . $coupon;
+        }
+
+        return 'title:' . (string) ($action->title ?? '') . '|' . $action->created_at->format('Y-m-d H:i:s');
+    }
+
+    private function parseAdminPromoHistoryComment(?string $comment): ?array
+    {
+        $comment = (string) $comment;
+
+        if ($comment === '') {
+            return null;
+        }
+
+        if (preg_match('/Kod:\s*([A-Z0-9_-]+)/iu', $comment, $couponMatches) !== 1) {
+            return null;
+        }
+
+        $coupon = $this->normalizeCoupon($couponMatches[1]);
+
+        if ($coupon === '') {
+            return null;
+        }
+
+        $discount = $this->discountFromCoupon($coupon);
+
+        if (preg_match('/Popust:\s*-?\s*(\d+)\s*%/iu', $comment, $discountMatches) === 1) {
+            $discount = (int) $discountMatches[1];
+        }
+
+        return [
+            'coupon' => $coupon,
+            'discount' => $discount,
+        ];
+    }
+
+    private function discountFromCoupon(string $coupon): int
+    {
+        if (preg_match('/^HVALA(\d+)/i', $coupon, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return 0;
+    }
+
+    private function adminPromoTitleForOrderId(int $orderId): string
+    {
+        return 'Promo za nedovrsenu narudzbu #' . $orderId;
     }
 
     private function totalTitlesForActions(Collection $actions): Collection

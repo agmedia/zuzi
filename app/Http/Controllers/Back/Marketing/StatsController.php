@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Back\Marketing\Action;
 use App\Services\UnfinishedOrderPromoStatsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StatsController extends Controller
 {
@@ -62,7 +63,7 @@ class StatsController extends Controller
             ->orderBy('id')
             ->get()
             ->each(function (Action $action) use (&$deletedCount, &$failedCount) {
-                if ($action->remove()) {
+                if ($this->archiveAction($action) && $action->remove()) {
                     $deletedCount++;
                     return;
                 }
@@ -94,5 +95,31 @@ class StatsController extends Controller
             ->where('coupon', '!=', '')
             ->whereNotNull('date_end')
             ->where('date_end', '<', now());
+    }
+
+    private function archiveAction(Action $action): bool
+    {
+        $now = now();
+
+        return DB::table('product_action_archives')->updateOrInsert(
+            ['product_action_id' => (int) $action->id],
+            [
+                'title' => $action->getRawOriginal('title'),
+                'type' => $action->getRawOriginal('type'),
+                'discount' => (int) $action->getRawOriginal('discount'),
+                'group' => $action->getRawOriginal('group'),
+                'links' => $action->getRawOriginal('links'),
+                'date_start' => $action->getRawOriginal('date_start'),
+                'date_end' => $action->getRawOriginal('date_end'),
+                'data' => $action->getRawOriginal('data'),
+                'coupon' => $action->getRawOriginal('coupon'),
+                'quantity' => (bool) $action->getRawOriginal('quantity'),
+                'lock' => (bool) $action->getRawOriginal('lock'),
+                'status' => (bool) $action->getRawOriginal('status'),
+                'archived_at' => $now,
+                'created_at' => $action->getRawOriginal('created_at') ?: $now,
+                'updated_at' => $now,
+            ]
+        );
     }
 }

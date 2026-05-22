@@ -73,7 +73,10 @@ class AppServiceProvider extends ServiceProvider
         View::share('uvjeti_kupnje', $sharedPages['uvjeti_kupnje'] ?? collect());
         View::share('nacini_placanja', $sharedPages['nacini_placanja'] ?? collect());
         View::composer('back.layouts.partials.topbar', function ($view) {
-            $view->with('pendingWishlistCount', $this->resolvePendingWishlistCount());
+            $view->with([
+                'pendingWishlistCount' => $this->resolvePendingWishlistCount(),
+                'pendingReviewCount' => $this->resolvePendingReviewCount(),
+            ]);
         });
 
         Paginator::useBootstrap();
@@ -132,6 +135,21 @@ class AppServiceProvider extends ServiceProvider
                 ->where('w.sent', 0)
                 ->where('w.status', 1)
                 ->where('p.quantity', '!=', 0)
+                ->count();
+        } catch (Throwable $exception) {
+            return 0;
+        }
+    }
+
+    private function resolvePendingReviewCount(): int
+    {
+        if (! $this->safeHasTable('reviews')) {
+            return 0;
+        }
+
+        try {
+            return (int) DB::table('reviews')
+                ->where('status', 0)
                 ->count();
         } catch (Throwable $exception) {
             return 0;
