@@ -53,8 +53,8 @@
             }
 
             .corvus-wallet-button--apple-native {
-                min-height: 44px;
-                height: 44px !important;
+                min-height: 38px;
+                height: 38px !important;
             }
 
             .corvus-wallet-button--apple-fallback {
