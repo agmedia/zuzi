@@ -476,39 +476,15 @@ class Checkout extends Component
     private function setAddress(array $value = [], bool $only_state = false)
     {
         if ( ! empty($value)) {
-            $value['state'] = trim((string) ($value['state'] ?? '')) ?: self::DEFAULT_COUNTRY;
-
             if ($only_state) {
-                $this->address['state'] = $value['state'];
+                $this->address['state'] = trim((string) ($value['state'] ?? '')) ?: self::DEFAULT_COUNTRY;
 
             } else {
-                $this->address = [
-                    'fname' => $value['fname'] ?? '',
-                    'lname' => $value['lname'] ?? '',
-                    'email' => $value['email'] ?? '',
-                    'phone' => $value['phone'] ?? '',
-                    'address' => $value['address'] ?? '',
-                    'city' => $value['city'] ?? '',
-                    'company' => $value['company'] ?? '',
-                    'oib' => $value['oib'] ?? '',
-                    'zip' => $value['zip'] ?? '',
-                    'state' => $value['state'],
-                ];
+                $this->address = $this->resolveAddress($value);
             }
         } else {
             if (auth()->user()) {
-                $this->address = [
-                    'fname' => auth()->user()->details->fname ?? '',
-                    'lname' => auth()->user()->details->lname ?? '',
-                    'email' => auth()->user()->email ?? '',
-                    'phone' => auth()->user()->details->phone ?? '',
-                    'address' => auth()->user()->details->address ?? '',
-                    'city' => auth()->user()->details->city ?? '',
-                    'company' => auth()->user()->details->company ?? '',
-                    'oib' => auth()->user()->details->oib ?? '',
-                    'zip' => auth()->user()->details->zip ?? '',
-                    'state' => trim((string) (auth()->user()->details->state ?? '')) ?: self::DEFAULT_COUNTRY
-                ];
+                $this->address = $this->resolveAddress();
             } else {
                 $this->address['state'] = self::DEFAULT_COUNTRY;
             }
@@ -523,6 +499,79 @@ class Checkout extends Component
         //dd($this->address);
 
         return $this->address;
+    }
+
+    private function resolveAddress(array $value = []): array
+    {
+        $address = [
+            'fname' => $value['fname'] ?? '',
+            'lname' => $value['lname'] ?? '',
+            'email' => $value['email'] ?? '',
+            'phone' => $value['phone'] ?? '',
+            'address' => $value['address'] ?? '',
+            'city' => $value['city'] ?? '',
+            'company' => $value['company'] ?? '',
+            'oib' => $value['oib'] ?? '',
+            'zip' => $value['zip'] ?? '',
+            'state' => $value['state'] ?? '',
+        ];
+
+        if (auth()->check()) {
+            $defaults = $this->authenticatedAddressDefaults();
+
+            if ($this->hasOnlyDefaultCountry($address) && ! $this->isBlankAddressValue($defaults['state'])) {
+                $address['state'] = '';
+            }
+
+            foreach ($address as $key => $current) {
+                if ($this->isBlankAddressValue($current) && ! $this->isBlankAddressValue($defaults[$key] ?? '')) {
+                    $address[$key] = $defaults[$key];
+                }
+            }
+        }
+
+        $address['state'] = trim((string) ($address['state'] ?? '')) ?: self::DEFAULT_COUNTRY;
+
+        return $address;
+    }
+
+    private function authenticatedAddressDefaults(): array
+    {
+        $user = auth()->user();
+        $details = $user->details ?? null;
+
+        return [
+            'fname' => $details?->fname ?? '',
+            'lname' => $details?->lname ?? '',
+            'email' => $user->email ?? '',
+            'phone' => $details?->phone ?? '',
+            'address' => $details?->address ?? '',
+            'city' => $details?->city ?? '',
+            'company' => $details?->company ?? '',
+            'oib' => $details?->oib ?? '',
+            'zip' => $details?->zip ?? '',
+            'state' => trim((string) ($details?->state ?? '')),
+        ];
+    }
+
+    private function isBlankAddressValue($value): bool
+    {
+        return trim((string) $value) === '';
+    }
+
+    private function hasOnlyDefaultCountry(array $address): bool
+    {
+        if (trim((string) ($address['state'] ?? '')) !== self::DEFAULT_COUNTRY) {
+            return false;
+        }
+
+        foreach (['fname', 'lname', 'email', 'phone', 'address', 'city', 'company', 'oib', 'zip'] as $key) {
+            if (! $this->isBlankAddressValue($address[$key] ?? '')) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function autofillAddressField(string $field, string $value): void
