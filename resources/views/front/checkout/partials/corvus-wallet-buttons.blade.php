@@ -24,7 +24,7 @@
                 display: none;
                 align-items: center;
                 justify-content: center;
-                height: 3.5rem;
+                height: 2.8125rem;
                 border-radius: var(--cz-btn-border-radius, .3125rem);
                 background: #000;
                 overflow: hidden;
@@ -34,8 +34,8 @@
                 display: none !important;
                 align-items: center;
                 justify-content: center;
-                min-height: 3.5rem;
-                height: 3.5rem;
+                min-height: 2.8125rem;
+                height: 2.8125rem;
                 border-radius: .5rem;
                 font-weight: 700;
                 letter-spacing: 0;
@@ -53,13 +53,13 @@
             }
 
             .corvus-wallet-button--apple-native {
-                min-height: 38px;
-                height: 38px !important;
+                min-height: 34px;
+                height: 34px !important;
             }
 
             .corvus-wallet-button--apple-fallback {
-                min-height: 3.5rem;
-                height: 3.5rem;
+                min-height: 2.8125rem;
+                height: 2.8125rem;
             }
 
             .corvus-wallet-button--apple-native:hover,
@@ -93,8 +93,8 @@
             }
 
             .corvus-wallet-button--google {
-                min-height: 3.5rem;
-                height: 3.5rem;
+                min-height: 2.8125rem;
+                height: 2.8125rem;
                 border: 0;
                 background: #000;
                 color: #fff;
