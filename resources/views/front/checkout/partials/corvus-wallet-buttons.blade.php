@@ -21,6 +21,7 @@
                 align-items: center;
                 justify-content: center;
                 min-height: 3.5rem;
+                height: 3.5rem;
                 border-radius: .5rem;
                 font-weight: 700;
                 letter-spacing: 0;
@@ -31,6 +32,7 @@
             .corvus-wallet-button--apple-fallback {
                 min-width: 140px;
                 min-height: 3.5rem;
+                height: 3.5rem;
                 padding: 0;
                 border: 0;
                 background: #000;
@@ -50,6 +52,7 @@
                 -webkit-appearance: -apple-pay-button;
                 -apple-pay-button-type: buy;
                 -apple-pay-button-style: black;
+                height: 3.5rem !important;
             }
 
             .corvus-wallet-button__apple-fallback {
@@ -70,6 +73,7 @@
 
             .corvus-wallet-button--google {
                 min-height: 3.5rem;
+                height: 3.5rem;
                 border: 0;
                 background: #000;
                 color: #fff;
