@@ -21,9 +21,22 @@
                                 🎁 <strong>TVOJA NAGRADA: -{{ (int) $promoAction->discount }}% na sve artikle</strong>
                             </p>
 
-                            <p style="margin: 0 0 10px;">
-                                Kod: <strong>{{ $promoAction->coupon }}</strong>
-                            </p>
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 14px 0 14px; border: 2px dashed #e6007e; border-radius: 10px;">
+                                <tr>
+                                    <td align="center" style="padding: 24px 16px; text-align: center;">
+                                        <p style="margin: 0 0 8px; font-size: 16px; line-height: 1.5; color: #373f50;">
+                                            Vaš kupon kod:
+                                        </p>
+                                        <p style="margin: 0 0 8px; font-size: 34px; line-height: 1.2; color: #e6007e; font-weight: 800; letter-spacing: 1px; word-break: break-word;">
+                                            {{ $promoAction->coupon }}
+                                        </p>
+                                        <p style="margin: 0; font-size: 17px; line-height: 1.5; color: #373f50; font-weight: 700;">
+                                            ostvaruje {{ (int) $promoAction->discount }}% popusta
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
                             <p style="margin: 0;">
                                 ⏳ Vrijedi samo sljedećih <strong>7 dana</strong>
                                 @if ($expiresAt)
