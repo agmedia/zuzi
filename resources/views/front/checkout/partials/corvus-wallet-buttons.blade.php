@@ -16,6 +16,20 @@
                 gap: .75rem;
             }
 
+            .corvus-wallet-form {
+                width: 100%;
+            }
+
+            .corvus-wallet-form--apple {
+                display: none;
+                align-items: center;
+                justify-content: center;
+                height: 3.5rem;
+                border-radius: var(--cz-btn-border-radius, .3125rem);
+                background: #000;
+                overflow: hidden;
+            }
+
             .corvus-wallet-button {
                 display: none !important;
                 align-items: center;
@@ -31,13 +45,21 @@
             .corvus-wallet-button--apple-native,
             .corvus-wallet-button--apple-fallback {
                 min-width: 140px;
-                min-height: 3.5rem;
-                height: 3.5rem;
                 padding: 0;
                 border: 0;
                 background: #000;
                 color: #fff;
                 cursor: pointer;
+            }
+
+            .corvus-wallet-button--apple-native {
+                min-height: 44px;
+                height: 44px !important;
+            }
+
+            .corvus-wallet-button--apple-fallback {
+                min-height: 3.5rem;
+                height: 3.5rem;
             }
 
             .corvus-wallet-button--apple-native:hover,
@@ -52,7 +74,6 @@
                 -webkit-appearance: -apple-pay-button;
                 -apple-pay-button-type: buy;
                 -apple-pay-button-style: black;
-                height: 3.5rem !important;
             }
 
             .corvus-wallet-button__apple-fallback {
@@ -110,6 +131,11 @@
                 display: flex !important;
             }
 
+            html.supports-corvus-applepay.supports-corvus-native-applepay .corvus-wallet-form--apple,
+            html.supports-corvus-applepay:not(.supports-corvus-native-applepay) .corvus-wallet-form--apple {
+                display: flex;
+            }
+
             .corvus-wallet-shortcuts .corvus-wallet-button {
                 border-radius: var(--cz-btn-border-radius, .3125rem);
             }
@@ -152,13 +178,15 @@
 <div class="corvus-wallet-shortcuts {{ $wrapperClass }}">
     <div class="corvus-wallet-shortcuts__grid">
         @if($mode === 'livewire')
-            <button type="button" class="corvus-wallet-button corvus-wallet-button--apple-native {{ $buttonClass }}" wire:click="selectWalletPayment('applepay')" aria-label="Apple Pay" lang="hr">
-            </button>
-            <button type="button" class="corvus-wallet-button corvus-wallet-button--apple-fallback {{ $buttonClass }}" wire:click="selectWalletPayment('applepay')" aria-label="Platite uz Apple Pay" lang="hr">
-                <span class="corvus-wallet-button__apple-fallback" aria-hidden="true">
-                    Platite uz <span class="corvus-wallet-button__apple-logo">&#63743;</span>Pay
-                </span>
-            </button>
+            <div class="corvus-wallet-form corvus-wallet-form--apple">
+                <button type="button" class="corvus-wallet-button corvus-wallet-button--apple-native {{ $buttonClass }}" wire:click="selectWalletPayment('applepay')" aria-label="Apple Pay" lang="hr">
+                </button>
+                <button type="button" class="corvus-wallet-button corvus-wallet-button--apple-fallback {{ $buttonClass }}" wire:click="selectWalletPayment('applepay')" aria-label="Platite uz Apple Pay" lang="hr">
+                    <span class="corvus-wallet-button__apple-fallback" aria-hidden="true">
+                        Platite uz <span class="corvus-wallet-button__apple-logo">&#63743;</span>Pay
+                    </span>
+                </button>
+            </div>
             <button type="button" class="btn corvus-wallet-button corvus-wallet-button--google {{ $buttonClass }}" wire:click="selectWalletPayment('googlepay')" aria-label="Google Pay">
                 <span class="corvus-wallet-button__google-mark" aria-hidden="true">
                     <svg viewBox="0 0 18 18" focusable="false" aria-hidden="true">
@@ -171,7 +199,7 @@
                 Google Pay
             </button>
         @else
-            <form action="{{ route('checkout.wallet', ['wallet' => 'applepay']) }}" method="GET">
+            <form class="corvus-wallet-form corvus-wallet-form--apple" action="{{ route('checkout.wallet', ['wallet' => 'applepay']) }}" method="GET">
                 <button type="submit" class="corvus-wallet-button corvus-wallet-button--apple-native {{ $buttonClass }}" aria-label="Apple Pay" lang="hr">
                 </button>
                 <button type="submit" class="corvus-wallet-button corvus-wallet-button--apple-fallback {{ $buttonClass }}" aria-label="Platite uz Apple Pay" lang="hr">
@@ -180,7 +208,7 @@
                     </span>
                 </button>
             </form>
-            <form action="{{ route('checkout.wallet', ['wallet' => 'googlepay']) }}" method="GET">
+            <form class="corvus-wallet-form" action="{{ route('checkout.wallet', ['wallet' => 'googlepay']) }}" method="GET">
                 <button type="submit" class="btn corvus-wallet-button corvus-wallet-button--google {{ $buttonClass }}" aria-label="Google Pay">
                     <span class="corvus-wallet-button__google-mark" aria-hidden="true">
                         <svg viewBox="0 0 18 18" focusable="false" aria-hidden="true">
