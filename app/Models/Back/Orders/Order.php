@@ -9,6 +9,7 @@ use App\Models\GiftVoucher;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Users\Client;
 use App\Services\GiftVoucherService;
+use App\Services\UnfinishedOrderPromoService;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Bouncer;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class Order extends Model
 {
@@ -157,6 +159,29 @@ class Order extends Model
             config('settings.order.status.declined'),
             config('settings.order.status.unfinished'),
         ], static fn ($status) => $status !== null))));
+    }
+
+    public static function completedStatusIds(): array
+    {
+        $configuredTitles = collect((array) config('settings.order.review_request.status_titles', ['Završeno']))
+            ->map(fn ($title) => static::normalizeStatusTitle((string) $title))
+            ->filter()
+            ->values();
+
+        $statusIds = collect(Settings::get('order', 'statuses') ?: [])
+            ->filter(function ($status) use ($configuredTitles) {
+                return $configuredTitles->contains(
+                    static::normalizeStatusTitle((string) ($status->title ?? ''))
+                );
+            })
+            ->pluck('id')
+            ->map(fn ($statusId) => (int) $statusId)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return $statusIds ?: [(int) config('settings.order.status.completed', 9)];
     }
 
     public function scopeDashboardSales(Builder $query): Builder
@@ -437,7 +462,15 @@ class Order extends Model
     {
         $query = $this->newQuery()->with('products');
 
-        if ($request->has('status')) {
+        if ($request->boolean('completed_without_promo_mail')) {
+            $query->whereIn('order_status_id', static::completedStatusIds());
+
+            $sentPromoOrderIds = app(UnfinishedOrderPromoService::class)->sentOrderIds();
+
+            if ($sentPromoOrderIds->isNotEmpty()) {
+                $query->whereNotIn($this->getTable() . '.id', $sentPromoOrderIds->all());
+            }
+        } elseif ($request->has('status') && $request->input('status') !== '') {
             $query->where('order_status_id', '=', $request->input('status'));
         }
 
@@ -471,6 +504,13 @@ class Order extends Model
         }
 
         return $query->orderBy('created_at', 'desc');
+    }
+
+    private static function normalizeStatusTitle(string $title): string
+    {
+        $normalized = Str::lower(Str::ascii($title));
+
+        return trim((string) preg_replace('/\s+/', ' ', $normalized));
     }
 
 

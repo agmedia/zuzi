@@ -14,6 +14,7 @@ class UnfinishedOrderPromoService
 {
     public const ALLOWED_DISCOUNTS = [5, 10, 15, 20];
     public const VALID_FOR_DAYS = 7;
+    public const TITLE_PREFIX = 'Promo za nedovrsenu narudzbu #';
     private const COUPON_SUFFIX_LENGTH = 7;
 
     public function issueForOrder(Order $order, int $discount): Action
@@ -49,7 +50,7 @@ class UnfinishedOrderPromoService
 
     public function titleForOrder(Order $order): string
     {
-        return 'Promo za nedovrsenu narudzbu #' . $order->id;
+        return self::TITLE_PREFIX . $order->id;
     }
 
     public function findForOrder(Order $order): ?Action
@@ -91,6 +92,22 @@ class UnfinishedOrderPromoService
             })
             ->pluck('totals.order_id')
             ->map(fn ($orderId) => (int) $orderId)
+            ->unique()
+            ->values();
+    }
+
+    public function sentOrderIds(): Collection
+    {
+        return Action::query()
+            ->where('title', 'like', self::TITLE_PREFIX . '%')
+            ->where('group', 'total')
+            ->pluck('title')
+            ->map(function ($title) {
+                $orderId = Str::after((string) $title, self::TITLE_PREFIX);
+
+                return ctype_digit($orderId) ? (int) $orderId : 0;
+            })
+            ->filter(fn ($orderId) => $orderId > 0)
             ->unique()
             ->values();
     }

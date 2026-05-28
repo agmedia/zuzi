@@ -54,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
             'nacini_placanja' => collect(),
         ];
 
-        if ($this->safeHasTable('pages')) {
+        if ($this->safeHasTable('pages') && $this->safeHasColumn('pages', 'subgroup')) {
             $sharedPages = Helper::resolveCache('shared')->remember('front.page_groups', config('cache.life'), function () {
                 $pages = Page::query()
                     ->select('id', 'title', 'slug', 'subgroup')
@@ -86,6 +86,15 @@ class AppServiceProvider extends ServiceProvider
     {
         try {
             return Schema::hasTable($table);
+        } catch (Throwable $exception) {
+            return false;
+        }
+    }
+
+    private function safeHasColumn(string $table, string $column): bool
+    {
+        try {
+            return Schema::hasColumn($table, $column);
         } catch (Throwable $exception) {
             return false;
         }
