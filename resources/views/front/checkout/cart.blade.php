@@ -227,7 +227,15 @@
                 checkouturl="{{ route('naplata') }}"
                 bookmarkers-target="cart-bookmarkers"
                 :show-bookmarker-promo='@json(isset($cartBookmarkers) && $cartBookmarkers->count() > 0)'
-            ></cart-view-aside>
+            >
+                @if(!empty($showCartWalletButtons))
+                    <div slot="after-checkout-button">
+                        @include('front.checkout.partials.corvus-wallet-buttons', [
+                            'wrapperClass' => 'mt-3',
+                        ])
+                    </div>
+                @endif
+            </cart-view-aside>
         </aside>
     </div>
 

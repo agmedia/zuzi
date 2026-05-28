@@ -10,6 +10,7 @@ use App\Mail\OrderSent;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\Order;
+use App\Models\Front\Checkout\Payment\Corvus;
 use App\Models\Front\Checkout\PaymentMethod;
 use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\Back\Orders\Order as AdminOrderModel;
@@ -41,8 +42,9 @@ class CheckoutController extends Controller
         $recommendationService = app(ProductRecommendationService::class);
         $cartRecommendations = $recommendationService->forCartItems($cartItems);
         $cartBookmarkers = $recommendationService->randomBookmarkersForCart($cartItems);
+        $showCartWalletButtons = $cartItems->count() > 0 && (auth()->check() || CheckoutSession::hasAddress());
 
-        return view('front.checkout.cart', compact('gdl', 'cartRecommendations', 'cartBookmarkers'));
+        return view('front.checkout.cart', compact('gdl', 'cartRecommendations', 'cartBookmarkers', 'showCartWalletButtons'));
     }
 
 
@@ -63,6 +65,37 @@ class CheckoutController extends Controller
         $is_free_shipping = OrderHelper::isFreeShipping($this->shoppingCart()->get());
 
         return view('front.checkout.checkout', compact('step', 'is_free_shipping'));
+    }
+
+
+    /**
+     * @param Request $request
+     * @param string  $wallet
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function wallet(Request $request, string $wallet)
+    {
+        $wallet = Corvus::normalizeWallet($wallet);
+
+        if (! $wallet) {
+            abort(404);
+        }
+
+        if (! session()->has(config('session.cart'))) {
+            return redirect()->route('kosarica');
+        }
+
+        CheckoutSession::setPayment('corvus');
+        CheckoutSession::setPaymentWallet($wallet);
+
+        $missingStep = $this->firstMissingCheckoutStepForWallet();
+
+        if ($missingStep) {
+            return redirect()->route('naplata', ['step' => $missingStep]);
+        }
+
+        return redirect()->route('pregled');
     }
 
 
@@ -319,6 +352,92 @@ class CheckoutController extends Controller
         }
 
         return [];
+    }
+
+
+    /**
+     * @return string|null
+     */
+    private function firstMissingCheckoutStepForWallet(): ?string
+    {
+        $cart = $this->shoppingCart()->get();
+
+        if (empty($cart['items'])) {
+            return 'podaci';
+        }
+
+        $address = $this->checkoutAddressForWalletShortcut();
+
+        if (! $this->hasCompleteCheckoutAddress($address)) {
+            return 'podaci';
+        }
+
+        if (GiftVoucherService::cartContainsGiftVoucher($cart) && ! CheckoutSession::hasShipping()) {
+            CheckoutSession::setShipping(GiftVoucherService::SHIPPING_CODE);
+        }
+
+        if (! CheckoutSession::hasShipping()) {
+            return 'dostava';
+        }
+
+        $shippingCode = $this->shippingCode(CheckoutSession::getShipping());
+
+        if (in_array($shippingCode, ['gls_eu', 'gls_paketomat'], true) && trim((string) CheckoutSession::getComment()) === '') {
+            return 'dostava';
+        }
+
+        return null;
+    }
+
+
+    /**
+     * @return array
+     */
+    private function checkoutAddressForWalletShortcut(): array
+    {
+        if (CheckoutSession::hasAddress()) {
+            return (array) CheckoutSession::getAddress();
+        }
+
+        if (! auth()->check()) {
+            return [];
+        }
+
+        $user = auth()->user();
+        $details = $user->details ?? null;
+        $address = [
+            'fname' => $details?->fname ?? '',
+            'lname' => $details?->lname ?? '',
+            'email' => $user->email ?? '',
+            'phone' => $details?->phone ?? '',
+            'address' => $details?->address ?? '',
+            'city' => $details?->city ?? '',
+            'zip' => $details?->zip ?? '',
+            'company' => $details?->company ?? '',
+            'oib' => $details?->oib ?? '',
+            'state' => trim((string) ($details?->state ?? '')) ?: 'Croatia',
+        ];
+
+        CheckoutSession::setAddress($address);
+
+        return $address;
+    }
+
+
+    /**
+     * @param array $address
+     *
+     * @return bool
+     */
+    private function hasCompleteCheckoutAddress(array $address): bool
+    {
+        foreach (['fname', 'lname', 'email', 'phone', 'address', 'city', 'zip', 'state'] as $key) {
+            if (trim((string) ($address[$key] ?? '')) === '') {
+                return false;
+            }
+        }
+
+        return filter_var($address['email'], FILTER_VALIDATE_EMAIL) !== false;
     }
 
 

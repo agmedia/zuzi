@@ -2913,6 +2913,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -8590,45 +8591,53 @@ var render = function() {
             }
           },
           [
-            _c("div", { staticClass: "py-2 px-xl-2" }, [
-              _c("div", { staticClass: "text-center mb-2 pb-2" }, [
-                _c("h2", { staticClass: "h6 mb-3 pb-1" }, [_vm._v("Ukupno")]),
-                _vm._v(" "),
-                _c("h3", { staticClass: "fw-bold text-primary" }, [
-                  _vm._v(
-                    _vm._s(
-                      _vm.$store.state.service.formatMainPrice(
-                        _vm.$store.state.cart.total
-                      )
-                    )
-                  )
-                ]),
-                _vm._v(" "),
-                _vm.$store.state.cart.secondary_price
-                  ? _c("h4", { staticClass: "fs-sm" }, [
-                      _vm._v(
-                        _vm._s(
-                          _vm.$store.state.service.formatSecondaryPrice(
-                            _vm.$store.state.cart.total
-                          )
+            _c(
+              "div",
+              { staticClass: "py-2 px-xl-2" },
+              [
+                _c("div", { staticClass: "text-center mb-2 pb-2" }, [
+                  _c("h2", { staticClass: "h6 mb-3 pb-1" }, [_vm._v("Ukupno")]),
+                  _vm._v(" "),
+                  _c("h3", { staticClass: "fw-bold text-primary" }, [
+                    _vm._v(
+                      _vm._s(
+                        _vm.$store.state.service.formatMainPrice(
+                          _vm.$store.state.cart.total
                         )
                       )
-                    ])
-                  : _vm._e()
-              ]),
-              _vm._v(" "),
-              _c(
-                "a",
-                {
-                  staticClass: "btn btn-primary btn-shadow d-block w-100 mt-4",
-                  attrs: { href: _vm.checkouturl }
-                },
-                [
-                  _vm._v("NASTAVI NA NAPLATU "),
-                  _c("i", { staticClass: "ci-arrow-right fs-sm" })
-                ]
-              )
-            ])
+                    )
+                  ]),
+                  _vm._v(" "),
+                  _vm.$store.state.cart.secondary_price
+                    ? _c("h4", { staticClass: "fs-sm" }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.$store.state.service.formatSecondaryPrice(
+                              _vm.$store.state.cart.total
+                            )
+                          )
+                        )
+                      ])
+                    : _vm._e()
+                ]),
+                _vm._v(" "),
+                _c(
+                  "a",
+                  {
+                    staticClass:
+                      "btn btn-primary btn-shadow d-block w-100 mt-4",
+                    attrs: { href: _vm.checkouturl }
+                  },
+                  [
+                    _vm._v("NASTAVI NA NAPLATU "),
+                    _c("i", { staticClass: "ci-arrow-right fs-sm" })
+                  ]
+                ),
+                _vm._v(" "),
+                _vm._t("after-checkout-button")
+              ],
+              2
+            )
           ]
         )
       : _vm._e(),

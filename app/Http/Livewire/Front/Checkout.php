@@ -9,6 +9,7 @@ use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Settings\Settings;
 use App\Models\Front\AgCart;
 use App\Models\Front\Checkout\GeoZone;
+use App\Models\Front\Checkout\Payment\Corvus;
 use App\Models\Front\Checkout\PaymentMethod;
 use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\TagManager;
@@ -394,11 +395,34 @@ class Checkout extends Component
             $payment = GiftVoucherService::firstAllowedPaymentCode() ?: $payment;
         }
 
+        CheckoutSession::forgetPaymentWallet();
+
         $this->payment = $payment;
 
         $this->checkPayment($payment);
 
         CheckoutSession::setPayment($payment);
+    }
+
+
+    /**
+     * @param string $wallet
+     */
+    public function selectWalletPayment(string $wallet)
+    {
+        $wallet = Corvus::normalizeWallet($wallet);
+
+        if (! $wallet) {
+            return;
+        }
+
+        $this->payment = 'corvus';
+        $this->checkPayment($this->payment);
+
+        CheckoutSession::setPayment($this->payment);
+        CheckoutSession::setPaymentWallet($wallet);
+
+        return redirect()->route('pregled');
     }
 
 

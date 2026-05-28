@@ -390,6 +390,7 @@
     @if ($step == 'placanje')
         <div class="card p-3">
         <h2 class="h6 pt-1 pb-3 mb-3 ">Odaberite način plaćanja</h2>
+        @php($corvusAvailable = $paymentMethods->contains('code', 'corvus'))
 
         @if ($giftVoucherOnly)
             <div class="alert alert-warning d-flex mb-3" role="alert">
@@ -400,6 +401,13 @@
                     Poklon bon moguće je kupiti isključivo kartičnim plaćanjem.
                 </div>
             </div>
+        @endif
+
+        @if($corvusAvailable)
+            @include('front.checkout.partials.corvus-wallet-buttons', [
+                'mode' => 'livewire',
+                'wrapperClass' => 'mb-3',
+            ])
         @endif
 
         <div class="table-responsive">

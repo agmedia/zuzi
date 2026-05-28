@@ -2,6 +2,7 @@
 
 namespace App\Models\Front\Checkout\Payment;
 
+use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\Transaction;
 use Carbon\Carbon;
@@ -15,6 +16,18 @@ use Illuminate\Support\Facades\Log;
  */
 class Corvus
 {
+    public const WALLET_APPLE_PAY = 'applepay';
+    public const WALLET_GOOGLE_PAY = 'googlepay';
+
+    private const WALLET_LABELS = [
+        self::WALLET_APPLE_PAY => 'Apple Pay',
+        self::WALLET_GOOGLE_PAY => 'Google Pay',
+    ];
+
+    private const WALLET_HIDE_TABS = [
+        self::WALLET_APPLE_PAY => 'checkout,pis,wallet,paysafecard,googlepay,ips,crypto',
+        self::WALLET_GOOGLE_PAY => 'checkout,pis,wallet,paysafecard,applepay,ips,crypto',
+    ];
 
     /**
      * @var Order
@@ -46,7 +59,7 @@ class Corvus
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function resolveFormView(Collection $payment_method = null, array $options = null)
+    public function resolveFormView(?Collection $payment_method = null, ?array $options = null)
     {
         if ( ! $payment_method) {
             return '';
@@ -84,8 +97,21 @@ class Corvus
         $data['method']    = 'POST';
 
         $data['number_of_installments'] = 'Y0299';
+        $wallet = self::normalizeWallet($options['wallet'] ?? CheckoutSession::getPaymentWallet());
 
-        $string = 'amount' . $total . 'cardholder_email' . $data['email'] . 'cardholder_name' . $data['firstname'] . 'cardholder_phone' . $data['telephone'] . 'cardholder_surname' . $data['lastname'] . 'cartWeb shop kupnja ' . $data['order_id'] . 'currency' . $data['currency'] . 'language' . $data['lang'] . 'order_number' . $data['order_id'] . 'payment_all' . $data['number_of_installments'] . 'require_completefalsestore_id' . $data['merchant'] . 'version1.3';
+        if ($wallet) {
+            $data['wallet'] = $wallet;
+            $data['wallet_label'] = self::WALLET_LABELS[$wallet];
+            $data['hide_tabs'] = self::WALLET_HIDE_TABS[$wallet];
+        }
+
+        $string = 'amount' . $data['total'] . 'cardholder_email' . $data['email'] . 'cardholder_name' . $data['firstname'] . 'cardholder_phone' . $data['telephone'] . 'cardholder_surname' . $data['lastname'] . 'cartWeb shop kupnja ' . $data['order_id'] . 'currency' . $data['currency'];
+
+        if (isset($data['hide_tabs'])) {
+            $string .= 'hide_tabs' . $data['hide_tabs'];
+        }
+
+        $string .= 'language' . $data['lang'] . 'order_number' . $data['order_id'] . 'payment_all' . $data['number_of_installments'] . 'require_completefalsestore_id' . $data['merchant'] . 'version1.3';
 
         $keym = $payment_method->data->secret_key;
         $hash = hash_hmac('sha256', $string, $keym);
@@ -93,6 +119,23 @@ class Corvus
         $data['md5'] = $hash;
 
         return view('front.checkout.payment.corvus', compact('data'));
+    }
+
+
+    /**
+     * @param string|null $wallet
+     *
+     * @return string|null
+     */
+    public static function normalizeWallet(?string $wallet): ?string
+    {
+        $wallet = strtolower(trim((string) $wallet));
+
+        if (array_key_exists($wallet, self::WALLET_LABELS)) {
+            return $wallet;
+        }
+
+        return null;
     }
 
 

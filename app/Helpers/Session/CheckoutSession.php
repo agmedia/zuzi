@@ -236,7 +236,49 @@ class CheckoutSession
      */
     public static function forgetPayment()
     {
-        return session()->forget(static::$session_string . '.payment');
+        return session()->forget([
+            static::$session_string . '.payment',
+            static::$session_string . '.payment_wallet',
+        ]);
+    }
+
+    /**
+     * PAYMENT WALLET
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Session\SessionManager|\Illuminate\Session\Store|mixed
+     */
+    public static function getPaymentWallet()
+    {
+        return session(static::$session_string . '.payment_wallet');
+    }
+
+
+    /**
+     * @return bool
+     */
+    public static function hasPaymentWallet()
+    {
+        return session()->has(static::$session_string . '.payment_wallet');
+    }
+
+
+    /**
+     * @param array|string $value
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Session\SessionManager|\Illuminate\Session\Store|mixed
+     */
+    public static function setPaymentWallet($value)
+    {
+        return session([static::$session_string . '.payment_wallet' => $value]);
+    }
+
+
+    /**
+     * @return bool
+     */
+    public static function forgetPaymentWallet()
+    {
+        return session()->forget(static::$session_string . '.payment_wallet');
     }
 
     /*******************************************************************************

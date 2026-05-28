@@ -399,6 +399,7 @@ Route::post('/komentar/proizvoda/posalji', [HomeController::class, 'sendProductC
 //
 Route::get('/kosarica', [CheckoutController::class, 'cart'])->name('kosarica');
 Route::get('/naplata', [CheckoutController::class, 'checkout'])->name('naplata');
+Route::get('/naplata/wallet/{wallet}', [CheckoutController::class, 'wallet'])->name('checkout.wallet');
 Route::get('/pregled', [CheckoutController::class, 'view'])->name('pregled');
 Route::get('/narudzba', [CheckoutController::class, 'order'])->name('checkout');
 Route::get('/uspjeh', [CheckoutController::class, 'success'])->name('checkout.success');
