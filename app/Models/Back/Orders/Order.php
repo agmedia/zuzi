@@ -464,12 +464,26 @@ class Order extends Model
 
         if ($request->boolean('completed_without_promo_mail')) {
             $query->whereIn('order_status_id', static::completedStatusIds());
+            $query->whereNotNull('payment_email')
+                ->where('payment_email', '!=', '');
 
             $sentPromoOrderIds = app(UnfinishedOrderPromoService::class)->sentOrderIds();
 
             if ($sentPromoOrderIds->isNotEmpty()) {
                 $query->whereNotIn($this->getTable() . '.id', $sentPromoOrderIds->all());
             }
+
+            $query->whereDoesntHave('totals', function (Builder $query) {
+                $query->where('code', 'special')
+                    ->where(function (Builder $query) {
+                        $query->where('title', 'like', 'Kupon %')
+                            ->orWhereIn('title', Action::query()
+                                ->select('title')
+                                ->where('group', 'total')
+                                ->whereNotNull('coupon')
+                                ->where('coupon', '!=', ''));
+                    });
+            });
         } elseif ($request->has('status') && $request->input('status') !== '') {
             $query->where('order_status_id', '=', $request->input('status'));
         }
