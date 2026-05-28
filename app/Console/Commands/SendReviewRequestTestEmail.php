@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Mail\OrderReviewRequest;
 use App\Models\Back\Orders\Order;
+use App\Services\ReviewRequestPromoService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
@@ -12,7 +13,7 @@ class SendReviewRequestTestEmail extends Command
     /**
      * @var string
      */
-    protected $signature = 'send:review-request-test {email : Address that should receive the test email} {orderId? : Optional order ID to use as the email source}';
+    protected $signature = 'send:review-request-test {email : Address that should receive the test email} {orderId? : Optional order ID to use as the email source} {--real-coupon : Generate and persist a real coupon for the source order}';
 
     /**
      * @var string
@@ -34,20 +35,27 @@ class SendReviewRequestTestEmail extends Command
             return self::FAILURE;
         }
 
-        $mailable = new OrderReviewRequest($order);
+        $reviewItems = OrderReviewRequest::reviewItemsForOrder($order);
 
-        if ($mailable->reviewItems->isEmpty()) {
+        if ($reviewItems->isEmpty()) {
             $this->error('Selected order has no reviewable products with public product URLs.');
 
             return self::FAILURE;
         }
 
+        $promoService = app(ReviewRequestPromoService::class);
+        $promoAction = $this->option('real-coupon')
+            ? $promoService->issueForOrder($order)
+            : $promoService->previewForOrder($order);
+        $mailable = new OrderReviewRequest($order, $promoAction, $reviewItems);
+
         Mail::to($email)->send($mailable);
 
         $this->info(sprintf(
-            'Sent review-request test email for order #%d to %s.',
+            'Sent review-request test email for order #%d to %s. Coupon: %s',
             $order->id,
-            $email
+            $email,
+            $promoAction->coupon
         ));
 
         return self::SUCCESS;
@@ -62,7 +70,7 @@ class SendReviewRequestTestEmail extends Command
             ->limit(50)
             ->get()
             ->first(function (Order $order) {
-                return (new OrderReviewRequest($order))->reviewItems->isNotEmpty();
+                return OrderReviewRequest::reviewItemsForOrder($order)->isNotEmpty();
             });
     }
 }

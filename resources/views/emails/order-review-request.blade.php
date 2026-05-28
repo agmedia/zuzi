@@ -1,6 +1,7 @@
 @extends('emails.layouts.base')
 
 @section('content')
+    @php($expiresAt = \Illuminate\Support\Carbon::make($promoAction->date_end))
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
             <td class="ag-mail-tableset" style="padding-bottom: 4px;">
@@ -13,14 +14,30 @@
 
         <tr>
             <td class="ag-mail-tableset" style="padding-top: 0;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff5fa; border: 1px solid #f7c2dd; border-radius: 8px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff5fa; border: 1px solid #f7c2dd; border-radius: 10px;">
                     <tr>
-                        <td style="padding: 18px 20px; font-size: 14px; line-height: 1.7; color: #373f50;">
-                            @if ((int) $order->user_id > 0)
-                                <strong>Kao registrirani kupac</strong> za svaki odobreni komentar dobivate <strong>{{ \App\Models\Back\Marketing\Review::rewardPoints() }} loyalty bodova</strong>, do najviše <strong>{{ \App\Models\Back\Marketing\Review::monthlyLimit() }} komentara mjesečno</strong>.
-                            @else
-                                <strong>Registrirani kupci</strong> za svaki odobreni komentar dobivaju <strong>{{ \App\Models\Back\Marketing\Review::rewardPoints() }} loyalty bodova</strong>, do najviše <strong>{{ \App\Models\Back\Marketing\Review::monthlyLimit() }} komentara mjesečno</strong>.
-                            @endif
+                        <td style="padding: 22px 20px; font-size: 15px; line-height: 1.8; color: #373f50;">
+                            <p style="margin: 0 0 10px;">
+                                🎁 <strong>TVOJA NAGRADA: -{{ (int) $promoAction->discount }}% na sve artikle</strong>
+                            </p>
+
+                            <p style="margin: 0 0 10px;">
+                                Kod: <strong>{{ $promoAction->coupon }}</strong>
+                            </p>
+                            <p style="margin: 0;">
+                                ⏳ Vrijedi samo sljedećih <strong>7 dana</strong>
+                                @if ($expiresAt)
+                                    <br>Točnije do <strong>{{ $expiresAt->format('d.m.Y. H:i') }}</strong>
+                                @endif
+                            </p>
+
+                            <p style="margin: 12px 0 0;">
+                                @if ((int) $order->user_id > 0)
+                                    <strong>Kao registrirani kupac</strong> za svaki odobreni komentar dobivate i <strong>{{ \App\Models\Back\Marketing\Review::rewardPoints() }} loyalty bodova</strong>, do najviše <strong>{{ \App\Models\Back\Marketing\Review::monthlyLimit() }} komentara mjesečno</strong>.
+                                @else
+                                    <strong>Registrirani kupci</strong> za svaki odobreni komentar dobivaju i <strong>{{ \App\Models\Back\Marketing\Review::rewardPoints() }} loyalty bodova</strong>, do najviše <strong>{{ \App\Models\Back\Marketing\Review::monthlyLimit() }} komentara mjesečno</strong>.
+                                @endif
+                            </p>
                         </td>
                     </tr>
                 </table>

@@ -6,6 +6,7 @@ use App\Mail\OrderReviewRequest;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderHistory;
 use App\Models\Back\Settings\Settings;
+use App\Services\ReviewRequestPromoService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -40,6 +41,7 @@ class SendReviewRequestEmails extends Command
         $maxOrderAgeDays = max($daysAfterCompleted, (int) config('settings.order.review_request.max_order_age_days', 30));
         $threshold = now()->subDays($daysAfterCompleted);
         $oldestAllowedCompletedAt = now()->subDays($maxOrderAgeDays);
+        $promoService = app(ReviewRequestPromoService::class);
 
         $completedOrdersSubquery = OrderHistory::query()
             ->selectRaw('order_id, MAX(created_at) as completed_at')
@@ -63,9 +65,9 @@ class SendReviewRequestEmails extends Command
                         continue;
                     }
 
-                    $mailable = new OrderReviewRequest($order);
+                    $reviewItems = OrderReviewRequest::reviewItemsForOrder($order);
 
-                    if ($mailable->reviewItems->isEmpty()) {
+                    if ($reviewItems->isEmpty()) {
                         Log::warning('Skipping review request email because no linked products were resolved.', [
                             'order_id' => $order->id,
                         ]);
@@ -73,16 +75,59 @@ class SendReviewRequestEmails extends Command
                         continue;
                     }
 
-                    try {
-                        Mail::to($order->payment_email)->send($mailable);
+                    $existingPromoAction = $promoService->findForOrder($order);
+                    $promoAction = $existingPromoAction;
+                    $createdPromoAction = false;
 
+                    try {
+                        if (! $promoAction) {
+                            $promoAction = $promoService->issueForOrder($order);
+                            $createdPromoAction = true;
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to issue review request promo coupon.', [
+                            'order_id' => $order->id,
+                            'payment_email' => $order->payment_email,
+                            'error' => $e->getMessage(),
+                        ]);
+
+                        continue;
+                    }
+
+                    try {
+                        Mail::to($order->payment_email)->send(new OrderReviewRequest($order, $promoAction, $reviewItems));
+                    } catch (\Throwable $e) {
+                        if ($createdPromoAction && $promoAction) {
+                            try {
+                                $promoAction->delete();
+                            } catch (\Throwable $deleteException) {
+                                Log::warning('Failed to rollback review request promo coupon after email failure.', [
+                                    'order_id' => $order->id,
+                                    'coupon' => $promoAction->coupon ?? null,
+                                    'error' => $deleteException->getMessage(),
+                                ]);
+                            }
+                        }
+
+                        Log::error('Failed to send review request email.', [
+                            'order_id' => $order->id,
+                            'payment_email' => $order->payment_email,
+                            'coupon' => $promoAction->coupon ?? null,
+                            'message' => $e->getMessage(),
+                        ]);
+
+                        continue;
+                    }
+
+                    try {
                         $order->forceFill([
                             'review_request_sent_at' => now(),
                         ])->save();
                     } catch (\Throwable $e) {
-                        Log::error('Failed to send review request email.', [
+                        Log::warning('Review request email was sent, but marking the order as processed failed.', [
                             'order_id' => $order->id,
-                            'message' => $e->getMessage(),
+                            'coupon' => $promoAction->coupon ?? null,
+                            'error' => $e->getMessage(),
                         ]);
                     }
                 }

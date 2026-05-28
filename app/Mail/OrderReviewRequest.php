@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\Back\Marketing\Action;
 use App\Models\Back\Orders\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -18,14 +19,28 @@ class OrderReviewRequest extends Mailable
     public $order;
 
     /**
+     * @var Action
+     */
+    public $promoAction;
+
+    /**
      * @var Collection<int, array<string, mixed>>
      */
     public $reviewItems;
 
-    public function __construct(Order $order)
+    public function __construct(Order $order, Action $promoAction, ?Collection $reviewItems = null)
     {
         $this->order = $order;
-        $this->reviewItems = $order->products
+        $this->promoAction = $promoAction;
+        $this->reviewItems = $reviewItems ?: self::reviewItemsForOrder($order);
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public static function reviewItemsForOrder(Order $order): Collection
+    {
+        return $order->products
             ->map(function ($orderProduct) {
                 $product = $orderProduct->real;
                 $productUrl = $product && filled($product->url) ? url($product->url) : null;
