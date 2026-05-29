@@ -1268,8 +1268,7 @@
                                <span>{{ number_format($reviewsAverage, 1) }} prosječna ocjena</span>
                            </div>
                        @else
-                           <p class="text-muted mb-0">Podijelite svoje iskustvo s ovom knjigom i pomozite drugim kupcima.</p>
-                           <p class="fs-sm text-muted mt-2 mb-1">Vaše iskustvo pomaže drugim kupcima, a nama puno znači. Hvala vam što odvajate vrijeme za preporuku.</p>
+
                            <p class="fs-sm text-muted mb-0">Registrirani kupci za svaki odobreni komentar dobivaju {{ $reviewRewardPoints }} loyalty bodova, do najviše {{ $reviewMonthlyLimit }} komentara mjesečno.</p>
                        @endif
                    </div>
