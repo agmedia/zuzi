@@ -329,6 +329,17 @@
                                     <small class="fs-sm text-muted" v-if="product.secondary_price_text">{{ product.secondary_price_text }}</small>
                                 </span>
                             </div>
+                            <div
+                                v-if="product.bogo_badge && product.bogo_badge.text"
+                                class="catalog-grid-card__bogo-line product-bogo-line"
+                                :data-bogo-tooltip="product.bogo_badge.tooltip"
+                                :aria-label="product.bogo_badge.tooltip"
+                                tabindex="0"
+                            >
+                                <span class="catalog-grid-card__bogo-pill product-bogo-pill badge-shadow">{{ product.bogo_badge.text }}</span>
+                                <span class="catalog-grid-card__bogo-text product-bogo-text">na košaricu</span>
+                                <span class="product-bogo-info" aria-hidden="true">i</span>
+                            </div>
                         </div>
                     </div>
                     <div class="product-floating-btn">
@@ -1358,6 +1369,38 @@
     position: static;
     background: #e50077;
     color: #fff;
+}
+
+.catalog-grid-card__bogo-line {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 1.25rem;
+    margin-top: 0.25rem;
+}
+
+.catalog-grid-card__bogo-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.85rem;
+    height: 1.25rem;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    background: #2f3747;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+
+.catalog-grid-card__bogo-text {
+    line-height: 1.1;
+    color: #7d879c;
+    font-size: 0.75rem;
+    white-space: nowrap;
 }
 
 .catalog-grid-card__meta {

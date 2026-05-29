@@ -4,6 +4,7 @@ namespace App\Models\Front\Catalog;
 
 use App\Helpers\Helper;
 use App\Helpers\Currency;
+use App\Models\Back\Marketing\Action as MarketingAction;
 use App\Models\Back\Marketing\Review;
 use App\Models\Back\Catalog\Product\ProductAction;
 use App\Models\Back\Settings\Settings;
@@ -335,8 +336,9 @@ class Product extends Model
 
         $bestsellerLookup = static::listingBestsellerIds($bestsellerLimit)
             ->flip();
+        $bogoBadge = MarketingAction::activeBogoListingBadge();
 
-        return $products->map(function ($product) use ($popularLookup, $bestsellerLookup) {
+        return $products->map(function ($product) use ($popularLookup, $bestsellerLookup, $bogoBadge) {
             $productId = (int) $product->id;
             $isBestSeller = $bestsellerLookup->has($productId);
             $isPopular = $popularLookup->has($productId);
@@ -344,6 +346,7 @@ class Product extends Model
             $product->setAttribute('is_best_seller', $isBestSeller);
             $product->setAttribute('is_popular', $isPopular);
             $product->setAttribute('sales_badge_type', $isBestSeller ? 'bestseller' : ($isPopular ? 'popular' : null));
+            $product->setAttribute('bogo_badge', $bogoBadge);
 
             return $product;
         });

@@ -646,6 +646,115 @@ class Action extends Model
         return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
     }
 
+    public static function activeBogoListingBadge(): ?array
+    {
+        $promo = self::activeBogoCartPromo();
+
+        if (! $promo) {
+            return null;
+        }
+
+        return [
+            'text' => $promo['discount_label'],
+            'tooltip' => $promo['title'] . '. Kombiniraj različite naslove u košarici i ostvari ' . $promo['discount_label'] . ' popusta.',
+        ];
+    }
+
+    public static function activeBogoCartPromo(): ?array
+    {
+        static $resolved = false;
+        static $promo = null;
+
+        if ($resolved) {
+            return $promo;
+        }
+
+        $resolved = true;
+        $tiersByQuantity = [];
+        $titles = [];
+
+        $actions = self::query()
+            ->where('group', self::GROUP_BOGO)
+            ->where('status', 1)
+            ->where(function ($query) {
+                $query->whereNull('date_start')->orWhere('date_start', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('date_end')->orWhere('date_end', '>=', now());
+            })
+            ->orderBy('date_start')
+            ->get(['id', 'title', 'data']);
+
+        foreach ($actions as $action) {
+            $actionTiers = self::normalizeBogoTiers(is_array($action->data) ? $action->data : []);
+
+            if (empty($actionTiers)) {
+                continue;
+            }
+
+            $title = trim((string) $action->title);
+
+            if ($title !== '') {
+                $titles[(int) $action->id] = $title;
+            }
+
+            foreach ($actionTiers as $tier) {
+                $quantity = (int) $tier['quantity'];
+                $discount = (float) $tier['discount'];
+
+                if (
+                    ! isset($tiersByQuantity[$quantity])
+                    || $discount > (float) $tiersByQuantity[$quantity]['discount']
+                ) {
+                    $tiersByQuantity[$quantity] = [
+                        'quantity' => $quantity,
+                        'discount' => $discount,
+                    ];
+                }
+            }
+        }
+
+        if (empty($tiersByQuantity)) {
+            return null;
+        }
+
+        ksort($tiersByQuantity);
+
+        $discounts = collect($tiersByQuantity)->pluck('discount');
+        $minDiscountLabel = self::formatPercentForHumans((float) $discounts->min());
+        $maxDiscountLabel = self::formatPercentForHumans((float) $discounts->max());
+        $discountLabel = $minDiscountLabel === $maxDiscountLabel
+            ? $minDiscountLabel . '%'
+            : $minDiscountLabel . '-' . $maxDiscountLabel . '%';
+
+        $tiers = collect($tiersByQuantity)
+            ->values()
+            ->map(function (array $tier) {
+                $quantity = (int) $tier['quantity'];
+                $quantityWord = $quantity >= 5 ? 'artikala' : 'artikla';
+
+                return [
+                    'quantity' => $quantity,
+                    'discount' => (float) $tier['discount'],
+                    'quantity_label' => $quantity . '+ ' . $quantityWord,
+                    'discount_label' => self::formatPercentForHumans((float) $tier['discount']) . '%',
+                ];
+            })
+            ->all();
+
+        $promo = [
+            'eyebrow' => 'Aktivna količinska akcija',
+            'title' => 'Kupi više, plati manje',
+            'subtitle' => count($titles) === 1 ? reset($titles) : 'BOGO količinski popust',
+            'description' => 'Kombiniraj različite naslove u košarici. Popust se automatski obračuna prema ukupnom broju artikala.',
+            'note' => 'Najviši dosegnuti prag primjenjuje se na artikle u košarici.',
+            'discount_label' => $discountLabel,
+            'tiers' => $tiers,
+        ];
+
+        return $promo;
+    }
+
 
     /*******************************************************************************
      *                                Copyright : AG media                           *

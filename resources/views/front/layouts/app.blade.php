@@ -128,6 +128,107 @@
             display: none;
         }
 
+        .product-bogo-line {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            max-width: 100%;
+            min-height: 1.25rem;
+            margin-top: .25rem;
+            outline: 0;
+            cursor: help;
+        }
+
+        .product-bogo-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.85rem;
+            height: 1.25rem;
+            padding: 0 .45rem;
+            border-radius: 999px;
+            background: #2f3747;
+            color: #fff;
+            font-size: .7rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+
+        .product-bogo-text {
+            color: #7d879c;
+            font-size: .75rem;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+
+        .product-bogo-info {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 999px;
+            background: rgba(229, 0, 119, .1);
+            color: #e50077;
+            font-size: .68rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .product-bogo-line::before,
+        .product-bogo-line::after {
+            position: absolute;
+            left: 0;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .16s ease, transform .16s ease;
+            z-index: 25;
+        }
+
+        .product-bogo-line::before {
+            content: "";
+            bottom: calc(100% + .28rem);
+            width: .65rem;
+            height: .65rem;
+            margin-left: .65rem;
+            background: #2f3747;
+            transform: translateY(.22rem) rotate(45deg);
+        }
+
+        .product-bogo-line::after {
+            content: attr(data-bogo-tooltip);
+            bottom: calc(100% + .55rem);
+            width: 14rem;
+            max-width: min(14rem, 72vw);
+            padding: .68rem .76rem;
+            border-radius: .5rem;
+            background: #2f3747;
+            color: #fff;
+            box-shadow: 0 .75rem 1.65rem rgba(43, 52, 69, .22);
+            font-size: .76rem;
+            font-weight: 600;
+            line-height: 1.28;
+            text-align: left;
+            white-space: normal;
+            transform: translateY(.22rem);
+        }
+
+        .product-bogo-line:hover::before,
+        .product-bogo-line:hover::after,
+        .product-bogo-line:focus::before,
+        .product-bogo-line:focus::after {
+            opacity: 1;
+            transform: translateY(0) rotate(45deg);
+        }
+
+        .product-bogo-line:hover::after,
+        .product-bogo-line:focus::after {
+            transform: translateY(0);
+        }
+
         .page-carousel-widget {
             position: relative;
         }

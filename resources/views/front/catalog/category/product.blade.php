@@ -24,6 +24,7 @@
         $salesBadgeViewBox = $salesBadgeType === 'bestseller' ? '0 0 640 512' : '0 0 576 512';
         $salesBadgeTransform = $salesBadgeType === 'bestseller' ? 'translate(0 512) scale(1 -1)' : null;
         $salesBadgeIconSize = $salesBadgeType === 'popular' ? '12' : '13.5';
+        $bogoListingBadge = \App\Models\Back\Marketing\Action::activeBogoListingBadge();
     @endphp
 
     <div class="card product-card shadow pb-2 position-relative @if($isCartShelfLayout) cart-shelf-card @endif @if($isCartShelfLayout && $isBookmarkerProduct) cart-shelf-card--bookmarkers @endif">
@@ -103,6 +104,18 @@
                    <span class="text-dark fs-md">{{ $product->main_special_text }} @if($product->secondary_special_text) <small class="text-muted">{{ $product->secondary_special_text }}</small> @endif</span></div>
                 @else
                     <div class="product-price"><span class="text-dark fs-md">{{ $product->main_price_text }}  @if($product->secondary_price_text) <small class="fs-sm text-muted">{{ $product->secondary_price_text }} </small>@endif</span></div>
+                @endif
+                @if ($bogoListingBadge && ! $isCartShelfLayout)
+                    <div
+                        class="product-bogo-line"
+                        data-bogo-tooltip="{{ $bogoListingBadge['tooltip'] }}"
+                        aria-label="{{ $bogoListingBadge['tooltip'] }}"
+                        tabindex="0"
+                    >
+                        <span class="product-bogo-pill badge-shadow">{{ $bogoListingBadge['text'] }}</span>
+                        <span class="product-bogo-text">na košaricu</span>
+                        <span class="product-bogo-info" aria-hidden="true">i</span>
+                    </div>
                 @endif
             </div>
         </div>

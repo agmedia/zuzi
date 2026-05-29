@@ -12,6 +12,42 @@
             </div>
         </div>
 
+        <div class="rounded-3 p-4 mt-3 cart-bogo-promo" v-if="route == 'kosarica' && hasBogoPromo">
+            <div class="py-2 px-xl-2">
+                <div class="cart-bogo-promo__header">
+                    <span class="cart-bogo-promo__icon" aria-hidden="true">%</span>
+                    <div>
+                        <div class="cart-bogo-promo__eyebrow">{{ bogoPromo.eyebrow }}</div>
+                        <h3 class="cart-bogo-promo__title">{{ bogoPromo.title }}</h3>
+                    </div>
+                </div>
+
+                <p class="cart-bogo-promo__text">{{ bogoPromo.description }}</p>
+
+                <div class="cart-bogo-promo__tiers" role="list">
+                    <div
+                        v-for="tier in bogoTiers"
+                        :key="`bogo-tier-${tier.quantity}`"
+                        class="cart-bogo-promo__tier"
+                        :class="{
+                            'cart-bogo-promo__tier--active': isBogoTierActive(tier),
+                            'cart-bogo-promo__tier--next': isBogoTierNext(tier)
+                        }"
+                        role="listitem"
+                    >
+                        <span>{{ tier.quantity_label }}</span>
+                        <strong>{{ tier.discount_label }}</strong>
+                    </div>
+                </div>
+
+                <p class="cart-bogo-promo__status" :class="{ 'cart-bogo-promo__status--active': activeBogoTier }">
+                    {{ bogoStatusText }}
+                </p>
+
+                <p class="cart-bogo-promo__note">{{ bogoPromo.note }}</p>
+            </div>
+        </div>
+
         <div class="rounded-3 p-4 mt-3 cart-bookmarker-promo" v-if="route == 'kosarica' && showBookmarkerPromo" style="border: 1px solid #dae1e7;background-color: #fff !important;">
             <div class="py-2 px-xl-2">
                 <div class="cart-bookmarker-promo__eyebrow mb-0">
@@ -181,6 +217,10 @@ export default {
         showBookmarkerPromo: {
             type: Boolean,
             default: false
+        },
+        bogoPromo: {
+            type: Object,
+            default: null
         }
     },
     data() {
@@ -213,6 +253,55 @@ export default {
             const currencyList = Array.isArray(settings['currency.list']) ? settings['currency.list'] : [];
 
             return currencyList.some((item) => item && item.status !== false && !item.main);
+        },
+        hasBogoPromo() {
+            return !!(this.bogoPromo && Array.isArray(this.bogoPromo.tiers) && this.bogoPromo.tiers.length);
+        },
+        bogoTiers() {
+            if (!this.hasBogoPromo) {
+                return [];
+            }
+
+            return this.bogoPromo.tiers
+                .slice()
+                .sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0));
+        },
+        bogoCartQuantity() {
+            const items = this.$store.state.cart && this.$store.state.cart.items ? this.$store.state.cart.items : {};
+
+            return Object.values(items).reduce((total, item) => {
+                if (this.isGiftWrap(item) || this.isGiftVoucher(item)) {
+                    return total;
+                }
+
+                return total + Math.max(0, Number(item.quantity || 0));
+            }, 0);
+        },
+        activeBogoTier() {
+            return this.bogoTiers
+                .filter((tier) => Number(tier.quantity || 0) <= this.bogoCartQuantity)
+                .pop() || null;
+        },
+        nextBogoTier() {
+            return this.bogoTiers.find((tier) => Number(tier.quantity || 0) > this.bogoCartQuantity) || null;
+        },
+        bogoStatusText() {
+            if (!this.hasBogoPromo) {
+                return '';
+            }
+
+            if (this.activeBogoTier) {
+                return `Trenutno ostvarujete ${this.activeBogoTier.discount_label} popusta na artikle u košarici.`;
+            }
+
+            if (this.nextBogoTier) {
+                const missing = Math.max(0, Number(this.nextBogoTier.quantity || 0) - this.bogoCartQuantity);
+                const word = missing === 1 ? 'artikl' : 'artikla';
+
+                return `Dodajte još ${missing} ${word} za ${this.nextBogoTier.discount_label} popusta.`;
+            }
+
+            return this.bogoPromo.note || '';
         },
         visibleDetailConditions() {
             const conditions = Array.isArray(this.$store.state.cart.detail_con) ? this.$store.state.cart.detail_con : [];
@@ -368,6 +457,14 @@ export default {
             });
         },
 
+        isBogoTierActive(tier) {
+            return Number(tier.quantity || 0) <= this.bogoCartQuantity;
+        },
+
+        isBogoTierNext(tier) {
+            return this.nextBogoTier && Number(this.nextBogoTier.quantity || 0) === Number(tier.quantity || 0);
+        },
+
         setLoyalty() {
             let cart = this.$store.state.storage.getCart();
 
@@ -475,6 +572,116 @@ export default {
     color: #5f6c82;
     font-size: 0.95rem;
     line-height: 1.5;
+}
+.cart-bogo-promo {
+    border: 1px solid rgba(229, 0, 119, 0.18);
+    background:
+        linear-gradient(180deg, #fff 0%, #fff7fb 100%) !important;
+    box-shadow: 0 12px 28px rgba(43, 52, 69, 0.06);
+}
+.cart-bogo-promo__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    margin-bottom: 0.75rem;
+}
+.cart-bogo-promo__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 50%;
+    background: #e50077;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    box-shadow: 0 10px 20px rgba(229, 0, 119, 0.2);
+}
+.cart-bogo-promo__eyebrow {
+    margin-bottom: 0.15rem;
+    color: #e50077;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+.cart-bogo-promo__title {
+    margin: 0;
+    color: #2b3445;
+    font-size: 1.15rem;
+    line-height: 1.25;
+}
+.cart-bogo-promo__text {
+    margin-bottom: 0.85rem;
+    color: #5f6c82;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+.cart-bogo-promo__tiers {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+.cart-bogo-promo__tier {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    min-height: 2.45rem;
+    padding: 0.48rem 0.55rem;
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.86);
+    color: #4b5563;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+.cart-bogo-promo__tier strong {
+    color: #2b3445;
+    font-size: 0.9rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+.cart-bogo-promo__tier--active {
+    border-color: rgba(229, 0, 119, 0.32);
+    background: rgba(229, 0, 119, 0.08);
+    color: #9f1c63;
+}
+.cart-bogo-promo__tier--active strong {
+    color: #e50077;
+}
+.cart-bogo-promo__tier--next {
+    border-color: rgba(229, 0, 119, 0.45);
+    border-style: dashed;
+}
+.cart-bogo-promo__status {
+    margin: 0;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.78);
+    color: #5f6c82;
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+.cart-bogo-promo__status--active {
+    background: rgba(229, 0, 119, 0.09);
+    color: #9f1c63;
+    font-weight: 700;
+}
+.cart-bogo-promo__note {
+    margin: 0.65rem 0 0;
+    color: #6b7280;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+@media (max-width: 420px) {
+    .cart-bogo-promo__tiers {
+        grid-template-columns: 1fr;
+    }
 }
 .gift-wrap-thumb {
     align-items: center;

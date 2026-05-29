@@ -24,6 +24,7 @@
         ],
     ];
     $bookmarkersUrl = route('catalog.route', ['group' => 'kategorija-proizvoda', 'cat' => 'bookmarkeri']);
+    $activeBogoCartPromo = \App\Models\Back\Marketing\Action::activeBogoCartPromo();
 @endphp
 
 @push('css_after')
@@ -227,6 +228,7 @@
                 checkouturl="{{ route('naplata') }}"
                 bookmarkers-target="cart-bookmarkers"
                 :show-bookmarker-promo='@json(isset($cartBookmarkers) && $cartBookmarkers->count() > 0)'
+                :bogo-promo='@json($activeBogoCartPromo)'
             >
                 @if(!empty($showCartWalletButtons))
                     <div slot="after-checkout-button">
