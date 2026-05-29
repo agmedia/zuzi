@@ -1,5 +1,5 @@
 <template>
-    <section class="col">
+    <section ref="productsListTop" class="col">
         <!-- Toolbar-->
         <div class="catalog-toolbar pt-2 pb-4 pb-sm-2 mb-3">
             <div class="catalog-toolbar__desktop d-none d-xl-flex align-items-center">
@@ -440,6 +440,7 @@
                 page: 1,
                 showMobileFilters: false,
                 toolbarRequestToken: 0,
+                shouldScrollAfterPageChange: false,
                 bodyOverflowValue: '',
                 isIPhone: false,
                 suppressSortWatcher: false,
@@ -611,10 +612,18 @@
              * @param page
              */
             getProductsPage(page = 1, syncRoute = true) {
+                let currentPage = this.products && this.products.current_page ? Number(this.products.current_page) : Number(this.page);
+
+                if (syncRoute && Number(page) === currentPage) {
+                    this.scrollToProductsListTop();
+                    return;
+                }
+
                 this.page = page;
 
                 if (syncRoute) {
-                    window.scrollTo({top: 0, behavior: 'smooth'});
+                    this.shouldScrollAfterPageChange = true;
+                    this.scrollToProductsListTop();
                     this.setQueryParam('page', page);
                     return;
                 }
@@ -634,6 +643,11 @@
                     this.checkSpecials();
                     this.checkAvailables();
                     this.syncProductsSchema();
+
+                    if (this.shouldScrollAfterPageChange) {
+                        this.shouldScrollAfterPageChange = false;
+                        this.$nextTick(() => this.scrollToProductsListTop());
+                    }
                 });
             },
 
@@ -1282,6 +1296,61 @@
                 }
 
                 document.body.style.overflow = this.bodyOverflowValue;
+            },
+
+            /**
+             *
+             */
+            scrollToProductsListTop() {
+                if (typeof window === 'undefined' || !this.$refs.productsListTop) {
+                    return;
+                }
+
+                let scrollContainer = this.getScrollContainer(this.$refs.productsListTop);
+                let header = document.querySelector('[data-fixed-element]');
+                let headerOffset = header ? header.getBoundingClientRect().height : 0;
+                let targetTop = 0;
+
+                if (scrollContainer === window) {
+                    targetTop = this.$refs.productsListTop.getBoundingClientRect().top + window.pageYOffset - headerOffset - 12;
+                } else {
+                    targetTop = this.$refs.productsListTop.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top + scrollContainer.scrollTop - headerOffset - 12;
+                }
+
+                let top = Math.max(targetTop, 0);
+
+                if ('scrollBehavior' in document.documentElement.style) {
+                    scrollContainer.scrollTo({ top, behavior: 'smooth' });
+                    return;
+                }
+
+                if (scrollContainer === window) {
+                    window.scrollTo(0, top);
+                    return;
+                }
+
+                scrollContainer.scrollTop = top;
+            },
+
+            /**
+             *
+             * @param element
+             * @return {Window|Element}
+             */
+            getScrollContainer(element) {
+                let parent = element ? element.parentElement : null;
+
+                while (parent && parent !== document.body) {
+                    let overflowY = window.getComputedStyle(parent).overflowY;
+
+                    if (/(auto|scroll|overlay)/.test(overflowY) && parent.scrollHeight > parent.clientHeight) {
+                        return parent;
+                    }
+
+                    parent = parent.parentElement;
+                }
+
+                return window;
             },
 
             /**

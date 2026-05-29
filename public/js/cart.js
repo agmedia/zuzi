@@ -4349,6 +4349,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       page: 1,
       showMobileFilters: false,
       toolbarRequestToken: 0,
+      shouldScrollAfterPageChange: false,
       bodyOverflowValue: '',
       isIPhone: false,
       suppressSortWatcher: false,
@@ -4510,12 +4511,15 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       var _this5 = this;
       var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var syncRoute = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      var currentPage = this.products && this.products.current_page ? Number(this.products.current_page) : Number(this.page);
+      if (syncRoute && Number(page) === currentPage) {
+        this.scrollToProductsListTop();
+        return;
+      }
       this.page = page;
       if (syncRoute) {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
+        this.shouldScrollAfterPageChange = true;
+        this.scrollToProductsListTop();
         this.setQueryParam('page', page);
         return;
       }
@@ -4534,6 +4538,12 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         _this5.checkSpecials();
         _this5.checkAvailables();
         _this5.syncProductsSchema();
+        if (_this5.shouldScrollAfterPageChange) {
+          _this5.shouldScrollAfterPageChange = false;
+          _this5.$nextTick(function () {
+            return _this5.scrollToProductsListTop();
+          });
+        }
       });
     },
     /**
@@ -5091,6 +5101,52 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         return;
       }
       document.body.style.overflow = this.bodyOverflowValue;
+    },
+    /**
+     *
+     */
+    scrollToProductsListTop: function scrollToProductsListTop() {
+      if (typeof window === 'undefined' || !this.$refs.productsListTop) {
+        return;
+      }
+      var scrollContainer = this.getScrollContainer(this.$refs.productsListTop);
+      var header = document.querySelector('[data-fixed-element]');
+      var headerOffset = header ? header.getBoundingClientRect().height : 0;
+      var targetTop = 0;
+      if (scrollContainer === window) {
+        targetTop = this.$refs.productsListTop.getBoundingClientRect().top + window.pageYOffset - headerOffset - 12;
+      } else {
+        targetTop = this.$refs.productsListTop.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top + scrollContainer.scrollTop - headerOffset - 12;
+      }
+      var top = Math.max(targetTop, 0);
+      if ('scrollBehavior' in document.documentElement.style) {
+        scrollContainer.scrollTo({
+          top: top,
+          behavior: 'smooth'
+        });
+        return;
+      }
+      if (scrollContainer === window) {
+        window.scrollTo(0, top);
+        return;
+      }
+      scrollContainer.scrollTop = top;
+    },
+    /**
+     *
+     * @param element
+     * @return {Window|Element}
+     */
+    getScrollContainer: function getScrollContainer(element) {
+      var parent = element ? element.parentElement : null;
+      while (parent && parent !== document.body) {
+        var overflowY = window.getComputedStyle(parent).overflowY;
+        if (/(auto|scroll|overlay)/.test(overflowY) && parent.scrollHeight > parent.clientHeight) {
+          return parent;
+        }
+        parent = parent.parentElement;
+      }
+      return window;
     },
     /**
      *
@@ -10263,7 +10319,7 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c(
     "section",
-    { staticClass: "col" },
+    { ref: "productsListTop", staticClass: "col" },
     [
       _c("div", { staticClass: "catalog-toolbar pt-2 pb-4 pb-sm-2 mb-3" }, [
         _c(
