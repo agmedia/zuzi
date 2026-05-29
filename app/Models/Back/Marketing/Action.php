@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class Action extends Model
 {
+    public const GROUP_BOGO = 'bogo';
+
     protected $table = 'product_actions';
     protected $guarded = ['id', 'created_at', 'updated_at'];
     protected $appends = ['discount_text', 'selection_text'];
@@ -33,6 +35,16 @@ class Action extends Model
 
     public function getDiscountTextAttribute($value)
     {
+        if (self::isBogoGroup((string) $this->group)) {
+            $tiers = self::normalizeBogoTiers(is_array($this->data) ? $this->data : []);
+
+            if (empty($tiers)) {
+                return 'BOGO';
+            }
+
+            return 'do ' . self::formatPercentForHumans((float) collect($tiers)->max('discount')) . ' %';
+        }
+
         if (self::isCombinedCategoryGroup((string) $this->group)) {
             return 'Kombinirano';
         }
@@ -48,6 +60,14 @@ class Action extends Model
 
     public function getSelectionTextAttribute(): string
     {
+        if (self::isBogoGroup((string) $this->group)) {
+            $tiers = self::normalizeBogoTiers(is_array($this->data) ? $this->data : []);
+
+            return collect($tiers)
+                ->map(fn (array $tier) => ((int) $tier['quantity']) . '+ artikla: ' . self::formatPercentForHumans((float) $tier['discount']) . '%')
+                ->implode(', ');
+        }
+
         if (self::isCombinedCategoryGroup((string) $this->group)) {
             $rules = self::normalizeCombinedCategoryRules(is_array($this->data) ? $this->data : []);
 
@@ -377,7 +397,7 @@ class Action extends Model
 
     private function listRequired(): bool
     {
-        return !in_array($this->request->group, ['all', 'total', 'combined_category']);
+        return !in_array($this->request->group, ['all', 'total', 'combined_category', self::GROUP_BOGO]);
     }
 
     /**
@@ -559,6 +579,71 @@ class Action extends Model
     private static function isCombinedCategoryGroup(?string $group): bool
     {
         return (string) $group === 'combined_category';
+    }
+
+    public static function isBogoGroup(?string $group): bool
+    {
+        return (string) $group === self::GROUP_BOGO;
+    }
+
+    /**
+     * @param array<string, mixed>|null $data
+     * @return array<int, array{quantity:int, discount:float}>
+     */
+    public static function normalizeBogoTiers(?array $data): array
+    {
+        $tiers = collect($data['tiers'] ?? $data ?? []);
+        $normalized = [];
+
+        foreach ($tiers as $tier) {
+            if (is_object($tier)) {
+                $tier = (array) $tier;
+            }
+
+            if (! is_array($tier)) {
+                continue;
+            }
+
+            $quantity = (int) ($tier['quantity'] ?? $tier['min_quantity'] ?? 0);
+            $discount = (float) str_replace(',', '.', (string) ($tier['discount'] ?? 0));
+
+            if ($quantity <= 0 || $discount <= 0) {
+                continue;
+            }
+
+            $discount = min($discount, 100);
+
+            if (! isset($normalized[$quantity]) || $discount > $normalized[$quantity]) {
+                $normalized[$quantity] = $discount;
+            }
+        }
+
+        ksort($normalized);
+
+        return collect($normalized)
+            ->map(fn (float $discount, int $quantity) => [
+                'quantity' => $quantity,
+                'discount' => $discount,
+            ])
+            ->values()
+            ->all();
+    }
+
+    public static function resolveBogoTierForQuantity(self $action, int $quantity): ?array
+    {
+        if ($quantity <= 0) {
+            return null;
+        }
+
+        return collect(self::normalizeBogoTiers(is_array($action->data) ? $action->data : []))
+            ->filter(fn (array $tier) => (int) $tier['quantity'] <= $quantity)
+            ->sortByDesc('quantity')
+            ->first();
+    }
+
+    public static function formatPercentForHumans(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
     }
 
 

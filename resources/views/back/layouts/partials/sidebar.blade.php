@@ -110,6 +110,11 @@
                             </a>
                         </li>
                         <li class="nav-main-item">
+                            <a class="nav-main-link{{ request()->routeIs(['marketing.bogo', 'marketing.bogo.*']) ? ' active' : '' }}" href="{{ route('marketing.bogo') }}">
+                                <span class="nav-main-link-name">BOGO</span>
+                            </a>
+                        </li>
+                        <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs(['blogs', 'blogs.*']) ? ' active' : '' }}" href="{{ route('blogs') }}">
                                 <span class="nav-main-link-name">Blog</span>
                             </a>

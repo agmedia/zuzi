@@ -128,4 +128,81 @@ class CartApiTest extends TestCase
         $this->assertNotFalse($condition);
         $this->assertSame('Kupon HVALA', $condition->getName());
     }
+
+    public function test_bogo_condition_applies_best_quantity_tier_without_coupon(): void
+    {
+        Action::query()->create([
+            'title' => 'BOGO test',
+            'type' => 'P',
+            'discount' => 20,
+            'group' => Action::GROUP_BOGO,
+            'links' => json_encode([Action::GROUP_BOGO]),
+            'date_start' => now()->subDay(),
+            'date_end' => now()->addDay(),
+            'data' => json_encode([
+                'tiers' => [
+                    ['quantity' => 2, 'discount' => 5],
+                    ['quantity' => 3, 'discount' => 10],
+                    ['quantity' => 5, 'discount' => 20],
+                ],
+            ]),
+            'coupon' => null,
+            'quantity' => 0,
+            'lock' => 0,
+            'status' => 1,
+        ]);
+
+        $cart = Cart::session('bogo-test');
+        $cart->clear();
+        $cart->clearCartConditions();
+        $cart->add([
+            'id' => 1,
+            'name' => 'Test product',
+            'price' => 10,
+            'quantity' => 3,
+            'attributes' => [],
+        ]);
+
+        $condition = Helper::hasBogoCartCondition($cart);
+
+        $this->assertNotFalse($condition);
+        $this->assertSame('BOGO test 10%', $condition->getName());
+        $this->assertSame(-3.0, (float) $condition->getValue());
+        $this->assertSame('bogo', $condition->getAttributes()['type']);
+    }
+
+    public function test_bogo_condition_is_not_combined_with_coupon(): void
+    {
+        Action::query()->create([
+            'title' => 'BOGO coupon guard',
+            'type' => 'P',
+            'discount' => 10,
+            'group' => Action::GROUP_BOGO,
+            'links' => json_encode([Action::GROUP_BOGO]),
+            'date_start' => now()->subDay(),
+            'date_end' => now()->addDay(),
+            'data' => json_encode([
+                'tiers' => [
+                    ['quantity' => 2, 'discount' => 10],
+                ],
+            ]),
+            'coupon' => null,
+            'quantity' => 0,
+            'lock' => 0,
+            'status' => 1,
+        ]);
+
+        $cart = Cart::session('bogo-coupon-test');
+        $cart->clear();
+        $cart->clearCartConditions();
+        $cart->add([
+            'id' => 1,
+            'name' => 'Test product',
+            'price' => 10,
+            'quantity' => 2,
+            'attributes' => [],
+        ]);
+
+        $this->assertFalse(Helper::hasBogoCartCondition($cart, 'HVALA'));
+    }
 }

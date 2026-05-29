@@ -22,7 +22,8 @@ class ActionController extends Controller
     public function index(Request $request)
     {
         $groups = Settings::get('action', 'group_list');
-        $query  = Action::query();
+        $query  = Action::query()
+            ->where('group', '!=', Action::GROUP_BOGO);
 
         if ($request->has('lock')) {
             $query->where('lock', $request->input('lock') == 'da' ? 1 : 0);

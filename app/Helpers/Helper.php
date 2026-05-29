@@ -13,6 +13,7 @@ use App\Models\Front\Catalog\Author;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\Publisher;
 use App\Services\GiftWrapService;
+use App\Services\GiftVoucherService;
 use Darryldecode\Cart\CartCondition;
 use Illuminate\Cache\TaggableStore;
 use Illuminate\Database\Eloquent\Builder;
@@ -54,11 +55,11 @@ class Helper
 
     /**
      * @param float $price
-     * @param int   $discount
+     * @param float $discount
      *
      * @return float|int
      */
-    public static function calculateDiscountPrice(float $price, int $discount, string $type)
+    public static function calculateDiscountPrice(float $price, float $discount, string $type)
     {
         if ($type == 'F') {
             return $price - $discount;
@@ -1392,6 +1393,89 @@ class Helper
         return $condition;
     }
 
+    /**
+     * @param        $cart
+     * @param string $coupon
+     *
+     * @return CartCondition|false
+     * @throws \Darryldecode\Cart\Exceptions\InvalidConditionException
+     */
+    public static function hasBogoCartCondition($cart, string $coupon = '')
+    {
+        if (! $cart || self::normalizeCoupon($coupon) !== '' || ! Schema::hasTable('product_actions')) {
+            return false;
+        }
+
+        $quantity = self::discountableCartQuantity($cart);
+        $discountableTotal = self::discountableBogoCartTotal($cart);
+
+        if ($quantity <= 0 || $discountableTotal <= 0) {
+            return false;
+        }
+
+        $best = null;
+
+        $actions = Action::query()
+            ->where('group', Action::GROUP_BOGO)
+            ->where('status', 1)
+            ->where(function ($query) {
+                $query->whereNull('date_start')->orWhere('date_start', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('date_end')->orWhere('date_end', '>=', now());
+            })
+            ->get();
+
+        foreach ($actions as $action) {
+            $tier = Action::resolveBogoTierForQuantity($action, $quantity);
+
+            if (! $tier) {
+                continue;
+            }
+
+            if (
+                $best === null
+                || (float) $tier['discount'] > (float) $best['tier']['discount']
+                || (
+                    (float) $tier['discount'] === (float) $best['tier']['discount']
+                    && (int) $action->id > (int) $best['action']->id
+                )
+            ) {
+                $best = [
+                    'action' => $action,
+                    'tier' => $tier,
+                ];
+            }
+        }
+
+        if ($best === null) {
+            return false;
+        }
+
+        $discountPercent = (float) $best['tier']['discount'];
+        $discountedTotal = self::calculateDiscountPrice($discountableTotal, $discountPercent, 'P');
+        $discount = round($discountableTotal - $discountedTotal, 2);
+
+        if ($discount <= 0) {
+            return false;
+        }
+
+        $label = Action::formatPercentForHumans($discountPercent);
+
+        return new CartCondition(array(
+            'name'       => $best['action']->title . ' ' . $label . '%',
+            'type'       => 'special',
+            'target'     => 'total',
+            'value'      => '-' . $discount,
+            'attributes' => [
+                'type' => 'bogo',
+                'description' => $best['action']->title,
+                'discount' => $discountPercent,
+                'quantity' => $quantity,
+            ]
+        ));
+    }
+
 
     /**
      * @param        $cart
@@ -1436,6 +1520,44 @@ class Helper
 
         foreach ($cart->getContent() as $item) {
             if (GiftWrapService::isGiftWrapItem($item)) {
+                continue;
+            }
+
+            $total += (float) $item->getPriceSumWithConditions(false);
+        }
+
+        return max(0.0, round($total, 2));
+    }
+
+    private static function discountableCartQuantity($cart): int
+    {
+        if (! $cart) {
+            return 0;
+        }
+
+        $quantity = 0;
+
+        foreach ($cart->getContent() as $item) {
+            if (GiftWrapService::isGiftWrapItem($item) || GiftVoucherService::isGiftVoucherItem($item)) {
+                continue;
+            }
+
+            $quantity += (int) $item->quantity;
+        }
+
+        return $quantity;
+    }
+
+    private static function discountableBogoCartTotal($cart): float
+    {
+        if (! $cart) {
+            return 0.0;
+        }
+
+        $total = 0.0;
+
+        foreach ($cart->getContent() as $item) {
+            if (GiftWrapService::isGiftWrapItem($item) || GiftVoucherService::isGiftVoucherItem($item)) {
                 continue;
             }
 

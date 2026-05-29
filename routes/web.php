@@ -11,6 +11,7 @@ use App\Http\Controllers\Back\DashboardController;
 use App\Http\Controllers\Back\OrderController;
 use App\Http\Controllers\Back\Marketing\AccountNoticeController;
 use App\Http\Controllers\Back\Marketing\ActionController;
+use App\Http\Controllers\Back\Marketing\BogoController;
 use App\Http\Controllers\Back\Marketing\BlogController;
 use App\Http\Controllers\Back\Marketing\GiftVoucherController as AdminGiftVoucherController;
 use App\Http\Controllers\Back\Marketing\ReviewController;
@@ -134,6 +135,14 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('action/{action}/edit', [ActionController::class, 'edit'])->name('actions.edit');
         Route::patch('action/{action}', [ActionController::class, 'update'])->name('actions.update');
         Route::delete('action/{action}', [ActionController::class, 'destroy'])->name('actions.destroy');
+
+        // BOGO
+        Route::get('bogo', [BogoController::class, 'index'])->name('marketing.bogo');
+        Route::get('bogo/create', [BogoController::class, 'create'])->name('marketing.bogo.create');
+        Route::post('bogo', [BogoController::class, 'store'])->name('marketing.bogo.store');
+        Route::get('bogo/{bogo}/edit', [BogoController::class, 'edit'])->name('marketing.bogo.edit');
+        Route::patch('bogo/{bogo}', [BogoController::class, 'update'])->name('marketing.bogo.update');
+        Route::delete('bogo/{bogo}', [BogoController::class, 'destroy'])->name('marketing.bogo.destroy');
 
         // BLOG
         Route::get('blogs', [BlogController::class, 'index'])->name('blogs');

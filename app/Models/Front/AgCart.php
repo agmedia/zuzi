@@ -71,6 +71,7 @@ class AgCart extends Model
     public function get()
     {
         $eur = $this->getEur();
+        $detailConditions = $this->setCartConditions();
 
         $response = [
             'id'              => $this->cart_id,
@@ -84,7 +85,7 @@ class AgCart extends Model
             'count'           => $this->cart->getTotalQuantity(),
             'subtotal'        => $this->cart->getSubTotal(),
             'conditions'      => $this->cart->getConditions(),
-            'detail_con'      => $this->setCartConditions(),
+            'detail_con'      => $detailConditions,
             'total'           => $this->cart->getTotal(),
             'eur'             => $eur,
             'secondary_price' => $eur
@@ -482,6 +483,7 @@ class AgCart extends Model
         $shipping_method   = ShippingMethod::condition($this->cart);
         $payment_method    = PaymentMethod::condition($this->cart);
         $special_condition = Helper::hasSpecialCartCondition($this->cart);
+        $bogo_condition = Helper::hasBogoCartCondition($this->cart, $this->coupon);
         $loyalty_conditions = Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
         $coupon_conditions = Helper::hasCouponCartConditions($this->cart, $this->coupon);
         $loyalty_conditions = Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
@@ -499,6 +501,10 @@ class AgCart extends Model
 
         if ($special_condition) {
             $this->cart->condition($special_condition);
+        }
+
+        if ($bogo_condition) {
+            $this->cart->condition($bogo_condition);
         }
 
         if ($coupon_conditions) {
