@@ -18,6 +18,7 @@ use App\Services\Front\CuratedCollectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -155,33 +156,30 @@ class HomeController extends Controller
             abort(404);
         }
 
-        $sessionKey = 'helpful_reviews';
-        $votedReviewIds = collect((array) $request->session()->get($sessionKey, []))
-            ->map(fn ($id) => (int) $id)
-            ->filter()
-            ->values();
-
-        if ($votedReviewIds->contains((int) $review->id)) {
+        if (! auth()->check()) {
             return response()->json([
-                'helpful_count' => (int) $review->helpful_count,
-                'already_voted' => true,
-            ]);
+                'message' => 'Prijavite se za označavanje korisnog dojma.',
+            ], 401);
         }
 
-        Review::query()
-            ->whereKey($review->id)
-            ->increment('helpful_count');
+        $inserted = DB::table('review_helpful_votes')->insertOrIgnore([
+            'review_id' => (int) $review->id,
+            'user_id'    => (int) auth()->id(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        $review->refresh();
+        if ($inserted) {
+            Review::query()
+                ->whereKey($review->id)
+                ->increment('helpful_count');
 
-        $request->session()->put(
-            $sessionKey,
-            $votedReviewIds->push((int) $review->id)->unique()->values()->all()
-        );
+            $review->refresh();
+        }
 
         return response()->json([
             'helpful_count' => (int) $review->helpful_count,
-            'already_voted' => false,
+            'already_voted' => ! $inserted,
         ]);
     }
 

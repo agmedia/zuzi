@@ -32,7 +32,20 @@
         ->values();
     $helpfulReviewIds = collect((array) session('helpful_reviews', []))
         ->map(fn ($id) => (int) $id)
-        ->all();
+        ->filter();
+
+    if (auth()->check() && \Illuminate\Support\Facades\Schema::hasTable('review_helpful_votes')) {
+        $helpfulReviewIds = $helpfulReviewIds
+            ->merge(
+                \Illuminate\Support\Facades\DB::table('review_helpful_votes')
+                    ->where('user_id', (int) auth()->id())
+                    ->whereIn('review_id', $reviews->pluck('id')->map(fn ($id) => (int) $id)->all())
+                    ->pluck('review_id')
+                    ->map(fn ($id) => (int) $id)
+            );
+    }
+
+    $helpfulReviewIds = $helpfulReviewIds->unique()->values()->all();
     $shouldOpenReviewForm = $hasReviewErrors || session('review_submitted');
     $reviewFormButtonText = $reviewsCount ? 'Podijelite dojam' : 'Podijelite prvi dojam';
     $reviewCountLabel = function (int $count): string {
@@ -668,6 +681,10 @@
         .product-review-helpful:disabled {
             cursor: default;
             opacity: 1;
+        }
+
+        .product-review-helpful--login {
+            text-decoration: none;
         }
 
         .product-review-helpful__count {
@@ -1896,18 +1913,32 @@
                                @endif
 
                                <div class="product-review-card__actions">
-                                   <button
-                                       class="product-review-helpful {{ $helpfulMarked ? 'is-active' : '' }}"
-                                       type="button"
-                                       data-review-helpful
-                                       data-review-helpful-url="{{ route('dojmovi.koristan', ['review' => $review]) }}"
-                                       aria-pressed="{{ $helpfulMarked ? 'true' : 'false' }}"
-                                       @if($helpfulMarked) disabled @endif
-                                   >
-                                       <i class="{{ $helpfulMarked ? 'ci-thumb-up-filled' : 'ci-thumb-up' }} me-1" aria-hidden="true"></i>
-                                       <span class="product-review-helpful__label">{{ $helpfulMarked ? 'Označeno korisno' : 'Koristan dojam' }}</span>
-                                       <span class="product-review-helpful__count">{{ (int) $review->helpful_count }}</span>
-                                   </button>
+                                   @if(auth()->check())
+                                       <button
+                                           class="product-review-helpful {{ $helpfulMarked ? 'is-active' : '' }}"
+                                           type="button"
+                                           data-review-helpful
+                                           data-review-helpful-url="{{ route('dojmovi.koristan', ['review' => $review]) }}"
+                                           aria-pressed="{{ $helpfulMarked ? 'true' : 'false' }}"
+                                           @if($helpfulMarked) disabled @endif
+                                       >
+                                           <i class="{{ $helpfulMarked ? 'ci-thumb-up-filled' : 'ci-thumb-up' }} me-1" aria-hidden="true"></i>
+                                           <span class="product-review-helpful__label">{{ $helpfulMarked ? 'Označeno korisno' : 'Koristan dojam' }}</span>
+                                           <span class="product-review-helpful__count">{{ (int) $review->helpful_count }}</span>
+                                       </button>
+                                   @else
+                                       <a
+                                           class="product-review-helpful product-review-helpful--login"
+                                           href="signin-tab"
+                                           role="button"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#signin-modal"
+                                       >
+                                           <i class="ci-sign-in me-1" aria-hidden="true"></i>
+                                           <span class="product-review-helpful__label">Prijavite se za glas</span>
+                                           <span class="product-review-helpful__count">{{ (int) $review->helpful_count }}</span>
+                                       </a>
+                                   @endif
                                </div>
                            </article>
                        @endforeach
