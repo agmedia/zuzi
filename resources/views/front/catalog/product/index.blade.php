@@ -13,11 +13,42 @@
     $reviews = $reviews ?? collect();
     $reviewsCount = $reviews->count();
     $reviewsAverage = $reviewsCount ? round((float) $reviews->avg('stars'), 1) : 0;
-    $hasReviewErrors = $errors->has('name') || $errors->has('email') || $errors->has('stars') || $errors->has('message');
+    $reviewErrorFields = ['name', 'email', 'stars', 'title', 'message', 'recommended_for', 'liked_most', 'tags', 'has_spoilers'];
+    $hasReviewErrors = collect($reviewErrorFields)->contains(fn ($field) => $errors->has($field));
     $reviewRewardPoints = \App\Models\Back\Marketing\Review::rewardPoints();
     $reviewMonthlyLimit = \App\Models\Back\Marketing\Review::monthlyLimit();
+    $reviewTagOptions = \App\Models\Back\Marketing\Review::tagOptions();
+    $selectedReviewTags = collect((array) old('tags', []))->map(fn ($tag) => (string) $tag)->all();
+    $reviewTagHighlights = $reviews
+        ->flatMap(fn ($review) => $review->tagsArray())
+        ->countBy()
+        ->sortDesc()
+        ->take(4)
+        ->map(fn ($count, $tag) => [
+            'label' => $reviewTagOptions[$tag] ?? null,
+            'count' => $count,
+        ])
+        ->filter(fn ($tag) => filled($tag['label']))
+        ->values();
+    $helpfulReviewIds = collect((array) session('helpful_reviews', []))
+        ->map(fn ($id) => (int) $id)
+        ->all();
     $shouldOpenReviewForm = $hasReviewErrors || session('review_submitted');
-    $reviewFormButtonText = $reviewsCount ? 'Napišite komentar' : 'Napišite prvi komentar';
+    $reviewFormButtonText = $reviewsCount ? 'Podijelite dojam' : 'Podijelite prvi dojam';
+    $reviewCountLabel = function (int $count): string {
+        $last = $count % 10;
+        $lastTwo = $count % 100;
+
+        if ($count === 1) {
+            return 'dojam čitatelja';
+        }
+
+        if ($last >= 2 && $last <= 4 && ! ($lastTwo >= 12 && $lastTwo <= 14)) {
+            return 'dojma čitatelja';
+        }
+
+        return 'dojmova čitatelja';
+    };
     $giftWrapAllowed = \App\Services\GiftWrapService::isEligibleProduct($prod);
     $relatedBlogReview = $relatedBlogReview ?? null;
     $relatedBlogReviewUrl = $relatedBlogReview ? route('catalog.route.blog', ['blog' => $relatedBlogReview]) : null;
@@ -218,6 +249,46 @@
             margin-bottom: 0;
         }
 
+        .product-review-trust-strip {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.55rem;
+            margin-bottom: 1rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 0.5rem;
+            background: #fbfcff;
+        }
+
+        .product-review-trust-strip__label {
+            color: #373f50;
+            font-size: 0.92rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .product-review-trust-strip__tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.32rem;
+            min-height: 1.85rem;
+            padding: 0.38rem 0.65rem;
+            border-radius: 999px;
+            background: #fff;
+            color: #535d72;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1;
+            border: 1px solid rgba(43, 52, 69, 0.12);
+        }
+
+        .product-review-trust-strip__count {
+            color: #8a94a6;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
         .product-review-form-shell {
             max-width: 52rem;
         }
@@ -280,6 +351,115 @@
         .product-review-form-panel .form-select {
             border-color: rgba(43, 52, 69, 0.16);
             background-color: #fff;
+        }
+
+        .product-review-current-user {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.35rem 0.7rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid rgba(43, 52, 69, 0.1);
+            border-radius: 0.5rem;
+            background: #fff;
+            color: #535d72;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .product-review-current-user strong {
+            color: #373f50;
+        }
+
+        .product-review-form-help {
+            color: #6b7280;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .product-review-tag-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+        }
+
+        .product-review-tag-option {
+            position: relative;
+            margin: 0;
+        }
+
+        .product-review-tag-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .product-review-tag-option span {
+            display: inline-flex;
+            align-items: center;
+            min-height: 2.1rem;
+            padding: 0.42rem 0.72rem;
+            border: 1px solid rgba(43, 52, 69, 0.16);
+            border-radius: 999px;
+            background: #fff;
+            color: #535d72;
+            cursor: pointer;
+            font-size: 0.86rem;
+            font-weight: 600;
+            line-height: 1;
+            transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+        }
+
+        .product-review-tag-option input:focus + span,
+        .product-review-tag-option input:checked + span {
+            border-color: rgba(229, 0, 119, 0.32);
+            background: rgba(229, 0, 119, 0.07);
+            color: #e50077;
+        }
+
+        .product-review-quick-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+        }
+
+        .product-review-answer-label {
+            display: block;
+            margin-bottom: 0.45rem;
+            color: #373f50;
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .product-review-answer-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+
+        .product-review-answer-option {
+            display: inline-flex;
+            align-items: center;
+            min-height: 2rem;
+            padding: 0.38rem 0.68rem;
+            border: 1px solid rgba(43, 52, 69, 0.14);
+            border-radius: 999px;
+            background: #fff;
+            color: #535d72;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1;
+            transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+        }
+
+        .product-review-answer-option:hover,
+        .product-review-answer-option:focus,
+        .product-review-answer-option.is-active {
+            border-color: rgba(229, 0, 119, 0.32);
+            background: rgba(229, 0, 119, 0.07);
+            color: #e50077;
         }
 
         .product-review-empty {
@@ -357,6 +537,26 @@
             font-size: 0.86rem;
         }
 
+        .product-review-card__meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.35rem 0.6rem;
+        }
+
+        .product-review-card__verified {
+            display: inline-flex;
+            align-items: center;
+            min-height: 1.45rem;
+            padding: 0.28rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(66, 214, 151, 0.12);
+            color: #198754;
+            font-size: 0.74rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
         .product-review-card__stars {
             margin-left: auto;
             padding-top: 0.1rem;
@@ -377,6 +577,111 @@
             color: #4b566b;
             font-size: 0.98rem;
             line-height: 1.7;
+        }
+
+        .product-review-card__title {
+            margin: 0 0 0.45rem;
+            color: #2b3445;
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .product-review-card__details {
+            display: grid;
+            gap: 0.45rem;
+            margin-top: 0.85rem;
+            padding-top: 0.85rem;
+            border-top: 1px solid rgba(15, 23, 42, 0.07);
+            color: #5b6680;
+            font-size: 0.9rem;
+            line-height: 1.55;
+        }
+
+        .product-review-card__details strong {
+            color: #373f50;
+        }
+
+        .product-review-card__tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.8rem;
+        }
+
+        .product-review-card__tag,
+        .product-review-card__spoiler {
+            display: inline-flex;
+            align-items: center;
+            min-height: 1.55rem;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0.32rem 0.55rem;
+        }
+
+        .product-review-card__tag {
+            background: #f6f7fb;
+            color: #5b6680;
+        }
+
+        .product-review-card__spoiler {
+            background: #fff3cd;
+            color: #936100;
+        }
+
+        .product-review-card__actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            gap: 0.55rem;
+            margin-top: 0.95rem;
+            padding-top: 0.85rem;
+            border-top: 1px solid rgba(15, 23, 42, 0.07);
+        }
+
+        .product-review-helpful {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.42rem;
+            min-height: 2rem;
+            border: 1px solid rgba(43, 52, 69, 0.14);
+            border-radius: 999px;
+            background: #fff;
+            color: #535d72;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0.4rem 0.7rem;
+            transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+        }
+
+        .product-review-helpful:hover,
+        .product-review-helpful:focus,
+        .product-review-helpful.is-active {
+            border-color: rgba(229, 0, 119, 0.26);
+            background: rgba(229, 0, 119, 0.07);
+            color: #e50077;
+        }
+
+        .product-review-helpful:disabled {
+            cursor: default;
+            opacity: 1;
+        }
+
+        .product-review-helpful__count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.35rem;
+            min-height: 1.35rem;
+            border-radius: 999px;
+            background: rgba(43, 52, 69, 0.08);
+            color: inherit;
+            font-size: 0.72rem;
+            line-height: 1;
+            padding: 0 0.28rem;
         }
 
         .blog-review-spotlight {
@@ -734,6 +1039,10 @@
                 margin-left: 3.15rem;
             }
 
+            .product-review-quick-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
             .product-purchase-box {
                 padding: 0.8rem;
             }
@@ -920,9 +1229,9 @@
                 </div>
 
                 @if ($reviewsCount)
-                    <span class="fs-sm text-body">{{ number_format($reviewsAverage, 1) }}/5 · {{ $reviewsCount }} {{ $reviewsCount === 1 ? 'komentar' : 'komentara' }}</span>
+                    <span class="fs-sm text-body">{{ number_format($reviewsAverage, 1) }}/5 · {{ $reviewsCount }} {{ $reviewCountLabel($reviewsCount) }}</span>
                 @else
-                    <span class="fs-sm text-body">Još nema komentara, budite prvi.</span>
+                    <span class="fs-sm text-body">Još nema dojmova čitatelja, budite prvi.</span>
                 @endif
             </a>
         </div>
@@ -1120,7 +1429,7 @@
 <div class="bg-light px-2 mb-3 shadow rounded-3">
 <!-- Tabs-->
 <ul class="nav nav-tabs" role="tablist">
-   <li class="nav-item"><a class="nav-link py-4 px-sm-4 active" href="#specs" data-bs-toggle="tab" role="tab"><span>Opis i komentari</span> </a></li>
+   <li class="nav-item"><a class="nav-link py-4 px-sm-4 active" href="#specs" data-bs-toggle="tab" role="tab"><span>Opis i dojmovi</span> </a></li>
 
 </ul>
 <div class="px-4 pt-lg-3 pb-3 mb-5">
@@ -1252,7 +1561,7 @@
            <section id="reviews">
                <div class="row product-review-summary-row">
                    <div class="col-lg-4 col-md-5 product-review-summary-main">
-                       <h3 class="h4 product-review-summary-title">{{ $reviewsCount }} {{ $reviewsCount === 1 ? 'komentar' : 'komentara' }}</h3>
+                       <h3 class="h4 product-review-summary-title">{{ $reviewsCount }} {{ $reviewCountLabel($reviewsCount) }}</h3>
 
                        @if ($reviewsCount)
                            <div class="product-review-average-line">
@@ -1269,7 +1578,7 @@
                            </div>
                        @else
 
-                           <p class="fs-sm text-muted mb-0">Registrirani kupci za svaki odobreni komentar dobivaju {{ $reviewRewardPoints }} loyalty bodova, do najviše {{ $reviewMonthlyLimit }} komentara mjesečno.</p>
+                           <p class="fs-sm text-muted mb-0">Registrirani kupci za svaki odobreni dojam dobivaju {{ $reviewRewardPoints }} loyalty bodova, do najviše {{ $reviewMonthlyLimit }} mjesečno.</p>
                        @endif
                    </div>
 
@@ -1296,12 +1605,26 @@
 
                <hr class="mt-2 mb-3">
 
+               @if($reviewTagHighlights->count())
+                   <div class="product-review-trust-strip">
+                       <span class="product-review-trust-strip__label">Čitatelji kažu:</span>
+                       @foreach($reviewTagHighlights as $tag)
+                           <span class="product-review-trust-strip__tag">
+                               {{ $tag['label'] }}
+                               @if((int) $tag['count'] > 1)
+                                   <span class="product-review-trust-strip__count">{{ $tag['count'] }}</span>
+                               @endif
+                           </span>
+                       @endforeach
+                   </div>
+               @endif
+
                <div class="review-promo-banner mb-3">
                    <div class="review-promo-banner__body d-flex flex-column flex-xl-row align-items-xl-center justify-content-between gap-3">
                        <div class="review-promo-banner__copy">
                            <span class="review-promo-banner__kicker">Loyalty klub</span>
                            <h3 class="h4 mb-1">Podijelite dojam o knjizi</h3>
-                           <p class="review-promo-banner__meta mb-0">Ostavite ocjenu i komentar te pomozite drugim kupcima pri odabiru.</p>
+                           <p class="review-promo-banner__meta mb-0">Napišite kome biste knjigu preporučili, što vam se najviše svidjelo i pomozite drugim čitateljima pri odabiru.</p>
                        </div>
 
                        <div class="review-promo-banner__actions d-flex flex-wrap align-items-center justify-content-xl-end gap-2">
@@ -1325,14 +1648,14 @@
                    <div class="product-review-form-panel">
                        <div class="product-review-form-panel__header">
                            <div>
-                               <h3 class="h4 product-review-form-panel__title">{{ $reviewsCount ? 'Napišite komentar' : 'Budite prvi i napišite komentar' }}</h3>
-                               <p class="product-review-form-panel__hint">Ocjena i komentar bit će vidljivi nakon odobrenja.</p>
+                               <h3 class="h4 product-review-form-panel__title">{{ $reviewsCount ? 'Podijelite dojam' : 'Budite prvi i podijelite dojam' }}</h3>
+                               <p class="product-review-form-panel__hint">Ocjena i dojam bit će vidljivi nakon odobrenja.</p>
                            </div>
                            <button
                                id="close-review-form"
                                class="product-review-form-panel__close"
                                type="button"
-                               aria-label="Zatvori obrazac za komentar"
+                               aria-label="Zatvori obrazac za dojam"
                                title="Zatvori"
                            >
                                <i class="ci-close" aria-hidden="true"></i>
@@ -1354,54 +1677,155 @@
                        <form class="needs-validation" method="post" action="{{ route('komentar.proizvoda') }}" novalidate>
                            @csrf
 
-                           <div class="row">
-                               <div class="col-md-6 mb-3">
-                                   <label class="form-label" for="review-name">Vaše ime <span class="text-danger">*</span></label>
-                                   <input class="form-control" type="text" required id="review-name" name="name" value="{{ old('name', optional(auth()->user())->name) }}">
-                                   @error('name')
-                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
-                                   @enderror
-                                   <div class="invalid-feedback">Upišite ime.</div>
+                           @if (auth()->check())
+                               <div class="product-review-current-user mb-3">
+                                   <span>Pišete kao <strong>{{ old('name', auth()->user()->name) }}</strong></span>
+                                   <span class="text-muted">{{ old('email', auth()->user()->email) }}</span>
                                </div>
-
-                               <div class="col-md-6 mb-3">
-                                   <label class="form-label" for="review-email">Email <span class="text-danger">*</span></label>
-                                   <input class="form-control" type="email" required id="review-email" name="email" value="{{ old('email', optional(auth()->user())->email) }}">
-                                   @error('email')
-                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
-                                   @enderror
-                                   <div class="invalid-feedback">Upišite ispravan email.</div>
-                               </div>
-                           </div>
-
-                           <div class="mb-3">
-                               <label class="form-label" for="review-stars">Ocjena <span class="text-danger">*</span></label>
-                               <select class="form-select" required id="review-stars" name="stars">
-                                   <option value="">Odaberite ocjenu</option>
-                                   @for ($i = 5; $i >= 1; $i--)
-                                       <option value="{{ $i }}" {{ (string) old('stars') === (string) $i ? 'selected' : '' }}>{{ $i }} / 5</option>
-                                   @endfor
-                               </select>
-                               @error('stars')
+                               <input type="hidden" name="name" value="{{ old('name', auth()->user()->name) }}">
+                               <input type="hidden" name="email" value="{{ old('email', auth()->user()->email) }}">
+                               @error('name')
                                    <div class="fs-sm text-danger mt-1">{{ $message }}</div>
                                @enderror
-                               <div class="invalid-feedback">Odaberite ocjenu.</div>
+                               @error('email')
+                                   <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                               @enderror
+                           @else
+                               <div class="row">
+                                   <div class="col-md-6 mb-3">
+                                       <label class="form-label" for="review-name">Vaše ime <span class="text-danger">*</span></label>
+                                       <input class="form-control" type="text" required id="review-name" name="name" value="{{ old('name') }}">
+                                       @error('name')
+                                           <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                       @enderror
+                                       <div class="invalid-feedback">Upišite ime.</div>
+                                   </div>
+
+                                   <div class="col-md-6 mb-3">
+                                       <label class="form-label" for="review-email">Email <span class="text-danger">*</span></label>
+                                       <input class="form-control" type="email" required id="review-email" name="email" value="{{ old('email') }}">
+                                       @error('email')
+                                           <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                       @enderror
+                                       <div class="invalid-feedback">Upišite ispravan email.</div>
+                                   </div>
+                               </div>
+                           @endif
+
+                           <div class="row">
+                               <div class="col-md-4 mb-3">
+                                   <label class="form-label" for="review-stars">Ocjena <span class="text-danger">*</span></label>
+                                   <select class="form-select" required id="review-stars" name="stars">
+                                       <option value="">Odaberite ocjenu</option>
+                                       @for ($i = 5; $i >= 1; $i--)
+                                           <option value="{{ $i }}" {{ (string) old('stars') === (string) $i ? 'selected' : '' }}>{{ $i }} / 5</option>
+                                       @endfor
+                                   </select>
+                                   @error('stars')
+                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                   @enderror
+                                   <div class="invalid-feedback">Odaberite ocjenu.</div>
+                               </div>
                            </div>
 
                            <div class="mb-3">
-                               <label class="form-label" for="review-message">Komentar <span class="text-danger">*</span></label>
-                               <textarea class="form-control" rows="5" required id="review-message" name="message">{{ old('message') }}</textarea>
+                               <label class="form-label" for="review-message">Vaš dojam <span class="text-danger">*</span></label>
+                               <textarea class="form-control" rows="4" required maxlength="1600" id="review-message" name="message" placeholder="Kako biste opisali ovu knjigu u nekoliko rečenica?">{{ old('message') }}</textarea>
                                @error('message')
                                    <div class="fs-sm text-danger mt-1">{{ $message }}</div>
                                @enderror
-                               <div class="invalid-feedback">Upišite komentar.</div>
+                               <div class="product-review-form-help mt-1">Iskren dojam pomaže drugim čitateljima više od same ocjene.</div>
+                               <div class="invalid-feedback">Upišite dojam.</div>
+                           </div>
+
+                           <input type="hidden" id="review-recommended-for" name="recommended_for" value="{{ old('recommended_for') }}">
+                           <input type="hidden" id="review-liked-most" name="liked_most" value="{{ old('liked_most') }}">
+
+                           <div class="product-review-quick-grid mb-3">
+                               <div class="product-review-answer-group">
+                                   <span class="product-review-answer-label">Preporučujem za</span>
+                                   <div class="product-review-answer-options">
+                                       @foreach ([
+                                           'za poklon' => 'Za poklon',
+                                           'za plažu' => 'Za plažu',
+                                           'za tinejdžere' => 'Za tinejdžere',
+                                           'za ljubitelje trilera' => 'Ljubitelje trilera',
+                                           'kad želiš nešto lagano' => 'Nešto lagano',
+                                       ] as $answerValue => $answerLabel)
+                                           <button
+                                               type="button"
+                                               class="product-review-answer-option {{ old('recommended_for') === $answerValue ? 'is-active' : '' }}"
+                                               data-review-answer
+                                               data-target="#review-recommended-for"
+                                               data-value="{{ $answerValue }}"
+                                           >
+                                               {{ $answerLabel }}
+                                           </button>
+                                       @endforeach
+                                   </div>
+                                   @error('recommended_for')
+                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                   @enderror
+                               </div>
+
+                               <div class="product-review-answer-group">
+                                   <span class="product-review-answer-label">Najviše mi se svidjelo</span>
+                                   <div class="product-review-answer-options">
+                                       @foreach ([
+                                           'atmosfera' => 'Atmosfera',
+                                           'likovi' => 'Likovi',
+                                           'tempo' => 'Tempo',
+                                           'završetak' => 'Završetak',
+                                           'stil pisanja' => 'Stil pisanja',
+                                       ] as $answerValue => $answerLabel)
+                                           <button
+                                               type="button"
+                                               class="product-review-answer-option {{ old('liked_most') === $answerValue ? 'is-active' : '' }}"
+                                               data-review-answer
+                                               data-target="#review-liked-most"
+                                               data-value="{{ $answerValue }}"
+                                           >
+                                               {{ $answerLabel }}
+                                           </button>
+                                       @endforeach
+                                   </div>
+                                   @error('liked_most')
+                                       <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                                   @enderror
+                               </div>
+                           </div>
+
+                           <div class="mb-3">
+                               <label class="form-label d-block">Oznake dojma</label>
+                               <div class="product-review-tag-options">
+                                   @foreach ($reviewTagOptions as $tagValue => $tagLabel)
+                                       <label class="product-review-tag-option">
+                                           <input type="checkbox" name="tags[]" value="{{ $tagValue }}" {{ in_array($tagValue, $selectedReviewTags, true) ? 'checked' : '' }}>
+                                           <span>{{ $tagLabel }}</span>
+                                       </label>
+                                   @endforeach
+                               </div>
+                               @error('tags')
+                                   <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                               @enderror
+                               @error('tags.*')
+                                   <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                               @enderror
+                           </div>
+
+                           <div class="form-check mb-3">
+                               <input class="form-check-input" type="checkbox" id="review-has-spoilers" name="has_spoilers" value="1" {{ old('has_spoilers') ? 'checked' : '' }}>
+                               <label class="form-check-label" for="review-has-spoilers">Dojam sadrži spoilere</label>
+                               @error('has_spoilers')
+                                   <div class="fs-sm text-danger mt-1">{{ $message }}</div>
+                               @enderror
                            </div>
 
                            <input type="hidden" name="lang" value="{{ app()->getLocale() }}">
                            <input type="hidden" name="product_id" value="{{ $prod->id }}">
                            <input type="hidden" name="recaptcha" id="recaptcha_review">
 
-                           <button class="btn btn-primary" type="submit">Pošalji komentar</button>
+                           <button class="btn btn-primary" type="submit">Pošalji dojam</button>
                        </form>
                    </div>
                </div>
@@ -1409,6 +1833,11 @@
                @if($reviewsCount)
                    <div class="product-review-list pt-2 pb-4">
                        @foreach($reviews as $review)
+                           @php
+                               $reviewTagLabels = $review->tagLabels();
+                               $isVerifiedPurchase = $review->isVerifiedPurchase();
+                               $helpfulMarked = in_array((int) $review->id, $helpfulReviewIds, true);
+                           @endphp
                            <article id="review-{{ $review->id }}" class="product-review-card">
                                <div class="product-review-card__head">
                                    <div class="product-review-card__avatar">
@@ -1417,7 +1846,15 @@
 
                                    <div>
                                        <h4 class="product-review-card__author">{{ trim($review->fname . ' ' . $review->lname) ?: $review->fname }}</h4>
-                                       <span class="product-review-card__date">{{ \Carbon\Carbon::make($review->created_at)->locale('hr')->format('d.m.Y.') }}</span>
+                                       <div class="product-review-card__meta">
+                                           <span class="product-review-card__date">{{ \Carbon\Carbon::make($review->created_at)->locale('hr')->format('d.m.Y.') }}</span>
+                                           @if ($review->has_spoilers)
+                                               <span class="product-review-card__spoiler">Sadrži spoilere</span>
+                                           @endif
+                                           @if ($isVerifiedPurchase)
+                                               <span class="product-review-card__verified"><i class="ci-check-circle me-1"></i>Provjerena kupnja</span>
+                                           @endif
+                                       </div>
                                    </div>
 
                                    <div class="product-review-card__stars">
@@ -1433,13 +1870,51 @@
                                    </div>
                                </div>
 
+                               @if (filled($review->title))
+                                   <h5 class="product-review-card__title">{{ $review->title }}</h5>
+                               @endif
+
                                <p class="product-review-card__message">{{ strip_tags($review->message) }}</p>
+
+                               @if (filled($review->recommended_for) || filled($review->liked_most))
+                                   <div class="product-review-card__details">
+                                       @if (filled($review->recommended_for))
+                                           <div><strong>Preporuka:</strong> {{ $review->recommended_for }}</div>
+                                       @endif
+                                       @if (filled($review->liked_most))
+                                           <div><strong>Najviše se svidjelo:</strong> {{ $review->liked_most }}</div>
+                                       @endif
+                                   </div>
+                               @endif
+
+                               @if (count($reviewTagLabels))
+                                   <div class="product-review-card__tags">
+                                       @foreach ($reviewTagLabels as $tagLabel)
+                                           <span class="product-review-card__tag">{{ $tagLabel }}</span>
+                                       @endforeach
+                                   </div>
+                               @endif
+
+                               <div class="product-review-card__actions">
+                                   <button
+                                       class="product-review-helpful {{ $helpfulMarked ? 'is-active' : '' }}"
+                                       type="button"
+                                       data-review-helpful
+                                       data-review-helpful-url="{{ route('dojmovi.koristan', ['review' => $review]) }}"
+                                       aria-pressed="{{ $helpfulMarked ? 'true' : 'false' }}"
+                                       @if($helpfulMarked) disabled @endif
+                                   >
+                                       <i class="{{ $helpfulMarked ? 'ci-thumb-up-filled' : 'ci-thumb-up' }} me-1" aria-hidden="true"></i>
+                                       <span class="product-review-helpful__label">{{ $helpfulMarked ? 'Označeno korisno' : 'Koristan dojam' }}</span>
+                                       <span class="product-review-helpful__count">{{ (int) $review->helpful_count }}</span>
+                                   </button>
+                               </div>
                            </article>
                        @endforeach
                    </div>
                @else
                    <div class="product-review-empty">
-                       <p class="mb-0">Trenutno nema komentara za ovaj naslov.</p>
+                       <p class="mb-0">Trenutno nema dojmova čitatelja za ovaj naslov.</p>
                    </div>
                @endif
            </section>
@@ -1607,6 +2082,90 @@
             scrollToReviewsSection();
             openReviewForm(true);
         }
+    });
+
+    document.addEventListener('click', function(event) {
+        const answerButton = event.target.closest('[data-review-answer]');
+
+        if (!answerButton) {
+            return;
+        }
+
+        const target = document.querySelector(answerButton.dataset.target);
+
+        if (!target) {
+            return;
+        }
+
+        const group = answerButton.closest('.product-review-answer-group');
+
+        if (group) {
+            group.querySelectorAll('[data-review-answer]').forEach(function(button) {
+                button.classList.remove('is-active');
+            });
+        }
+
+        target.value = answerButton.dataset.value || '';
+        answerButton.classList.add('is-active');
+    });
+
+    document.addEventListener('click', function(event) {
+        const helpfulButton = event.target.closest('[data-review-helpful]');
+
+        if (!helpfulButton) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (helpfulButton.dataset.loading === '1' || helpfulButton.disabled) {
+            return;
+        }
+
+        helpfulButton.dataset.loading = '1';
+        helpfulButton.disabled = true;
+
+        fetch(helpfulButton.dataset.reviewHelpfulUrl, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Request failed');
+                }
+
+                return response.json();
+            })
+            .then(function(data) {
+                const count = helpfulButton.querySelector('.product-review-helpful__count');
+                const label = helpfulButton.querySelector('.product-review-helpful__label');
+                const icon = helpfulButton.querySelector('i');
+
+                if (count && typeof data.helpful_count !== 'undefined') {
+                    count.textContent = data.helpful_count;
+                }
+
+                if (label) {
+                    label.textContent = 'Označeno korisno';
+                }
+
+                if (icon) {
+                    icon.className = 'ci-thumb-up-filled me-1';
+                }
+
+                helpfulButton.classList.add('is-active');
+                helpfulButton.setAttribute('aria-pressed', 'true');
+            })
+            .catch(function() {
+                helpfulButton.disabled = false;
+            })
+            .finally(function() {
+                helpfulButton.dataset.loading = '0';
+            });
     });
 </script>
 <script>

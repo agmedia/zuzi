@@ -45,6 +45,12 @@
                 </li>
 
                 <li class="account-nav-item">
+                    <a class="account-nav-link nav-link-style d-flex align-items-center px-3 py-2 {{ request()->routeIs('moji-dojmovi') ? 'active' : '' }}" href="{{ route('moji-dojmovi') }}">
+                        <i class="ci-star"></i>Moji dojmovi
+                    </a>
+                </li>
+
+                <li class="account-nav-item">
                     <a class="account-nav-link nav-link-style d-flex align-items-center px-3 py-2 {{ request()->routeIs('loyalty') ? 'active' : '' }}" href="{{ route('loyalty') }}">
                         <i class="ci-coins"></i>Loyalty
                     </a>

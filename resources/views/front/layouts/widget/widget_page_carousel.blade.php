@@ -81,7 +81,7 @@
             <a class="btn btn-primary btn-sm btn-shadow mt-0" href="/blog"><span class="d-none d-sm-inline-block">Pogledajte sve</span> <i class="ci-arrow-right "></i></a>
         @elseif ($isReviewWidget)
             <div class="review-widget-cta">
-                <a class="btn btn-primary btn-sm btn-shadow" href="{{ route('moje-narudzbe') }}">Napiši recenziju</a>
+                <a class="btn btn-primary btn-sm btn-shadow" href="{{ route('moji-dojmovi') }}">Podijeli dojam</a>
             </div>
         @endif
     </div>
@@ -175,6 +175,9 @@
                                 </div>
                             </div>
 
+                            @if($review->title)
+                                <div class="review-widget-review-title mb-2" style="color: #373f50; font-weight: 700; line-height: 1.35;">{{ $review->title }}</div>
+                            @endif
                             <div class="review-widget-message" style="display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6; max-height: 12.8em; text-overflow: ellipsis;">{{ strip_tags($review->message) }}</div>
                             <footer class="review-widget-card-footer d-flex flex-wrap justify-content-between align-items-center pt-3 mt-auto">
                                 <span class="review-widget-author d-inline-flex align-items-center">

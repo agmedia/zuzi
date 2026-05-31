@@ -130,7 +130,7 @@ class ActionGroupList extends Component
                 $this->title = 'Novosti koje želite uključiti' . $this->requiredSymbol();
                 break;
             case 'reviews':
-                $this->title = 'Komentari koje želite uključiti <span class="font-weight-lighter text-xs font-italic">Opcionalno, prazno znači svi odobreni komentari</span>';
+                $this->title = 'Dojmovi koje želite uključiti <span class="font-weight-lighter text-xs font-italic">Opcionalno, prazno znači svi odobreni dojmovi</span>';
                 break;
             case 'all':
                 $this->title = 'Nakladnici koje želite isključiti iz akcije <span class="font-weight-lighter text-xs font-italic">Opcionalno</span>';

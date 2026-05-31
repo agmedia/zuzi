@@ -200,7 +200,7 @@ return [
     'loyalty_current_points' => 'Ukupno raspoloživih bodova',
 
     'loyalty_ref_order' => 'Narudžba',
-    'loyalty_ref_review' => 'Recenzija proizvoda',
+    'loyalty_ref_review' => 'Dojam čitatelja',
 
     'loyalty_trenutno_nemate' => 'Trenutno nemate bodova. ',
     'use_loyalty' => 'Iskoristite Loyalty popust',
@@ -212,7 +212,7 @@ return [
 
     'min_cart_discount_title' => 'Količinski popust',
     'pogledaj_sve' => 'Pogledaj sve',
-    'review_request_subject' => 'Vaše mišljenje nam je važno – ocijenite narudžbu br. '
+    'review_request_subject' => 'Kako su vam se svidjele knjige iz narudžbe br. '
 
 
 

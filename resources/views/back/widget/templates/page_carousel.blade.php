@@ -48,7 +48,7 @@
                                         <option value="category" {{ (isset($widget) and $widget->target == 'category') ? 'selected="selected"' : '' }}>Kategorije</option>
                                         <option value="publisher" {{ (isset($widget) and $widget->target == 'publisher') ? 'selected="selected"' : '' }}>Izdavači</option>
 
-                                        <option value="reviews" {{ (isset($widget) and $widget->target == 'reviews') ? 'selected="selected"' : '' }}>Ocjene i komentari</option>
+                                        <option value="reviews" {{ (isset($widget) and $widget->target == 'reviews') ? 'selected="selected"' : '' }}>Dojmovi čitatelja</option>
                                         {{--@foreach ($targets as $target)
                                             <option value="{{ $target->id }}" {{ (isset($widget) and $target->id == $widget->target) ? 'selected="selected"' : '' }}>{{ $target->title }}</option>
                                         @endforeach--}}

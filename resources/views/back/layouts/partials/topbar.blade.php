@@ -31,8 +31,8 @@
             <a
                 href="{{ route('reviews', ['status' => 'pending']) }}"
                 class="btn btn-dual d-inline-flex align-items-center mr-2"
-                aria-label="Novi komentari"
-                title="Novi komentari"
+                aria-label="Novi dojmovi"
+                title="Novi dojmovi"
             >
                 <i class="fa fa-comment-dots {{ ($pendingReviewCount ?? 0) > 0 ? 'text-warning' : 'text-muted' }} mr-2"></i>
                 <span class="font-w600">{{ $pendingReviewCount ?? 0 }}</span>

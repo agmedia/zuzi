@@ -25,7 +25,10 @@ class ReviewController extends Controller
                     $nested->where('fname', 'like', '%' . $search . '%')
                         ->orWhere('lname', 'like', '%' . $search . '%')
                         ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhere('title', 'like', '%' . $search . '%')
                         ->orWhere('message', 'like', '%' . $search . '%')
+                        ->orWhere('recommended_for', 'like', '%' . $search . '%')
+                        ->orWhere('liked_most', 'like', '%' . $search . '%')
                         ->orWhereHas('product', function ($productQuery) use ($search) {
                             $productQuery->where('name', 'like', '%' . $search . '%')
                                 ->orWhere('sku', 'like', '%' . $search . '%');
@@ -75,10 +78,10 @@ class ReviewController extends Controller
 
             return redirect()
                 ->route('reviews.edit', ['review' => $updated])
-                ->with(['success' => 'Komentar je uspješno spremljen.']);
+                ->with(['success' => 'Dojam je uspješno spremljen.']);
         }
 
-        return redirect()->back()->with(['error' => 'Dogodila se greška prilikom spremanja komentara.']);
+        return redirect()->back()->with(['error' => 'Dogodila se greška prilikom spremanja dojma.']);
     }
 
 
@@ -93,10 +96,10 @@ class ReviewController extends Controller
         Loyalty::clearProductReviewReward($review);
 
         if (Review::destroy($review->id)) {
-            return redirect()->route('reviews')->with(['success' => 'Komentar je uspješno izbrisan.']);
+            return redirect()->route('reviews')->with(['success' => 'Dojam je uspješno izbrisan.']);
         }
 
-        return redirect()->back()->with(['error' => 'Dogodila se greška prilikom brisanja komentara.']);
+        return redirect()->back()->with(['error' => 'Dogodila se greška prilikom brisanja dojma.']);
     }
 
 
@@ -119,6 +122,6 @@ class ReviewController extends Controller
             return response()->json(['success' => 200]);
         }
 
-        return response()->json(['error' => 300, 'message' => 'Brisanje komentara nije uspjelo.']);
+        return response()->json(['error' => 300, 'message' => 'Brisanje dojma nije uspjelo.']);
     }
 }

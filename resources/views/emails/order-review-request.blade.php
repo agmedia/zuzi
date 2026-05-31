@@ -5,9 +5,9 @@
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
             <td class="ag-mail-tableset" style="padding-bottom: 4px;">
-                <h2 style="margin: 0 0 12px; font-size: 26px; line-height: 1.3; color: #1f2937;">Hvala vam na kupnji, {{ $order->payment_fname }}.</h2>
+                <h2 style="margin: 0 0 12px; font-size: 26px; line-height: 1.3; color: #1f2937;">Jeste li već stigli pročitati svoje knjige, {{ $order->payment_fname }}?</h2>
                 <p style="margin: 0; font-size: 15px; line-height: 1.7; color: #4b5563;">
-                    Nadamo se da uživate u svojim knjigama. Vaše mišljenje nam je jako važno jer pomaže drugim kupcima pri odabiru, a nama daje jasan signal što još više volite čitati.
+                    Vaš dojam može pomoći drugim čitateljima da lakše pronađu sljedeću knjigu. Ne mora biti duga recenzija: napišite kome biste knjigu preporučili, što vam se najviše svidjelo i kakav je dojam ostavila na vas.
                 </p>
             </td>
         </tr>
@@ -18,27 +18,27 @@
                     <tr>
                         <td style="padding: 22px 20px; font-size: 15px; line-height: 1.8; color: #373f50;">
                             <p style="margin: 0 0 10px;">
-                                🎁 <strong>TVOJA NAGRADA: -{{ (int) $promoAction->discount }}% na sve artikle</strong>
+                                <strong>Hvala što gradite Zuzi zajednicu čitatelja.</strong>
                             </p>
 
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 14px 0 14px; border: 2px dashed #e6007e; border-radius: 10px;">
                                 <tr>
                                     <td align="center" style="padding: 24px 16px; text-align: center;">
                                         <p style="margin: 0 0 8px; font-size: 16px; line-height: 1.5; color: #373f50;">
-                                            Vaš kupon kod:
+                                            Vaš kod za sljedeću kupnju:
                                         </p>
                                         <p style="margin: 0 0 8px; font-size: 34px; line-height: 1.2; color: #e6007e; font-weight: 800; letter-spacing: 1px; word-break: break-word;">
                                             {{ $promoAction->coupon }}
                                         </p>
                                         <p style="margin: 0; font-size: 17px; line-height: 1.5; color: #373f50; font-weight: 700;">
-                                            ostvaruje {{ (int) $promoAction->discount }}% popusta
+                                            ostvaruje {{ (int) $promoAction->discount }}% popusta na sve artikle
                                         </p>
                                     </td>
                                 </tr>
                             </table>
 
                             <p style="margin: 0;">
-                                ⏳ Vrijedi samo sljedećih <strong>7 dana</strong>
+                                Vrijedi samo sljedećih <strong>7 dana</strong>
                                 @if ($expiresAt)
                                     <br>Točnije do <strong>{{ $expiresAt->format('d.m.Y. H:i') }}</strong>
                                 @endif
@@ -46,10 +46,11 @@
 
                             <p style="margin: 12px 0 0;">
                                 @if ((int) $order->user_id > 0)
-                                    <strong>Kao registrirani kupac</strong> za svaki odobreni komentar dobivate i <strong>{{ \App\Models\Back\Marketing\Review::rewardPoints() }} loyalty bodova</strong>, do najviše <strong>{{ \App\Models\Back\Marketing\Review::monthlyLimit() }} komentara mjesečno</strong>.
+                                    <strong>Kao registrirani kupac</strong> za svaki odobreni dojam dobivate i <strong>{{ \App\Models\Back\Marketing\Review::rewardPoints() }} loyalty bodova</strong>, do najviše <strong>{{ \App\Models\Back\Marketing\Review::monthlyLimit() }} mjesečno</strong>.
                                 @else
-                                    <strong>Registrirani kupci</strong> za svaki odobreni komentar dobivaju i <strong>{{ \App\Models\Back\Marketing\Review::rewardPoints() }} loyalty bodova</strong>, do najviše <strong>{{ \App\Models\Back\Marketing\Review::monthlyLimit() }} komentara mjesečno</strong>.
+                                    <strong>Registrirani kupci</strong> za svaki odobreni dojam dobivaju i <strong>{{ \App\Models\Back\Marketing\Review::rewardPoints() }} loyalty bodova</strong>, do najviše <strong>{{ \App\Models\Back\Marketing\Review::monthlyLimit() }} mjesečno</strong>.
                                 @endif
+                                Bodovi se dodjeljuju za iskren dojam, bez obzira na ocjenu.
                             </p>
                         </td>
                     </tr>
@@ -59,7 +60,7 @@
 
         <tr>
             <td class="ag-mail-tableset" style="padding-top: 0;">
-                <h3 style="margin: 0 0 12px; font-size: 18px; color: #1f2937;">Odaberite knjigu i ostavite svoj komentar</h3>
+                <h3 style="margin: 0 0 12px; font-size: 18px; color: #1f2937;">Odaberite knjigu i podijelite dojam</h3>
             </td>
         </tr>
 
@@ -78,7 +79,7 @@
                                             <a href="{{ $item['product_url'] }}" class="ag-btn" style="width: 180px; color: #ffffff !important;">Pogledaj knjigu</a>
                                         </td>
                                         <td style="padding: 0 0 10px;">
-                                            <a href="{{ $item['review_url'] }}" class="ag-btn" style="width: 180px; background-color: #111827; color: #ffffff !important;">Napiši komentar</a>
+                                            <a href="{{ $item['review_url'] }}" class="ag-btn" style="width: 180px; background-color: #111827; color: #ffffff !important;">Podijeli dojam</a>
                                         </td>
                                     </tr>
                                 </table>
@@ -92,7 +93,7 @@
         <tr>
             <td class="ag-mail-tableset" style="padding-top: 6px;">
                 <p style="margin: 0; font-size: 14px; line-height: 1.8; color: #4b5563;">
-                    Hvala vam još jednom na povjerenju i na svakoj preporuci koju podijelite s nama.
+                    Hvala vam još jednom na povjerenju i na svakoj preporuci koju podijelite s drugim čitateljima.
                 </p>
                 <p style="margin: 14px 0 0; font-size: 14px; line-height: 1.8; color: #4b5563;">
                     Lijep pozdrav,<br>Zuzi Shop

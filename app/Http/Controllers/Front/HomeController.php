@@ -119,7 +119,7 @@ class HomeController extends Controller
             return back()
                 ->withInput()
                 ->with([
-                    'error'            => 'Hvala vam na dosadašnjim komentarima. Ovaj mjesec ste već iskoristili maksimum od ' . $limit . ' komentara za loyalty nagradu.',
+                    'error'            => 'Hvala vam na dosadašnjim dojmovima. Ovaj mjesec ste već iskoristili maksimum za loyalty nagradu: ' . $limit . '.',
                     'review_submitted' => true,
                 ]);
         }
@@ -135,7 +135,7 @@ class HomeController extends Controller
             $limit = Review::monthlyLimit();
 
             return back()->with([
-                'success'          => 'Hvala vam na komentaru. Nakon odobrenja bit će vidljiv na stranici, a registrirani kupci dobivaju ' . $points . ' loyalty bodova po odobrenom komentaru, do ' . $limit . ' komentara mjesečno.',
+                'success'          => 'Hvala vam na dojmu. Nakon odobrenja bit će vidljiv na stranici, a registrirani kupci dobivaju ' . $points . ' loyalty bodova po odobrenom dojmu, do ' . $limit . ' mjesečno.',
                 'review_submitted' => true,
             ]);
         }
@@ -143,9 +143,46 @@ class HomeController extends Controller
         return back()
             ->withInput()
             ->with([
-                'error'            => 'Dogodila se greška prilikom spremanja komentara.',
+                'error'            => 'Dogodila se greška prilikom spremanja dojma.',
                 'review_submitted' => true,
             ]);
+    }
+
+
+    public function markReviewHelpful(Request $request, Review $review)
+    {
+        if (! $review->status) {
+            abort(404);
+        }
+
+        $sessionKey = 'helpful_reviews';
+        $votedReviewIds = collect((array) $request->session()->get($sessionKey, []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values();
+
+        if ($votedReviewIds->contains((int) $review->id)) {
+            return response()->json([
+                'helpful_count' => (int) $review->helpful_count,
+                'already_voted' => true,
+            ]);
+        }
+
+        Review::query()
+            ->whereKey($review->id)
+            ->increment('helpful_count');
+
+        $review->refresh();
+
+        $request->session()->put(
+            $sessionKey,
+            $votedReviewIds->push((int) $review->id)->unique()->values()->all()
+        );
+
+        return response()->json([
+            'helpful_count' => (int) $review->helpful_count,
+            'already_voted' => false,
+        ]);
     }
 
 

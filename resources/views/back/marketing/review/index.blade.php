@@ -4,7 +4,7 @@
     <div class="bg-body-light">
         <div class="content content-full">
             <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center">
-                <h1 class="flex-sm-fill font-size-h2 font-w400 mt-2 mb-0 mb-sm-2">Komentari artikala</h1>
+                <h1 class="flex-sm-fill font-size-h2 font-w400 mt-2 mb-0 mb-sm-2">Dojmovi čitatelja</h1>
             </div>
         </div>
     </div>
@@ -14,11 +14,11 @@
 
         <div class="block block-rounded">
             <div class="block-header block-header-default">
-                <h3 class="block-title">Svi komentari ({{ $reviews->total() }})</h3>
+                <h3 class="block-title">Svi dojmovi ({{ $reviews->total() }})</h3>
                 <div class="block-options">
                     <form action="{{ route('reviews') }}" method="GET" class="d-flex flex-wrap align-items-center gap-2">
                         <div class="block-options-item mr-2">
-                            <input type="text" class="form-control" name="search" placeholder="Pretraži komentar, kupca ili artikl" value="{{ request('search') }}">
+                            <input type="text" class="form-control" name="search" placeholder="Pretraži dojam, kupca ili artikl" value="{{ request('search') }}">
                         </div>
                         <div class="block-options-item mr-2">
                             <select class="form-control" name="status">
@@ -45,7 +45,7 @@
                             <th style="width: 110px;">Datum</th>
                             <th style="min-width: 240px;">Artikl</th>
                             <th style="width: 90px;">Ocjena</th>
-                            <th>Komentar</th>
+                            <th>Dojam</th>
                             <th style="width: 210px;">Kupac</th>
                             <th class="text-center" style="width: 90px;">Status</th>
                             <th class="text-right" style="width: 110px;">Akcije</th>
@@ -66,7 +66,20 @@
                                     @endif
                                 </td>
                                 <td>{{ number_format((float) $review->stars, 1) }}</td>
-                                <td>{{ \Illuminate\Support\Str::limit(strip_tags((string) $review->message), 110) }}</td>
+                                <td>
+                                    @if($review->title)
+                                        <div class="font-w600">{{ \Illuminate\Support\Str::limit($review->title, 70) }}</div>
+                                    @endif
+                                    <div>{{ \Illuminate\Support\Str::limit(strip_tags((string) $review->message), 110) }}</div>
+                                    <div class="mt-1">
+                                        @if($review->isVerifiedPurchase())
+                                            <span class="badge badge-success">Provjerena kupnja</span>
+                                        @endif
+                                        @if((int) $review->helpful_count > 0)
+                                            <span class="badge badge-info">{{ (int) $review->helpful_count }} korisno</span>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td>
                                     <div>{{ trim($review->fname . ' ' . $review->lname) }}</div>
                                     <div class="font-size-sm text-muted">{{ $review->email }}</div>
@@ -89,7 +102,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Nema komentara za prikaz.</td>
+                                <td colspan="7" class="text-center text-muted">Nema dojmova za prikaz.</td>
                             </tr>
                         @endforelse
                         </tbody>

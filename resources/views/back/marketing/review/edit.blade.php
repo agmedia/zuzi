@@ -4,11 +4,11 @@
     <div class="bg-body-light">
         <div class="content content-full">
             <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center">
-                <h1 class="flex-sm-fill font-size-h2 font-w400 mt-2 mb-0 mb-sm-2">Uredi komentar</h1>
+                <h1 class="flex-sm-fill font-size-h2 font-w400 mt-2 mb-0 mb-sm-2">Uredi dojam</h1>
                 <nav class="flex-sm-00-auto ml-sm-3" aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ route('reviews') }}">Komentari</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Uredi komentar</li>
+                        <li class="breadcrumb-item"><a href="{{ route('reviews') }}">Dojmovi</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Uredi dojam</li>
                     </ol>
                 </nav>
             </div>
@@ -96,9 +96,64 @@
                                 </div>
                             </div>
 
+                            <div class="form-group row">
+                                <div class="col-md-6">
+                                    <label>Signal povjerenja</label>
+                                    <div class="form-control bg-body-light">
+                                        @if($review->isVerifiedPurchase())
+                                            <span class="badge badge-success">Provjerena kupnja</span>
+                                        @else
+                                            <span class="badge badge-secondary">Nije potvrđena kupnja</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Korisnost</label>
+                                    <div class="form-control bg-body-light">{{ (int) $review->helpful_count }} oznaka</div>
+                                </div>
+                            </div>
+
                             <div class="form-group">
-                                <label for="message-input">Komentar</label>
+                                <label for="title-input">Naslov dojma</label>
+                                <input type="text" class="form-control" id="title-input" name="title" value="{{ old('title', $review->title) }}" maxlength="120">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="message-input">Dojam</label>
                                 <textarea class="form-control" id="message-input" name="message" rows="8">{{ old('message', $review->message) }}</textarea>
+                            </div>
+
+                            <div class="form-group row">
+                                <div class="col-md-6">
+                                    <label for="recommended-for-input">Kome je preporučeno</label>
+                                    <input type="text" class="form-control" id="recommended-for-input" name="recommended_for" value="{{ old('recommended_for', $review->recommended_for) }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="liked-most-input">Najviše se svidjelo</label>
+                                    <input type="text" class="form-control" id="liked-most-input" name="liked_most" value="{{ old('liked_most', $review->liked_most) }}">
+                                </div>
+                            </div>
+
+                            @php($selectedTags = collect(old('tags', $review->tagsArray()))->map(fn ($tag) => (string) $tag)->all())
+                            <div class="form-group">
+                                <label>Oznake dojma</label>
+                                <div class="row">
+                                    @foreach(\App\Models\Back\Marketing\Review::tagOptions() as $tagValue => $tagLabel)
+                                        <div class="col-sm-6 col-md-4">
+                                            <div class="custom-control custom-checkbox mb-2">
+                                                <input type="checkbox" class="custom-control-input" id="tag-{{ $tagValue }}" name="tags[]" value="{{ $tagValue }}" {{ in_array($tagValue, $selectedTags, true) ? 'checked' : '' }}>
+                                                <label class="custom-control-label" for="tag-{{ $tagValue }}">{{ $tagLabel }}</label>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="custom-control custom-switch custom-control-warning">
+                                    <input type="checkbox" class="custom-control-input" id="spoiler-switch" name="has_spoilers" value="1" {{ old('has_spoilers', $review->has_spoilers) ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="spoiler-switch">Dojam sadrži spoilere</label>
+                                </div>
                             </div>
                         </div>
                     </div>

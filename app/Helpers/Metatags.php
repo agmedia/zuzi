@@ -437,7 +437,7 @@ class Metatags
                         ],
                         'datePublished' => Carbon::make($review->created_at)->locale('hr')->format('Y-m-d'),
                         'reviewBody'    => strip_tags($review->message),
-                        'name'          => $prod->name,
+                        'name'          => $review->title ?: $prod->name,
                         'reviewRating'  => [
                             '@type'       => 'Rating',
                             'bestRating'  => '5',

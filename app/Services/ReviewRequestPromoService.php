@@ -71,25 +71,30 @@ class ReviewRequestPromoService
     public function findForOrder(Order $order): ?Action
     {
         return Action::query()
-            ->where('title', $this->titleForOrder($order))
+            ->whereIn('title', [$this->titleForOrder($order), $this->legacyTitleForOrder($order)])
             ->where('group', 'total')
             ->first();
     }
 
     public function titleForOrder(Order $order): string
     {
-        return 'Promo za komentar narudzbe #' . $order->id;
+        return 'Promo za dojam narudzbe #' . $order->id;
     }
 
     private function generateUniqueCode(): string
     {
         do {
-            $code = 'KOMENTAR' . self::DISCOUNT_PERCENT . '-' . Str::upper(Str::random(self::COUPON_SUFFIX_LENGTH));
+            $code = 'DOJAM' . self::DISCOUNT_PERCENT . '-' . Str::upper(Str::random(self::COUPON_SUFFIX_LENGTH));
         } while (
             Action::query()->where('coupon', $code)->exists()
             || GiftVoucher::query()->where('code', $code)->exists()
         );
 
         return $code;
+    }
+
+    private function legacyTitleForOrder(Order $order): string
+    {
+        return 'Promo za komentar narudzbe #' . $order->id;
     }
 }
