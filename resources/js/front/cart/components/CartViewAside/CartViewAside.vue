@@ -291,17 +291,26 @@ export default {
             }
 
             if (this.activeBogoTier) {
-                return `Trenutno ostvarujete ${this.activeBogoTier.discount_label} popusta na artikle u košarici.`;
+                const nextStatus = this.nextBogoTier ? ` ${this.nextBogoStatusText}` : '';
+
+                return `Trenutno ostvarujete ${this.activeBogoTier.discount_label} popusta na artikle u košarici.${nextStatus}`;
             }
 
             if (this.nextBogoTier) {
-                const missing = Math.max(0, Number(this.nextBogoTier.quantity || 0) - this.bogoCartQuantity);
-                const word = missing === 1 ? 'artikl' : 'artikla';
-
-                return `Dodajte još ${missing} ${word} za ${this.nextBogoTier.discount_label} popusta.`;
+                return this.nextBogoStatusText;
             }
 
             return this.bogoPromo.note || '';
+        },
+        nextBogoStatusText() {
+            if (!this.nextBogoTier) {
+                return '';
+            }
+
+            const missing = Math.max(0, Number(this.nextBogoTier.quantity || 0) - this.bogoCartQuantity);
+            const word = missing === 1 ? 'artikl' : (missing >= 5 ? 'artikala' : 'artikla');
+
+            return `Dodajte još ${missing} ${word} za ${this.nextBogoTier.discount_label} popusta.`;
         },
         visibleDetailConditions() {
             const conditions = Array.isArray(this.$store.state.cart.detail_con) ? this.$store.state.cart.detail_con : [];

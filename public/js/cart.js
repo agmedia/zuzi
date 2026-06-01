@@ -2621,6 +2621,14 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2630,6 +2638,10 @@ __webpack_require__.r(__webpack_exports__);
     buttons: {
       type: String,
       "default": 'true'
+    },
+    bogoPromo: {
+      type: Object,
+      "default": null
     }
   },
   data: function data() {
@@ -2644,6 +2656,65 @@ __webpack_require__.r(__webpack_exports__);
   computed: {
     hasGiftVoucher: function hasGiftVoucher() {
       return !!this.$store.state.cart.has_gift_voucher;
+    },
+    hasBogoPromo: function hasBogoPromo() {
+      return !!(this.bogoPromo && Array.isArray(this.bogoPromo.tiers) && this.bogoPromo.tiers.length);
+    },
+    bogoTiers: function bogoTiers() {
+      if (!this.hasBogoPromo) {
+        return [];
+      }
+      return this.bogoPromo.tiers.slice().sort(function (a, b) {
+        return Number(a.quantity || 0) - Number(b.quantity || 0);
+      });
+    },
+    bogoCartQuantity: function bogoCartQuantity() {
+      var _this = this;
+      var items = this.$store.state.cart && this.$store.state.cart.items ? this.$store.state.cart.items : {};
+      return Object.values(items).reduce(function (total, item) {
+        if (_this.isGiftWrap(item) || _this.isGiftVoucher(item)) {
+          return total;
+        }
+        return total + Math.max(0, Number(item.quantity || 0));
+      }, 0);
+    },
+    activeBogoTier: function activeBogoTier() {
+      var _this2 = this;
+      return this.bogoTiers.filter(function (tier) {
+        return Number(tier.quantity || 0) <= _this2.bogoCartQuantity;
+      }).pop() || null;
+    },
+    nextBogoTier: function nextBogoTier() {
+      var _this3 = this;
+      return this.bogoTiers.find(function (tier) {
+        return Number(tier.quantity || 0) > _this3.bogoCartQuantity;
+      }) || null;
+    },
+    bogoPrimaryStatusText: function bogoPrimaryStatusText() {
+      if (this.activeBogoTier) {
+        return "Trenutno ostvarujete ".concat(this.activeBogoTier.discount_label, " popusta na artikle u ko\u0161arici.");
+      }
+      if (this.nextBogoTier) {
+        return this.nextBogoStatusText;
+      }
+      return this.bogoPromo && this.bogoPromo.note ? this.bogoPromo.note : '';
+    },
+    bogoSecondaryStatusText: function bogoSecondaryStatusText() {
+      if (this.activeBogoTier && this.nextBogoTier) {
+        return this.nextBogoStatusText;
+      }
+      if (this.activeBogoTier && !this.nextBogoTier) {
+        return 'Dosegli ste najveći količinski popust.';
+      }
+      return '';
+    },
+    nextBogoStatusText: function nextBogoStatusText() {
+      if (!this.nextBogoTier) {
+        return '';
+      }
+      var missing = Math.max(0, Number(this.nextBogoTier.quantity || 0) - this.bogoCartQuantity);
+      var word = missing === 1 ? 'artikl' : missing >= 5 ? 'artikala' : 'artikla';
+      return "Dodajte jo\u0161 ".concat(missing, " ").concat(word, " za ").concat(this.nextBogoTier.discount_label, " popusta.");
     }
   },
   mounted: function mounted() {
@@ -3043,14 +3114,21 @@ __webpack_require__.r(__webpack_exports__);
         return '';
       }
       if (this.activeBogoTier) {
-        return "Trenutno ostvarujete ".concat(this.activeBogoTier.discount_label, " popusta na artikle u ko\u0161arici.");
+        var nextStatus = this.nextBogoTier ? " ".concat(this.nextBogoStatusText) : '';
+        return "Trenutno ostvarujete ".concat(this.activeBogoTier.discount_label, " popusta na artikle u ko\u0161arici.").concat(nextStatus);
       }
       if (this.nextBogoTier) {
-        var missing = Math.max(0, Number(this.nextBogoTier.quantity || 0) - this.bogoCartQuantity);
-        var word = missing === 1 ? 'artikl' : 'artikla';
-        return "Dodajte jo\u0161 ".concat(missing, " ").concat(word, " za ").concat(this.nextBogoTier.discount_label, " popusta.");
+        return this.nextBogoStatusText;
       }
       return this.bogoPromo.note || '';
+    },
+    nextBogoStatusText: function nextBogoStatusText() {
+      if (!this.nextBogoTier) {
+        return '';
+      }
+      var missing = Math.max(0, Number(this.nextBogoTier.quantity || 0) - this.bogoCartQuantity);
+      var word = missing === 1 ? 'artikl' : missing >= 5 ? 'artikala' : 'artikla';
+      return "Dodajte jo\u0161 ".concat(missing, " ").concat(word, " za ").concat(this.nextBogoTier.discount_label, " popusta.");
     },
     visibleDetailConditions: function visibleDetailConditions() {
       var conditions = Array.isArray(this.$store.state.cart.detail_con) ? this.$store.state.cart.detail_con : [];
@@ -6155,7 +6233,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n@font-face {\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    font-display: block;\n    src: url(\"/fonts/fontawesome/fa-solid-900.woff2\") format(\"woff2\"),\n         url(\"/fonts/fontawesome/fa-solid-900.woff\") format(\"woff\");\n}\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.mobile-prices {\n    font-size: .66rem;\n    color: #999999;\n}\n.gift-wrap-thumb {\n    align-items: center;\n    justify-content: center;\n    border-radius: 1rem;\n    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);\n    border: 1px solid rgba(229, 0, 119, 0.14);\n    text-decoration: none;\n    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);\n}\n.gift-wrap-thumb--lg {\n    width: 120px;\n    height: 120px;\n}\n.gift-wrap-thumb__icon::before {\n    content: \"\\f06b\";\n    font-family: \"Font Awesome 5 Free\";\n    font-weight: 900;\n    color: #e50077;\n    font-size: 2rem;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n@font-face {\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    font-display: block;\n    src: url(\"/fonts/fontawesome/fa-solid-900.woff2\") format(\"woff2\"),\n         url(\"/fonts/fontawesome/fa-solid-900.woff\") format(\"woff\");\n}\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.mobile-prices {\n    font-size: .66rem;\n    color: #999999;\n}\n.cart-bogo-inline {\n    display: flex;\n    align-items: flex-start;\n    gap: 0.75rem;\n    padding: 0.8rem 0.95rem;\n    border: 1px solid rgba(229, 0, 119, 0.16);\n    border-radius: 0.5rem;\n    background: rgba(229, 0, 119, 0.07);\n    color: #9f1c63;\n    font-size: 0.9rem;\n    line-height: 1.4;\n}\n.cart-bogo-inline__icon {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex: 0 0 auto;\n    width: 1.7rem;\n    height: 1.7rem;\n    border-radius: 999px;\n    background: #e50077;\n    color: #ffffff;\n    font-size: 0.82rem;\n    font-weight: 800;\n    line-height: 1;\n}\n.cart-bogo-inline__content {\n    display: flex;\n    flex-direction: column;\n    gap: 0.15rem;\n    min-width: 0;\n}\n.cart-bogo-inline__content strong {\n    color: #9f1c63;\n    font-size: 0.9rem;\n    font-weight: 700;\n    line-height: 1.35;\n}\n.cart-bogo-inline__content span {\n    color: #5f6c82;\n    font-size: 0.82rem;\n    line-height: 1.35;\n}\n.gift-wrap-thumb {\n    align-items: center;\n    justify-content: center;\n    border-radius: 1rem;\n    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);\n    border: 1px solid rgba(229, 0, 119, 0.14);\n    text-decoration: none;\n    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);\n}\n.gift-wrap-thumb--lg {\n    width: 120px;\n    height: 120px;\n}\n.gift-wrap-thumb__icon::before {\n    content: \"\\f06b\";\n    font-family: \"Font Awesome 5 Free\";\n    font-weight: 900;\n    color: #e50077;\n    font-size: 2rem;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -8344,6 +8422,31 @@ var render = function() {
   return _c(
     "div",
     [
+      !_vm.hasGiftVoucher && _vm.hasBogoPromo && _vm.$store.state.cart.count
+        ? _c(
+            "div",
+            { staticClass: "mt-3 cart-bogo-inline", attrs: { role: "status" } },
+            [
+              _c(
+                "div",
+                {
+                  staticClass: "cart-bogo-inline__icon",
+                  attrs: { "aria-hidden": "true" }
+                },
+                [_vm._v("%")]
+              ),
+              _vm._v(" "),
+              _c("div", { staticClass: "cart-bogo-inline__content" }, [
+                _c("strong", [_vm._v(_vm._s(_vm.bogoPrimaryStatusText))]),
+                _vm._v(" "),
+                _vm.bogoSecondaryStatusText
+                  ? _c("span", [_vm._v(_vm._s(_vm.bogoSecondaryStatusText))])
+                  : _vm._e()
+              ])
+            ]
+          )
+        : _vm._e(),
+      _vm._v(" "),
       !_vm.hasGiftVoucher &&
       _vm.$store.state.cart.total < _vm.freeship &&
       _vm.$store.state.cart.count

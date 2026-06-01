@@ -1,6 +1,14 @@
 <template>
     <div>
 
+        <div role="status" class="mt-3 cart-bogo-inline" v-if="!hasGiftVoucher && hasBogoPromo && $store.state.cart.count">
+            <div class="cart-bogo-inline__icon" aria-hidden="true">%</div>
+            <div class="cart-bogo-inline__content">
+                <strong>{{ bogoPrimaryStatusText }}</strong>
+                <span v-if="bogoSecondaryStatusText">{{ bogoSecondaryStatusText }}</span>
+            </div>
+        </div>
+
         <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="!hasGiftVoucher && $store.state.cart.total < freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Još  {{ $store.state.service.formatMainPrice(freeship - $store.state.cart.total) }} <span v-if="$store.state.cart.secondary_price">({{ $store.state.service.formatSecondaryPrice(freeship - $store.state.cart.total) }})</span> do besplatne dostave!</div></div>
 
         <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="!hasGiftVoucher && $store.state.cart.total > freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Ostvarili ste pravo na besplatnu dostavu!</div></div>
@@ -73,6 +81,10 @@
             checkouturl: String,
             freeship: String,
             buttons: {type: String, default: 'true'},
+            bogoPromo: {
+                type: Object,
+                default: null
+            }
         },
         data() {
             return {
@@ -86,6 +98,69 @@
         computed: {
             hasGiftVoucher() {
                 return !!this.$store.state.cart.has_gift_voucher;
+            },
+            hasBogoPromo() {
+                return !!(this.bogoPromo && Array.isArray(this.bogoPromo.tiers) && this.bogoPromo.tiers.length);
+            },
+            bogoTiers() {
+                if (!this.hasBogoPromo) {
+                    return [];
+                }
+
+                return this.bogoPromo.tiers
+                    .slice()
+                    .sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0));
+            },
+            bogoCartQuantity() {
+                const items = this.$store.state.cart && this.$store.state.cart.items ? this.$store.state.cart.items : {};
+
+                return Object.values(items).reduce((total, item) => {
+                    if (this.isGiftWrap(item) || this.isGiftVoucher(item)) {
+                        return total;
+                    }
+
+                    return total + Math.max(0, Number(item.quantity || 0));
+                }, 0);
+            },
+            activeBogoTier() {
+                return this.bogoTiers
+                    .filter((tier) => Number(tier.quantity || 0) <= this.bogoCartQuantity)
+                    .pop() || null;
+            },
+            nextBogoTier() {
+                return this.bogoTiers.find((tier) => Number(tier.quantity || 0) > this.bogoCartQuantity) || null;
+            },
+            bogoPrimaryStatusText() {
+                if (this.activeBogoTier) {
+                    return `Trenutno ostvarujete ${this.activeBogoTier.discount_label} popusta na artikle u košarici.`;
+                }
+
+                if (this.nextBogoTier) {
+                    return this.nextBogoStatusText;
+                }
+
+                return this.bogoPromo && this.bogoPromo.note ? this.bogoPromo.note : '';
+            },
+            bogoSecondaryStatusText() {
+                if (this.activeBogoTier && this.nextBogoTier) {
+                    return this.nextBogoStatusText;
+                }
+
+                if (this.activeBogoTier && !this.nextBogoTier) {
+                    return 'Dosegli ste najveći količinski popust.';
+                }
+
+                return '';
+            },
+            nextBogoStatusText() {
+                if (!this.nextBogoTier) {
+                    return '';
+                }
+
+                const missing = Math.max(0, Number(this.nextBogoTier.quantity || 0) - this.bogoCartQuantity);
+                const word = missing === 1 ? 'artikl' : (missing >= 5 ? 'artikala' : 'artikla');
+
+                return `Dodajte još ${missing} ${word} za ${this.nextBogoTier.discount_label} popusta.`;
             }
         },
         mounted() {
@@ -209,6 +284,54 @@
 .mobile-prices {
     font-size: .66rem;
     color: #999999;
+}
+
+.cart-bogo-inline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid rgba(229, 0, 119, 0.16);
+    border-radius: 0.5rem;
+    background: rgba(229, 0, 119, 0.07);
+    color: #9f1c63;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.cart-bogo-inline__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 999px;
+    background: #e50077;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.cart-bogo-inline__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.cart-bogo-inline__content strong {
+    color: #9f1c63;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.cart-bogo-inline__content span {
+    color: #5f6c82;
+    font-size: 0.82rem;
+    line-height: 1.35;
 }
 
 .gift-wrap-thumb {

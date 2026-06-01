@@ -70,6 +70,7 @@
         : asset('media/img/lightslider.webp');
     $relatedBlogReviewTeaser = $relatedBlogReview ? $relatedBlogReview->reviewTeaser(200) : '';
     $isTrackedQuantity = (bool) $prod->decrease;
+    $bogoListingBadge = \App\Models\Back\Marketing\Action::activeBogoListingBadge();
     $isInStock = (int) $prod->quantity > 0;
     $availabilityLabel = $isInStock
         ? ($isTrackedQuantity ? 'Na stanju: ' . $prod->quantity . ' kom.' : 'Dostupno za narudžbu')
@@ -1277,6 +1278,18 @@
    @if ($prod->main_price > $prod->main_special)
        <div class="product-price-stack__legal">
            <span>*Najniža cijena u zadnjih 30 dana.</span>
+       </div>
+   @endif
+   @if ($bogoListingBadge)
+       <div
+           class="product-bogo-line"
+           data-bogo-tooltip="{{ $bogoListingBadge['tooltip'] }}"
+           aria-label="{{ $bogoListingBadge['tooltip'] }}"
+           tabindex="0"
+       >
+           <span class="product-bogo-pill badge-shadow">{{ $bogoListingBadge['text'] }}</span>
+           <span class="product-bogo-text">na košaricu</span>
+           <span class="product-bogo-info" aria-hidden="true">i</span>
        </div>
    @endif
        </div>

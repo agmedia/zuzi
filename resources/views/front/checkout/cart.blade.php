@@ -215,7 +215,12 @@
                 </a>
             </div>
             <div class="card px-3">
-            <cart-view continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}" checkouturl="{{ route('naplata') }}" freeship="{{ config('settings.free_shipping') }}"></cart-view>
+            <cart-view
+                continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}"
+                checkouturl="{{ route('naplata') }}"
+                freeship="{{ config('settings.free_shipping') }}"
+                :bogo-promo='@json($activeBogoCartPromo)'
+            ></cart-view>
             </div>
 
         </section>
