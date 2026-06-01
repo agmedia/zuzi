@@ -2629,6 +2629,23 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -2749,6 +2766,12 @@ __webpack_require__.r(__webpack_exports__);
     isQuantityEditable: function isQuantityEditable(item) {
       var _item$attributes5;
       return (item === null || item === void 0 ? void 0 : (_item$attributes5 = item.attributes) === null || _item$attributes5 === void 0 ? void 0 : _item$attributes5.is_editable_quantity) !== false;
+    },
+    isBogoTierActive: function isBogoTierActive(tier) {
+      return Number(tier.quantity || 0) <= this.bogoCartQuantity;
+    },
+    isBogoTierNext: function isBogoTierNext(tier) {
+      return this.nextBogoTier && Number(this.nextBogoTier.quantity || 0) === Number(tier.quantity || 0);
     },
     /**
      *
@@ -6233,7 +6256,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n@font-face {\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    font-display: block;\n    src: url(\"/fonts/fontawesome/fa-solid-900.woff2\") format(\"woff2\"),\n         url(\"/fonts/fontawesome/fa-solid-900.woff\") format(\"woff\");\n}\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.mobile-prices {\n    font-size: .66rem;\n    color: #999999;\n}\n.cart-bogo-inline {\n    display: flex;\n    align-items: flex-start;\n    gap: 0.75rem;\n    padding: 0.8rem 0.95rem;\n    border: 1px solid rgba(229, 0, 119, 0.16);\n    border-radius: 0.5rem;\n    background: rgba(229, 0, 119, 0.07);\n    color: #9f1c63;\n    font-size: 0.9rem;\n    line-height: 1.4;\n}\n.cart-bogo-inline__icon {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex: 0 0 auto;\n    width: 1.7rem;\n    height: 1.7rem;\n    border-radius: 999px;\n    background: #e50077;\n    color: #ffffff;\n    font-size: 0.82rem;\n    font-weight: 800;\n    line-height: 1;\n}\n.cart-bogo-inline__content {\n    display: flex;\n    flex-direction: column;\n    gap: 0.15rem;\n    min-width: 0;\n}\n.cart-bogo-inline__content strong {\n    color: #9f1c63;\n    font-size: 0.9rem;\n    font-weight: 700;\n    line-height: 1.35;\n}\n.cart-bogo-inline__content span {\n    color: #5f6c82;\n    font-size: 0.82rem;\n    line-height: 1.35;\n}\n.gift-wrap-thumb {\n    align-items: center;\n    justify-content: center;\n    border-radius: 1rem;\n    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);\n    border: 1px solid rgba(229, 0, 119, 0.14);\n    text-decoration: none;\n    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);\n}\n.gift-wrap-thumb--lg {\n    width: 120px;\n    height: 120px;\n}\n.gift-wrap-thumb__icon::before {\n    content: \"\\f06b\";\n    font-family: \"Font Awesome 5 Free\";\n    font-weight: 900;\n    color: #e50077;\n    font-size: 2rem;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n@font-face {\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    font-display: block;\n    src: url(\"/fonts/fontawesome/fa-solid-900.woff2\") format(\"woff2\"),\n         url(\"/fonts/fontawesome/fa-solid-900.woff\") format(\"woff\");\n}\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.mobile-prices {\n    font-size: .66rem;\n    color: #999999;\n}\n.cart-bogo-inline {\n    display: flex;\n    align-items: flex-start;\n    gap: 0.75rem;\n    padding: 0.8rem 0.95rem;\n    border: 1px solid rgba(229, 0, 119, 0.16);\n    border-radius: 0.5rem;\n    background: rgba(229, 0, 119, 0.07);\n    color: #9f1c63;\n    font-size: 0.9rem;\n    line-height: 1.4;\n}\n.cart-bogo-inline__icon {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex: 0 0 auto;\n    width: 1.7rem;\n    height: 1.7rem;\n    border-radius: 999px;\n    background: #e50077;\n    color: #ffffff;\n    font-size: 0.82rem;\n    font-weight: 800;\n    line-height: 1;\n}\n.cart-bogo-inline__content {\n    display: flex;\n    flex-direction: column;\n    gap: 0.15rem;\n    min-width: 0;\n}\n.cart-bogo-inline__content strong {\n    color: #9f1c63;\n    font-size: 0.9rem;\n    font-weight: 700;\n    line-height: 1.35;\n}\n.cart-bogo-inline__content span {\n    color: #5f6c82;\n    font-size: 0.82rem;\n    line-height: 1.35;\n}\n.cart-bogo-inline__tiers {\n    display: flex;\n    flex-wrap: wrap;\n    gap: 0.4rem;\n    margin-top: 0.25rem;\n}\n.cart-bogo-inline__tier {\n    display: inline-flex;\n    align-items: center;\n    gap: 0.35rem;\n    min-height: 1.85rem;\n    padding: 0.28rem 0.48rem;\n    border: 1px solid rgba(203, 213, 225, 0.95);\n    border-radius: 0.45rem;\n    background: rgba(255, 255, 255, 0.78);\n    color: #4b5563;\n    font-size: 0.78rem;\n    line-height: 1.2;\n}\n.cart-bogo-inline__tier span {\n    color: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n.cart-bogo-inline__tier strong {\n    color: #2b3445;\n    font-size: 0.8rem;\n    font-weight: 800;\n    line-height: 1;\n    white-space: nowrap;\n}\n.cart-bogo-inline__tier--active {\n    border-color: rgba(229, 0, 119, 0.32);\n    background: rgba(229, 0, 119, 0.09);\n    color: #9f1c63;\n}\n.cart-bogo-inline__tier--active strong {\n    color: #e50077;\n}\n.cart-bogo-inline__tier--next {\n    border-color: rgba(229, 0, 119, 0.45);\n    border-style: dashed;\n}\n.gift-wrap-thumb {\n    align-items: center;\n    justify-content: center;\n    border-radius: 1rem;\n    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);\n    border: 1px solid rgba(229, 0, 119, 0.14);\n    text-decoration: none;\n    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);\n}\n.gift-wrap-thumb--lg {\n    width: 120px;\n    height: 120px;\n}\n.gift-wrap-thumb__icon::before {\n    content: \"\\f06b\";\n    font-family: \"Font Awesome 5 Free\";\n    font-weight: 900;\n    color: #e50077;\n    font-size: 2rem;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -8441,66 +8464,47 @@ var render = function() {
                 _vm._v(" "),
                 _vm.bogoSecondaryStatusText
                   ? _c("span", [_vm._v(_vm._s(_vm.bogoSecondaryStatusText))])
-                  : _vm._e()
-              ])
-            ]
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      !_vm.hasGiftVoucher &&
-      _vm.$store.state.cart.total < _vm.freeship &&
-      _vm.$store.state.cart.count
-        ? _c(
-            "div",
-            {
-              staticClass: "mt-3 alert alert-info d-flex fs-sm",
-              attrs: { role: "alert" }
-            },
-            [
-              _vm._m(0),
-              _vm._v(" "),
-              _c("div", [
-                _vm._v(
-                  " Još  " +
-                    _vm._s(
-                      _vm.$store.state.service.formatMainPrice(
-                        _vm.freeship - _vm.$store.state.cart.total
-                      )
-                    ) +
-                    " "
-                ),
-                _vm.$store.state.cart.secondary_price
-                  ? _c("span", [
-                      _vm._v(
-                        "(" +
-                          _vm._s(
-                            _vm.$store.state.service.formatSecondaryPrice(
-                              _vm.freeship - _vm.$store.state.cart.total
-                            )
-                          ) +
-                          ")"
-                      )
-                    ])
                   : _vm._e(),
-                _vm._v(" do besplatne dostave!")
+                _vm._v(" "),
+                _c(
+                  "div",
+                  {
+                    staticClass: "cart-bogo-inline__tiers",
+                    attrs: {
+                      role: "list",
+                      "aria-label": "Pragovi količinskog popusta"
+                    }
+                  },
+                  _vm._l(_vm.bogoTiers, function(tier) {
+                    return _c(
+                      "span",
+                      {
+                        key:
+                          "cart-inline-bogo-tier-" +
+                          tier.quantity +
+                          "-" +
+                          tier.discount,
+                        staticClass: "cart-bogo-inline__tier",
+                        class: {
+                          "cart-bogo-inline__tier--active": _vm.isBogoTierActive(
+                            tier
+                          ),
+                          "cart-bogo-inline__tier--next": _vm.isBogoTierNext(
+                            tier
+                          )
+                        },
+                        attrs: { role: "listitem" }
+                      },
+                      [
+                        _c("span", [_vm._v(_vm._s(tier.quantity_label))]),
+                        _vm._v(" "),
+                        _c("strong", [_vm._v(_vm._s(tier.discount_label))])
+                      ]
+                    )
+                  }),
+                  0
+                )
               ])
-            ]
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      !_vm.hasGiftVoucher &&
-      _vm.$store.state.cart.total > _vm.freeship &&
-      _vm.$store.state.cart.count
-        ? _c(
-            "div",
-            {
-              staticClass: "mt-3 alert alert-info d-flex fs-sm",
-              attrs: { role: "alert" }
-            },
-            [
-              _vm._m(1),
-              _vm._v(" "),
-              _c("div", [_vm._v(" Ostvarili ste pravo na besplatnu dostavu!")])
             ]
           )
         : _vm._e(),
@@ -8513,7 +8517,7 @@ var render = function() {
               attrs: { role: "alert" }
             },
             [
-              _vm._m(2),
+              _vm._m(0),
               _vm._v(" "),
               _c("div", [
                 _vm._v(
@@ -8524,7 +8528,7 @@ var render = function() {
           )
         : _vm._e(),
       _vm._v(" "),
-      _vm._m(3),
+      _vm._m(1),
       _vm._v(" "),
       !_vm.$store.state.cart.count
         ? _c("div", { staticClass: "d-flex pt-3 pb-2 mt-1" }, [
@@ -8785,22 +8789,6 @@ var render = function() {
   )
 }
 var staticRenderFns = [
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "alert-icon" }, [
-      _c("i", { staticClass: "ci-gift" })
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "alert-icon" }, [
-      _c("i", { staticClass: "ci-gift" })
-    ])
-  },
   function() {
     var _vm = this
     var _h = _vm.$createElement

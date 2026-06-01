@@ -6,12 +6,29 @@
             <div class="cart-bogo-inline__content">
                 <strong>{{ bogoPrimaryStatusText }}</strong>
                 <span v-if="bogoSecondaryStatusText">{{ bogoSecondaryStatusText }}</span>
+                <div class="cart-bogo-inline__tiers" role="list" aria-label="Pragovi količinskog popusta">
+                    <span
+                        v-for="tier in bogoTiers"
+                        :key="`cart-inline-bogo-tier-${tier.quantity}-${tier.discount}`"
+                        class="cart-bogo-inline__tier"
+                        :class="{
+                            'cart-bogo-inline__tier--active': isBogoTierActive(tier),
+                            'cart-bogo-inline__tier--next': isBogoTierNext(tier)
+                        }"
+                        role="listitem"
+                    >
+                        <span>{{ tier.quantity_label }}</span>
+                        <strong>{{ tier.discount_label }}</strong>
+                    </span>
+                </div>
             </div>
         </div>
 
+        <!--
         <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="!hasGiftVoucher && $store.state.cart.total < freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Još  {{ $store.state.service.formatMainPrice(freeship - $store.state.cart.total) }} <span v-if="$store.state.cart.secondary_price">({{ $store.state.service.formatSecondaryPrice(freeship - $store.state.cart.total) }})</span> do besplatne dostave!</div></div>
 
         <div role="alert" class="mt-3 alert alert-info d-flex fs-sm" v-if="!hasGiftVoucher && $store.state.cart.total > freeship && $store.state.cart.count"><div class="alert-icon"><i class="ci-gift"></i></div> <div> Ostvarili ste pravo na besplatnu dostavu!</div></div>
+        -->
 
         <div role="alert" class="mt-3 alert alert-warning d-flex fs-sm" v-if="hasGiftVoucher">
             <div class="alert-icon"><i class="ci-card"></i></div>
@@ -199,6 +216,14 @@
                 return item?.attributes?.is_editable_quantity !== false;
             },
 
+            isBogoTierActive(tier) {
+                return Number(tier.quantity || 0) <= this.bogoCartQuantity;
+            },
+
+            isBogoTierNext(tier) {
+                return this.nextBogoTier && Number(this.nextBogoTier.quantity || 0) === Number(tier.quantity || 0);
+            },
+
             /**
              *
              * @param item
@@ -332,6 +357,56 @@
     color: #5f6c82;
     font-size: 0.82rem;
     line-height: 1.35;
+}
+
+.cart-bogo-inline__tiers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+}
+
+.cart-bogo-inline__tier {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 1.85rem;
+    padding: 0.28rem 0.48rem;
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    border-radius: 0.45rem;
+    background: rgba(255, 255, 255, 0.78);
+    color: #4b5563;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.cart-bogo-inline__tier span {
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.cart-bogo-inline__tier strong {
+    color: #2b3445;
+    font-size: 0.8rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.cart-bogo-inline__tier--active {
+    border-color: rgba(229, 0, 119, 0.32);
+    background: rgba(229, 0, 119, 0.09);
+    color: #9f1c63;
+}
+
+.cart-bogo-inline__tier--active strong {
+    color: #e50077;
+}
+
+.cart-bogo-inline__tier--next {
+    border-color: rgba(229, 0, 119, 0.45);
+    border-style: dashed;
 }
 
 .gift-wrap-thumb {
