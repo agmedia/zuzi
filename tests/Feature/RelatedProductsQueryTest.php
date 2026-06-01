@@ -40,6 +40,10 @@ class RelatedProductsQueryTest extends TestCase
             $queries->contains(fn (string $sql) => str_contains(strtolower($sql), 'rand(')),
             'Related products query should not use RAND() ordering.'
         );
+        $this->assertFalse(
+            $queries->contains(fn (string $sql) => str_contains(strtolower($sql), 'sort_order')),
+            'Related products query should not sort the category relation by sort_order.'
+        );
     }
 
     private function createCategory(string $title, int $parentId = 0): int

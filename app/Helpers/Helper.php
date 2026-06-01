@@ -523,11 +523,11 @@ class Helper
         $related = collect();
 
         if ($subcat) {
-            $related = static::sampleOrderedProducts($subcat->products(), $limit);
+            $related = static::sampleProductsByIdWindow($subcat->products(), $limit);
 
         } else {
             if ($cat) {
-                $related = static::sampleOrderedProducts($cat->products(), $limit);
+                $related = static::sampleProductsByIdWindow($cat->products(), $limit);
             }
         }
 
@@ -542,25 +542,6 @@ class Helper
         }
 
         return $related;
-    }
-
-    private static function sampleOrderedProducts(Builder|Relation $query, int $limit): Collection
-    {
-        if ($limit < 1) {
-            return collect();
-        }
-
-        $candidatePool = max(
-            $limit * self::RANDOMIZED_PRODUCT_POOL_MULTIPLIER,
-            self::RANDOMIZED_PRODUCT_POOL_MINIMUM
-        );
-
-        return (clone $query)
-            ->limit($candidatePool)
-            ->get()
-            ->shuffle()
-            ->take($limit)
-            ->values();
     }
 
     private static function sampleProductsByIdWindow(Builder|Relation $query, int $limit, array $excludeProductIds = []): Collection
