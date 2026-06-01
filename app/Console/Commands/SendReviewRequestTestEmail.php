@@ -44,9 +44,14 @@ class SendReviewRequestTestEmail extends Command
         }
 
         $promoService = app(ReviewRequestPromoService::class);
-        $promoAction = $this->option('real-coupon')
-            ? $promoService->issueForOrder($order)
-            : $promoService->previewForOrder($order);
+        $promoAction = null;
+
+        if ($promoService->shouldIssueCoupons()) {
+            $promoAction = $this->option('real-coupon')
+                ? $promoService->issueForOrder($order)
+                : $promoService->previewForOrder($order);
+        }
+
         $mailable = new OrderReviewRequest($order, $promoAction, $reviewItems);
 
         Mail::to($email)->send($mailable);
@@ -55,7 +60,7 @@ class SendReviewRequestTestEmail extends Command
             'Sent review-request test email for order #%d to %s. Coupon: %s',
             $order->id,
             $email,
-            $promoAction->coupon
+            $promoAction ? $promoAction->coupon : 'none'
         ));
 
         return self::SUCCESS;

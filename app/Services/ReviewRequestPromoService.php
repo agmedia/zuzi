@@ -16,6 +16,26 @@ class ReviewRequestPromoService
     private const COUPON_SUFFIX_LENGTH = 7;
     private const SOURCE = 'review_request_promo';
 
+    public function shouldIssueCoupons(?Carbon $now = null): bool
+    {
+        return ! $this->couponsPaused($now);
+    }
+
+    public function couponsPaused(?Carbon $now = null): bool
+    {
+        $pausedFrom = config('settings.order.review_request.promo_paused_from');
+        $pausedUntil = config('settings.order.review_request.promo_paused_until');
+
+        if (blank($pausedFrom) || blank($pausedUntil)) {
+            return false;
+        }
+
+        $now = $now ?: Carbon::now();
+
+        return $now->greaterThanOrEqualTo(Carbon::parse($pausedFrom))
+            && $now->lessThan(Carbon::parse($pausedUntil));
+    }
+
     public function issueForOrder(Order $order): Action
     {
         if ($existing = $this->findForOrder($order)) {

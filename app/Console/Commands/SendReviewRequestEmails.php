@@ -42,6 +42,7 @@ class SendReviewRequestEmails extends Command
         $threshold = now()->subDays($daysAfterCompleted);
         $oldestAllowedCompletedAt = now()->subDays($maxOrderAgeDays);
         $promoService = app(ReviewRequestPromoService::class);
+        $shouldIssuePromoCoupons = $promoService->shouldIssueCoupons();
 
         $completedOrdersSubquery = OrderHistory::query()
             ->selectRaw('order_id, MAX(created_at) as completed_at')
@@ -59,7 +60,7 @@ class SendReviewRequestEmails extends Command
             ->where('completed_history.completed_at', '>=', $oldestAllowedCompletedAt)
             ->with(['products.real'])
             ->orderBy('orders.id')
-            ->chunkById(50, function ($orders) {
+            ->chunkById(50, function ($orders) use ($promoService, $shouldIssuePromoCoupons) {
                 foreach ($orders as $order) {
                     if (blank($order->payment_email)) {
                         continue;
@@ -75,23 +76,27 @@ class SendReviewRequestEmails extends Command
                         continue;
                     }
 
-                    $existingPromoAction = $promoService->findForOrder($order);
-                    $promoAction = $existingPromoAction;
+                    $promoAction = null;
                     $createdPromoAction = false;
 
-                    try {
-                        if (! $promoAction) {
-                            $promoAction = $promoService->issueForOrder($order);
-                            $createdPromoAction = true;
-                        }
-                    } catch (\Throwable $e) {
-                        Log::error('Failed to issue review request promo coupon.', [
-                            'order_id' => $order->id,
-                            'payment_email' => $order->payment_email,
-                            'error' => $e->getMessage(),
-                        ]);
+                    if ($shouldIssuePromoCoupons) {
+                        $existingPromoAction = $promoService->findForOrder($order);
+                        $promoAction = $existingPromoAction;
 
-                        continue;
+                        try {
+                            if (! $promoAction) {
+                                $promoAction = $promoService->issueForOrder($order);
+                                $createdPromoAction = true;
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error('Failed to issue review request promo coupon.', [
+                                'order_id' => $order->id,
+                                'payment_email' => $order->payment_email,
+                                'error' => $e->getMessage(),
+                            ]);
+
+                            continue;
+                        }
                     }
 
                     try {

@@ -19,7 +19,7 @@ class OrderReviewRequest extends Mailable
     public $order;
 
     /**
-     * @var Action
+     * @var Action|null
      */
     public $promoAction;
 
@@ -28,7 +28,7 @@ class OrderReviewRequest extends Mailable
      */
     public $reviewItems;
 
-    public function __construct(Order $order, Action $promoAction, ?Collection $reviewItems = null)
+    public function __construct(Order $order, ?Action $promoAction = null, ?Collection $reviewItems = null)
     {
         $this->order = $order;
         $this->promoAction = $promoAction;

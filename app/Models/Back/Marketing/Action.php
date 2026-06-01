@@ -747,7 +747,7 @@ class Action extends Model
             'title' => 'Kupi više, plati manje',
             'subtitle' => count($titles) === 1 ? reset($titles) : 'BOGO količinski popust',
             'description' => 'Kombiniraj različite naslove u košarici. Popust se automatski obračuna prema ukupnom broju artikala.',
-            'note' => 'Najviši dosegnuti prag primjenjuje se na artikle u košarici.',
+            'note' => 'Kuponi i količinska akcija ne mogu se koristiti zajedno. Primjenjuje se veći popust.',
             'discount_label' => $discountLabel,
             'tiers' => $tiers,
         ];
