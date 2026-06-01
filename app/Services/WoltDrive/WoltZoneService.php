@@ -234,14 +234,21 @@ class WoltZoneService
     protected function geocode(string $address): ?array
     {
         try {
-            $resp = \Http::timeout(7)->withHeaders([
-                'User-Agent' => 'WoltZoneChecker/1.0 (+contact@example.com)'
-            ])->get('https://nominatim.openstreetmap.org/search', [
+            $query = [
                 'q' => $address,
                 'format' => 'json',
                 'limit' => 1,
                 'addressdetails' => 0,
-            ]);
+            ];
+
+            if ($email = $this->geocoderEmail()) {
+                $query['email'] = $email;
+            }
+
+            $resp = \Http::timeout(7)->withHeaders([
+                'User-Agent' => $this->geocoderUserAgent(),
+                'Accept' => 'application/json',
+            ])->get('https://nominatim.openstreetmap.org/search', $query);
 
             if ($resp->successful()) {
                 $json = $resp->json();
@@ -251,10 +258,54 @@ class WoltZoneService
                         'lng' => (float) $json[0]['lon'],
                     ];
                 }
+
+                Log::debug('[WOLT] Geocode returned no results', ['address' => $address]);
+            } else {
+                Log::warning('[WOLT] Geocode HTTP failed', [
+                    'address' => $address,
+                    'status' => $resp->status(),
+                    'body' => substr($resp->body(), 0, 200),
+                ]);
             }
         } catch (\Throwable $e) {
             Log::warning('[WOLT] Geocode exception', ['msg' => $e->getMessage()]);
         }
         return null;
+    }
+
+    protected function geocoderUserAgent(): string
+    {
+        $configured = trim((string) env('WOLT_GEOCODER_USER_AGENT', ''));
+        if ($configured !== '') {
+            return $this->sanitizeHeaderValue($configured);
+        }
+
+        $appName = $this->sanitizeHeaderValue((string) config('app.name', 'Zuzi')) ?: 'Zuzi';
+        $contact = array_filter([
+            $this->sanitizeHeaderValue((string) config('app.url', '')),
+            $this->geocoderEmail(),
+        ]);
+
+        return $appName . ' WoltZoneChecker/1.0' . ($contact ? ' (' . implode('; ', $contact) . ')' : '');
+    }
+
+    protected function geocoderEmail(): ?string
+    {
+        $email = trim((string) env('WOLT_GEOCODER_EMAIL', config('mail.from.address', '')));
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return null;
+        }
+
+        if (str_ends_with(strtolower($email), '@example.com')) {
+            return null;
+        }
+
+        return $this->sanitizeHeaderValue($email);
+    }
+
+    private function sanitizeHeaderValue(string $value): string
+    {
+        return trim(str_replace(["\r", "\n"], '', $value));
     }
 }
