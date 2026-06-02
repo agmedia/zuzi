@@ -630,6 +630,19 @@
 
       </div>
 
+      <div class="d-flex row justify-content-between mt-2">
+          <div class="col-md-12">
+              <div role="alert" class="alert alert-info d-flex mb-1">
+                  <div class="alert-icon">
+                      <i class="ci-mail"></i>
+                  </div>
+                  <small>
+                      📚 Poštovani kupci, danas zbog inventure nismo u mogućnosti zaprimati telefonske pozive. Ispričavamo se na neugodnosti i molimo da nam se za sve upite javite na <strong>info@zuzi.hr</strong>. Hvala na razumijevanju.
+                  </small>
+              </div>
+          </div>
+      </div>
+
       <div class="row justify-content-between mt-2">
           <div class="col-md-12">
               <div role="alert" class="alert alert-info d-flex align-items-stretch mb-1 home-promo-alert">
