@@ -44,9 +44,11 @@ class OrderController extends Controller
         $statuses = Settings::get('order', 'statuses');
         $promoService = app(UnfinishedOrderPromoService::class);
         $sentPromoActions = collect();
+        $sentReminderHistories = collect();
         $appliedCouponOrderIds = collect();
 
         if ($orders->count()) {
+            $orderIds = $orders->getCollection()->pluck('id');
             $promoTitles = $orders->getCollection()
                 ->map(fn (Order $listedOrder) => $promoService->titleForOrder($listedOrder))
                 ->values();
@@ -65,11 +67,19 @@ class OrderController extends Controller
                 });
 
             $appliedCouponOrderIds = $promoService->orderIdsWithAppliedCoupons(
-                $orders->getCollection()->pluck('id')
+                $orderIds
             );
+
+            $sentReminderHistories = OrderHistory::query()
+                ->whereIn('order_id', $orderIds)
+                ->where('comment', UnfinishedOrderPromoService::REMINDER_HISTORY_COMMENT)
+                ->orderByDesc('created_at')
+                ->get(['order_id', 'created_at'])
+                ->unique('order_id')
+                ->keyBy('order_id');
         }
 
-        return view('back.order.index', compact('orders', 'statuses', 'sentPromoActions', 'appliedCouponOrderIds'));
+        return view('back.order.index', compact('orders', 'statuses', 'sentPromoActions', 'sentReminderHistories', 'appliedCouponOrderIds'));
     }
 
 
@@ -446,6 +456,15 @@ class OrderController extends Controller
             return response()->json(['error' => 'Narudžba nema e-mail adresu kupca.'], 422);
         }
 
+        $existingReminderHistory = OrderHistory::query()
+            ->where('order_id', $order->id)
+            ->where('comment', UnfinishedOrderPromoService::REMINDER_HISTORY_COMMENT)
+            ->exists();
+
+        if ($existingReminderHistory) {
+            return response()->json(['error' => 'Podsjetnik je već poslan za ovu narudžbu.'], 422);
+        }
+
         try {
             Mail::to($order->payment_email)->send(new UnfinishedOrderReminder($order));
         } catch (\Throwable $e) {
@@ -461,7 +480,7 @@ class OrderController extends Controller
         try {
             OrderHistory::store($order->id, new Request([
                 'status' => 0,
-                'comment' => 'Poslan podsjetnik za nedovrsenu narudzbu bez promo koda.',
+                'comment' => UnfinishedOrderPromoService::REMINDER_HISTORY_COMMENT,
             ]));
         } catch (\Throwable $e) {
             Log::warning('Failed to store unfinished order reminder email history.', [

@@ -6,6 +6,7 @@ use App\Models\Back\Marketing\Action;
 use App\Mail\UnfinishedOrderPromo;
 use App\Mail\UnfinishedOrderReminder;
 use App\Models\User;
+use App\Services\UnfinishedOrderPromoService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -271,7 +272,35 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
             ->where('order_id', $orderId)
             ->value('comment');
 
-        $this->assertSame('Poslan podsjetnik za nedovrsenu narudzbu bez promo koda.', (string) $historyComment);
+        $this->assertSame(UnfinishedOrderPromoService::REMINDER_HISTORY_COMMENT, (string) $historyComment);
+    }
+
+    public function test_unfinished_order_reminder_email_cannot_be_sent_twice_for_same_order(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+        $orderId = $this->createOrder(config('settings.order.status.unfinished'), 'reminder@example.com');
+
+        $this->actingAs($user)->postJson(route('api.order.send.unfinished-reminder'), [
+            'order_id' => $orderId,
+        ])->assertOk();
+
+        $response = $this->actingAs($user)->postJson(route('api.order.send.unfinished-reminder'), [
+            'order_id' => $orderId,
+        ]);
+
+        $response->assertStatus(422)->assertJson([
+            'error' => 'Podsjetnik je već poslan za ovu narudžbu.',
+        ]);
+
+        $historyCount = DB::table('order_history')
+            ->where('order_id', $orderId)
+            ->where('comment', UnfinishedOrderPromoService::REMINDER_HISTORY_COMMENT)
+            ->count();
+
+        $this->assertSame(1, $historyCount);
+        Mail::assertSent(UnfinishedOrderReminder::class, 1);
     }
 
     public function test_unfinished_order_reminder_email_cannot_be_sent_for_other_order_statuses(): void
@@ -304,6 +333,20 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         $response->assertDontSee('data-unfinished-promo-btn="' . $orderId . '"', false);
         $response->assertSee('data-unfinished-reminder-btn="' . $orderId . '"', false);
         $response->assertSee('Pošalji podsjetnik', false);
+    }
+
+    public function test_orders_index_marks_unfinished_reminder_as_sent(): void
+    {
+        $user = User::factory()->create();
+        $orderId = $this->createOrder(config('settings.order.status.unfinished'), 'reminder@example.com');
+        $this->addOrderHistory($orderId, $user->id, UnfinishedOrderPromoService::REMINDER_HISTORY_COMMENT);
+
+        $response = $this->actingAs($user)->get(route('orders'));
+
+        $response->assertOk();
+        $response->assertSee('Podsjetnik poslan', false);
+        $response->assertDontSee('data-unfinished-reminder-btn="' . $orderId . '"', false);
+        $response->assertSee('data-unfinished-promo-btn="' . $orderId . '"', false);
     }
 
     private function createOrder(int $statusId, string $email): int
@@ -353,6 +396,18 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
             'title' => $title,
             'value' => $value,
             'sort_order' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addOrderHistory(int $orderId, int $userId, string $comment): void
+    {
+        DB::table('order_history')->insert([
+            'order_id' => $orderId,
+            'user_id' => $userId,
+            'status' => 0,
+            'comment' => $comment,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

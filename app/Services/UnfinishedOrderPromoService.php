@@ -15,6 +15,7 @@ class UnfinishedOrderPromoService
     public const ALLOWED_DISCOUNTS = [5, 10, 15, 20];
     public const VALID_FOR_DAYS = 7;
     public const TITLE_PREFIX = 'Promo za nedovrsenu narudzbu #';
+    public const REMINDER_HISTORY_COMMENT = 'Poslan podsjetnik za nedovrsenu narudzbu bez promo koda.';
     private const COUPON_SUFFIX_LENGTH = 7;
 
     public function issueForOrder(Order $order, int $discount): Action
