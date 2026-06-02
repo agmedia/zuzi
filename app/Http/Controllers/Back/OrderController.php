@@ -11,6 +11,7 @@ use App\Mail\StatusCompleted;
 use App\Mail\StatusPaid;
 use App\Mail\StatusReady;
 use App\Mail\UnfinishedOrderPromo;
+use App\Mail\UnfinishedOrderReminder;
 use App\Models\Back\Marketing\Action;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderHistory;
@@ -412,6 +413,64 @@ class OrderController extends Controller
         }
 
         return response()->json(['message' => 'Promo mail je uspješno poslan.']);
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function api_send_unfinished_reminder(Request $request)
+    {
+        if (! auth()->check()) {
+            return response()->json(['error' => 'Niste autorizirani.'], 403);
+        }
+
+        $request->validate([
+            'order_id' => 'required|integer',
+        ]);
+
+        /** @var Order|null $order */
+        $order = Order::query()->find($request->input('order_id'));
+
+        if (! $order) {
+            return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
+        }
+
+        if ((int) $order->order_status_id !== (int) config('settings.order.status.unfinished')) {
+            return response()->json(['error' => 'Podsjetnik se može poslati samo za nedovršenu narudžbu.'], 422);
+        }
+
+        if (! filled($order->payment_email)) {
+            return response()->json(['error' => 'Narudžba nema e-mail adresu kupca.'], 422);
+        }
+
+        try {
+            Mail::to($order->payment_email)->send(new UnfinishedOrderReminder($order));
+        } catch (\Throwable $e) {
+            Log::error('Failed to send unfinished order reminder email.', [
+                'order_id' => $order->id,
+                'payment_email' => $order->payment_email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Greška..! Slanje podsjetnika nije uspjelo.'], 422);
+        }
+
+        try {
+            OrderHistory::store($order->id, new Request([
+                'status' => 0,
+                'comment' => 'Poslan podsjetnik za nedovrsenu narudzbu bez promo koda.',
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to store unfinished order reminder email history.', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json(['message' => 'Podsjetnik je uspješno poslan.']);
     }
 
 

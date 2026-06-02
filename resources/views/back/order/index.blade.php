@@ -174,6 +174,8 @@
                             @php($sentPromoAction = $sentPromoActions->get($order->id))
                             @php($hasAppliedCoupon = $appliedCouponOrderIds->contains((int) $order->id))
                             @php($canSendUnfinishedPromo = ! $sentPromoAction && ! $hasAppliedCoupon && filled($order->payment_email))
+                            @php($canSendUnfinishedReminder = (int) $order->order_status_id === (int) config('settings.order.status.unfinished') && filled($order->payment_email))
+                            @php($canShowUnfinishedMailButton = $canSendUnfinishedPromo || $canSendUnfinishedReminder)
                             <tr>
                                 <td class="text-center">
                                     <div class="form-group">
@@ -228,7 +230,8 @@
                                             <span class="badge badge-success">Poslano -{{ (int) $sentPromoAction->discount }}%</span>
                                             <span class="text-muted small mt-1">{{ \Illuminate\Support\Carbon::make(data_get($sentPromoAction->data, 'sent_at', $sentPromoAction->created_at))->format('d.m.Y H:i') }}</span>
                                         </div>
-                                    @elseif ($canSendUnfinishedPromo)
+                                    @endif
+                                    @if ($canShowUnfinishedMailButton)
                                         <div class="btn-group mr-1">
                                             <button
                                                 type="button"
@@ -236,15 +239,28 @@
                                                 data-toggle="dropdown"
                                                 aria-haspopup="true"
                                                 aria-expanded="false"
-                                                data-unfinished-promo-btn="{{ $order->id }}"
-                                                title="Pošalji promo mail"
+                                                @if ($canSendUnfinishedPromo)
+                                                    data-unfinished-promo-btn="{{ $order->id }}"
+                                                @endif
+                                                @if ($canSendUnfinishedReminder)
+                                                    data-unfinished-reminder-btn="{{ $order->id }}"
+                                                @endif
+                                                title="Pošalji mail"
                                             >
                                                 <i class="fa fa-fw fa-envelope mr-1"></i><span class="d-none d-xl-inline">Mail</span>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-right">
-                                                @foreach (\App\Services\UnfinishedOrderPromoService::ALLOWED_DISCOUNTS as $discount)
-                                                    <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, {{ $discount }})">Pošalji -{{ $discount }}%</a>
-                                                @endforeach
+                                                @if ($canSendUnfinishedReminder)
+                                                    <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedReminder({{ $order->id }})">Pošalji podsjetnik</a>
+                                                @endif
+                                                @if ($canSendUnfinishedReminder && $canSendUnfinishedPromo)
+                                                    <div class="dropdown-divider"></div>
+                                                @endif
+                                                @if ($canSendUnfinishedPromo)
+                                                    @foreach (\App\Services\UnfinishedOrderPromoService::ALLOWED_DISCOUNTS as $discount)
+                                                        <a class="dropdown-item" href="javascript:void(0)" onclick="sendUnfinishedPromo({{ $order->id }}, {{ $discount }})">Pošalji -{{ $discount }}%</a>
+                                                    @endforeach
+                                                @endif
                                             </div>
                                         </div>
                                     @endif
@@ -407,6 +423,32 @@
             return axios.post("{{ route('api.order.send.unfinished-promo') }}", { order_id, discount });
         }
 
+        function sendUnfinishedReminder(order_id) {
+            if (bulkPromoSending) {
+                return;
+            }
+
+            setUnfinishedReminderBtnLoading(order_id, true);
+            axios.post("{{ route('api.order.send.unfinished-reminder') }}", { order_id })
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({
+                            timer: 1500,
+                            text: response.data.message,
+                        }).then(() => {
+                            location.reload();
+                        });
+
+                    } else {
+                        errorToast.fire(response.data.error || 'Greška prilikom slanja podsjetnika.');
+                    }
+                })
+                .catch(error => {
+                    errorToast.fire(error?.response?.data?.error || 'Greška prilikom slanja podsjetnika.');
+                })
+                .finally(() => setUnfinishedReminderBtnLoading(order_id, false));
+        }
+
         async function sendBulkUnfinishedPromo(discount) {
             if (bulkPromoSending) {
                 return;
@@ -512,6 +554,16 @@
                 : '<i class="fa fa-fw fa-envelope mr-1"></i><span class="d-none d-xl-inline">Mail</span>';
         }
 
+        function setUnfinishedReminderBtnLoading(orderId, isLoading) {
+            const btn = document.querySelector(`[data-unfinished-reminder-btn="${orderId}"]`);
+            if (!btn) return;
+
+            btn.disabled = isLoading || bulkPromoSending;
+            btn.innerHTML = isLoading
+                ? '<i class="fa fa-spinner fa-spin mr-1"></i><span class="d-none d-xl-inline">Slanje...</span>'
+                : '<i class="fa fa-fw fa-envelope mr-1"></i><span class="d-none d-xl-inline">Mail</span>';
+        }
+
         function getSelectedBulkPromoCheckboxes() {
             return Array.from(document.querySelectorAll('input[data-bulk-promo-checkbox]:checked'));
         }
@@ -529,7 +581,8 @@
                 document.getElementById('bulkPromoDelay'),
                 document.getElementById('checkAll'),
                 ...document.querySelectorAll('input[data-bulk-promo-checkbox]'),
-                ...document.querySelectorAll('[data-unfinished-promo-btn]')
+                ...document.querySelectorAll('[data-unfinished-promo-btn]'),
+                ...document.querySelectorAll('[data-unfinished-reminder-btn]')
             ].filter(Boolean);
 
             controls.forEach((control) => {

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Back\Marketing\Action;
 use App\Mail\UnfinishedOrderPromo;
+use App\Mail\UnfinishedOrderReminder;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -231,6 +232,78 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('data-unfinished-promo-btn="' . $blockedOrderId . '"', false);
         $response->assertSee('data-unfinished-promo-btn="' . $availableOrderId . '"', false);
+    }
+
+    public function test_unfinished_order_reminder_email_can_be_sent_without_promo_code(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+        $orderId = $this->createOrder(config('settings.order.status.unfinished'), 'reminder@example.com');
+
+        $response = $this->actingAs($user)->postJson(route('api.order.send.unfinished-reminder'), [
+            'order_id' => $orderId,
+        ]);
+
+        $response->assertOk()->assertJson([
+            'message' => 'Podsjetnik je uspješno poslan.',
+        ]);
+
+        $this->assertNull(Action::query()
+            ->where('title', 'Promo za nedovrsenu narudzbu #' . $orderId)
+            ->first());
+
+        Mail::assertSent(UnfinishedOrderReminder::class, function (UnfinishedOrderReminder $mail) use ($orderId) {
+            $rendered = view('emails.unfinished-order-reminder', [
+                'order' => $mail->order,
+            ])->render();
+
+            return $mail->hasTo('reminder@example.com')
+                && (int) $mail->order->id === $orderId
+                && $mail->build()->subject === 'Podsjetnik na nedovršenu narudžbu - Zuzi Shop'
+                && str_contains($rendered, 'primijetili smo da tvoja narudžba nije dovršena')
+                && ! str_contains($rendered, 'HVALA')
+                && ! str_contains($rendered, 'Kod:')
+                && ! str_contains($rendered, 'TVOJA NAGRADA');
+        });
+
+        $historyComment = DB::table('order_history')
+            ->where('order_id', $orderId)
+            ->value('comment');
+
+        $this->assertSame('Poslan podsjetnik za nedovrsenu narudzbu bez promo koda.', (string) $historyComment);
+    }
+
+    public function test_unfinished_order_reminder_email_cannot_be_sent_for_other_order_statuses(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+        $orderId = $this->createOrder(config('settings.order.status.new'), 'reminder@example.com');
+
+        $response = $this->actingAs($user)->postJson(route('api.order.send.unfinished-reminder'), [
+            'order_id' => $orderId,
+        ]);
+
+        $response->assertStatus(422)->assertJson([
+            'error' => 'Podsjetnik se može poslati samo za nedovršenu narudžbu.',
+        ]);
+
+        Mail::assertNotSent(UnfinishedOrderReminder::class);
+    }
+
+    public function test_orders_index_shows_unfinished_reminder_when_promo_is_blocked_by_coupon(): void
+    {
+        $user = User::factory()->create();
+        $orderId = $this->createOrder(config('settings.order.status.unfinished'), 'coupon@example.com');
+        $this->addOrderTotal($orderId, 'special', 'Kupon HVALA10-POSTOJI', -2.50);
+
+        $response = $this->actingAs($user)->get(route('orders'));
+
+        $response->assertOk();
+        $response->assertDontSee('data-unfinished-promo-btn="' . $orderId . '"', false);
+        $response->assertSee('data-unfinished-reminder-btn="' . $orderId . '"', false);
+        $response->assertSee('Pošalji podsjetnik', false);
     }
 
     private function createOrder(int $statusId, string $email): int
