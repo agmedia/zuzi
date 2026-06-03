@@ -561,6 +561,20 @@
             vertical-align: middle;
         }
 
+        .dashboard-list-id {
+            width: 4.5rem !important;
+            white-space: nowrap;
+        }
+
+        .dashboard-list-status {
+            width: 6.5rem !important;
+            white-space: nowrap;
+        }
+
+        .dashboard-list-price {
+            width: 5.5rem !important;
+        }
+
         .dashboard-list-table tbody tr {
             border-top: 1px solid #edf1f7;
         }
