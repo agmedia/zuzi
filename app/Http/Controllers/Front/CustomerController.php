@@ -6,12 +6,15 @@ use App\Helpers\Country;
 use App\Helpers\Session\CheckoutSession;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Marketing\Review;
+use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderProduct;
 use App\Models\Front\AgCart;
-use App\Models\Front\Checkout\Order;
 use App\Models\Front\Loyalty;
 use App\Services\AccountNoticeService;
 use App\Services\ProductRecommendationService;
+use App\Services\Shipping\BoxNowService;
+use App\Services\Shipping\GlsTrackingService;
+use App\Services\Shipping\OrderTrackingService;
 use App\Models\User;
 use App\Models\UserAffiliate;
 use Illuminate\Http\Request;
@@ -70,6 +73,58 @@ class CustomerController extends Controller
             ->paginate(10);
 
         return view('front.customer.moje-narudzbe', compact('user', 'orders'));
+    }
+
+    /**
+     * Display a single customer order.
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
+    public function order(Request $request, $order)
+    {
+        $user = auth()->user();
+
+        $order = $this->ordersForUserQuery($user)
+            ->with(['products.product', 'products.real', 'totals'])
+            ->whereKey($order)
+            ->firstOrFail();
+
+        $trackingService = app(OrderTrackingService::class);
+        $trackingCarrier = $trackingService->resolveCarrier($order);
+        $trackingCarrierLabel = $trackingService->carrierLabel($trackingCarrier);
+        $canRefreshTracking = $this->canRefreshTracking($order, $trackingCarrier);
+
+        return view('front.customer.narudzba', compact('user', 'order', 'trackingCarrier', 'trackingCarrierLabel', 'canRefreshTracking'));
+    }
+
+    public function refreshOrderTracking(Request $request, $order)
+    {
+        $user = auth()->user();
+
+        $order = $this->ordersForUserQuery($user)
+            ->whereKey($order)
+            ->firstOrFail();
+
+        $trackingService = app(OrderTrackingService::class);
+        $trackingCarrier = $trackingService->resolveCarrier($order);
+
+        if (! $this->canRefreshTracking($order, $trackingCarrier)) {
+            return redirect()
+                ->route('moje-narudzbe.show', ['order' => $order->id])
+                ->with('warning', 'Praćenje pošiljke još nije dostupno za ovu narudžbu.');
+        }
+
+        try {
+            $result = $trackingService->refresh($order);
+
+            return redirect()
+                ->route('moje-narudzbe.show', ['order' => $order->id])
+                ->with($result['updated'] ? 'success' : 'warning', $result['message'] ?? 'Tracking status je osvježen.');
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('moje-narudzbe.show', ['order' => $order->id])
+                ->with('error', $e->getMessage());
+        }
     }
 
 
@@ -142,6 +197,19 @@ class CustomerController extends Controller
                 $query->where('user_id', $user->id)
                     ->orWhere('payment_email', $user->email);
             });
+    }
+
+    private function canRefreshTracking(Order $order, ?string $trackingCarrier): bool
+    {
+        if ($trackingCarrier === GlsTrackingService::CARRIER) {
+            return filled($order->tracking_code);
+        }
+
+        if ($trackingCarrier === BoxNowService::CARRIER) {
+            return true;
+        }
+
+        return false;
     }
 
     private function reviewsForUserQuery(User $user)

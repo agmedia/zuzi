@@ -272,6 +272,10 @@ Route::middleware(['auth:sanctum', 'verified'])->prefix('moj-racun')->group(func
     Route::get('/podaci', [CustomerController::class, 'index'])->name('moj-racun.podaci');
     Route::patch('/snimi/{user}', [CustomerController::class, 'save'])->name('moj-racun.snimi');
     Route::get('/narudzbe', [CustomerController::class, 'orders'])->name('moje-narudzbe');
+    Route::get('/narudzbe/{order}', [CustomerController::class, 'order'])->name('moje-narudzbe.show');
+    Route::post('/narudzbe/{order}/tracking/osvjezi', [CustomerController::class, 'refreshOrderTracking'])
+        ->middleware('throttle:6,1')
+        ->name('moje-narudzbe.tracking.refresh');
     Route::get('/dojmovi', [CustomerController::class, 'reviews'])->name('moji-dojmovi');
     Route::get('/loyalty', [CustomerController::class, 'loyalty'])->name('loyalty');
 });

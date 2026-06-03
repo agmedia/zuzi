@@ -4,67 +4,6 @@
 
 @section('content')
 
-    <!-- Order Details Modal-->
-    @foreach ($orders as $order)
-        <div class="modal fade" id="order-details{{ $order->id }}">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Broj narudžbe - {{ $order->id }}</h5>
-                        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body pb-0">
-                        @foreach ($order->products as $product)
-                            @php
-                                $productUrl = optional($product->real)->url;
-                                $productImage = optional($product->product)->image;
-                            @endphp
-
-                            <div class="d-sm-flex justify-content-between mb-4 pb-3 pb-sm-2 border-bottom">
-                                <div class="d-sm-flex text-center text-sm-start">
-                                    @if ($productUrl)
-                                        <a class="d-inline-block flex-shrink-0 mx-auto" href="{{ url($productUrl) }}" style="width: 10rem;">
-                                            <img src="{{ $productImage ? asset($productImage) : asset('media/avatars/avatar0.jpg') }}" alt="{{ $product->name }}">
-                                        </a>
-                                    @else
-                                        <span class="d-inline-block flex-shrink-0 mx-auto" style="width: 10rem;">
-                                            <img src="{{ $productImage ? asset($productImage) : asset('media/avatars/avatar0.jpg') }}" alt="{{ $product->name }}">
-                                        </span>
-                                    @endif
-                                    <div class="ps-sm-4 pt-2">
-                                        <h3 class="product-title fs-base mb-2">
-                                            @if ($productUrl)
-                                                <a href="{{ url($productUrl) }}">{{ $product->name }}</a>
-                                            @else
-                                                <span>{{ $product->name }}</span>
-                                            @endif
-                                        </h3>
-                                        @if ( ! $productUrl)
-                                            <div class="fs-sm text-muted">Proizvod više nije dostupan u katalogu.</div>
-                                        @endif
-                                        <div class="fs-lg text-accent pt-2">{{ number_format($product->price, 2, ',', '.') }} €</div>
-                                    </div>
-                                </div>
-                                <div class="pt-2 ps-sm-3 mx-auto mx-sm-0 text-center">
-                                    <div class="text-muted mb-2 fs-sm">Količina:</div>{{ $product->quantity }}
-                                </div>
-                                <div class="pt-2 ps-sm-3 mx-auto mx-sm-0 text-center">
-                                    <div class="text-muted mb-2 fs-sm">Ukupno</div>{{ number_format($product->total, 2, ',', '.') }} €
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    <!-- Footer-->
-                    <div class="modal-footer flex-wrap justify-content-between bg-secondary fs-md">
-                        @foreach ($order->totals as $total)
-                            <div class="px-2 py-1"><span class="text-muted">{{ $total->title }}:&nbsp;</span><span>{{ number_format($total->value, 2, ',', '.') }} €</span></div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endforeach
-
     @include('front.customer.layouts.header')
 
     <section class="account-page pb-5 mb-2 mb-md-4">
@@ -104,7 +43,7 @@
                             <tbody>
                             @forelse ($orders as $order)
                                 <tr>
-	                                    <td class="py-3"><a class="nav-link-style fw-medium fs-sm" href="#order-details{{ $order->id }}" data-bs-toggle="modal">{{ $order->id }}</a></td>
+	                                    <td class="py-3"><a class="nav-link-style fw-medium fs-sm" href="{{ route('moje-narudzbe.show', ['order' => $order->id]) }}">{{ $order->id }}</a></td>
 	                                    <td class="py-3">{{ \Illuminate\Support\Carbon::make($order->created_at)->format('d.m.Y') }}</td>
 	                                    <td class="py-3"><span class="badge bg-info account-status-badge m-0">{{ optional($order->status)->title ?: 'Nepoznat status' }}</span></td>
 	                                    <td class="py-3">
@@ -118,7 +57,7 @@
 	                                        @endif
 	                                    </td>
 	                                    <td class="py-3 fw-medium">{{ number_format($order->total, 2, ',', '.') }} €</td>
-	                                    <td class="py-3"><a class="btn btn-sm btn-outline-primary" href="#order-details{{ $order->id }}" data-bs-toggle="modal">Pregled</a></td>
+	                                    <td class="py-3"><a class="btn btn-sm btn-outline-primary" href="{{ route('moje-narudzbe.show', ['order' => $order->id]) }}">Pregled</a></td>
 	                                </tr>
                             @empty
                                 <tr>

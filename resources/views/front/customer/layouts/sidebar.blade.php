@@ -39,7 +39,7 @@
                 </li>
 
                 <li class="account-nav-item">
-                    <a class="account-nav-link nav-link-style d-flex align-items-center px-3 py-2 {{ request()->routeIs('moje-narudzbe') ? 'active' : '' }}" href="{{ route('moje-narudzbe') }}">
+                    <a class="account-nav-link nav-link-style d-flex align-items-center px-3 py-2 {{ request()->routeIs('moje-narudzbe*') ? 'active' : '' }}" href="{{ route('moje-narudzbe') }}">
                         <i class="ci-bag"></i>Narudžbe
                     </a>
                 </li>

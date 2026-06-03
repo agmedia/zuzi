@@ -302,11 +302,6 @@
                                     <a class="btn btn-sm btn-alt-secondary mr-1" href="{{ route('orders.show', ['order' => $order]) }}">
                                         <i class="fa fa-fw fa-eye"></i>
                                     </a>
-                                    @if ($order->shipping_carrier || $order->tracking_code || $order->shipping_method == 'BoxNow')
-                                        <button type="button" class="btn btn-sm btn-alt-primary mr-1" data-tracking-btn="{{ $order->id }}" onclick="refreshTracking({{ $order->id }})" title="Osvježi tracking">
-                                            <i class="fa fa-fw fa-sync-alt"></i>
-                                        </button>
-                                    @endif
                                     <a class="btn btn-sm btn-alt-info" href="{{ route('orders.edit', ['order' => $order]) }}">
                                         <i class="fa fa-fw fa-edit"></i>
                                     </a>
@@ -431,37 +426,6 @@
             btn.innerHTML = isLoading
                 ? '<i class="fa fa-spinner fa-spin"></i> Slanje...'
                 : '<i class="fa fa-motorcycle ml-1"></i> Wolt';
-        }
-
-        function refreshTracking(order_id) {
-            setTrackingBtnLoading(order_id, true);
-            axios.post("{{ route('api.order.tracking.refresh') }}", { order_id })
-                .then(response => {
-                    if (response.data.message) {
-                        successToast.fire({
-                            timer: 1500,
-                            text: response.data.message,
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        errorToast.fire(response.data.error || 'Tracking nije osvježen.');
-                    }
-                })
-                .catch(error => {
-                    errorToast.fire(error?.response?.data?.error || 'Tracking nije osvježen.');
-                })
-                .finally(() => setTrackingBtnLoading(order_id, false));
-        }
-
-        function setTrackingBtnLoading(orderId, isLoading) {
-            const btn = document.querySelector(`[data-tracking-btn="${orderId}"]`);
-            if (!btn) return;
-
-            btn.disabled = isLoading;
-            btn.innerHTML = isLoading
-                ? '<i class="fa fa-spinner fa-spin"></i>'
-                : '<i class="fa fa-fw fa-sync-alt"></i>';
         }
 
         function sendUnfinishedPromo(order_id, discount) {
