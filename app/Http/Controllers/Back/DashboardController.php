@@ -48,6 +48,7 @@ class DashboardController extends Controller
 
         $data['today'] = (clone $todayOrders)->count();
         $data['today_total'] = (clone $todayOrders)->sum('total');
+        $data['today_items_average'] = $this->averageProductItemsPerOrder($todayOrders);
         $data['proccess'] = (clone $processingOrders)->count();
         $data['processing_total'] = (clone $processingOrders)->sum('total');
         $data['finished'] = (clone $finishedOrders)->count();
@@ -56,6 +57,7 @@ class DashboardController extends Controller
         // broj narudžbi u TEKUĆEM mjesecu
         $data['this_month'] = (clone $thisMonthOrders)->count();
         $data['this_month_total'] = (clone $thisMonthOrders)->sum('total');
+        $data['this_month_items_average'] = $this->averageProductItemsPerOrder($thisMonthOrders);
 
         $orders = Order::query()
             ->select(['id', 'payment_fname', 'payment_lname', 'total', 'order_status_id', 'created_at'])
@@ -411,19 +413,66 @@ class DashboardController extends Controller
      */
     public function chartByMonth(Request $request)
     {
-        $year  = $request->get('year', Carbon::now()->year);
-        $month = $request->get('month', Carbon::now()->month);
+        $year  = (int) $request->get('year', Carbon::now()->year);
+        $month = max(1, min(12, (int) $request->get('month', Carbon::now()->month)));
 
-        $data = Order::query()
-            ->selectRaw('DAY(created_at) as day, SUM(total) as total, COUNT(id) as orders')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->dashboardSales()
+        $from = Carbon::create($year, $month, 1)->startOfMonth();
+        $to = (clone $from)->endOfMonth();
+
+        $monthOrders = Order::query()
+            ->whereBetween('orders.created_at', [$from, $to])
+            ->dashboardSales();
+
+        $data = (clone $monthOrders)
+            ->selectRaw('DAY(orders.created_at) as day, SUM(orders.total) as total, COUNT(orders.id) as orders')
             ->groupBy('day')
             ->orderBy('day')
             ->get();
 
-        return response()->json($data);
+        $itemQuantities = (clone $monthOrders)
+            ->join('order_products', 'order_products.order_id', '=', 'orders.id')
+            ->where('order_products.product_id', '>', 0)
+            ->selectRaw('DAY(orders.created_at) as day, SUM(order_products.quantity) as item_quantity')
+            ->groupBy('day')
+            ->pluck('item_quantity', 'day');
+
+        $data = $data->map(function ($row) use ($itemQuantities) {
+            $row->item_quantity = (int) ($itemQuantities[(int) $row->day] ?? 0);
+            $row->avg_items = $row->orders > 0 ? round($row->item_quantity / $row->orders, 2) : 0;
+
+            return $row;
+        });
+
+        $monthOrderCount = (int) (clone $monthOrders)->count();
+        $monthItemQuantity = $this->productItemQuantity($monthOrders);
+
+        return response()->json([
+            'days' => $data,
+            'summary' => $this->salesSummary($monthOrders, $monthOrderCount, $monthItemQuantity),
+        ]);
+    }
+
+    public function chartByYear(Request $request)
+    {
+        $year = (int) $request->get('year', Carbon::now()->year);
+
+        $from = Carbon::create($year, 1, 1)->startOfYear();
+        $to = (clone $from)->endOfYear();
+
+        $yearOrders = Order::query()
+            ->whereBetween('orders.created_at', [$from, $to])
+            ->dashboardSales();
+
+        $data = (clone $yearOrders)
+            ->selectRaw('MONTH(orders.created_at) as month, SUM(orders.total) as total, COUNT(orders.id) as orders')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        return response()->json([
+            'months' => $data,
+            'summary' => $this->salesSummary($yearOrders),
+        ]);
     }
 
     public function chartByDay(Request $request)
@@ -458,6 +507,84 @@ class DashboardController extends Controller
             ->get();
 
         return response()->json($data);
+    }
+
+    private function averageProductItemsPerOrder($ordersQuery): float
+    {
+        $orders = (int) (clone $ordersQuery)->count();
+
+        if ($orders === 0) {
+            return 0;
+        }
+
+        return $this->averageItems($this->productItemQuantity($ordersQuery), $orders);
+    }
+
+    private function averageItems(int $itemQuantity, int $orders): float
+    {
+        return $orders > 0 ? round($itemQuantity / $orders, 2) : 0;
+    }
+
+    private function productItemQuantity($ordersQuery): int
+    {
+        $filteredOrders = (clone $ordersQuery)->select('orders.id');
+
+        return (int) DB::query()
+            ->fromSub($filteredOrders, 'filtered_orders')
+            ->join('order_products', 'order_products.order_id', '=', 'filtered_orders.id')
+            ->where('order_products.product_id', '>', 0)
+            ->sum('order_products.quantity');
+    }
+
+    private function salesSummary($ordersQuery, ?int $orderCount = null, ?int $itemQuantity = null): array
+    {
+        $orders = $orderCount ?? (int) (clone $ordersQuery)->count();
+        $items = $itemQuantity ?? $this->productItemQuantity($ordersQuery);
+
+        return [
+            'total' => (float) (clone $ordersQuery)->sum('orders.total'),
+            'orders' => $orders,
+            'item_quantity' => $items,
+            'avg_items' => $this->averageItems($items, $orders),
+            'payment_methods' => $this->monthlyBreakdown($ordersQuery, 'orders.payment_method'),
+            'shipping_methods' => $this->monthlyBreakdown($ordersQuery, 'orders.shipping_method'),
+            'gift_wrap' => $this->giftWrapStats($ordersQuery),
+        ];
+    }
+
+    private function monthlyBreakdown($ordersQuery, string $column): array
+    {
+        $label = "COALESCE(NULLIF(TRIM({$column}), ''), 'Nepoznato')";
+
+        return (clone $ordersQuery)
+            ->selectRaw("{$label} as label, COUNT(orders.id) as orders, SUM(orders.total) as total")
+            ->groupByRaw($label)
+            ->orderByDesc('orders')
+            ->orderBy('label')
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'label' => (string) $row->label,
+                    'orders' => (int) $row->orders,
+                    'total' => (float) $row->total,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function giftWrapStats($ordersQuery): array
+    {
+        $giftWrapRows = (clone $ordersQuery)
+            ->join('order_products', 'order_products.order_id', '=', 'orders.id')
+            ->where('order_products.product_id', 0)
+            ->where('order_products.name', 'like', 'Zamatanje%');
+
+        return [
+            'orders' => (int) (clone $giftWrapRows)->count(DB::raw('distinct orders.id')),
+            'items' => (int) (clone $giftWrapRows)->sum('order_products.quantity'),
+            'total' => (float) (clone $giftWrapRows)->sum('order_products.total'),
+        ];
     }
 
 }

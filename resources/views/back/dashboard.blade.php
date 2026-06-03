@@ -160,7 +160,10 @@
                                             <div class="dashboard-sales-kpi h-100">
                                                 <div class="dashboard-sales-kpi-content">
                                                     <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Narudžbe mjesec</div>
-                                                    <div id="kpi-month-orders" class="font-size-h3 font-w600 dashboard-sales-kpi-value">—</div>
+                                                    <div class="dashboard-sales-kpi-line dashboard-sales-kpi-value">
+                                                        <span id="kpi-month-orders" class="font-size-h3 font-w600">—</span>
+                                                        <span id="kpi-month-items-avg" class="dashboard-sales-kpi-meta">— art./nar.</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -170,8 +173,9 @@
                                             <div class="dashboard-sales-kpi h-100">
                                                 <div class="dashboard-sales-kpi-content">
                                                     <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Narudžbe danas</div>
-                                                    <div class="font-size-h3 font-w600 dashboard-sales-kpi-value">
-                                                        {{ $data['today'] }}
+                                                    <div class="dashboard-sales-kpi-line dashboard-sales-kpi-value">
+                                                        <span class="font-size-h3 font-w600">{{ $data['today'] }}</span>
+                                                        <span class="dashboard-sales-kpi-meta">{{ number_format($data['today_items_average'], 2, ',', '.') }} art./nar.</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -181,9 +185,47 @@
                                         <div class="col-6 col-md-3 mb-3">
                                             <div class="dashboard-sales-kpi h-100">
                                                 <div class="dashboard-sales-kpi-content">
-                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Prosj. narudžba</div>
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Prosj. iznos narudžbe</div>
                                                     <div id="kpi-month-aov" class="font-size-h3 font-w600 dashboard-sales-kpi-value">—</div>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3 dashboard-sales-details">
+                                <div class="col-12 col-md-4 mb-3">
+                                    <div class="dashboard-sales-detail h-100">
+                                        <div class="dashboard-sales-detail-title">Vrsta plaćanja</div>
+                                        <div id="monthly-payment-methods" class="dashboard-breakdown-list">
+                                            <div class="dashboard-breakdown-empty">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4 mb-3">
+                                    <div class="dashboard-sales-detail h-100">
+                                        <div class="dashboard-sales-detail-title">Izabrana dostava</div>
+                                        <div id="monthly-shipping-methods" class="dashboard-breakdown-list">
+                                            <div class="dashboard-breakdown-empty">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4 mb-3">
+                                    <div class="dashboard-sales-detail h-100">
+                                        <div class="dashboard-sales-detail-title">Poklon zamatanje</div>
+                                        <div class="dashboard-gift-wrap-summary">
+                                            <div class="dashboard-gift-wrap-item">
+                                                <strong id="monthly-gift-wrap-orders">0</strong>
+                                                <span>narudžbi</span>
+                                            </div>
+                                            <div class="dashboard-gift-wrap-item">
+                                                <strong id="monthly-gift-wrap-items">0</strong>
+                                                <span>kom.</span>
+                                            </div>
+                                            <div class="dashboard-gift-wrap-item">
+                                                <strong id="monthly-gift-wrap-total">0,00 €</strong>
+                                                <span>ukupno</span>
                                             </div>
                                         </div>
                                     </div>
@@ -197,6 +239,92 @@
 
                         <!-- Tab 2: Godišnji pregled -->
                         <div class="tab-pane fade" id="tab-monthly" role="tabpanel" aria-labelledby="monthly-tab">
+                            <div class="row mb-3 mt-3 dashboard-sales-kpis">
+                                <div class="col-12">
+                                    <div class="row">
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="dashboard-sales-kpi h-100">
+                                                <div class="dashboard-sales-kpi-content">
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Godišnji promet</div>
+                                                    <div id="kpi-year-total" class="font-size-h3 font-w600 dashboard-sales-kpi-value">—</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="dashboard-sales-kpi h-100">
+                                                <div class="dashboard-sales-kpi-content">
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Narudžbe godina</div>
+                                                    <div class="dashboard-sales-kpi-line dashboard-sales-kpi-value">
+                                                        <span id="kpi-year-orders" class="font-size-h3 font-w600">—</span>
+                                                        <span id="kpi-year-items-avg" class="dashboard-sales-kpi-meta">— art./nar.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="dashboard-sales-kpi h-100">
+                                                <div class="dashboard-sales-kpi-content">
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Zamatanje godina</div>
+                                                    <div class="dashboard-sales-kpi-line dashboard-sales-kpi-value">
+                                                        <span id="kpi-year-gift-wrap-orders" class="font-size-h3 font-w600">—</span>
+                                                        <span class="dashboard-sales-kpi-meta">nar.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="dashboard-sales-kpi h-100">
+                                                <div class="dashboard-sales-kpi-content">
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Prosj. iznos narudžbe</div>
+                                                    <div id="kpi-year-aov" class="font-size-h3 font-w600 dashboard-sales-kpi-value">—</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3 dashboard-sales-details">
+                                <div class="col-12 col-md-4 mb-3">
+                                    <div class="dashboard-sales-detail h-100">
+                                        <div class="dashboard-sales-detail-title">Vrsta plaćanja</div>
+                                        <div id="yearly-payment-methods" class="dashboard-breakdown-list">
+                                            <div class="dashboard-breakdown-empty">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4 mb-3">
+                                    <div class="dashboard-sales-detail h-100">
+                                        <div class="dashboard-sales-detail-title">Izabrana dostava</div>
+                                        <div id="yearly-shipping-methods" class="dashboard-breakdown-list">
+                                            <div class="dashboard-breakdown-empty">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4 mb-3">
+                                    <div class="dashboard-sales-detail h-100">
+                                        <div class="dashboard-sales-detail-title">Poklon zamatanje</div>
+                                        <div class="dashboard-gift-wrap-summary">
+                                            <div class="dashboard-gift-wrap-item">
+                                                <strong id="yearly-gift-wrap-orders">0</strong>
+                                                <span>narudžbi</span>
+                                            </div>
+                                            <div class="dashboard-gift-wrap-item">
+                                                <strong id="yearly-gift-wrap-items">0</strong>
+                                                <span>kom.</span>
+                                            </div>
+                                            <div class="dashboard-gift-wrap-item">
+                                                <strong id="yearly-gift-wrap-total">0,00 €</strong>
+                                                <span>ukupno</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="chart-container large">
                                 <canvas class="js-chartjs-overview"></canvas>
                             </div>
@@ -531,6 +659,174 @@
             color: #3f4854;
             font-size: 1.35rem;
             line-height: 1.15;
+        }
+
+        .dashboard-sales-kpi-line {
+            display: flex;
+            align-items: baseline;
+            gap: .55rem;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-sales-kpi-meta {
+            color: #687482;
+            font-size: .78rem;
+            font-weight: 600;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .dashboard-sales-details {
+            margin-right: -.5rem;
+            margin-left: -.5rem;
+        }
+
+        .dashboard-sales-details > [class*=col-] {
+            padding-right: .5rem;
+            padding-left: .5rem;
+        }
+
+        .dashboard-sales-detail {
+            position: relative;
+            display: flex;
+            min-height: 10.25rem;
+            flex-direction: column;
+            padding: .9rem 1rem;
+            border: 1px solid #e8edf5;
+            border-radius: .35rem;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(31, 45, 61, .03);
+        }
+
+        .dashboard-sales-detail-title {
+            color: #687482;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 0;
+            line-height: 1.3;
+            text-transform: uppercase;
+        }
+
+        .dashboard-breakdown-list {
+            display: grid;
+            gap: .45rem;
+            margin-top: .65rem;
+            max-height: 7.35rem;
+            padding-right: .25rem;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        .dashboard-breakdown-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .dashboard-breakdown-list::-webkit-scrollbar-thumb {
+            border-radius: 999px;
+            background: #cbd5e1;
+        }
+
+        .dashboard-breakdown-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .dashboard-breakdown-list.is-scrollable {
+            padding-bottom: .25rem;
+        }
+
+        .dashboard-breakdown-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: baseline;
+            min-height: 2.05rem;
+            gap: .75rem;
+            padding-bottom: .45rem;
+            border-bottom: 1px solid #edf1f7;
+        }
+
+        .dashboard-breakdown-row:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+
+        .dashboard-breakdown-label {
+            min-width: 0;
+            overflow: hidden;
+            color: #3f4854;
+            font-size: .86rem;
+            font-weight: 600;
+            line-height: 1.25;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dashboard-breakdown-value {
+            flex: 0 0 auto;
+            color: #3f4854;
+            font-size: .84rem;
+            font-weight: 700;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .dashboard-breakdown-value small {
+            display: block;
+            color: #687482;
+            font-size: .68rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .dashboard-breakdown-empty {
+            margin-top: .65rem;
+            color: #8a96a5;
+            font-size: .84rem;
+            font-weight: 600;
+        }
+
+        .dashboard-gift-wrap-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .65rem;
+            margin-top: .65rem;
+            align-items: stretch;
+        }
+
+        .dashboard-gift-wrap-item {
+            display: flex;
+            min-height: 3.55rem;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+            padding: .55rem .6rem;
+            border-radius: .3rem;
+            background: #f8fafc;
+            text-align: center;
+        }
+
+        .dashboard-gift-wrap-item strong,
+        .dashboard-gift-wrap-item span {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dashboard-gift-wrap-item strong {
+            color: #3f4854;
+            font-size: 1rem;
+            line-height: 1.2;
+        }
+
+        .dashboard-gift-wrap-item span {
+            margin-top: .15rem;
+            color: #687482;
+            font-size: .68rem;
+            font-weight: 700;
+            line-height: 1.2;
+            text-transform: uppercase;
         }
 
         .dashboard-list-row {
@@ -925,6 +1221,7 @@
         // Formatiranje valuta i brojeva (hr-HR, EUR)
         const fmtCurrency = new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
         const fmtInt = new Intl.NumberFormat('hr-HR', { maximumFractionDigits: 0 });
+        const fmtDecimal = new Intl.NumberFormat('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         // Helper: složi pune serije za sve dane u mjesecu (prazno => 0)
         function prepareMonthSeries(year, month, raw) {
@@ -934,41 +1231,135 @@
                 const day = parseInt(d.day, 10);
                 map[day] = {
                     total: Number(d.total) || 0,
-                    orders: Number(d.orders) || 0
+                    orders: Number(d.orders) || 0,
+                    itemQuantity: Number(d.item_quantity) || 0
                 };
             });
 
             const labels = [];
             const values = [];
             const counts = [];
+            const itemQuantities = [];
 
             for (let day = 1; day <= daysInMonth; day++) {
                 labels.push(day + '.');
-                const row = map[day] || { total: 0, orders: 0 };
+                const row = map[day] || { total: 0, orders: 0, itemQuantity: 0 };
                 values.push(row.total);
                 counts.push(row.orders);
+                itemQuantities.push(row.itemQuantity);
             }
-            return { labels, values, counts };
+            return { labels, values, counts, itemQuantities };
         }
 
         // Izračun KPI-ja i upis u DOM
-        function updateMonthStats(total, orders) {
+        function updateMonthStats(total, orders, averageItems) {
             const aov = orders > 0 ? (total / orders) : 0;
+            const avgItems = Number.isFinite(Number(averageItems)) ? Number(averageItems) : 0;
             document.getElementById('kpi-month-total').textContent  = fmtCurrency.format(total);
             document.getElementById('kpi-month-orders').textContent = fmtInt.format(orders);
+            document.getElementById('kpi-month-items-avg').textContent = fmtDecimal.format(avgItems) + ' art./nar.';
             document.getElementById('kpi-month-aov').textContent    = fmtCurrency.format(aov);
+        }
+
+        function renderBreakdownList(elementId, rows) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = '';
+            el.classList.toggle('is-scrollable', Boolean(rows && rows.length > 3));
+
+            if (! rows || ! rows.length) {
+                const empty = document.createElement('div');
+                empty.className = 'dashboard-breakdown-empty';
+                empty.textContent = 'Nema podataka';
+                el.appendChild(empty);
+                return;
+            }
+
+            rows.forEach(row => {
+                const item = document.createElement('div');
+                item.className = 'dashboard-breakdown-row';
+
+                const label = document.createElement('span');
+                label.className = 'dashboard-breakdown-label';
+                label.textContent = row.label || 'Nepoznato';
+                label.title = label.textContent;
+
+                const value = document.createElement('span');
+                value.className = 'dashboard-breakdown-value';
+                value.textContent = fmtInt.format(Number(row.orders) || 0) + ' nar.';
+
+                const total = document.createElement('small');
+                total.textContent = fmtCurrency.format(Number(row.total) || 0);
+                value.appendChild(total);
+
+                item.appendChild(label);
+                item.appendChild(value);
+                el.appendChild(item);
+            });
+        }
+
+        function updateMonthlyDetails(summary) {
+            const data = summary || {};
+            const giftWrap = data.gift_wrap || {};
+
+            renderBreakdownList('monthly-payment-methods', data.payment_methods || []);
+            renderBreakdownList('monthly-shipping-methods', data.shipping_methods || []);
+
+            document.getElementById('monthly-gift-wrap-orders').textContent = fmtInt.format(Number(giftWrap.orders) || 0);
+            document.getElementById('monthly-gift-wrap-items').textContent = fmtInt.format(Number(giftWrap.items) || 0);
+            document.getElementById('monthly-gift-wrap-total').textContent = fmtCurrency.format(Number(giftWrap.total) || 0);
+        }
+
+        function updateYearStats(summary) {
+            const data = summary || {};
+            const orders = Number(data.orders) || 0;
+            const total = Number(data.total) || 0;
+            const averageItems = Number(data.avg_items) || 0;
+            const giftWrap = data.gift_wrap || {};
+            const aov = orders > 0 ? (total / orders) : 0;
+
+            document.getElementById('kpi-year-total').textContent = fmtCurrency.format(total);
+            document.getElementById('kpi-year-orders').textContent = fmtInt.format(orders);
+            document.getElementById('kpi-year-items-avg').textContent = fmtDecimal.format(averageItems) + ' art./nar.';
+            document.getElementById('kpi-year-gift-wrap-orders').textContent = fmtInt.format(Number(giftWrap.orders) || 0);
+            document.getElementById('kpi-year-aov').textContent = fmtCurrency.format(aov);
+        }
+
+        function updateYearDetails(summary) {
+            const data = summary || {};
+            const giftWrap = data.gift_wrap || {};
+
+            renderBreakdownList('yearly-payment-methods', data.payment_methods || []);
+            renderBreakdownList('yearly-shipping-methods', data.shipping_methods || []);
+
+            document.getElementById('yearly-gift-wrap-orders').textContent = fmtInt.format(Number(giftWrap.orders) || 0);
+            document.getElementById('yearly-gift-wrap-items').textContent = fmtInt.format(Number(giftWrap.items) || 0);
+            document.getElementById('yearly-gift-wrap-total').textContent = fmtCurrency.format(Number(giftWrap.total) || 0);
         }
 
         function loadMonth(year, month) {
             $.get('{{ route('dashboard.chart.month') }}', { year, month }, function(data) {
-                const series = prepareMonthSeries(Number(year), Number(month), data);
+                const days = Array.isArray(data) ? data : (data.days || []);
+                const summary = Array.isArray(data) ? {} : (data.summary || {});
+                const series = prepareMonthSeries(Number(year), Number(month), days);
 
                 // KPI: sumiraj promet i narudžbe za mjesec
-                const monthTotal  = series.values.reduce((s, v) => s + Number(v || 0), 0);
-                const monthOrders = series.counts.reduce((s, v) => s + Number(v || 0), 0);
-                updateMonthStats(monthTotal, monthOrders);
+                const monthTotal  = Number(summary.total) || series.values.reduce((s, v) => s + Number(v || 0), 0);
+                const monthOrders = Number(summary.orders) || series.counts.reduce((s, v) => s + Number(v || 0), 0);
+                const monthItems = Number(summary.item_quantity) || series.itemQuantities.reduce((s, v) => s + Number(v || 0), 0);
+                const monthAverageItems = Number(summary.avg_items) || (monthOrders > 0 ? monthItems / monthOrders : 0);
+                updateMonthStats(monthTotal, monthOrders, monthAverageItems);
+                updateMonthlyDetails(summary);
 
                 renderChart(series);
+            });
+        }
+
+        function loadYear(year) {
+            $.get('{{ route('dashboard.chart.year') }}', { year }, function(data) {
+                const summary = data.summary || {};
+
+                updateYearStats(summary);
+                updateYearDetails(summary);
             });
         }
 
@@ -1054,6 +1445,7 @@
             const year  = $('#chart-year').val();
             const month = $('#chart-month').val();
             loadMonth(year, month);
+            loadYear(year);
         });
 
         // Inicijalni prikaz trenutnog mjeseca
@@ -1061,6 +1453,7 @@
         $('#chart-year').val(now.getFullYear());
         $('#chart-month').val(now.getMonth() + 1);
         loadMonth(now.getFullYear(), now.getMonth() + 1);
+        loadYear(now.getFullYear());
 
         // =====================
         // MJESEČNI PREGLED (ova vs prošla godina)
