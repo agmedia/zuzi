@@ -59,6 +59,24 @@ return [
         'venue_id'    => env('WOLT_VENUE_ID'),
     ],
 
+    'gls' => [
+        'client_number' => env('GLS_CLIENT_NUMBER', 380006507),
+        'username' => env('GLS_USERNAME', 'info@zuzi.hr'),
+        'password' => env('GLS_PASSWORD', 'Mimizizi0510'),
+        'wsdl' => env('GLS_WSDL', 'https://api.mygls.hr/ParcelService.svc?singleWsdl'),
+        'language' => env('GLS_LANGUAGE', 'HR'),
+        'printer_type' => env('GLS_PRINTER_TYPE', 'A4_2x2'),
+        'tracking_url' => env('GLS_TRACKING_URL', 'https://gls-group.com/HR/hr/pracenje-posiljke/'),
+    ],
+
+    'boxnow' => [
+        'base_url' => env('BOXNOW_API_URL', 'https://api-production.boxnow.hr/api/v1'),
+        'client_id' => env('BOXNOW_CLIENT_ID', '813f3a0c-bbea-4f83-bfb1-a605e79a11cd'),
+        'client_secret' => env('BOXNOW_CLIENT_SECRET', '8dc55b1ef55369e08c1b8eada89e2ba1bdf9256fdeb43c81cc1efc5f4755953b'),
+        'tracking_url' => env('BOXNOW_TRACKING_URL', 'https://track.boxnow.hr/en/track'),
+        'webhook_secret' => env('BOXNOW_WEBHOOK_SECRET'),
+    ],
+
     'pelion' => [
         'base_url' => env('PELION_BASE_URL', 'https://api.pelionpro.com/api/v1'),
         'api_key' => env('PELION_API_KEY'),

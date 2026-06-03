@@ -66,6 +66,17 @@
                                     {{ $user->details->role }}
                                 </td>
                                 <td class="text-right font-size-base">
+                                    @if (auth()->user()->can('*') && auth()->id() !== $user->id)
+                                        <form action="{{ route('users.impersonate', ['user' => $user]) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-alt-primary"
+                                                    title="Pregledaj račun kao korisnik"
+                                                    onclick="return confirm('Prijaviti se kao ovaj korisnik?')">
+                                                <i class="fa fa-fw fa-eye"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                     <a class="btn btn-sm btn-alt-secondary" href="{{ route('users.edit', ['user' => $user]) }}">
                                         <i class="fa fa-fw fa-pencil-alt"></i>
                                     </a>

@@ -37,12 +37,9 @@ class Glsstari
             ini_set('memory_limit', '1024M');
             ini_set('max_execution_time', 600);
 
-            //Test ClientNumber:
-            $clientNumber = 380006507; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
-            //Test username:
-            $username = "info@zuzi.hr"; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
-            //Test password:
-            $pwd      = "Mimizizi0510"; //!!!NOT FOR CUSTOMER TESTING, USE YOUR OWN, USE YOUR OWN!!!
+            $clientNumber = (int) config('services.gls.client_number');
+            $username = (string) config('services.gls.username');
+            $pwd = (string) config('services.gls.password');
             $password = hash('sha512', $pwd, true);
 
             $brojracuna = $this->order['id'];
@@ -97,16 +94,20 @@ class Glsstari
             $parcels[] = $parcel;
 
             //The service URL:
-            $wsdl = "https://api.mygls.hr/SERVICE_NAME.svc?singleWsdl";
+            $wsdl = str_replace('ParcelService', 'SERVICE_NAME', (string) config('services.gls.wsdl'));
 
-            $soapOptions = array('soap_version' => SOAP_1_1, 'stream_context' => stream_context_create(array('ssl' => array('cafile' => 'cacert.pem'))));
+            $soapOptions = array('soap_version' => SOAP_1_1);
+
+            if (file_exists(base_path('cacert.pem'))) {
+                $soapOptions['stream_context'] = stream_context_create(array('ssl' => array('cafile' => base_path('cacert.pem'))));
+            }
 
             //Parcel service:
             $serviceName = "ParcelService";
 
-            return $this->PrepareLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order);
+            return $this->PrintLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order);
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             echo $e->getMessage();
         }
     }
@@ -137,12 +138,16 @@ class Glsstari
      *
      * @return void
      */
-    private function PrintLabels($username, $password, $parcels, $wsdl, $soapOptions)
+    private function PrintLabels($username, $password, $parcels, $wsdl, $soapOptions, $order)
     {
         //Test request:
         $printLabelsRequest = array('Username'   => $username,
             'Password'   => $password,
-            'ParcelList' => $parcels);
+            'ParcelList' => $parcels,
+            'WebshopEngine' => 'Zuzi',
+            'PrintPosition' => 1,
+            'ShowPrintDialog' => 0,
+            'TypeOfPrinter' => config('services.gls.printer_type', 'A4_2x2'));
 
         $request = array("printLabelsRequest" => $printLabelsRequest);
 
@@ -151,12 +156,43 @@ class Glsstari
 
         //Service calling:
         $response = $client->PrintLabels($request);
+        $printLabelsResult = $response->PrintLabelsResult ?? null;
+        $printLabelsErrors = json_decode(json_encode($printLabelsResult->PrintLabelsErrorList ?? []), true) ?: [];
+        $printLabelsInfoList = json_decode(json_encode($printLabelsResult->PrintLabelsInfoList ?? []), true) ?: [];
 
-        if ($response != null && count((array) $response->PrintLabelsResult->PrintLabelsErrorList) == 0 && $response->PrintLabelsResult->Labels != "") {
-            //Label(s) saving:
+        $parcelIdList = [];
+        $parcelNumberList = [];
+        $printLabelsInfo = $printLabelsInfoList['PrintLabelsInfo'] ?? $printLabelsInfoList;
 
-            $this->response->setOutput(json_encode('OK'));
+        if (isset($printLabelsInfo['ParcelId']) || isset($printLabelsInfo['ParcelNumber'])) {
+            $printLabelsInfo = [$printLabelsInfo];
         }
+
+        foreach ($printLabelsInfo as $info) {
+            if (! is_array($info)) {
+                continue;
+            }
+
+            if (! empty($info['ParcelId'])) {
+                $parcelIdList[] = $info['ParcelId'];
+            }
+
+            if (! empty($info['ParcelNumber'])) {
+                $parcelNumberList[] = $info['ParcelNumber'];
+            }
+        }
+
+        if ($response != null && count($printLabelsErrors) == 0 && count($parcelNumberList) > 0) {
+            $order->update(['printed' => 1]);
+        }
+
+        return [
+            'ParcelIdList' => $parcelIdList,
+            'ParcelNumberList' => $parcelNumberList,
+            'PrintLabelsInfoList' => $printLabelsInfoList,
+            'PrintLabelsErrorList' => $printLabelsErrors,
+            'Labels' => $printLabelsResult->Labels ?? null,
+        ];
     }
 
 

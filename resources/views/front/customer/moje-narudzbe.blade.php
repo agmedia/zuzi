@@ -94,24 +94,35 @@
                             <thead>
                             <tr>
                                 <th>Broj narudžbe #</th>
-                                <th>Datum</th>
-                                <th>Status</th>
-                                <th>Ukupno</th>
-                                <th>Narudžba</th>
-                            </tr>
+	                                <th>Datum</th>
+	                                <th>Status</th>
+	                                <th>Dostava</th>
+	                                <th>Ukupno</th>
+	                                <th>Narudžba</th>
+	                            </tr>
                             </thead>
                             <tbody>
                             @forelse ($orders as $order)
                                 <tr>
-                                    <td class="py-3"><a class="nav-link-style fw-medium fs-sm" href="#order-details{{ $order->id }}" data-bs-toggle="modal">{{ $order->id }}</a></td>
-                                    <td class="py-3">{{ \Illuminate\Support\Carbon::make($order->created_at)->format('d.m.Y') }}</td>
-                                    <td class="py-3"><span class="badge bg-info account-status-badge m-0">{{ optional($order->status)->title ?: 'Nepoznat status' }}</span></td>
-                                    <td class="py-3 fw-medium">{{ number_format($order->total, 2, ',', '.') }} €</td>
-                                    <td class="py-3"><a class="btn btn-sm btn-outline-primary" href="#order-details{{ $order->id }}" data-bs-toggle="modal">Pregled</a></td>
-                                </tr>
+	                                    <td class="py-3"><a class="nav-link-style fw-medium fs-sm" href="#order-details{{ $order->id }}" data-bs-toggle="modal">{{ $order->id }}</a></td>
+	                                    <td class="py-3">{{ \Illuminate\Support\Carbon::make($order->created_at)->format('d.m.Y') }}</td>
+	                                    <td class="py-3"><span class="badge bg-info account-status-badge m-0">{{ optional($order->status)->title ?: 'Nepoznat status' }}</span></td>
+	                                    <td class="py-3">
+	                                        @if($order->shipping_tracking_status)
+	                                            <span class="d-block fs-sm">{{ $order->shipping_tracking_status }}</span>
+	                                            @if($order->shipping_tracking_url)
+	                                                <a class="fs-sm" href="{{ $order->shipping_tracking_url }}" target="_blank" rel="noopener">Praćenje pošiljke</a>
+	                                            @endif
+	                                        @else
+	                                            <span class="text-muted fs-sm">Nije dostupno</span>
+	                                        @endif
+	                                    </td>
+	                                    <td class="py-3 fw-medium">{{ number_format($order->total, 2, ',', '.') }} €</td>
+	                                    <td class="py-3"><a class="btn btn-sm btn-outline-primary" href="#order-details{{ $order->id }}" data-bs-toggle="modal">Pregled</a></td>
+	                                </tr>
                             @empty
                                 <tr>
-                                    <td class="p-0 border-0" colspan="5">
+	                                    <td class="p-0 border-0" colspan="6">
                                         <div class="account-empty-state">
                                             <div>
                                                 <i class="ci-bag d-block fs-3 mb-3 text-muted"></i>

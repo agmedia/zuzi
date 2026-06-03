@@ -8,9 +8,9 @@ use App\Models\Back\Marketing\Action;
 use App\Models\GiftVoucher;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Users\Client;
+use App\Models\User;
 use App\Services\GiftVoucherService;
 use App\Services\UnfinishedOrderPromoService;
-use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -37,6 +37,8 @@ class Order extends Model
      */
     protected $casts = [
         'review_request_sent_at' => 'datetime',
+        'shipping_tracking_updated_at' => 'datetime',
+        'shipping_tracking_payload' => 'array',
     ];
 
     /**

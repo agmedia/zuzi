@@ -82,6 +82,38 @@
             animation: sk-scaleout 1.0s infinite ease-in-out;
         }
 
+        .impersonation-banner {
+            position: sticky;
+            top: 0;
+            z-index: 1060;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .75rem;
+            padding: .75rem 1rem;
+            border-bottom: 1px solid rgba(95, 67, 0, .18);
+            background: #fff4d5;
+            color: #5f4300;
+            font-size: .875rem;
+            line-height: 1.35;
+            text-align: center;
+        }
+
+        .impersonation-banner strong {
+            color: #332300;
+        }
+
+        .impersonation-banner form {
+            margin: 0;
+        }
+
+        @media (max-width: 575.98px) {
+            .impersonation-banner {
+                flex-direction: column;
+                gap: .5rem;
+            }
+        }
+
         @media screen and (-webkit-min-device-pixel-ratio:0) {
             .form-control {
                 font-size: 16px;
@@ -583,6 +615,21 @@
         </div>
 
         <div class="v-cloak--hidden">
+            @if (auth()->check() && session('impersonator_id'))
+                <div class="impersonation-banner" role="status">
+                    <span>
+                        Pregledavate račun kao
+                        <strong>{{ auth()->user()->email }}</strong>
+                        @if (session('impersonator_email'))
+                            (admin: {{ session('impersonator_email') }})
+                        @endif
+                    </span>
+                    <form action="{{ route('users.impersonate.stop') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-warning">Vrati me u admin</button>
+                    </form>
+                </div>
+            @endif
             @include('front.layouts.partials.header')
             <main class="offcanvas-enabled ">
                 <section class="ps-lg-4 pe-lg-3 pt-2 page-wrapper">

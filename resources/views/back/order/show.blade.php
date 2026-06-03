@@ -107,6 +107,60 @@
             </div>
         </div>
 
+        @php
+            $trackingCarrier = $order->shipping_carrier;
+            if (! $trackingCarrier && \Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower($order->shipping_method), ['boxnow', 'box now'])) {
+                $trackingCarrier = 'boxnow';
+            }
+            if (! $trackingCarrier && ($order->tracking_code || \Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower($order->shipping_method . ' ' . $order->shipping_code), 'gls'))) {
+                $trackingCarrier = 'gls';
+            }
+        @endphp
+
+        @if($trackingCarrier || $order->tracking_code || $order->shipping_tracking_status)
+            <div class="block block-rounded">
+                <div class="block-header block-header-default">
+                    <h3 class="block-title">Praćenje dostave</h3>
+                    <div class="block-options">
+                        <button type="button" class="btn btn-sm btn-alt-primary" data-tracking-btn="{{ $order->id }}" onclick="refreshTracking({{ $order->id }})">
+                            Osvježi <i class="fa fa-sync-alt ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="font-size-sm text-muted">Dostavna služba</div>
+                            <div class="font-w600">{{ $trackingCarrier === 'boxnow' ? 'Box Now' : strtoupper($trackingCarrier ?: 'Dostava') }}</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="font-size-sm text-muted">Tracking broj</div>
+                            <div class="font-w600">
+                                @if($order->shipping_tracking_url && $order->tracking_code)
+                                    <a href="{{ $order->shipping_tracking_url }}" target="_blank" rel="noopener">{{ $order->tracking_code }}</a>
+                                @else
+                                    {{ $order->tracking_code ?: $order->shipping_parcel_id ?: 'Nije upisan' }}
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="font-size-sm text-muted">Zadnji status</div>
+                            <div class="font-w600">{{ $order->shipping_tracking_status ?: 'Još nije osvježeno' }}</div>
+                            @if($order->shipping_tracking_status_code)
+                                <div class="font-size-sm text-muted">Kod: {{ $order->shipping_tracking_status_code }}</div>
+                            @endif
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="font-size-sm text-muted">Osvježeno</div>
+                            <div class="font-w600">
+                                {{ $order->shipping_tracking_updated_at ? \Illuminate\Support\Carbon::make($order->shipping_tracking_updated_at)->format('d.m.Y H:i') : 'Nikad' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if($order->giftVouchers->count())
             <div class="block block-rounded">
                 <div class="block-header block-header-default">
@@ -305,7 +359,38 @@
                 } else {
                     return errorToast.fire(response.data.error);
                 }
-            });
+                });
+        }
+
+        function refreshTracking(order_id) {
+            setTrackingBtnLoading(order_id, true);
+            axios.post("{{ route('api.order.tracking.refresh') }}", { order_id })
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({
+                            timer: 1500,
+                            text: response.data.message,
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        errorToast.fire(response.data.error || 'Tracking nije osvježen.');
+                    }
+                })
+                .catch(error => {
+                    errorToast.fire(error?.response?.data?.error || 'Tracking nije osvježen.');
+                })
+                .finally(() => setTrackingBtnLoading(order_id, false));
+        }
+
+        function setTrackingBtnLoading(orderId, isLoading) {
+            const btn = document.querySelector(`[data-tracking-btn="${orderId}"]`);
+            if (!btn) return;
+
+            btn.disabled = isLoading;
+            btn.innerHTML = isLoading
+                ? 'Osvježavam <i class="fa fa-spinner fa-spin ml-1"></i>'
+                : 'Osvježi <i class="fa fa-sync-alt ml-1"></i>';
         }
     </script>
 

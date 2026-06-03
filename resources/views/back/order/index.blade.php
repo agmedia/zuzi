@@ -198,9 +198,37 @@
                                     </span>
                                 </td>
                                 <td class="text-lwft">{{ $order->payment_method }}</td>
-                                <td class="text-lwft">{{ $order->shipping_method }}</td>
+                                <td class="text-lwft">
+                                    {{ $order->shipping_method }}
+                                    @if ($order->shipping_tracking_status || $order->tracking_code)
+                                        <div class="mt-1">
+                                            @if ($order->shipping_carrier)
+                                                <span class="badge badge-light">{{ $order->shipping_carrier === 'boxnow' ? 'Box Now' : strtoupper($order->shipping_carrier) }}</span>
+                                            @endif
+                                            @if ($order->tracking_code)
+                                                <small class="text-muted">#{{ $order->tracking_code }}</small>
+                                            @endif
+                                        </div>
+                                    @endif
+                                    @if ($order->shipping_tracking_status)
+                                        <div class="text-muted small mt-1">{{ $order->shipping_tracking_status }}</div>
+                                    @endif
+                                </td>
                                 <td>
-                                    <a class="font-w600" href="{{ route('orders.show', ['order' => $order]) }}">{{ $order->shipping_fname }} {{ $order->shipping_lname }}</a>
+                                    @if (auth()->user()->can('*') && $order->user)
+                                        <form action="{{ route('users.impersonate', ['user' => $order->user]) }}" method="POST" class="d-inline m-0">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="btn btn-link p-0 border-0 font-w600 text-left align-baseline"
+                                                    title="Otvori front profil kupca"
+                                                    onclick="return confirm('Prijaviti se kao ovaj kupac i otvoriti njegov front račun?')">
+                                                {{ $order->shipping_fname }} {{ $order->shipping_lname }}
+                                                <i class="fa fa-user-check ml-1 text-success"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a class="font-w600" href="{{ route('orders.show', ['order' => $order]) }}">{{ $order->shipping_fname }} {{ $order->shipping_lname }}</a>
+                                    @endif
                                 </td>
                                 <td class="text-center">{{ $order->products->count() }}</td>
                                 <td class="text-right">
@@ -274,6 +302,11 @@
                                     <a class="btn btn-sm btn-alt-secondary mr-1" href="{{ route('orders.show', ['order' => $order]) }}">
                                         <i class="fa fa-fw fa-eye"></i>
                                     </a>
+                                    @if ($order->shipping_carrier || $order->tracking_code || $order->shipping_method == 'BoxNow')
+                                        <button type="button" class="btn btn-sm btn-alt-primary mr-1" data-tracking-btn="{{ $order->id }}" onclick="refreshTracking({{ $order->id }})" title="Osvježi tracking">
+                                            <i class="fa fa-fw fa-sync-alt"></i>
+                                        </button>
+                                    @endif
                                     <a class="btn btn-sm btn-alt-info" href="{{ route('orders.edit', ['order' => $order]) }}">
                                         <i class="fa fa-fw fa-edit"></i>
                                     </a>
@@ -398,6 +431,37 @@
             btn.innerHTML = isLoading
                 ? '<i class="fa fa-spinner fa-spin"></i> Slanje...'
                 : '<i class="fa fa-motorcycle ml-1"></i> Wolt';
+        }
+
+        function refreshTracking(order_id) {
+            setTrackingBtnLoading(order_id, true);
+            axios.post("{{ route('api.order.tracking.refresh') }}", { order_id })
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({
+                            timer: 1500,
+                            text: response.data.message,
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        errorToast.fire(response.data.error || 'Tracking nije osvježen.');
+                    }
+                })
+                .catch(error => {
+                    errorToast.fire(error?.response?.data?.error || 'Tracking nije osvježen.');
+                })
+                .finally(() => setTrackingBtnLoading(order_id, false));
+        }
+
+        function setTrackingBtnLoading(orderId, isLoading) {
+            const btn = document.querySelector(`[data-tracking-btn="${orderId}"]`);
+            if (!btn) return;
+
+            btn.disabled = isLoading;
+            btn.innerHTML = isLoading
+                ? '<i class="fa fa-spinner fa-spin"></i>'
+                : '<i class="fa fa-fw fa-sync-alt"></i>';
         }
 
         function sendUnfinishedPromo(order_id, discount) {

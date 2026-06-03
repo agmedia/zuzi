@@ -16,11 +16,13 @@ use App\Models\Back\Marketing\Action;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderHistory;
 use App\Models\Back\Settings\Settings;
-use App\Models\Front\Checkout\Shipping\Gls;
 use App\Models\Front\Checkout\Shipping\Glsstari;
 use App\Models\Front\Checkout\Shipping\HP;
 use App\Models\Front\Loyalty;
 use App\Services\GiftVoucherService;
+use App\Services\Shipping\BoxNowService;
+use App\Services\Shipping\GlsTrackingService;
+use App\Services\Shipping\OrderTrackingService;
 use App\Services\UnfinishedOrderPromoService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -40,7 +42,10 @@ class OrderController extends Controller
      */
     public function index(Request $request, Order $order)
     {
-        $orders   = $order->filter($request)->paginate(config('settings.pagination.back'))->appends(request()->query());
+        $orders   = $order->filter($request)
+            ->with('user')
+            ->paginate(config('settings.pagination.back'))
+            ->appends(request()->query());
         $statuses = Settings::get('order', 'statuses');
         $promoService = app(UnfinishedOrderPromoService::class);
         $sentPromoActions = collect();
@@ -500,20 +505,27 @@ class OrderController extends Controller
      */
     public function api_send_gls(Request $request)
     {
-        $request->validate(['order_id' => 'required']);
+        $request->validate(['order_id' => 'required|integer']);
 
-        $order = Order::where('id', $request->input('order_id'))->first();
+        $order = Order::query()->with('products')->find($request->input('order_id'));
 
-        $gls   = new Gls($order);
-        $label = $gls->resolve();
-
-        $var = json_decode($label, true);
-
-        if (isset($var['parcels'][0]['id'])) {
-            return response()->json(['message' => 'BOXNOW je uspješno poslan sa ID: ' . $var['parcels'][0]['id']]);
+        if (! $order) {
+            return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
         }
 
-        return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
+        try {
+            $tracking = app(BoxNowService::class)->createDeliveryRequest($order);
+            app(OrderTrackingService::class)->apply($order, $tracking);
+
+            return response()->json(['message' => 'BOXNOW je uspješno poslan sa ID: ' . $tracking['parcel_id']]);
+        } catch (\Throwable $e) {
+            Log::error('Box Now shipment failed.', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Greška..! ' . $e->getMessage()], 422);
+        }
     }
 
 
@@ -570,9 +582,34 @@ class OrderController extends Controller
         $gls   = new Glsstari($order);
         $label = $gls->resolve();
         $parcelId = data_get($label, 'ParcelIdList.0');
+        $parcelNumber = data_get($label, 'ParcelNumberList.0');
+
+        if ($parcelNumber) {
+            $trackingPayload = $label;
+            unset($trackingPayload['Labels']);
+
+            app(OrderTrackingService::class)->apply($order, [
+                'carrier' => GlsTrackingService::CARRIER,
+                'parcel_id' => (string) $parcelId,
+                'tracking_code' => (string) $parcelNumber,
+                'tracking_url' => rtrim((string) config('services.gls.tracking_url'), '/') . '/?match=' . urlencode((string) $parcelNumber),
+                'status_code' => '51',
+                'status' => 'Podaci o pošiljci su uneseni u GLS sustav; pošiljka još nije predana GLS-u.',
+                'tracked_at' => now(),
+                'payload' => $trackingPayload,
+            ]);
+
+            return response()->json(['message' => 'GLS je uspješno poslan sa brojem: ' . $parcelNumber]);
+        }
 
         if ($parcelId) {
-            return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $parcelId]);
+            $order->forceFill([
+                'shipping_carrier' => GlsTrackingService::CARRIER,
+                'shipping_parcel_id' => (string) $parcelId,
+                'printed' => true,
+            ])->save();
+
+            return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $parcelId . '. Tracking broj nije vraćen.']);
         }
 
         Log::warning('GLS stari shipment did not return a parcel ID.', [
@@ -581,6 +618,33 @@ class OrderController extends Controller
         ]);
 
         return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
+    }
+
+    public function api_refresh_tracking(Request $request, OrderTrackingService $trackingService)
+    {
+        $request->validate(['order_id' => 'required|integer']);
+
+        $order = Order::query()->find($request->input('order_id'));
+
+        if (! $order) {
+            return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
+        }
+
+        try {
+            $result = $trackingService->refresh($order);
+
+            return response()->json([
+                'message' => $result['message'],
+                'tracking' => $result['tracking'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Shipment tracking refresh failed.', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Greška..! ' . $e->getMessage()], 422);
+        }
     }
 
     /**

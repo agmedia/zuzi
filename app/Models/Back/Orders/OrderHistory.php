@@ -57,11 +57,11 @@ class OrderHistory extends Model
      *
      * @return bool
      */
-    public static function store(int $order_id, Request $request = null): bool
+    public static function store(int $order_id, ?Request $request = null): bool
     {
         $id = self::insertGetId([
             'order_id'   => $order_id,
-            'user_id'    => auth()->user()->id,
+            'user_id'    => auth()->id() ?: 0,
             'status'     => $request ? $request->input('status') : config('settings.order.status.new'),
             'comment'    => $request ? ($request->input('status') ? 'Status promijenjen... ' . $request->input('comment') : $request->input('comment')) : 'Narudžba napravljena.',
             'created_at' => Carbon::now(),

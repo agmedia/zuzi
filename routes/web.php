@@ -177,6 +177,10 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::post('user', [UserController::class, 'store'])->name('users.store');
     Route::get('user/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::patch('user/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::post('user/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
+    Route::get('user/{user}/impersonate', fn () => redirect()->route('users')->with([
+        'warning' => 'Za pregled računa kao korisnik kliknite ikonu iz liste korisnika.',
+    ]));
 
 
     Route::prefix('admin')->middleware(['auth'])->group(function () {
@@ -255,6 +259,10 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
     Route::get('maintenance/on', [QuickMenuController::class, 'maintenanceModeON'])->name('maintenance.on');
     Route::get('maintenance/off', [QuickMenuController::class, 'maintenanceModeOFF'])->name('maintenance.off');
 });
+
+Route::post('/admin/impersonacija/stop', [UserController::class, 'stopImpersonating'])
+     ->middleware(['auth:sanctum'])
+     ->name('users.impersonate.stop');
 
 /**
  * CUSTOMER BACK ROUTES
@@ -350,6 +358,7 @@ Route::prefix('api/v2')->group(function () {
                 Route::post('send/gls', [OrderController::class, 'api_send_gls'])->name('api.order.send.gls');
                 Route::post('send/hppak', [OrderController::class, 'api_send_hp_pak'])->name('api.order.send.hp_pak');
                 Route::post('send/glsstari', [OrderController::class, 'api_send_glsstari'])->name('api.order.send.glsstari');
+                Route::post('tracking/refresh', [OrderController::class, 'api_refresh_tracking'])->name('api.order.tracking.refresh');
             });
             // PAYMENTS
             Route::prefix('payment')->group(function () {

@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Log;
 
 class Order extends Model
 {
+    protected $casts = [
+        'shipping_tracking_updated_at' => 'datetime',
+        'shipping_tracking_payload' => 'array',
+    ];
 
     /**
      * @var array

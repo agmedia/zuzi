@@ -7,6 +7,7 @@ use App\Models\Front\Loyalty;
 use App\Models\Roles\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -93,6 +94,106 @@ class UserController extends Controller
         }
 
         return redirect()->back()->with(['error' => 'Oops..! Greška prilikom snimanja.']);
+    }
+
+
+    /**
+     * Log the current admin into the storefront as the selected user.
+     *
+     * @param Request $request
+     * @param User    $user
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function impersonate(Request $request, User $user)
+    {
+        $admin = $request->user();
+
+        if (! $admin || ! $admin->can('*')) {
+            abort(403);
+        }
+
+        if ($admin->id === $user->id) {
+            return redirect()->back()->with(['warning' => 'Već ste prijavljeni kao taj korisnik.']);
+        }
+
+        $request->session()->put([
+            'impersonator_id'    => $admin->id,
+            'impersonator_name'  => $admin->name,
+            'impersonator_email' => $admin->email,
+        ]);
+
+        Auth::guard('web')->login($user);
+        Auth::shouldUse('web');
+        $request->setUserResolver(fn () => $user);
+        $request->session()->regenerate();
+        $this->storePasswordHashInSession($request, $user);
+
+        return redirect()->route('moj-racun')->with([
+            'success' => 'Sada pregledavate korisnički račun za ' . $user->email . '.',
+        ]);
+    }
+
+
+    /**
+     * Restore the original admin login after storefront impersonation.
+     *
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function stopImpersonating(Request $request)
+    {
+        $admin_id = $request->session()->get('impersonator_id');
+
+        if (! $admin_id) {
+            return redirect()->route('index');
+        }
+
+        $admin = User::find($admin_id);
+
+        if (! $admin) {
+            Auth::guard('web')->logout();
+
+            $request->session()->forget([
+                'impersonator_id',
+                'impersonator_name',
+                'impersonator_email',
+            ]);
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with(['error' => 'Admin korisnik više ne postoji. Prijavite se ponovno.']);
+        }
+
+        Auth::guard('web')->login($admin);
+        Auth::shouldUse('web');
+        $request->setUserResolver(fn () => $admin);
+        $request->session()->forget([
+            'impersonator_id',
+            'impersonator_name',
+            'impersonator_email',
+        ]);
+        $request->session()->regenerate();
+        $this->storePasswordHashInSession($request, $admin);
+
+        return redirect()->route('dashboard')->with(['success' => 'Vraćeni ste u admin račun.']);
+    }
+
+
+    /**
+     * Keep Jetstream's session authentication hash in sync after a manual login.
+     *
+     * @param Request $request
+     * @param User    $user
+     *
+     * @return void
+     */
+    private function storePasswordHashInSession(Request $request, User $user): void
+    {
+        $request->session()->put([
+            'password_hash_web' => $user->getAuthPassword(),
+        ]);
     }
 
 
