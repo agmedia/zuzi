@@ -83,15 +83,15 @@
         }
 
         .impersonation-banner {
-            position: sticky;
-            top: 0;
-            z-index: 1060;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: .75rem;
             padding: .75rem 1rem;
+            margin: .75rem .5rem 0;
+            border-top: 1px solid rgba(95, 67, 0, .12);
             border-bottom: 1px solid rgba(95, 67, 0, .18);
+            border-radius: .5rem;
             background: #fff4d5;
             color: #5f4300;
             font-size: .875rem;
@@ -615,23 +615,23 @@
         </div>
 
         <div class="v-cloak--hidden">
-            @if (auth()->check() && session('impersonator_id'))
-                <div class="impersonation-banner" role="status">
-                    <span>
-                        Pregledavate račun kao
-                        <strong>{{ auth()->user()->email }}</strong>
-                        @if (session('impersonator_email'))
-                            (admin: {{ session('impersonator_email') }})
-                        @endif
-                    </span>
-                    <form action="{{ route('users.impersonate.stop') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-warning">Vrati me u admin</button>
-                    </form>
-                </div>
-            @endif
             @include('front.layouts.partials.header')
             <main class="offcanvas-enabled ">
+                @if (auth()->check() && session('impersonator_id'))
+                    <div class="impersonation-banner" role="status">
+                        <span>
+                            Pregledavate račun kao
+                            <strong>{{ auth()->user()->email }}</strong>
+                            @if (session('impersonator_email'))
+                                (admin: {{ session('impersonator_email') }})
+                            @endif
+                        </span>
+                        <form action="{{ route('users.impersonate.stop') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-warning">Vrati me u admin</button>
+                        </form>
+                    </div>
+                @endif
                 <section class="ps-lg-4 pe-lg-3 pt-2 page-wrapper">
                     <div class="px-2 pt-2">
                         @yield('content')
