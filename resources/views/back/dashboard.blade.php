@@ -551,6 +551,8 @@
         }
 
         .dashboard-list-table {
+            width: 100%;
+            table-layout: fixed;
             margin-bottom: 0;
         }
 
@@ -581,10 +583,12 @@
 
         .dashboard-list-main {
             min-width: 0;
+            max-width: 0;
         }
 
         .dashboard-list-main a {
             display: block;
+            max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -828,6 +832,10 @@
 
             .dashboard-list-table .dashboard-list-main a {
                 white-space: normal;
+            }
+
+            .dashboard-products-table .dashboard-list-main a {
+                white-space: nowrap;
             }
 
             .dashboard-list-table .dashboard-list-price {
