@@ -597,11 +597,12 @@
 
         .dashboard-list-main {
             min-width: 0;
-            max-width: 0;
+            overflow: hidden;
         }
 
         .dashboard-list-main a {
             display: block;
+            width: 100%;
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -840,16 +841,16 @@
             .dashboard-list-table .dashboard-list-main {
                 margin-top: .12rem;
                 padding-right: 6.2rem !important;
+                width: auto !important;
                 max-width: none;
+                overflow: hidden;
                 font-size: .86rem;
                 line-height: 1.3;
             }
 
             .dashboard-list-table .dashboard-list-main a {
-                white-space: normal;
-            }
-
-            .dashboard-products-table .dashboard-list-main a {
+                width: 100%;
+                max-width: 100%;
                 white-space: nowrap;
             }
 
