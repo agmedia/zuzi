@@ -840,6 +840,7 @@
             .dashboard-list-table .dashboard-list-main {
                 margin-top: .12rem;
                 padding-right: 6.2rem !important;
+                max-width: none;
                 font-size: .86rem;
                 line-height: 1.3;
             }
