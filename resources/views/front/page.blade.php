@@ -630,7 +630,7 @@
 
       </div>
 
-      <div class="d-flex row justify-content-between mt-2">
+  <!--    <div class="d-flex row justify-content-between mt-2">
           <div class="col-md-12">
               <div role="alert" class="alert alert-info d-flex mb-1">
                   <div class="alert-icon">
@@ -641,7 +641,7 @@
                   </small>
               </div>
           </div>
-      </div>
+      </div>-->
 
       <div class="row justify-content-between mt-2">
           <div class="col-md-12">
