@@ -37,17 +37,25 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $data['today'] = Order::whereDate('created_at', Carbon::today())
-            ->dashboardSales()
-            ->count();
-        $data['proccess']   = Order::whereIn('order_status_id', Order::dashboardProcessingStatusIds())->count();
-        $data['finished']   = Order::whereIn('order_status_id', [4, 5, 6, 7])->count();
+        $todayOrders = Order::whereDate('created_at', Carbon::today())
+            ->dashboardSales();
+        $processingOrders = Order::whereIn('order_status_id', Order::dashboardProcessingStatusIds());
+        $finishedOrders = Order::whereYear('created_at', Carbon::now()->year)
+            ->whereIn('order_status_id', Order::completedStatusIds());
+        $thisMonthOrders = Order::whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->dashboardSales();
+
+        $data['today'] = (clone $todayOrders)->count();
+        $data['today_total'] = (clone $todayOrders)->sum('total');
+        $data['proccess'] = (clone $processingOrders)->count();
+        $data['processing_total'] = (clone $processingOrders)->sum('total');
+        $data['finished'] = (clone $finishedOrders)->count();
+        $data['finished_total'] = (clone $finishedOrders)->sum('total');
 
         // broj narudžbi u TEKUĆEM mjesecu
-        $data['this_month'] = Order::whereYear('created_at', Carbon::now()->year)
-            ->whereMonth('created_at', Carbon::now()->month)
-            ->dashboardSales()
-            ->count();
+        $data['this_month'] = (clone $thisMonthOrders)->count();
+        $data['this_month_total'] = (clone $thisMonthOrders)->sum('total');
 
         $orders = Order::query()
             ->select(['id', 'payment_fname', 'payment_lname', 'total', 'order_status_id', 'created_at'])

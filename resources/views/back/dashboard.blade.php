@@ -17,41 +17,69 @@
     <!-- END Hero -->
 
     <!-- Page Content -->
-    <div class="content">
+    <div class="content dashboard-content">
         @include('back.layouts.partials.session')
 
         @if( auth()->user()->id != '1716')
             <!-- Quick Overview -->
-        <div class="row row-deck">
-                 <div class="col-6 col-lg-3">
-                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                         <div class="block-content py-5">
-                             <div class="font-size-h3 font-w600 text-warning mb-1">{{ $data['proccess'] }}</div>
-                             <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi u obradi</p>
+        <div class="row row-deck dashboard-kpi-grid">
+                 <div class="col-6 col-lg-3 dashboard-kpi-col">
+                     <a class="block block-rounded block-link-shadow dashboard-kpi-card dashboard-kpi-card-warning" href="{{ route('orders') }}">
+                         <div class="block-content py-5 dashboard-kpi-content">
+                             <div class="dashboard-kpi-head">
+                                 <span class="dashboard-kpi-icon"><i class="fa fa-hourglass-half"></i></span>
+                                 <span class="dashboard-kpi-label">Narudžbe u obradi</span>
+                             </div>
+                             <div class="font-size-h3 font-w700 dashboard-kpi-value">{{ $data['proccess'] }}</div>
+                             <div class="dashboard-kpi-total">
+                                 <span>Ukupno</span>
+                                 <strong>{{ \App\Helpers\Currency::main($data['processing_total'], true) }}</strong>
+                             </div>
                          </div>
                      </a>
                  </div>
-                 <div class="col-6 col-lg-3">
-                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                         <div class="block-content py-5">
-                             <div class="font-size-h3 font-w600 text-success mb-1">{{ $data['finished'] }}</div>
-                             <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Dovršenih narudžbi</p>
+                 <div class="col-6 col-lg-3 dashboard-kpi-col">
+                     <a class="block block-rounded block-link-shadow dashboard-kpi-card dashboard-kpi-card-success" href="{{ route('orders') }}">
+                         <div class="block-content py-5 dashboard-kpi-content">
+                             <div class="dashboard-kpi-head">
+                                 <span class="dashboard-kpi-icon"><i class="fa fa-check-circle"></i></span>
+                                 <span class="dashboard-kpi-label">Dovršene ove godine</span>
+                             </div>
+                             <div class="font-size-h3 font-w700 dashboard-kpi-value">{{ $data['finished'] }}</div>
+                             <div class="dashboard-kpi-total">
+                                 <span>Ukupno</span>
+                                 <strong>{{ \App\Helpers\Currency::main($data['finished_total'], true) }}</strong>
+                             </div>
                          </div>
                      </a>
                  </div>
-                 <div class="col-6 col-lg-3">
-                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                         <div class="block-content py-5">
-                             <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['today'] }}</div>
-                             <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi danas</p>
+                 <div class="col-6 col-lg-3 dashboard-kpi-col">
+                     <a class="block block-rounded block-link-shadow dashboard-kpi-card dashboard-kpi-card-info" href="{{ route('orders') }}">
+                         <div class="block-content py-5 dashboard-kpi-content">
+                             <div class="dashboard-kpi-head">
+                                 <span class="dashboard-kpi-icon"><i class="fa fa-calendar-day"></i></span>
+                                 <span class="dashboard-kpi-label">Narudžbe danas</span>
+                             </div>
+                             <div class="font-size-h3 font-w700 dashboard-kpi-value">{{ $data['today'] }}</div>
+                             <div class="dashboard-kpi-total">
+                                 <span>Ukupno</span>
+                                 <strong>{{ \App\Helpers\Currency::main($data['today_total'], true) }}</strong>
+                             </div>
                          </div>
                      </a>
                  </div>
-                 <div class="col-6 col-lg-3">
-                     <a class="block block-rounded block-link-shadow text-center" href="{{ route('orders') }}">
-                         <div class="block-content py-5">
-                             <div class="font-size-h3 text-success font-w600 mb-1">{{ $data['this_month'] }}</div>
-                             <p class="font-w600 font-size-sm text-muted text-uppercase mb-0">Narudžbi ovaj mjesec</p>
+                 <div class="col-6 col-lg-3 dashboard-kpi-col">
+                     <a class="block block-rounded block-link-shadow dashboard-kpi-card dashboard-kpi-card-primary" href="{{ route('orders') }}">
+                         <div class="block-content py-5 dashboard-kpi-content">
+                             <div class="dashboard-kpi-head">
+                                 <span class="dashboard-kpi-icon"><i class="fa fa-calendar-alt"></i></span>
+                                 <span class="dashboard-kpi-label">Narudžbe ovaj mjesec</span>
+                             </div>
+                             <div class="font-size-h3 font-w700 dashboard-kpi-value">{{ $data['this_month'] }}</div>
+                             <div class="dashboard-kpi-total">
+                                 <span>Ukupno</span>
+                                 <strong>{{ \App\Helpers\Currency::main($data['this_month_total'], true) }}</strong>
+                             </div>
                          </div>
                      </a>
                  </div>
@@ -59,7 +87,7 @@
             <!-- END Quick Overview -->
 
             <!-- Sales Overview Block with Tabs -->
-            <div class="block block-rounded mt-4">
+            <div class="block block-rounded mt-2 dashboard-sales-block">
                 <div class="block-header block-header-default sales-header">
                     <h3 class="block-title">Statistika prometa</h3>
 
@@ -99,8 +127,7 @@
                 </div>
                 <div class="block-content">
                     <!-- Tabs nav -->
-                    <!-- Tabs nav -->
-                    <ul class="nav nav-tabs" id="salesTabs" role="tablist">
+                    <ul class="nav nav-tabs dashboard-sales-tabs" id="salesTabs" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" id="sales-tab" data-toggle="tab" href="#tab-sales" role="tab"
                                aria-controls="tab-sales" aria-selected="true">Mjesečni pregled</a>
@@ -115,35 +142,35 @@
                     <div class="tab-content mt-3" id="salesTabsContent">
                         <!-- Tab 1: Mjesečni pregled (po danima) -->
                         <div class="tab-pane fade show active" id="tab-sales" role="tabpanel" aria-labelledby="sales-tab">
-                            <div class="row mb-4 mt-3">
+                            <div class="row mb-3 mt-3 dashboard-sales-kpis">
                                 <div class="col-12">
                                     <div class="row">
                                         <!-- Mjesečni promet -->
-                                        <div class="col-12 col-md-3 mb-3">
-                                            <div class="block block-rounded text-center h-100">
-                                                <div class="block-content py-3">
-                                                    <div class="font-size-sm text-muted text-uppercase">Mjesečni promet</div>
-                                                    <div id="kpi-month-total" class="font-size-h3 font-w600 mt-1">—</div>
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="dashboard-sales-kpi h-100">
+                                                <div class="dashboard-sales-kpi-content">
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Mjesečni promet</div>
+                                                    <div id="kpi-month-total" class="font-size-h3 font-w600 dashboard-sales-kpi-value">—</div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <!-- Broj narudžbi u mjesecu (računa se iz JS serije) -->
-                                        <div class="col-12 col-md-3 mb-3">
-                                            <div class="block block-rounded text-center h-100">
-                                                <div class="block-content py-3">
-                                                    <div class="font-size-sm text-muted text-uppercase">Narudžbe mjesec</div>
-                                                    <div id="kpi-month-orders" class="font-size-h3 font-w600 mt-1">—</div>
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="dashboard-sales-kpi h-100">
+                                                <div class="dashboard-sales-kpi-content">
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Narudžbe mjesec</div>
+                                                    <div id="kpi-month-orders" class="font-size-h3 font-w600 dashboard-sales-kpi-value">—</div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <!-- Narudžbi danas (iz backend varijable) -->
-                                        <div class="col-12 col-md-3 mb-3">
-                                            <div class="block block-rounded text-center h-100">
-                                                <div class="block-content py-3">
-                                                    <div class="font-size-sm text-muted text-uppercase">Narudžbe danas</div>
-                                                    <div class="font-size-h3 font-w600 mt-1">
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="dashboard-sales-kpi h-100">
+                                                <div class="dashboard-sales-kpi-content">
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Narudžbe danas</div>
+                                                    <div class="font-size-h3 font-w600 dashboard-sales-kpi-value">
                                                         {{ $data['today'] }}
                                                     </div>
                                                 </div>
@@ -151,11 +178,11 @@
                                         </div>
 
                                         <!-- Prosj. narudžba -->
-                                        <div class="col-12 col-md-3 mb-3">
-                                            <div class="block block-rounded text-center h-100">
-                                                <div class="block-content py-3">
-                                                    <div class="font-size-sm text-muted text-uppercase">Prosj. narudžba</div>
-                                                    <div id="kpi-month-aov" class="font-size-h3 font-w600 mt-1">—</div>
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="dashboard-sales-kpi h-100">
+                                                <div class="dashboard-sales-kpi-content">
+                                                    <div class="font-size-sm text-muted text-uppercase dashboard-sales-kpi-label">Prosj. narudžba</div>
+                                                    <div id="kpi-month-aov" class="font-size-h3 font-w600 dashboard-sales-kpi-value">—</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -182,24 +209,30 @@
         @endif
 
         <!-- Top Products and Latest Orders -->
-        <div class="row mt-4">
+        <div class="row dashboard-list-row">
             <div class="col-xl-6">
-                <div class="block block-rounded">
+                <div class="block block-rounded dashboard-list-block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">Zadnje prodani artikli</h3>
+                        <h3 class="block-title">Zadnje narudžbe</h3>
                     </div>
                     <div class="block-content">
-                        <table class="table table-borderless table-striped table-vcenter font-size-sm">
+                        <table class="table table-borderless table-striped table-vcenter font-size-sm dashboard-list-table dashboard-orders-table">
                             <tbody>
-                            @foreach ($products->take(9) as $product)
+                            @foreach ($orders as $order)
                                 <tr>
-                                    <td class="text-center" style="width: 5%;">
-                                        <a class="font-w600" href="{{ route('products.edit', ['product' => $product->product_id]) }}">{{ $product->id }}</a>
+                                    <td class="font-w600 text-center dashboard-list-id" style="width: 5%;">
+                                        <a href="{{ route('orders.show', ['order' => $order]) }}">{{ $order->id }}</a>
                                     </td>
-                                    <td>
-                                        <a href="{{ route('products.edit', ['product' => $product->product_id]) }}">{{ $product->name }}</a>
+                                    <td class="dashboard-list-main">
+                                        <a href="{{ route('orders.show', ['order' => $order]) }}">{{ $order->payment_fname . ' ' . $order->payment_lname }}</a>
                                     </td>
-                                    <td class="font-w600 text-right" style="width: 20%;">{{ \App\Helpers\Currency::main($product->price, true) }}</td>
+                                    <td class="text-right dashboard-list-status" style="width: 5%;">
+                                        @php($status = $order->status)
+                                        <span class="badge badge-pill badge-{{ $status->color ?? 'secondary' }}">
+                                            {{ $status->title ?? ('Nepoznat status (#' . $order->order_status_id . ')') }}
+                                        </span>
+                                    </td>
+                                    <td class="font-w600 text-right dashboard-list-price" style="width: 20%;">{{ \App\Helpers\Currency::main($order->total, true) }}</td>
                                 </tr>
                             @endforeach
                             </tbody>
@@ -208,28 +241,22 @@
                 </div>
             </div>
             <div class="col-xl-6">
-                <div class="block block-rounded">
+                <div class="block block-rounded dashboard-list-block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">Zadnje narudžbe</h3>
+                        <h3 class="block-title">Zadnje prodani artikli</h3>
                     </div>
                     <div class="block-content">
-                        <table class="table table-borderless table-striped table-vcenter font-size-sm">
+                        <table class="table table-borderless table-striped table-vcenter font-size-sm dashboard-list-table dashboard-products-table">
                             <tbody>
-                            @foreach ($orders as $order)
+                            @foreach ($products->take(9) as $product)
                                 <tr>
-                                    <td class="font-w600 text-center" style="width: 5%;">
-                                        <a href="{{ route('orders.edit', ['order' => $order]) }}">{{ $order->id }}</a>
+                                    <td class="text-center dashboard-list-id" style="width: 5%;">
+                                        <a class="font-w600" href="{{ route('products.edit', ['product' => $product->product_id]) }}">{{ $product->id }}</a>
                                     </td>
-                                    <td class="d-none d-sm-table-cell">
-                                        <a href="{{ route('orders.edit', ['order' => $order]) }}">{{ $order->payment_fname . ' ' . $order->payment_lname }}</a>
+                                    <td class="dashboard-list-main">
+                                        <a href="{{ route('products.edit', ['product' => $product->product_id]) }}">{{ $product->name }}</a>
                                     </td>
-                                    <td class="text-right" style="width: 5%;">
-                                        @php($status = $order->status)
-                                        <span class="badge badge-pill badge-{{ $status->color ?? 'secondary' }}">
-                                            {{ $status->title ?? ('Nepoznat status (#' . $order->order_status_id . ')') }}
-                                        </span>
-                                    </td>
-                                    <td class="font-w600 text-right" style="width: 20%;">{{ \App\Helpers\Currency::main($order->total, true) }}</td>
+                                    <td class="font-w600 text-right dashboard-list-price" style="width: 20%;">{{ \App\Helpers\Currency::main($product->price, true) }}</td>
                                 </tr>
                             @endforeach
                             </tbody>
@@ -243,20 +270,620 @@
 
 @push('css_after')
     <style>
-        .chart-container { position: relative; width: 100%; }
+        .dashboard-content {
+            padding-top: 1.25rem;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+        }
+
         .chart-container.small { height: 200px; }
         .chart-container.medium { height: 280px; }
-        .chart-container.large { height: 400px; }
-        .sales-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-        .sales-filters { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; flex-wrap: wrap; margin-left: auto; }
-        .sales-filter-item { flex: 0 0 auto; }
-        .sales-filter-select { min-width: 180px; }
+        .chart-container.large { height: 340px; }
+
+        .dashboard-kpi-grid {
+            margin-bottom: .25rem;
+        }
+
+        .dashboard-kpi-grid > .dashboard-kpi-col {
+            display: block;
+        }
+
+        .dashboard-kpi-card {
+            position: relative;
+            min-width: 100%;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            border: 1px solid #e8edf5;
+            border-left-width: 4px;
+            box-shadow: 0 1px 3px rgba(31, 45, 61, .06);
+            transition: box-shadow .15s ease, transform .15s ease;
+        }
+
+        .dashboard-kpi-card:hover {
+            box-shadow: 0 6px 18px rgba(31, 45, 61, .09);
+            transform: translateY(-1px);
+        }
+
+        .dashboard-kpi-content {
+            display: flex;
+            min-height: 0;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            padding: 1rem 1.2rem 1.05rem !important;
+        }
+
+        .dashboard-kpi-head {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 2.15rem;
+            gap: .7rem;
+        }
+
+        .dashboard-kpi-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            flex: 0 0 auto;
+            border-radius: .35rem;
+            font-size: .95rem;
+        }
+
+        .dashboard-kpi-card-warning {
+            border-left-color: #f3a41d;
+        }
+
+        .dashboard-kpi-card-warning .dashboard-kpi-icon {
+            color: #b76f00;
+            background: #fff4dc;
+        }
+
+        .dashboard-kpi-card-warning .dashboard-kpi-value {
+            color: #f3a41d;
+        }
+
+        .dashboard-kpi-card-success {
+            border-left-color: #75b843;
+        }
+
+        .dashboard-kpi-card-success .dashboard-kpi-icon {
+            color: #4f8425;
+            background: #eef8e7;
+        }
+
+        .dashboard-kpi-card-success .dashboard-kpi-value {
+            color: #75b843;
+        }
+
+        .dashboard-kpi-card-info {
+            border-left-color: #3f9be5;
+        }
+
+        .dashboard-kpi-card-info .dashboard-kpi-icon {
+            color: #1f6fae;
+            background: #e8f4ff;
+        }
+
+        .dashboard-kpi-card-info .dashboard-kpi-value {
+            color: #3f9be5;
+        }
+
+        .dashboard-kpi-card-primary {
+            border-left-color: #e50077;
+        }
+
+        .dashboard-kpi-card-primary .dashboard-kpi-icon {
+            color: #b6005f;
+            background: #ffe8f4;
+        }
+
+        .dashboard-kpi-card-primary .dashboard-kpi-value {
+            color: #e50077;
+        }
+
+        .dashboard-kpi-label,
+        .dashboard-sales-kpi-label {
+            line-height: 1.3;
+        }
+
+        .dashboard-kpi-label {
+            flex: 1 1 auto;
+            color: #687482;
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: 0;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .dashboard-kpi-value {
+            margin: .85rem 0 .65rem;
+            font-size: 1.75rem;
+            line-height: 1.05;
+        }
+
+        .dashboard-kpi-total {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: .6rem;
+            padding-top: .7rem;
+            border-top: 1px solid #edf1f7;
+            color: #687482;
+            line-height: 1.25;
+        }
+
+        .dashboard-kpi-total span {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .dashboard-kpi-total strong {
+            color: #3f4854;
+            font-size: .92rem;
+            font-weight: 700;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .dashboard-sales-block {
+            margin-bottom: 1.5rem;
+        }
+
+        .dashboard-sales-block .block-content {
+            padding-bottom: 1.15rem;
+            overflow-x: hidden;
+        }
+
+        .sales-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: .95rem 1.15rem;
+        }
+
+        .sales-filters {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: .75rem;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .sales-filter-item {
+            flex: 0 0 auto;
+        }
+
+        .sales-filter-select {
+            min-width: 180px;
+        }
+
+        .dashboard-sales-tabs {
+            border-bottom: 1px solid #e8edf5;
+        }
+
+        .dashboard-sales-tabs .nav-link {
+            border: 0;
+            border-bottom: 2px solid transparent;
+            color: #687482;
+            font-weight: 600;
+            letter-spacing: 0;
+            padding: .65rem .9rem;
+        }
+
+        .dashboard-sales-tabs .nav-link:hover {
+            color: #3f4854;
+        }
+
+        .dashboard-sales-tabs .nav-link.active {
+            border-bottom-color: #e50077;
+            color: #e50077;
+            background: transparent;
+        }
+
+        .dashboard-sales-kpis > .col-12 > .row {
+            margin-right: 0;
+            margin-left: 0;
+            overflow: hidden;
+            border: 1px solid #e8edf5;
+            border-radius: .35rem;
+            background: #f8fafc;
+        }
+
+        .dashboard-sales-kpis > .col-12 > .row > [class*=col-] {
+            margin-bottom: 0 !important;
+            padding-right: 0;
+            padding-left: 0;
+        }
+
+        .dashboard-sales-kpi {
+            height: 100%;
+            padding: .9rem 1rem;
+            border-right: 1px solid #e8edf5;
+        }
+
+        .dashboard-sales-kpis > .col-12 > .row > [class*=col-]:last-child .dashboard-sales-kpi {
+            border-right: 0;
+        }
+
+        .dashboard-sales-kpi-content {
+            min-width: 0;
+        }
+
+        .dashboard-sales-kpi-label {
+            color: #687482 !important;
+            font-size: .72rem !important;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        .dashboard-sales-kpi-value {
+            margin-top: .35rem;
+            color: #3f4854;
+            font-size: 1.35rem;
+            line-height: 1.15;
+        }
+
+        .dashboard-list-row {
+            margin-top: .5rem;
+        }
+
+        .dashboard-list-block {
+            height: calc(100% - 1.75rem);
+        }
+
+        .dashboard-list-block .block-header {
+            padding: .95rem 1.15rem;
+        }
+
+        .dashboard-list-block .block-content {
+            padding-top: .75rem;
+            padding-bottom: 1rem;
+        }
+
+        .dashboard-list-table {
+            margin-bottom: 0;
+        }
+
+        .dashboard-list-table td {
+            padding: .65rem .75rem;
+            vertical-align: middle;
+        }
+
+        .dashboard-list-table tbody tr {
+            border-top: 1px solid #edf1f7;
+        }
+
+        .dashboard-list-table tbody tr:first-child {
+            border-top: 0;
+        }
+
+        .dashboard-list-table.table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f8fafc;
+        }
+
+        .dashboard-list-table tbody tr:hover {
+            background-color: #fff7fb;
+        }
+
+        .dashboard-list-table a {
+            color: #e50077;
+        }
+
+        .dashboard-list-main {
+            min-width: 0;
+        }
+
+        .dashboard-list-main a {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dashboard-list-id a {
+            font-weight: 700;
+        }
+
+        .dashboard-list-price {
+            color: #3f4854;
+            white-space: nowrap;
+        }
+
+        .dashboard-list-status .badge {
+            padding: .27rem .55rem;
+            font-size: .68rem;
+            line-height: 1;
+        }
 
         @media (max-width: 767.98px) {
-            .sales-header { align-items: stretch; }
-            .sales-filters { width: 100%; justify-content: stretch; margin-left: 0; }
-            .sales-filter-item { flex: 1 1 100%; }
-            .sales-filter-select { min-width: 0; width: 100%; }
+            .dashboard-content {
+                padding-top: .875rem;
+            }
+
+            .dashboard-kpi-grid {
+                margin-right: -.4rem;
+                margin-left: -.4rem;
+                margin-bottom: .15rem;
+            }
+
+            .dashboard-kpi-col {
+                padding-right: .4rem;
+                padding-left: .4rem;
+            }
+
+            .dashboard-kpi-card {
+                margin-bottom: .8rem;
+            }
+
+            .dashboard-kpi-content {
+                padding: .8rem .75rem .85rem !important;
+            }
+
+            .dashboard-kpi-head {
+                align-items: center;
+                min-height: 2rem;
+                gap: .45rem;
+            }
+
+            .dashboard-kpi-icon {
+                width: 1.75rem;
+                height: 1.75rem;
+                font-size: .82rem;
+            }
+
+            .dashboard-kpi-value {
+                margin: .65rem 0 .5rem;
+                font-size: 1.45rem;
+            }
+
+            .dashboard-kpi-label {
+                font-size: .68rem;
+                line-height: 1.2;
+                text-align: left;
+            }
+
+            .dashboard-kpi-total {
+                display: block;
+                padding-top: .55rem;
+                font-size: .76rem;
+                text-align: left;
+            }
+
+            .dashboard-kpi-total span {
+                display: block;
+                margin-bottom: .12rem;
+                font-size: .62rem;
+            }
+
+            .dashboard-kpi-total strong {
+                display: block;
+                font-size: .8rem;
+                text-align: left;
+            }
+
+            .dashboard-sales-block {
+                margin-top: .1rem !important;
+            }
+
+            .sales-header {
+                align-items: stretch;
+                padding: .9rem .95rem;
+            }
+
+            .sales-header .block-title {
+                width: 100%;
+            }
+
+            .sales-filters {
+                display: grid;
+                width: 100%;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                justify-content: stretch;
+                gap: .5rem;
+                margin-left: 0;
+            }
+
+            .sales-filter-item {
+                min-width: 0;
+            }
+
+            .sales-filter-select {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .dashboard-sales-tabs {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: .5rem;
+                border-bottom: 0;
+            }
+
+            .dashboard-sales-tabs .nav-item {
+                margin-bottom: 0;
+            }
+
+            .dashboard-sales-tabs .nav-link {
+                width: 100%;
+                min-height: 42px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid #dfe7f3;
+                border-radius: .25rem;
+                text-align: center;
+                white-space: normal;
+            }
+
+            .dashboard-sales-tabs .nav-link.active {
+                border-color: #e50077;
+                color: #e50077;
+            }
+
+            .dashboard-sales-kpis {
+                margin-bottom: .5rem !important;
+            }
+
+            .dashboard-sales-kpis > .col-12 > .row {
+                margin-right: 0;
+                margin-left: 0;
+            }
+
+            .dashboard-sales-kpis > .col-12 > .row > [class*=col-]:nth-child(2n) .dashboard-sales-kpi {
+                border-right: 0;
+            }
+
+            .dashboard-sales-kpis > .col-12 > .row > [class*=col-]:nth-child(n+3) .dashboard-sales-kpi {
+                border-top: 1px solid #e8edf5;
+            }
+
+            .dashboard-sales-kpi {
+                padding: .75rem .8rem;
+            }
+
+            .dashboard-sales-kpi-content {
+                min-height: 0;
+            }
+
+            .dashboard-sales-kpi-value {
+                font-size: 1.15rem;
+                line-height: 1.2;
+            }
+
+            .dashboard-sales-kpi-label {
+                font-size: .66rem !important;
+            }
+
+            .chart-container.large {
+                height: 260px;
+            }
+
+            .dashboard-list-row {
+                margin-top: .3rem;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .dashboard-list-block .block-content {
+                overflow-x: visible;
+            }
+
+            .dashboard-list-table {
+                min-width: 0 !important;
+                margin-bottom: 0;
+            }
+
+            .dashboard-list-table,
+            .dashboard-list-table tbody,
+            .dashboard-list-table tr,
+            .dashboard-list-table td {
+                display: block;
+                width: 100% !important;
+            }
+
+            .dashboard-list-table tr {
+                position: relative;
+                margin-bottom: .5rem;
+                padding: .65rem .75rem;
+                border: 1px solid #edf1f7;
+                border-radius: .35rem;
+                background: #fff;
+            }
+
+            .dashboard-orders-table tr {
+                min-height: 4.15rem;
+            }
+
+            .dashboard-list-table tr:last-child {
+                margin-bottom: 0;
+            }
+
+            .dashboard-list-table td {
+                padding: .1rem 0 !important;
+                border: 0 !important;
+                text-align: left !important;
+            }
+
+            .dashboard-list-table .dashboard-list-id {
+                font-size: .74rem;
+                line-height: 1.2;
+            }
+
+            .dashboard-list-table .dashboard-list-main {
+                margin-top: .12rem;
+                padding-right: 6.2rem !important;
+                font-size: .86rem;
+                line-height: 1.3;
+            }
+
+            .dashboard-list-table .dashboard-list-main a {
+                white-space: normal;
+            }
+
+            .dashboard-list-table .dashboard-list-price {
+                position: absolute;
+                top: .65rem;
+                right: .75rem;
+                width: auto !important;
+                font-size: .86rem;
+                line-height: 1.2;
+                text-align: right !important;
+                white-space: nowrap;
+            }
+
+            .dashboard-list-table .dashboard-list-status {
+                margin-top: .4rem;
+            }
+
+            .dashboard-orders-table .dashboard-list-status {
+                position: absolute;
+                top: 1.9rem;
+                right: .75rem;
+                width: auto !important;
+                max-width: 6.25rem;
+                margin-top: 0;
+                text-align: right !important;
+            }
+
+            .dashboard-orders-table .dashboard-list-status .badge {
+                max-width: 100%;
+                padding: .16rem .38rem;
+                overflow: hidden;
+                font-size: .54rem;
+                line-height: 1.05;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 374.98px) {
+            .sales-filters,
+            .dashboard-sales-tabs {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-kpi-content {
+                padding-right: .65rem !important;
+                padding-left: .65rem !important;
+            }
+
+            .dashboard-kpi-label {
+                font-size: .62rem;
+            }
+
+            .dashboard-kpi-total strong {
+                font-size: .74rem;
+            }
         }
     </style>
 @endpush

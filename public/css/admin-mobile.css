@@ -1,0 +1,178 @@
+@media (max-width: 767.98px) {
+    html,
+    body,
+    #page-container {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    #page-container > #page-header .content-header,
+    #page-container > #page-header .content,
+    #page-container > #main-container .content,
+    #page-container > #page-footer .content {
+        padding-right: .875rem !important;
+        padding-left: .875rem !important;
+    }
+
+    #page-header .content-header {
+        min-height: 56px;
+        gap: .5rem;
+    }
+
+    #page-header .btn-dual {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        min-height: 38px;
+        padding-right: .625rem;
+        padding-left: .625rem;
+    }
+
+    #page-header .content-header > .d-flex {
+        min-width: 0;
+        gap: .35rem;
+    }
+
+    #page-header .content-header > .d-flex .btn {
+        margin-right: 0 !important;
+    }
+
+    .bg-body-light .content-full {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    .breadcrumb {
+        display: none;
+    }
+
+    .font-size-h2 {
+        font-size: 1.35rem !important;
+        line-height: 1.25;
+    }
+
+    .block {
+        margin-bottom: 1rem;
+    }
+
+    .block-header {
+        align-items: flex-start;
+        min-height: 0;
+        padding: .9rem 1rem;
+        gap: .75rem;
+        flex-wrap: wrap;
+    }
+
+    .block-title {
+        min-width: 0;
+        margin-bottom: 0;
+        font-size: 1rem;
+        line-height: 1.35;
+    }
+
+    .block-options {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        width: 100%;
+        gap: .5rem;
+        margin-left: 0;
+    }
+
+    .block-options.flex-nowrap,
+    .block-options .flex-nowrap {
+        flex-wrap: wrap !important;
+    }
+
+    .block-options .btn,
+    .block-options .btn-group,
+    .block-options .dropdown,
+    .block-options .block-options-item {
+        margin: 0 !important;
+    }
+
+    .block-options .btn {
+        white-space: nowrap;
+    }
+
+    .block-content {
+        padding: 1rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-responsive {
+        margin-right: -1rem;
+        margin-left: -1rem;
+        padding-right: 1rem;
+        padding-left: 1rem;
+    }
+
+    .table-responsive > .table,
+    .block-content > table.table {
+        min-width: 640px;
+    }
+
+    .form-group {
+        margin-bottom: .9rem;
+    }
+
+    .form-control,
+    .custom-select,
+    .select2-container .select2-selection--single {
+        min-height: 42px;
+    }
+
+    .input-group {
+        min-width: 0;
+    }
+
+    .input-group .form-control {
+        min-width: 0;
+    }
+
+    .btn:not(.btn-sm) {
+        min-height: 38px;
+    }
+
+    .dropdown-menu {
+        max-width: calc(100vw - 1.5rem);
+    }
+
+    .modal-dialog {
+        margin: .5rem;
+    }
+
+    .modal-content {
+        max-height: calc(100vh - 1rem);
+        overflow: auto;
+    }
+
+    .block-content-full.text-right,
+    .col-md-6.text-right,
+    .col-sm-8.text-right,
+    .col-md-12.text-right {
+        text-align: left !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #page-container > #main-container .content {
+        padding-top: .875rem !important;
+    }
+
+    .block-header,
+    .block-content {
+        padding-right: .875rem;
+        padding-left: .875rem;
+    }
+
+    .table-responsive {
+        margin-right: -.875rem;
+        margin-left: -.875rem;
+        padding-right: .875rem;
+        padding-left: .875rem;
+    }
+}

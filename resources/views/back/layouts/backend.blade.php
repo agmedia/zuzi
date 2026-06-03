@@ -28,6 +28,7 @@
         @stack('css_before')
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
         <link rel="stylesheet" id="css-main" href="{{ asset('css/dashmix.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/admin-mobile.css') }}">
 
         <!-- You can include a specific file from public/css/themes/ folder to alter the default color theme of the template. eg: -->
         <!-- <link rel="stylesheet" id="css-theme" href="{{ asset('css/themes/xwork.css') }}"> -->
