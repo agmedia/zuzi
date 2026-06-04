@@ -24,7 +24,7 @@
             <!-- Quick Overview -->
         <div class="row row-deck dashboard-kpi-grid">
                  <div class="col-6 col-lg-3 dashboard-kpi-col">
-                     <a class="block block-rounded block-link-shadow dashboard-kpi-card dashboard-kpi-card-warning" href="{{ route('orders', ['status' => \App\Models\Back\Orders\Order::dashboardProcessingStatusIds()]) }}">
+                     <a class="block block-rounded block-link-shadow dashboard-kpi-card dashboard-kpi-card-warning" href="{{ route('orders', ['status' => config('settings.order.status.processing', 11)]) }}">
                          <div class="block-content py-5 dashboard-kpi-content">
                              <div class="dashboard-kpi-head">
                                  <span class="dashboard-kpi-icon"><i class="fa fa-hourglass-half"></i></span>
