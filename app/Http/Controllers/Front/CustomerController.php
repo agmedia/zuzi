@@ -92,9 +92,10 @@ class CustomerController extends Controller
         $trackingService = app(OrderTrackingService::class);
         $trackingCarrier = $trackingService->resolveCarrier($order);
         $trackingCarrierLabel = $trackingService->carrierLabel($trackingCarrier);
+        $hasTrackingParcel = $this->hasTrackingParcel($order);
         $canRefreshTracking = $this->canRefreshTracking($order, $trackingCarrier);
 
-        return view('front.customer.narudzba', compact('user', 'order', 'trackingCarrier', 'trackingCarrierLabel', 'canRefreshTracking'));
+        return view('front.customer.narudzba', compact('user', 'order', 'trackingCarrier', 'trackingCarrierLabel', 'hasTrackingParcel', 'canRefreshTracking'));
     }
 
     public function refreshOrderTracking(Request $request, $order)
@@ -206,10 +207,15 @@ class CustomerController extends Controller
         }
 
         if ($trackingCarrier === BoxNowService::CARRIER) {
-            return true;
+            return $this->hasTrackingParcel($order);
         }
 
         return false;
+    }
+
+    private function hasTrackingParcel(Order $order): bool
+    {
+        return filled($order->tracking_code) || filled($order->shipping_parcel_id);
     }
 
     private function reviewsForUserQuery(User $user)

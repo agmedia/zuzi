@@ -38,6 +38,7 @@ class Order extends Model
     protected $casts = [
         'review_request_sent_at' => 'datetime',
         'shipping_tracking_updated_at' => 'datetime',
+        'shipping_tracking_email_sent_at' => 'datetime',
         'shipping_tracking_payload' => 'array',
     ];
 

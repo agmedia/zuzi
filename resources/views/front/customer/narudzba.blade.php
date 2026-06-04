@@ -255,49 +255,47 @@
                         </div>
                     </div>
 
-                    <div class="account-order-meta-strip account-order-meta-strip--tracking">
-                        <div>
-                            <div class="account-order-meta-label">Dostava</div>
-                            <div class="account-order-meta-value">{{ $order->shipping_method ?: 'Nije upisano' }}</div>
-                            @if($trackingCarrier)
-                                <div class="account-order-meta-note">{{ $trackingCarrierLabel }}</div>
-                            @endif
-                        </div>
-                        <div>
-                            <div class="account-order-meta-label">Tracking</div>
-                            @if($order->shipping_tracking_status)
-                                <div class="account-order-meta-value">{{ $order->shipping_tracking_status }}</div>
-                                @if($trackingDate)
-                                    <div class="account-order-meta-note">Osvježeno {{ $trackingDate }}</div>
+                    @if($hasTrackingParcel)
+                        <div class="account-order-meta-strip account-order-meta-strip--tracking">
+                            <div>
+                                <div class="account-order-meta-label">Dostava</div>
+                                <div class="account-order-meta-value">{{ $order->shipping_method ?: 'Nije upisano' }}</div>
+                                @if($trackingCarrier)
+                                    <div class="account-order-meta-note">{{ $trackingCarrierLabel }}</div>
                                 @endif
-                            @else
-                                <div class="account-order-meta-value text-muted">Nije dostupno</div>
-                            @endif
-                        </div>
-                        <div>
-                            <div class="account-order-meta-label">Broj pošiljke</div>
-                            @if($order->tracking_code || $order->shipping_parcel_id)
+                            </div>
+                            <div>
+                                <div class="account-order-meta-label">Tracking</div>
+                                @if($order->shipping_tracking_status)
+                                    <div class="account-order-meta-value">{{ $order->shipping_tracking_status }}</div>
+                                    @if($trackingDate)
+                                        <div class="account-order-meta-note">Osvježeno {{ $trackingDate }}</div>
+                                    @endif
+                                @else
+                                    <div class="account-order-meta-value text-muted">Nije dostupno</div>
+                                @endif
+                            </div>
+                            <div>
+                                <div class="account-order-meta-label">Broj pošiljke</div>
                                 <div class="account-order-meta-value">{{ $order->tracking_code ?: $order->shipping_parcel_id }}</div>
-                            @else
-                                <div class="account-order-meta-value text-muted">Nije upisan</div>
-                            @endif
+                            </div>
+                            <div class="account-order-actions">
+                                @if($order->shipping_tracking_url)
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ $order->shipping_tracking_url }}" target="_blank" rel="noopener">
+                                        Praćenje pošiljke
+                                    </a>
+                                @endif
+                                @if($canRefreshTracking)
+                                    <form action="{{ route('moje-narudzbe.tracking.refresh', ['order' => $order->id]) }}" method="POST" class="mb-0">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-primary">
+                                            <i class="ci-reload me-2"></i>Osvježi status
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
                         </div>
-                        <div class="account-order-actions">
-                            @if($order->shipping_tracking_url)
-                                <a class="btn btn-sm btn-outline-primary" href="{{ $order->shipping_tracking_url }}" target="_blank" rel="noopener">
-                                    Praćenje pošiljke
-                                </a>
-                            @endif
-                            @if($canRefreshTracking)
-                                <form action="{{ route('moje-narudzbe.tracking.refresh', ['order' => $order->id]) }}" method="POST" class="mb-0">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="ci-reload me-2"></i>Osvježi status
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
-                    </div>
+                    @endif
 
                     <div class="account-section">
                         <h3 class="account-section-title"><i class="ci-cart"></i>Artikli</h3>

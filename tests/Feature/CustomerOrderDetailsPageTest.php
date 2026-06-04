@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\UserDetail;
+use App\Services\Shipping\BoxNowService;
 use App\Services\Shipping\GlsTrackingService;
 use App\Services\Shipping\OrderTrackingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,6 +49,26 @@ class CustomerOrderDetailsPageTest extends TestCase
             ->assertSee('U dostavi')
             ->assertSee('Osvježi status')
             ->assertSee(route('moje-narudzbe.tracking.refresh', ['order' => $orderId]), false);
+    }
+
+    public function test_customer_order_page_hides_tracking_section_until_parcel_exists(): void
+    {
+        $user = $this->createCustomer('customer@example.com');
+        $orderId = $this->createOrderFor($user, [
+            'shipping_carrier' => BoxNowService::CARRIER,
+            'shipping_method' => 'BoxNow',
+            'shipping_code' => 'boxnow',
+            'tracking_code' => '',
+            'shipping_parcel_id' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('moje-narudzbe.show', ['order' => $orderId]))
+            ->assertOk()
+            ->assertSee('Narudžba #' . $orderId)
+            ->assertDontSee('<div class="account-order-meta-label">Broj pošiljke</div>', false)
+            ->assertDontSee('Osvježi status')
+            ->assertDontSee(route('moje-narudzbe.tracking.refresh', ['order' => $orderId]), false);
     }
 
     public function test_customer_cannot_view_another_customers_order_page(): void

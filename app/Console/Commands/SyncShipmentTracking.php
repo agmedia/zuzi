@@ -35,6 +35,15 @@ class SyncShipmentTracking extends Command
                     ->orWhere('shipping_code', 'like', '%boxnow%');
             })
             ->where(function ($query) {
+                $query->where(function ($trackingQuery) {
+                    $trackingQuery->whereNotNull('tracking_code')
+                        ->where('tracking_code', '<>', '');
+                })->orWhere(function ($trackingQuery) {
+                    $trackingQuery->whereNotNull('shipping_parcel_id')
+                        ->where('shipping_parcel_id', '<>', '');
+                });
+            })
+            ->where(function ($query) {
                 $query->whereNull('shipping_tracking_status_code')
                     ->orWhereNotIn('shipping_tracking_status_code', ['5', '92', 'delivered', 'returned', 'expired', 'expired-return', 'canceled', 'cancelled']);
             })

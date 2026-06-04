@@ -2,10 +2,14 @@
 
 namespace App\Services\Shipping;
 
+use App\Mail\ShippingTrackingAvailable;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 class OrderTrackingService
@@ -41,6 +45,7 @@ class OrderTrackingService
     {
         $trackedAt = $this->trackedAt($tracking['tracked_at'] ?? null);
         $currentTrackedAt = $order->shipping_tracking_updated_at ? Carbon::make($order->shipping_tracking_updated_at) : null;
+        $hadTrackingIdentifier = $this->hasTrackingIdentifier($order);
 
         if ($currentTrackedAt && $trackedAt->lt($currentTrackedAt)) {
             return [
@@ -71,6 +76,8 @@ class OrderTrackingService
         if ($writeHistory && $newStatusCode !== '' && $newStatusCode !== $previousStatusCode) {
             $this->storeHistory($order, $tracking);
         }
+
+        $this->sendTrackingAvailableMail($order, $hadTrackingIdentifier);
 
         return [
             'updated' => true,
@@ -164,5 +171,44 @@ class OrderTrackingService
             'status' => 0,
             'comment' => 'Tracking update (' . $carrier . '): ' . $status,
         ]));
+    }
+
+    private function sendTrackingAvailableMail(Order $order, bool $hadTrackingIdentifier): void
+    {
+        if ($hadTrackingIdentifier || ! $this->hasTrackingIdentifier($order)) {
+            return;
+        }
+
+        if (! filled($order->payment_email) || ! Schema::hasColumn('orders', 'shipping_tracking_email_sent_at')) {
+            return;
+        }
+
+        if ($order->shipping_tracking_email_sent_at) {
+            return;
+        }
+
+        try {
+            Mail::to($order->payment_email)->send(new ShippingTrackingAvailable($order->fresh(['products', 'totals']) ?: $order));
+
+            $order->forceFill([
+                'shipping_tracking_email_sent_at' => now(),
+            ])->save();
+
+            OrderHistory::store($order->id, new Request([
+                'status' => 0,
+                'comment' => 'Kupcu poslan email s podacima za praćenje pošiljke.',
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('Shipment tracking email failed.', [
+                'order_id' => $order->id,
+                'email' => $order->payment_email,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function hasTrackingIdentifier(Order $order): bool
+    {
+        return filled($order->tracking_code) || filled($order->shipping_parcel_id);
     }
 }
