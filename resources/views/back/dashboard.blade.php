@@ -24,7 +24,7 @@
             <!-- Quick Overview -->
         <div class="row row-deck dashboard-kpi-grid">
                  <div class="col-6 col-lg-3 dashboard-kpi-col">
-                     <a class="block block-rounded block-link-shadow dashboard-kpi-card dashboard-kpi-card-warning" href="{{ route('orders') }}">
+                     <a class="block block-rounded block-link-shadow dashboard-kpi-card dashboard-kpi-card-warning" href="{{ route('orders', ['status' => \App\Models\Back\Orders\Order::dashboardProcessingStatusIds()]) }}">
                          <div class="block-content py-5 dashboard-kpi-content">
                              <div class="dashboard-kpi-head">
                                  <span class="dashboard-kpi-icon"><i class="fa fa-hourglass-half"></i></span>
@@ -709,7 +709,7 @@
 
         .dashboard-breakdown-list {
             display: grid;
-            gap: .45rem;
+            gap: 0;
             margin-top: .65rem;
             max-height: 7.35rem;
             padding-right: .25rem;
@@ -738,10 +738,10 @@
         .dashboard-breakdown-row {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
-            align-items: baseline;
-            min-height: 2.05rem;
-            gap: .75rem;
-            padding-bottom: .45rem;
+            align-items: center;
+            min-height: 2.55rem;
+            gap: 1rem;
+            padding: .28rem 0 .58rem;
             border-bottom: 1px solid #edf1f7;
         }
 

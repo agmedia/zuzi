@@ -86,6 +86,9 @@
                     </div>
                     <div class="dropdown">
                         @php($orderFilterQuery = request()->except(['page', 'status', 'completed_without_promo_mail']))
+                        @php($currentStatusIds = collect((array) request()->input('status', []))->filter(fn ($status) => $status !== null && $status !== '')->map(fn ($status) => (int) $status)->filter(fn ($status) => $status > 0)->unique()->sort()->values()->all())
+                        @php($processingStatusIds = \App\Models\Back\Orders\Order::dashboardProcessingStatusIds())
+                        @php($processingStatusIdsSorted = collect($processingStatusIds)->sort()->values()->all())
                         <button type="button" class="btn btn-light d-inline-flex align-items-center justify-content-center px-2 px-sm-3" id="dropdown-ecom-filters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Filtriraj">
                             <i class="fa fa-filter mr-sm-1"></i>
                             <span class="d-none d-sm-inline">Filtriraj</span>
@@ -95,13 +98,18 @@
                             <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('orders', $orderFilterQuery) }}">
                                 Sve narudžbe
                             </a>
+                            <a class="dropdown-item d-flex align-items-center justify-content-between {{ $currentStatusIds === $processingStatusIdsSorted ? 'active' : '' }}" href="{{ route('orders', array_merge($orderFilterQuery, ['status' => $processingStatusIds])) }}">
+                                <span class="badge badge-pill badge-warning">
+                                    <i class="fa fa-hourglass-half mr-1"></i>Narudžbe u obradi
+                                </span>
+                            </a>
                             <a class="dropdown-item d-flex align-items-center justify-content-between {{ request()->boolean('completed_without_promo_mail') ? 'active' : '' }}" href="{{ route('orders', array_merge($orderFilterQuery, ['completed_without_promo_mail' => 1])) }}">
                                 <span class="badge badge-pill badge-warning">
                                     <i class="fa fa-envelope-open mr-1"></i>Završeno bez maila
                                 </span>
                             </a>
                             @foreach ($statuses as $status)
-                                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('orders', array_merge($orderFilterQuery, ['status' => $status->id])) }}">
+                                <a class="dropdown-item d-flex align-items-center justify-content-between {{ $currentStatusIds === [(int) $status->id] ? 'active' : '' }}" href="{{ route('orders', array_merge($orderFilterQuery, ['status' => $status->id])) }}">
                                     <span class="badge badge-pill badge-{{ $status->color ?? 'secondary' }}">{{ $status->title }}</span>
                                 </a>
                             @endforeach
@@ -116,7 +124,9 @@
                         <input type="hidden" name="completed_without_promo_mail" value="1">
                     @endif
                     @if (request()->filled('status') && ! request()->boolean('completed_without_promo_mail'))
-                        <input type="hidden" name="status" value="{{ request()->input('status') }}">
+                        @foreach ((array) request()->input('status') as $status)
+                            <input type="hidden" name="status[]" value="{{ $status }}">
+                        @endforeach
                     @endif
                     @if (request()->boolean('gift_wrap'))
                         <input type="hidden" name="gift_wrap" value="1">

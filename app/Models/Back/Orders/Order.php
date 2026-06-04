@@ -487,8 +487,20 @@ class Order extends Model
                                 ->where('coupon', '!=', ''));
                     });
             });
-        } elseif ($request->has('status') && $request->input('status') !== '') {
-            $query->where('order_status_id', '=', $request->input('status'));
+        } else {
+            $statusIds = collect((array) $request->input('status', []))
+                ->filter(static fn ($status) => $status !== null && $status !== '')
+                ->map(static fn ($status) => (int) $status)
+                ->filter(static fn ($status) => $status > 0)
+                ->unique()
+                ->values()
+                ->all();
+
+            if (count($statusIds) === 1) {
+                $query->where('order_status_id', '=', $statusIds[0]);
+            } elseif (count($statusIds) > 1) {
+                $query->whereIn('order_status_id', $statusIds);
+            }
         }
 
         if ($request->boolean('gift_wrap')) {
