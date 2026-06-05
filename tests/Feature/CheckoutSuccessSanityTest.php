@@ -105,11 +105,65 @@ class CheckoutSuccessSanityTest extends TestCase
         ]);
     }
 
-    private function createOrder(User $user, float $total, $createdAt = null): AdminOrder
+    public function test_success_flow_saves_first_checkout_address_to_customer_details(): void
+    {
+        Bus::fake();
+
+        $user = User::factory()->create([
+            'email' => 'ana@example.test',
+        ]);
+
+        $this->actingAs($user);
+
+        $order = $this->createOrder($user, 44.50, null, [
+            'payment_fname' => 'Ana',
+            'payment_lname' => 'Anic',
+            'payment_address' => 'Malesnica bb',
+            'payment_zip' => '10000',
+            'payment_city' => 'Zagreb',
+            'payment_state' => 'Croatia',
+            'payment_phone' => '0992153975',
+            'shipping_fname' => 'Ana',
+            'shipping_lname' => 'Anic',
+            'shipping_address' => 'Malesnica bb',
+            'shipping_zip' => '10000',
+            'shipping_city' => 'Zagreb',
+            'shipping_state' => 'Croatia',
+            'shipping_phone' => '0992153975',
+            'company' => 'Zuzi Obrt',
+            'oib' => '12345678901',
+        ]);
+
+        session()->start();
+        session([
+            config('session.cart') => 'manual-cart',
+        ]);
+        CheckoutSession::setOrder(['id' => $order->id]);
+
+        $response = app(CheckoutController::class)->success(Request::create('/uspjeh', 'GET'));
+
+        $this->assertInstanceOf(View::class, $response);
+        $this->assertDatabaseHas('user_details', [
+            'user_id' => $user->id,
+            'fname' => 'Ana',
+            'lname' => 'Anic',
+            'address' => 'Malesnica bb',
+            'zip' => '10000',
+            'city' => 'Zagreb',
+            'state' => 'Croatia',
+            'phone' => '0992153975',
+            'company' => 'Zuzi Obrt',
+            'oib' => '12345678901',
+            'role' => 'customer',
+            'status' => 1,
+        ]);
+    }
+
+    private function createOrder(User $user, float $total, $createdAt = null, array $overrides = []): AdminOrder
     {
         $createdAt = $createdAt ?: now();
 
-        return AdminOrder::query()->create([
+        return AdminOrder::query()->create(array_merge([
             'user_id' => $user->id,
             'affiliate_id' => 0,
             'order_status_id' => 1,
@@ -120,6 +174,7 @@ class CheckoutSuccessSanityTest extends TestCase
             'payment_address' => 'Test 1',
             'payment_zip' => '10000',
             'payment_city' => 'Zagreb',
+            'payment_state' => 'Croatia',
             'payment_phone' => '',
             'payment_email' => $user->email,
             'payment_method' => 'Plaćanje pouzećem',
@@ -131,6 +186,7 @@ class CheckoutSuccessSanityTest extends TestCase
             'shipping_address' => 'Test 1',
             'shipping_zip' => '10000',
             'shipping_city' => 'Zagreb',
+            'shipping_state' => 'Croatia',
             'shipping_phone' => '',
             'shipping_email' => $user->email,
             'shipping_method' => 'Dostava',
@@ -141,7 +197,7 @@ class CheckoutSuccessSanityTest extends TestCase
             'tracking_code' => '',
             'created_at' => $createdAt,
             'updated_at' => $createdAt,
-        ]);
+        ], $overrides));
     }
 
     private function createSchema(): void
@@ -168,6 +224,7 @@ class CheckoutSuccessSanityTest extends TestCase
             $table->string('payment_address');
             $table->string('payment_zip');
             $table->string('payment_city');
+            $table->string('payment_state')->nullable();
             $table->string('payment_phone')->nullable();
             $table->string('payment_email');
             $table->string('payment_method');
@@ -179,6 +236,7 @@ class CheckoutSuccessSanityTest extends TestCase
             $table->string('shipping_address');
             $table->string('shipping_zip');
             $table->string('shipping_city');
+            $table->string('shipping_state')->nullable();
             $table->string('shipping_phone')->nullable();
             $table->string('shipping_email');
             $table->string('shipping_method');
@@ -189,6 +247,26 @@ class CheckoutSuccessSanityTest extends TestCase
             $table->string('tracking_code');
             $table->boolean('shipped')->default(false);
             $table->boolean('printed')->default(false);
+            $table->timestamps();
+        });
+
+        Schema::create('user_details', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id')->index();
+            $table->string('fname');
+            $table->string('lname')->nullable();
+            $table->string('address')->nullable();
+            $table->string('zip')->nullable();
+            $table->string('city')->nullable();
+            $table->string('state')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('company')->nullable();
+            $table->string('oib')->nullable();
+            $table->string('avatar')->nullable();
+            $table->longText('bio')->nullable();
+            $table->string('social')->nullable();
+            $table->string('role');
+            $table->boolean('status')->default(1);
             $table->timestamps();
         });
 

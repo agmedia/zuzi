@@ -41,7 +41,9 @@
 	                            </tr>
                             </thead>
                             <tbody>
+                            @php($trackingService = app(\App\Services\Shipping\OrderTrackingService::class))
                             @forelse ($orders as $order)
+                                @php($trackingUrl = $trackingService->trackingUrlForOrder($order))
                                 <tr>
 	                                    <td class="py-3"><a class="nav-link-style fw-medium fs-sm" href="{{ route('moje-narudzbe.show', ['order' => $order->id]) }}">{{ $order->id }}</a></td>
 	                                    <td class="py-3">{{ \Illuminate\Support\Carbon::make($order->created_at)->format('d.m.Y') }}</td>
@@ -49,9 +51,9 @@
 	                                    <td class="py-3">
 	                                        @if($order->shipping_tracking_status)
 	                                            <span class="d-block fs-sm">{{ $order->shipping_tracking_status }}</span>
-	                                            @if($order->shipping_tracking_url)
-	                                                <a class="fs-sm" href="{{ $order->shipping_tracking_url }}" target="_blank" rel="noopener">Praćenje pošiljke</a>
-	                                            @endif
+                                            @if($trackingUrl)
+                                                <a class="fs-sm" href="{{ $trackingUrl }}" target="_blank" rel="noopener">Praćenje pošiljke</a>
+                                            @endif
 	                                        @else
 	                                            <span class="text-muted fs-sm">Nije dostupno</span>
 	                                        @endif

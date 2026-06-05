@@ -38,4 +38,14 @@ class BoxNowWebhookPayloadTest extends TestCase
         $this->assertTrue(app(BoxNowService::class)->verifyWebhookSignature($body, $signature));
         $this->assertFalse(app(BoxNowService::class)->verifyWebhookSignature($body, 'invalid'));
     }
+
+    public function test_tracking_url_prefills_parcel_number(): void
+    {
+        config(['services.boxnow.tracking_url' => 'https://track.boxnow.hr/en/track']);
+
+        $this->assertSame(
+            'https://track.boxnow.hr/en?track=5936763647',
+            app(BoxNowService::class)->trackingUrl('5936763647')
+        );
+    }
 }

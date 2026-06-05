@@ -319,6 +319,89 @@ class OrderHelper
     /**
      * @return $this
      */
+    public function syncCustomerDetails()
+    {
+        if (! $this->getOrder()) {
+            return $this;
+        }
+
+        $user_id = intval($this->order->user_id);
+
+        if (! $user_id) {
+            return $this;
+        }
+
+        $details = UserDetail::query()->firstOrNew(['user_id' => $user_id]);
+
+        foreach ($this->customerDetailFieldsFromOrder() as $field => $value) {
+            if ($this->isBlankCustomerDetail($details->{$field} ?? null) && ! $this->isBlankCustomerDetail($value)) {
+                $details->{$field} = $value;
+            }
+        }
+
+        if ($this->isBlankCustomerDetail($details->avatar ?? null)) {
+            $details->avatar = 'media/avatars/avatar1.jpg';
+        }
+
+        if ($this->isBlankCustomerDetail($details->bio ?? null)) {
+            $details->bio = '';
+        }
+
+        if ($this->isBlankCustomerDetail($details->social ?? null)) {
+            $details->social = '';
+        }
+
+        if ($this->isBlankCustomerDetail($details->role ?? null)) {
+            $details->role = 'customer';
+        }
+
+        if (is_null($details->status ?? null)) {
+            $details->status = 1;
+        }
+
+        $details->save();
+
+        return $this;
+    }
+
+
+    private function customerDetailFieldsFromOrder(): array
+    {
+        return [
+            'fname' => $this->firstFilledCustomerDetail($this->order->shipping_fname ?? null, $this->order->payment_fname ?? null),
+            'lname' => $this->firstFilledCustomerDetail($this->order->shipping_lname ?? null, $this->order->payment_lname ?? null),
+            'address' => $this->firstFilledCustomerDetail($this->order->shipping_address ?? null, $this->order->payment_address ?? null),
+            'zip' => $this->firstFilledCustomerDetail($this->order->shipping_zip ?? null, $this->order->payment_zip ?? null),
+            'city' => $this->firstFilledCustomerDetail($this->order->shipping_city ?? null, $this->order->payment_city ?? null),
+            'state' => $this->firstFilledCustomerDetail($this->order->shipping_state ?? null, $this->order->payment_state ?? null),
+            'phone' => $this->firstFilledCustomerDetail($this->order->shipping_phone ?? null, $this->order->payment_phone ?? null),
+            'company' => $this->order->company ?? null,
+            'oib' => $this->order->oib ?? null,
+        ];
+    }
+
+
+    private function firstFilledCustomerDetail(...$values): string
+    {
+        foreach ($values as $value) {
+            if (! $this->isBlankCustomerDetail($value)) {
+                return trim((string) $value);
+            }
+        }
+
+        return '';
+    }
+
+
+    private function isBlankCustomerDetail($value): bool
+    {
+        return trim((string) $value) === '';
+    }
+
+
+    /**
+     * @return $this
+     */
     public function forgetCheckoutCache()
     {
         CheckoutSession::forgetCheckout();
@@ -401,7 +484,7 @@ class OrderHelper
      */
     public static function get(string|int $order_id)
     {
-        if (self::$_instance === null) {
+        if (self::$_instance === null || intval(self::$_instance->order_id) !== intval($order_id)) {
             self::$_instance = new OrderHelper($order_id);
         }
 

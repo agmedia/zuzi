@@ -4,6 +4,7 @@
     @php
         $customerName = trim((string) $order->payment_fname);
         $trackingCode = $order->tracking_code ?: $order->shipping_parcel_id;
+        $trackingUrl = app(\App\Services\Shipping\OrderTrackingService::class)->trackingUrlForOrder($order);
     @endphp
 
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -44,13 +45,13 @@
             </td>
         </tr>
 
-        @if($order->shipping_tracking_url)
+        @if($trackingUrl)
             <tr>
                 <td class="ag-mail-tableset" style="padding-top: 0;">
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                         <tr>
                             <td>
-                                <a href="{{ $order->shipping_tracking_url }}" class="ag-btn" style="width: 220px; color: #ffffff !important;">Prati pošiljku</a>
+                                <a href="{{ $trackingUrl }}" class="ag-btn" style="width: 220px; color: #ffffff !important;">Prati pošiljku</a>
                             </td>
                         </tr>
                     </table>

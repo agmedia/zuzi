@@ -280,8 +280,8 @@
                                 <div class="account-order-meta-value">{{ $order->tracking_code ?: $order->shipping_parcel_id }}</div>
                             </div>
                             <div class="account-order-actions">
-                                @if($order->shipping_tracking_url)
-                                    <a class="btn btn-sm btn-outline-primary" href="{{ $order->shipping_tracking_url }}" target="_blank" rel="noopener">
+                                @if($trackingUrl)
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ $trackingUrl }}" target="_blank" rel="noopener">
                                         Praćenje pošiljke
                                     </a>
                                 @endif

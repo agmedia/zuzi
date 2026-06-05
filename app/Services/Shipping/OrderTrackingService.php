@@ -120,6 +120,18 @@ class OrderTrackingService
         ][$carrier] ?? 'Dostava';
     }
 
+    public function trackingUrlForOrder(Order $order): ?string
+    {
+        $carrier = $this->resolveCarrier($order);
+        $trackingCode = trim((string) ($order->tracking_code ?: $order->shipping_parcel_id));
+
+        if ($carrier === BoxNowService::CARRIER && $trackingCode !== '') {
+            return $this->boxNow->trackingUrl($trackingCode);
+        }
+
+        return $order->shipping_tracking_url;
+    }
+
     private function findBoxNowOrder(array $tracking): ?Order
     {
         $orderNumber = (string) ($tracking['order_number'] ?? '');

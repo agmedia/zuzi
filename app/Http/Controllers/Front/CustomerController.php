@@ -94,8 +94,9 @@ class CustomerController extends Controller
         $trackingCarrierLabel = $trackingService->carrierLabel($trackingCarrier);
         $hasTrackingParcel = $this->hasTrackingParcel($order);
         $canRefreshTracking = $this->canRefreshTracking($order, $trackingCarrier);
+        $trackingUrl = $trackingService->trackingUrlForOrder($order);
 
-        return view('front.customer.narudzba', compact('user', 'order', 'trackingCarrier', 'trackingCarrierLabel', 'hasTrackingParcel', 'canRefreshTracking'));
+        return view('front.customer.narudzba', compact('user', 'order', 'trackingCarrier', 'trackingCarrierLabel', 'hasTrackingParcel', 'canRefreshTracking', 'trackingUrl'));
     }
 
     public function refreshOrderTracking(Request $request, $order)

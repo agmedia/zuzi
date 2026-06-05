@@ -71,6 +71,26 @@ class CustomerOrderDetailsPageTest extends TestCase
             ->assertDontSee(route('moje-narudzbe.tracking.refresh', ['order' => $orderId]), false);
     }
 
+    public function test_boxnow_tracking_button_prefills_parcel_number(): void
+    {
+        config(['services.boxnow.tracking_url' => 'https://track.boxnow.hr/en/track']);
+
+        $user = $this->createCustomer('customer@example.com');
+        $orderId = $this->createOrderFor($user, [
+            'shipping_carrier' => BoxNowService::CARRIER,
+            'shipping_method' => 'BoxNow',
+            'shipping_code' => 'boxnow',
+            'tracking_code' => '5936763647',
+            'shipping_tracking_status' => 'Čeka se preuzimanje iz e-trgovine',
+            'shipping_tracking_url' => 'https://track.boxnow.hr/en/track',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('moje-narudzbe.show', ['order' => $orderId]))
+            ->assertOk()
+            ->assertSee('href="https://track.boxnow.hr/en?track=5936763647"', false);
+    }
+
     public function test_customer_cannot_view_another_customers_order_page(): void
     {
         $user = $this->createCustomer('customer@example.com');

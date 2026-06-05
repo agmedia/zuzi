@@ -290,6 +290,7 @@ class CheckoutController extends Controller
 
             $order->sendEmails()
                 ->decreaseCartItems(false)
+                ->syncCustomerDetails()
                 ->addLoyaltyPoints($selected_loyalty);
 
             if ($subscribe_to_newsletter) {

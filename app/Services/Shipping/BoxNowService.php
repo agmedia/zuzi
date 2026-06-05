@@ -249,8 +249,14 @@ class BoxNowService
         return rtrim((string) config('services.boxnow.base_url'), '/') . '/' . ltrim($path, '/');
     }
 
-    private function trackingUrl(string $parcelId): ?string
+    public function trackingUrl(string $parcelId): ?string
     {
+        $parcelId = trim($parcelId);
+
+        if ($parcelId === '') {
+            return null;
+        }
+
         $baseUrl = trim((string) config('services.boxnow.tracking_url'));
 
         if ($baseUrl === '') {
@@ -261,7 +267,17 @@ class BoxNowService
             return str_replace('{parcel}', urlencode($parcelId), $baseUrl);
         }
 
-        return $baseUrl;
+        if (str_contains($baseUrl, 'track.boxnow.hr')) {
+            $baseUrl = preg_replace('#/track/?$#', '', rtrim($baseUrl, '/')) ?: $baseUrl;
+
+            if (preg_match('/([?&]track=)([^&]*)/', $baseUrl)) {
+                return preg_replace('/([?&]track=)([^&]*)/', '$1' . urlencode($parcelId), $baseUrl);
+            }
+
+            return $baseUrl . (str_contains($baseUrl, '?') ? '&' : '?') . 'track=' . urlencode($parcelId);
+        }
+
+        return rtrim($baseUrl, '/') . '/' . urlencode($parcelId);
     }
 
     private function errorMessage($payload, string $fallback): string

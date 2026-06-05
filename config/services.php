@@ -73,7 +73,7 @@ return [
         'base_url' => env('BOXNOW_API_URL', 'https://api-production.boxnow.hr/api/v1'),
         'client_id' => env('BOXNOW_CLIENT_ID', '813f3a0c-bbea-4f83-bfb1-a605e79a11cd'),
         'client_secret' => env('BOXNOW_CLIENT_SECRET', '8dc55b1ef55369e08c1b8eada89e2ba1bdf9256fdeb43c81cc1efc5f4755953b'),
-        'tracking_url' => env('BOXNOW_TRACKING_URL', 'https://track.boxnow.hr/en/track'),
+        'tracking_url' => env('BOXNOW_TRACKING_URL', 'https://track.boxnow.hr/en?track={parcel}'),
         'webhook_secret' => env('BOXNOW_WEBHOOK_SECRET'),
     ],
 
