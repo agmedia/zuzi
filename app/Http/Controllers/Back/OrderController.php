@@ -131,8 +131,9 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $statuses = Settings::get('order', 'statuses');
+        $trackingEmailSentAt = app(OrderTrackingService::class)->trackingEmailSentAt($order);
 
-        return view('back.order.show', compact('order', 'statuses'));
+        return view('back.order.show', compact('order', 'statuses', 'trackingEmailSentAt'));
     }
 
 
@@ -716,6 +717,34 @@ class OrderController extends Controller
 
             return response()->json(['error' => 'Greška..! ' . $e->getMessage()], 422);
         }
+    }
+
+    public function api_send_tracking_email(Request $request, OrderTrackingService $trackingService)
+    {
+        $request->validate(['order_id' => 'required|integer']);
+
+        $order = Order::query()->find($request->input('order_id'));
+
+        if (! $order) {
+            return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
+        }
+
+        try {
+            $result = $trackingService->sendTrackingAvailableMailManually($order);
+        } catch (\Throwable $e) {
+            Log::warning('Manual shipment tracking email failed.', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Greška..! Slanje tracking emaila nije uspjelo.'], 422);
+        }
+
+        if (! empty($result['error'])) {
+            return response()->json(['error' => $result['error']], 422);
+        }
+
+        return response()->json(['message' => $result['message'] ?? 'Tracking email je obrađen.']);
     }
 
     /**

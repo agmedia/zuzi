@@ -57,7 +57,7 @@ class ShippingTrackingAvailableEmailTest extends TestCase
             'order_id' => $orderId,
             'user_id' => 0,
             'status' => 0,
-            'comment' => 'Kupcu poslan email s podacima za praćenje pošiljke.',
+            'comment' => 'Kupcu poslan email s podacima za praćenje pošiljke. Broj pošiljke: 123456789.',
         ]);
     }
 
@@ -121,6 +121,56 @@ class ShippingTrackingAvailableEmailTest extends TestCase
 
         Mail::assertNothingSent();
         $this->assertNull(DB::table('orders')->where('id', $orderId)->value('shipping_tracking_email_sent_at'));
+    }
+
+    public function test_tracking_email_can_be_sent_manually_when_tracking_identifier_already_exists(): void
+    {
+        Mail::fake();
+        Carbon::setTestNow('2026-06-04 10:15:00');
+
+        $orderId = $this->createOrder([
+            'shipping_carrier' => GlsTrackingService::CARRIER,
+            'tracking_code' => '123456789',
+            'shipping_tracking_url' => 'https://gls.example.test/track/123456789',
+            'shipping_tracking_status' => 'Podaci o pošiljci su uneseni u GLS sustav.',
+            'shipping_tracking_email_sent_at' => null,
+        ]);
+
+        $result = app(OrderTrackingService::class)->sendTrackingAvailableMailManually(Order::findOrFail($orderId));
+
+        $this->assertTrue($result['sent']);
+        Mail::assertSent(ShippingTrackingAvailable::class, 1);
+        $this->assertNotNull(DB::table('orders')->where('id', $orderId)->value('shipping_tracking_email_sent_at'));
+        $this->assertDatabaseHas('order_history', [
+            'order_id' => $orderId,
+            'user_id' => 0,
+            'status' => 0,
+            'comment' => 'Kupcu poslan email s podacima za praćenje pošiljke. Broj pošiljke: 123456789.',
+        ]);
+    }
+
+    public function test_tracking_email_sent_at_can_be_read_from_order_history_marker(): void
+    {
+        Carbon::setTestNow('2026-06-04 10:15:00');
+
+        $orderId = $this->createOrder([
+            'shipping_carrier' => GlsTrackingService::CARRIER,
+            'tracking_code' => '123456789',
+            'shipping_tracking_email_sent_at' => null,
+        ]);
+
+        DB::table('order_history')->insert([
+            'order_id' => $orderId,
+            'user_id' => 0,
+            'status' => 0,
+            'comment' => 'Kupcu poslan email s podacima za praćenje pošiljke. Broj pošiljke: 123456789.',
+            'created_at' => '2026-06-04 11:45:00',
+            'updated_at' => '2026-06-04 11:45:00',
+        ]);
+
+        $sentAt = app(OrderTrackingService::class)->trackingEmailSentAt(Order::findOrFail($orderId));
+
+        $this->assertSame('2026-06-04 11:45:00', $sentAt->format('Y-m-d H:i:s'));
     }
 
     protected function tearDown(): void

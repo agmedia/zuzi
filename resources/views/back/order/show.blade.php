@@ -129,7 +129,7 @@
                 </div>
                 <div class="block-content">
                     <div class="row">
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-2 mb-3">
                             <div class="font-size-sm text-muted">Dostavna služba</div>
                             <div class="font-w600">{{ $trackingCarrier === 'boxnow' ? 'Box Now' : strtoupper($trackingCarrier ?: 'Dostava') }}</div>
                         </div>
@@ -143,7 +143,7 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <div class="font-size-sm text-muted">Zadnji status</div>
                             <div class="font-w600">{{ $order->shipping_tracking_status ?: 'Još nije osvježeno' }}</div>
                             @if($order->shipping_tracking_status_code)
@@ -155,6 +155,20 @@
                             <div class="font-w600">
                                 {{ $order->shipping_tracking_updated_at ? \Illuminate\Support\Carbon::make($order->shipping_tracking_updated_at)->format('d.m.Y H:i') : 'Nikad' }}
                             </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="font-size-sm text-muted">Email kupcu</div>
+                            @if($trackingEmailSentAt)
+                                <div><span class="badge badge-success">Poslan</span></div>
+                                <div class="font-size-sm text-muted">{{ \Illuminate\Support\Carbon::make($trackingEmailSentAt)->format('d.m.Y H:i') }}</div>
+                            @else
+                                <div><span class="badge badge-warning">Nije poslan</span></div>
+                                @if($order->tracking_code)
+                                    <button type="button" class="btn btn-sm btn-alt-secondary mt-1" data-tracking-email-btn="{{ $order->id }}" onclick="sendTrackingEmail({{ $order->id }})">
+                                        Pošalji
+                                    </button>
+                                @endif
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -391,6 +405,37 @@
             btn.innerHTML = isLoading
                 ? 'Osvježavam <i class="fa fa-spinner fa-spin ml-1"></i>'
                 : 'Osvježi <i class="fa fa-sync-alt ml-1"></i>';
+        }
+
+        function sendTrackingEmail(order_id) {
+            setTrackingEmailBtnLoading(order_id, true);
+            axios.post("{{ route('api.order.send.tracking-email') }}", { order_id })
+                .then(response => {
+                    if (response.data.message) {
+                        successToast.fire({
+                            timer: 1500,
+                            text: response.data.message,
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        errorToast.fire(response.data.error || 'Tracking email nije poslan.');
+                    }
+                })
+                .catch(error => {
+                    errorToast.fire(error?.response?.data?.error || 'Tracking email nije poslan.');
+                })
+                .finally(() => setTrackingEmailBtnLoading(order_id, false));
+        }
+
+        function setTrackingEmailBtnLoading(orderId, isLoading) {
+            const btn = document.querySelector(`[data-tracking-email-btn="${orderId}"]`);
+            if (!btn) return;
+
+            btn.disabled = isLoading;
+            btn.innerHTML = isLoading
+                ? 'Šaljem <i class="fa fa-spinner fa-spin ml-1"></i>'
+                : 'Pošalji';
         }
     </script>
 

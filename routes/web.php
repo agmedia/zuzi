@@ -363,6 +363,7 @@ Route::prefix('api/v2')->group(function () {
                 Route::post('send/gls', [OrderController::class, 'api_send_gls'])->name('api.order.send.gls');
                 Route::post('send/hppak', [OrderController::class, 'api_send_hp_pak'])->name('api.order.send.hp_pak');
                 Route::post('send/glsstari', [OrderController::class, 'api_send_glsstari'])->name('api.order.send.glsstari');
+                Route::post('send/tracking-email', [OrderController::class, 'api_send_tracking_email'])->name('api.order.send.tracking-email');
                 Route::post('tracking/refresh', [OrderController::class, 'api_refresh_tracking'])->name('api.order.tracking.refresh');
             });
             // PAYMENTS
