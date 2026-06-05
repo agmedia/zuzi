@@ -242,13 +242,14 @@
                                     <strong>€ {{ number_format($order->total, 2, ',', '.') }}</strong>
                                 </td>
                                 <td class="text-center">
+                                    @php($shipmentCarrierHint = \Illuminate\Support\Str::lower($order->shipping_method . ' ' . $order->shipping_code))
                                     @if($order->printed)
                                         <i class="fa fa-fw fa-check text-success"></i>
                                     @else
                                         @if ($order->shipping_code == \App\Services\GiftVoucherService::SHIPPING_CODE)
                                             <span class="badge badge-success">E-mail</span>
-                                        @elseif ($order->shipping_method == 'BoxNow')
-                                            <button type="button" class="btn btn-light btn-sm" onclick="sendGLS({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
+                                        @elseif (\Illuminate\Support\Str::contains($shipmentCarrierHint, ['boxnow', 'box now']))
+                                            <button type="button" class="btn btn-light btn-sm" onclick="sendBoxNow({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
                                         @elseif ($order->shipping_code == 'hp_paketomat')
                                             <button type="button" class="btn btn-light btn-sm" onclick="sendHPPak({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
                                         @elseif ($order->shipping_code == 'wolt_drive')
@@ -256,7 +257,7 @@
                                                 <i class="fa fa-motorcycle ml-1"></i> Wolt
                                             </button>
                                         @else
-                                            <button type="button" class="btn btn-light btn-sm" onclick="sendGLSstari({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
+                                            <button type="button" class="btn btn-light btn-sm" onclick="sendGLS({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
                                         @endif
                                     @endif
                                 </td>
@@ -365,12 +366,16 @@
             });
         });
 
-        /**
-         *
-         * @param order_id
-         */
-        function sendGLS(order_id) {
-            axios.post("{{ route('api.order.send.gls') }}", {order_id: order_id})
+        const pendingShipmentOrders = new Set();
+
+        function sendShipment(order_id, endpoint) {
+            if (pendingShipmentOrders.has(order_id)) {
+                return;
+            }
+
+            pendingShipmentOrders.add(order_id);
+
+            axios.post(endpoint, {order_id: order_id})
                 .then(response => {
                     if (response.data.message) {
                         successToast.fire({
@@ -383,7 +388,21 @@
                     } else {
                         return errorToast.fire(response.data.error);
                     }
+                })
+                .catch(() => {
+                    return errorToast.fire();
+                })
+                .finally(() => {
+                    pendingShipmentOrders.delete(order_id);
                 });
+        }
+
+        /**
+         *
+         * @param order_id
+         */
+        function sendBoxNow(order_id) {
+            sendShipment(order_id, "{{ route('api.order.send.boxnow') }}");
         }
 
         /**
@@ -693,20 +712,15 @@
          * @param order_id
          */
         function sendGLSstari(order_id) {
-            axios.post("{{ route('api.order.send.glsstari') }}", {order_id: order_id})
-                .then(response => {
-                    if (response.data.message) {
-                        successToast.fire({
-                            timer: 1500,
-                            text: response.data.message,
-                        }).then(() => {
-                            location.reload();
-                        })
+            sendGLS(order_id);
+        }
 
-                    } else {
-                        return errorToast.fire(response.data.error);
-                    }
-                });
+        /**
+         *
+         * @param order_id
+         */
+        function sendGLS(order_id) {
+            sendShipment(order_id, "{{ route('api.order.send.gls') }}");
         }
     </script>
     <script>

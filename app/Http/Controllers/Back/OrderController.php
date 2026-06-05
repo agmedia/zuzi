@@ -29,6 +29,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Services\WoltDrive\WoltDriveService;
 
@@ -503,7 +504,7 @@ class OrderController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function api_send_gls(Request $request)
+    public function api_send_boxnow(Request $request)
     {
         $request->validate(['order_id' => 'required|integer']);
 
@@ -513,19 +514,30 @@ class OrderController extends Controller
             return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
         }
 
-        try {
-            $tracking = app(BoxNowService::class)->createDeliveryRequest($order);
-            app(OrderTrackingService::class)->apply($order, $tracking);
+        return $this->sendBoxNowShipment($order);
+    }
 
-            return response()->json(['message' => 'BOXNOW je uspješno poslan sa ID: ' . $tracking['parcel_id']]);
-        } catch (\Throwable $e) {
-            Log::error('Box Now shipment failed.', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
 
-            return response()->json(['error' => 'Greška..! ' . $e->getMessage()], 422);
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function api_send_gls(Request $request)
+    {
+        $request->validate(['order_id' => 'required|integer']);
+
+        $order = Order::query()->find($request->input('order_id'));
+
+        if (! $order) {
+            return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
         }
+
+        if ($this->isBoxNowOrder($order)) {
+            return $this->sendBoxNowShipment($order);
+        }
+
+        return $this->sendGlsShipment($order);
     }
 
 
@@ -579,6 +591,15 @@ class OrderController extends Controller
             return response()->json(['error' => 'Narudžba nije pronađena.'], 404);
         }
 
+        return $this->sendGlsShipment($order);
+    }
+
+    private function sendGlsShipment(Order $order)
+    {
+        if ($this->hasExistingShipment($order)) {
+            return response()->json(['message' => $this->existingShipmentMessage($order)]);
+        }
+
         $gls   = new Glsstari($order);
         $label = $gls->resolve();
         $parcelId = data_get($label, 'ParcelIdList.0');
@@ -587,6 +608,7 @@ class OrderController extends Controller
         if ($parcelNumber) {
             $trackingPayload = $label;
             unset($trackingPayload['Labels']);
+            unset($trackingPayload['GetPrintedLabelsRequest']);
 
             app(OrderTrackingService::class)->apply($order, [
                 'carrier' => GlsTrackingService::CARRIER,
@@ -618,6 +640,48 @@ class OrderController extends Controller
         ]);
 
         return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
+    }
+
+    private function sendBoxNowShipment(Order $order)
+    {
+        if ($this->hasExistingShipment($order)) {
+            return response()->json(['message' => $this->existingShipmentMessage($order)]);
+        }
+
+        try {
+            $tracking = app(BoxNowService::class)->createDeliveryRequest($order);
+            app(OrderTrackingService::class)->apply($order, $tracking);
+
+            return response()->json(['message' => 'BOXNOW je uspješno poslan sa ID: ' . $tracking['parcel_id']]);
+        } catch (\Throwable $e) {
+            Log::error('Box Now shipment failed.', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Greška..! ' . $e->getMessage()], 422);
+        }
+    }
+
+    private function isBoxNowOrder(Order $order): bool
+    {
+        return Str::contains(Str::lower($order->shipping_method . ' ' . $order->shipping_code), ['boxnow', 'box now']);
+    }
+
+    private function hasExistingShipment(Order $order): bool
+    {
+        return filled($order->shipping_parcel_id)
+            || filled($order->tracking_code)
+            || (bool) $order->printed;
+    }
+
+    private function existingShipmentMessage(Order $order): string
+    {
+        $shipmentId = $order->tracking_code ?: $order->shipping_parcel_id;
+
+        return $shipmentId
+            ? 'Pošiljka je već kreirana za ovu narudžbu: ' . $shipmentId
+            : 'Pošiljka je već kreirana za ovu narudžbu.';
     }
 
     public function api_refresh_tracking(Request $request, OrderTrackingService $trackingService)

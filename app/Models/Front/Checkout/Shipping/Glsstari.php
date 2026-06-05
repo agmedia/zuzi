@@ -105,7 +105,7 @@ class Glsstari
             //Parcel service:
             $serviceName = "ParcelService";
 
-            return $this->PrintLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order);
+            return $this->PrepareLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order);
 
         } catch (\Exception $e) {
             echo $e->getMessage();
@@ -223,17 +223,33 @@ class Glsstari
         //Service calling:
         $response = $client->PrepareLabels($request);
         $prepareLabelsResult = $response->PrepareLabelsResult ?? null;
-        $prepareLabelsErrors = json_decode(json_encode($prepareLabelsResult->PrepareLabelsError ?? []), true) ?: [];
+        $prepareLabelsErrors = json_decode(json_encode($prepareLabelsResult->PrepareLabelsError ?? $prepareLabelsResult->PrepareLabelsErrorList ?? []), true) ?: [];
         $parcelInfoList = json_decode(json_encode($prepareLabelsResult->ParcelInfoList ?? []), true) ?: [];
 
         $parcelIdList = [];
-        if ($response != null && count($prepareLabelsErrors) == 0 && count($parcelInfoList) > 0) {
-            $parcelId = data_get($parcelInfoList, 'ParcelInfo.ParcelId');
+        $parcelNumberList = [];
+        $parcelInfo = $parcelInfoList['ParcelInfo'] ?? $parcelInfoList;
 
-            if ($parcelId) {
-                $parcelIdList[] = $parcelId;
-                $order->update(['printed' => 1]);
+        if (isset($parcelInfo['ParcelId']) || isset($parcelInfo['ParcelNumber'])) {
+            $parcelInfo = [$parcelInfo];
+        }
+
+        foreach ($parcelInfo as $info) {
+            if (! is_array($info)) {
+                continue;
             }
+
+            if (! empty($info['ParcelId'])) {
+                $parcelIdList[] = $info['ParcelId'];
+            }
+
+            if (! empty($info['ParcelNumber'])) {
+                $parcelNumberList[] = $info['ParcelNumber'];
+            }
+        }
+
+        if ($response != null && count($prepareLabelsErrors) == 0 && count($parcelIdList) > 0) {
+            $order->update(['printed' => 1]);
         }
 
         //Test request:
@@ -245,7 +261,13 @@ class Glsstari
             'PrepareLabelsError' => $prepareLabelsErrors,
             'ParcelInfoList' => $parcelInfoList);
 
-        return $getPrintedLabelsRequest;
+        return [
+            'ParcelIdList' => $parcelIdList,
+            'ParcelNumberList' => $parcelNumberList,
+            'PrepareLabelsError' => $prepareLabelsErrors,
+            'ParcelInfoList' => $parcelInfoList,
+            'GetPrintedLabelsRequest' => $getPrintedLabelsRequest,
+        ];
     }
 
 
