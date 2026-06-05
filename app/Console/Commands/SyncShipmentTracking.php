@@ -50,7 +50,7 @@ class SyncShipmentTracking extends Command
                 $query->whereNull('shipping_tracking_status_code')
                     ->orWhereNotIn('shipping_tracking_status_code', ['5', '92', 'delivered', 'returned', 'expired', 'expired-return', 'canceled', 'cancelled']);
             })
-            ->where(function ($query) {
+            ->where(function ($query) use ($staleMinutes) {
                 $query->whereNull('shipping_tracking_updated_at')
                     ->orWhere('shipping_tracking_updated_at', '<=', now()->subMinutes($staleMinutes));
             })
