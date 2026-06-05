@@ -25,13 +25,7 @@ class OrderTrackingService
         $carrier = $this->resolveCarrier($order);
 
         if ($carrier === GlsTrackingService::CARRIER) {
-            $trackingCode = trim((string) $order->tracking_code);
-
-            if ($trackingCode === '') {
-                throw new RuntimeException('GLS tracking broj nije upisan za ovu narudžbu.');
-            }
-
-            return $this->apply($order, $this->gls->track($trackingCode));
+            return $this->apply($order, $this->gls->trackOrder($order));
         }
 
         if ($carrier === BoxNowService::CARRIER) {

@@ -625,9 +625,16 @@ class OrderController extends Controller
         }
 
         if ($parcelId) {
+            $trackingPayload = $label;
+            unset($trackingPayload['GetPrintedLabelsRequest']);
+
             $order->forceFill([
                 'shipping_carrier' => GlsTrackingService::CARRIER,
                 'shipping_parcel_id' => (string) $parcelId,
+                'shipping_tracking_status_code' => '51',
+                'shipping_tracking_status' => 'Podaci o pošiljci su uneseni u GLS sustav; pošiljka još nije predana GLS-u.',
+                'shipping_tracking_updated_at' => now(),
+                'shipping_tracking_payload' => $trackingPayload,
                 'printed' => true,
             ])->save();
 

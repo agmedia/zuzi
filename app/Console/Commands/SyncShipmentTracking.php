@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Schema;
 
 class SyncShipmentTracking extends Command
 {
-    protected $signature = 'sync:shipment-tracking {--limit=50 : Maximum number of orders to refresh}';
+    protected $signature = 'sync:shipment-tracking
+        {--limit=50 : Maximum number of orders to refresh}
+        {--stale-minutes=30 : Refresh orders older than this many minutes}';
 
     protected $description = 'Refresh shipment tracking statuses for GLS and Box Now orders.';
 
@@ -25,6 +27,7 @@ class SyncShipmentTracking extends Command
         }
 
         $limit = max(1, (int) $this->option('limit'));
+        $staleMinutes = max(1, (int) $this->option('stale-minutes'));
         $orders = Order::query()
             ->where(function ($query) {
                 $query->whereIn('shipping_carrier', [GlsTrackingService::CARRIER, BoxNowService::CARRIER])
@@ -49,7 +52,7 @@ class SyncShipmentTracking extends Command
             })
             ->where(function ($query) {
                 $query->whereNull('shipping_tracking_updated_at')
-                    ->orWhere('shipping_tracking_updated_at', '<=', now()->subHours(3));
+                    ->orWhere('shipping_tracking_updated_at', '<=', now()->subMinutes($staleMinutes));
             })
             ->latest('created_at')
             ->limit($limit)

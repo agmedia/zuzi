@@ -2,6 +2,7 @@
 
 namespace App\Services\Shipping;
 
+use App\Models\Back\Orders\Order;
 use Carbon\Carbon;
 use RuntimeException;
 use SoapClient;
@@ -10,6 +11,34 @@ use Throwable;
 class GlsTrackingService
 {
     public const CARRIER = 'gls';
+
+    public function trackOrder(Order $order): array
+    {
+        $parcelNumber = trim((string) $order->tracking_code);
+
+        if ($parcelNumber === '') {
+            $parcelNumber = $this->parcelNumberForOrder($order);
+        }
+
+        if ($parcelNumber !== '') {
+            return $this->track($parcelNumber);
+        }
+
+        return [
+            'carrier' => self::CARRIER,
+            'parcel_id' => $order->shipping_parcel_id,
+            'tracking_code' => null,
+            'tracking_url' => null,
+            'status_code' => '51',
+            'status' => $this->statusCodeMeaning('51'),
+            'tracked_at' => now(),
+            'payload' => [
+                'lookup' => 'ParcelNumber nije još dostupan u GLS parcel listi.',
+                'parcel_id' => $order->shipping_parcel_id,
+                'client_reference' => (string) $order->id,
+            ],
+        ];
+    }
 
     public function track(string $parcelNumber): array
     {
@@ -75,6 +104,54 @@ class GlsTrackingService
         }
 
         return new SoapClient(config('services.gls.wsdl'), $options);
+    }
+
+    private function parcelNumberForOrder(Order $order): string
+    {
+        $response = $this->client()->GetParcelList([
+            'getParcelListRequest' => [
+                'Username' => config('services.gls.username'),
+                'Password' => $this->hashedPassword(),
+                'PickupDateFrom' => $this->parcelListDateFrom($order),
+                'PickupDateTo' => now()->addDays(7)->format('Y-m-d'),
+                'PrintDateFrom' => null,
+                'PrintDateTo' => null,
+            ],
+        ]);
+
+        $result = $this->toArray($response->GetParcelListResult ?? []);
+        $errors = $this->normalizeRows(data_get($result, 'GetParcelListErrors.ErrorInfo', data_get($result, 'GetParcelListErrors', [])));
+
+        if (! empty($errors)) {
+            throw new RuntimeException('GLS parcel list greška: ' . $this->formatErrors($errors));
+        }
+
+        $rows = $this->normalizeRows(data_get($result, 'PrintDataInfoList.PrintDataInfo', data_get($result, 'PrintDataInfoList', [])));
+        $orderId = (string) $order->id;
+        $parcelId = (string) $order->shipping_parcel_id;
+
+        foreach ($rows as $row) {
+            if (! $this->matchesOrder($row, $orderId, $parcelId)) {
+                continue;
+            }
+
+            $parcelNumber = $this->firstFilled($row, ['ParcelNumber', 'ParcelNo', 'ParcelNum']);
+
+            if ($parcelNumber !== '') {
+                return $parcelNumber;
+            }
+        }
+
+        return '';
+    }
+
+    private function parcelListDateFrom(Order $order): string
+    {
+        try {
+            return Carbon::make($order->created_at ?: now())->subDay()->format('Y-m-d');
+        } catch (Throwable $e) {
+            return now()->subDays(30)->format('Y-m-d');
+        }
     }
 
     private function hashedPassword(): string
@@ -161,6 +238,31 @@ class GlsTrackingService
             })
             ->filter()
             ->implode('; ');
+    }
+
+    private function matchesOrder(array $row, string $orderId, string $parcelId): bool
+    {
+        $references = [
+            $this->firstFilled($row, ['ClientReference', 'CustomerReference', 'Reference', 'CODReference']),
+            $this->firstFilled($row, ['ParcelId', 'ParcelID']),
+        ];
+
+        return collect($references)
+            ->filter()
+            ->contains(fn (string $reference) => $reference === $orderId || ($parcelId !== '' && $reference === $parcelId));
+    }
+
+    private function firstFilled(array $row, array $keys): string
+    {
+        foreach ($keys as $key) {
+            $value = trim((string) data_get($row, $key, ''));
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
     }
 
     private function statusCodeMeaning(string $statusCode): string
