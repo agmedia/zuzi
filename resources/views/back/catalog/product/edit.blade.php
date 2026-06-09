@@ -68,16 +68,23 @@
                     <div class="row justify-content-center push">
                         <div class="col-md-10">
                             <div class="form-group row items-push mb-3">
-                                <div class="col-md-8">
+                                <div class="col-md-6">
                                     <label for="dm-post-edit-title">Naziv <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="name-input" name="name" placeholder="Upišite naziv artikla" value="{{ old('name', isset($product) ? $product->name : '') }}" onkeyup="SetSEOPreview()">
                                     @error('name')
                                     <span class="text-danger font-italic">Naziv je potreban...</span>
                                     @enderror
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label for="isbn-input">ISBN</label>
                                     <input type="text" class="form-control" id="isbn-input" name="isbn" placeholder="Upišite ISBN" value="{{ old('isbn', isset($product) ? $product->isbn : '') }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="itemid-input">Pelion ItemID <span class="text-danger">*</span></label>
+                                    <input type="number" min="1" class="form-control" id="itemid-input" name="itemid" placeholder="Upišite ItemID" value="{{ old('itemid', isset($product) && $product->itemid ? $product->itemid : '') }}" required>
+                                    @error('itemid')
+                                    <span class="text-danger font-italic">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="form-group row items-push mb-3">

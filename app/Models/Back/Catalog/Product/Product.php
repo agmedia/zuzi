@@ -207,12 +207,20 @@ class Product extends Model
      */
     public function validateRequest(Request $request)
     {
+        $itemidRule = 'required|integer|min:1|unique:products,itemid' . ($this->id ? ',' . $this->id : '');
+
         // Validate the request.
         $request->validate([
             'name'     => 'required',
+            'itemid'   => $itemidRule,
             'sku'      => 'required',
             'price'    => 'required',
             'category' => 'required'
+        ], [
+            'itemid.required' => 'Pelion ItemID je potreban...',
+            'itemid.integer' => 'Pelion ItemID mora biti broj...',
+            'itemid.min' => 'Pelion ItemID mora biti veći od 0...',
+            'itemid.unique' => 'Pelion ItemID već postoji na drugom artiklu...',
         ]);
 
         // Set Product Model request variable
@@ -298,6 +306,7 @@ class Product extends Model
     private function getModelArray(bool $insert = true): array
     {
         $isbn = trim((string) $this->request->isbn) ?: null;
+        $itemid = (int) $this->request->itemid;
 
         if ($insert) {
             $slug = $this->resolveSlug();
@@ -312,6 +321,7 @@ class Product extends Model
             'action_id'        => $this->request->action ?: 0,
             'name'             => $this->request->name,
             'isbn'             => $isbn,
+            'itemid'           => $itemid,
             'sku'              => $this->request->sku,
             'ean'              => $isbn,
             'polica'           => $this->request->polica,

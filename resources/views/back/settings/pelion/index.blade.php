@@ -72,6 +72,7 @@
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-primary btn-block" onclick="runPelionTest('stock-by-item')">/stockList?ItemId={ItemId}</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-primary btn-block" onclick="runPelionTest('stock-by-isbn')">/stockList preko ISBN / ITEMBARCODE</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-secondary btn-block" onclick="runPelionTest('sync-item-index')">Osvježi Pelion barcode index</button></div>
+                            <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-secondary btn-block" onclick="runPelionTest('sync-product-isbns')">Upiši Pelion ISBN i ItemID po SKU</button></div>
                         </div>
                     </div>
                 </div>
@@ -98,6 +99,10 @@
 @push('js_after')
     <script>
         function runPelionTest(action) {
+            if (action === 'sync-product-isbns' && !confirm('Upisati Pelion ITEMBARCODE u products.isbn i ITEMID u products.itemid prema products.sku?')) {
+                return;
+            }
+
             let block = $('#pelion-result-block');
 
             const payload = {

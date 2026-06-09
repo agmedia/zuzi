@@ -89,3 +89,7 @@ export PELION_BASE_URL="https://zuzishop.pelionpro.com/api/v1"
 ```
 
 Za brzi dohvat Pelion zalihe po ISBN-u u adminu prvo otvori tablicu iz `database/054_create_pelion_items_table.sql`, zatim pokreni "Osvježi Pelion barcode index", a onda koristi test "/stockList preko ISBN / ITEMBARCODE".
+
+Za upis Pelion barkodova i ItemID-a u artikle koristi admin akciju "Upiši Pelion ISBN i ItemID po SKU". Akcija mapira `ITEMCODE` na `products.sku`, `ITEMBARCODE` upisuje u `products.isbn`, a `ITEMID` u `products.itemid`.
+
+Rucni SQL za dodavanje `products.itemid` stupca je u `database/055_add_itemid_to_products_table.sql`.

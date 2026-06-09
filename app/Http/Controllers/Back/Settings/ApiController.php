@@ -149,7 +149,7 @@ class ApiController extends Controller
     public function pelionTest(Request $request)
     {
         $data = $request->validate([
-            'action' => 'required|string|in:item-list,item-list-attrs,item-by-id,group-items,group-active,item-type,item-groups,stock-list,stock-by-item,sync-item-index,stock-by-isbn',
+            'action' => 'required|string|in:item-list,item-list-attrs,item-by-id,group-items,group-active,item-type,item-groups,stock-list,stock-by-item,sync-item-index,sync-product-isbns,stock-by-isbn',
             'item_id' => 'nullable|integer|min:1',
             'item_group_id' => 'nullable|integer|min:1',
             'item_type' => 'nullable|string|in:T,K,U',
@@ -170,6 +170,10 @@ class ApiController extends Controller
 
         if ($data['action'] === 'sync-item-index') {
             return $this->syncPelionItemIndex($baseUrl, $apiKey);
+        }
+
+        if ($data['action'] === 'sync-product-isbns') {
+            return $this->syncProductIsbnsFromPelion($baseUrl, $apiKey);
         }
 
         if ($data['action'] === 'stock-by-isbn') {
@@ -425,6 +429,195 @@ class ApiController extends Controller
         }
     }
 
+    private function syncProductIsbnsFromPelion(string $baseUrl, string $apiKey)
+    {
+        if (
+            ! Schema::hasTable('products') ||
+            ! Schema::hasColumn('products', 'sku') ||
+            ! Schema::hasColumn('products', 'isbn') ||
+            ! Schema::hasColumn('products', 'itemid')
+        ) {
+            return response()->json([
+                'error' => 'Nedostaje tablica products ili stupci products.sku / products.isbn / products.itemid.'
+            ], 422);
+        }
+
+        $url = $baseUrl . '/itemList';
+
+        try {
+            $response = Http::timeout(120)
+                            ->withHeaders($this->pelionHeaders($apiKey))
+                            ->get($url);
+
+            if (! $response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => $response->status(),
+                    'url' => $response->effectiveUri() ? (string) $response->effectiveUri() : $url,
+                    'body' => $response->json() !== null ? $response->json() : $response->body(),
+                ], 422);
+            }
+
+            $items = $response->json();
+
+            if (! is_array($items)) {
+                return response()->json([
+                    'error' => 'Pelion itemList nije vratio očekivani JSON niz.'
+                ], 422);
+            }
+
+            $skuItems = [];
+            $conflicts = [];
+            $skippedInvalid = 0;
+
+            foreach ($items as $item) {
+                if (! is_array($item)) {
+                    $skippedInvalid++;
+                    continue;
+                }
+
+                $sku = $this->normalizePelionSku($item['ITEMCODE'] ?? null);
+                $isbn = $this->normalizeBarcode($item['ITEMBARCODE'] ?? null);
+                $itemid = $this->normalizePelionItemId($item['ITEMID'] ?? null);
+
+                if (! $sku || ! $isbn || ! $itemid) {
+                    $skippedInvalid++;
+                    continue;
+                }
+
+                $pair = [
+                    'isbn' => $isbn,
+                    'itemid' => $itemid,
+                ];
+                $pairKey = $isbn . ':' . $itemid;
+
+                if (isset($conflicts[$sku])) {
+                    $conflicts[$sku][$pairKey] = $pair;
+                    continue;
+                }
+
+                if (
+                    isset($skuItems[$sku]) &&
+                    ($skuItems[$sku]['isbn'] !== $isbn || $skuItems[$sku]['itemid'] !== $itemid)
+                ) {
+                    $existing = $skuItems[$sku];
+                    $conflicts[$sku] = [
+                        $existing['isbn'] . ':' . $existing['itemid'] => $existing,
+                        $pairKey => $pair,
+                    ];
+                    unset($skuItems[$sku]);
+                    continue;
+                }
+
+                $skuItems[$sku] = $pair;
+            }
+
+            $now = now();
+            $updated = 0;
+            $unchanged = 0;
+            $missingProducts = 0;
+            $examples = [
+                'updated' => [],
+                'missing_products' => [],
+                'conflicts' => [],
+            ];
+
+            foreach (array_chunk($skuItems, 500, true) as $chunk) {
+                $products = DB::table('products')
+                              ->select('id', 'sku', 'isbn', 'itemid')
+                              ->whereIn('sku', array_keys($chunk))
+                              ->get()
+                              ->keyBy('sku');
+
+                foreach ($chunk as $sku => $pelionItem) {
+                    $isbn = $pelionItem['isbn'];
+                    $itemid = $pelionItem['itemid'];
+                    $product = $products->get($sku);
+
+                    if (! $product) {
+                        $missingProducts++;
+
+                        if (count($examples['missing_products']) < 10) {
+                            $examples['missing_products'][] = [
+                                'sku' => $sku,
+                                'isbn' => $isbn,
+                                'itemid' => $itemid,
+                            ];
+                        }
+
+                        continue;
+                    }
+
+                    if (
+                        $this->normalizeBarcode($product->isbn ?? null) === $isbn &&
+                        (int) ($product->itemid ?? 0) === $itemid
+                    ) {
+                        $unchanged++;
+                        continue;
+                    }
+
+                    DB::table('products')
+                      ->where('id', $product->id)
+                      ->update([
+                          'isbn' => $isbn,
+                          'itemid' => $itemid,
+                          'updated_at' => $now,
+                      ]);
+
+                    $updated++;
+
+                    if (count($examples['updated']) < 10) {
+                        $examples['updated'][] = [
+                            'id' => $product->id,
+                            'sku' => $sku,
+                            'old_isbn' => $product->isbn,
+                            'new_isbn' => $isbn,
+                            'old_itemid' => $product->itemid,
+                            'new_itemid' => $itemid,
+                        ];
+                    }
+                }
+            }
+
+            foreach (array_slice($conflicts, 0, 10, true) as $sku => $pelionItems) {
+                $examples['conflicts'][] = [
+                    'sku' => $sku,
+                    'items' => array_values($pelionItems),
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'status' => $response->status(),
+                'url' => $response->effectiveUri() ? (string) $response->effectiveUri() : $url,
+                'body' => [
+                    'message' => 'Pelion ISBN i ItemID sinkronizacija je završena.',
+                    'items_received' => count($items),
+                    'valid_sku_item_pairs' => count($skuItems),
+                    'updated' => $updated,
+                    'unchanged' => $unchanged,
+                    'missing_products' => $missingProducts,
+                    'skipped_invalid' => $skippedInvalid,
+                    'skipped_conflicts' => count($conflicts),
+                    'mapping' => [
+                        'ITEMCODE' => 'products.sku',
+                        'ITEMBARCODE' => 'products.isbn',
+                        'ITEMID' => 'products.itemid',
+                    ],
+                    'examples' => $examples,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Pelion product ISBN sync failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Greška kod Pelion ISBN sinkronizacije: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     private function pelionHeaders(string $apiKey): array
     {
         return [
@@ -458,6 +651,26 @@ class ApiController extends Controller
         return $value ?: null;
     }
 
+    private function normalizePelionSku($value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function normalizePelionItemId($value): ?int
+    {
+        $value = trim((string) $value);
+
+        if ($value === '' || ! ctype_digit($value)) {
+            return null;
+        }
+
+        $itemid = (int) $value;
+
+        return $itemid > 0 ? $itemid : null;
+    }
+
     private function findLocalProductByIsbn(string $isbn)
     {
         if (! Schema::hasTable('products')) {
@@ -465,7 +678,7 @@ class ApiController extends Controller
         }
 
         return DB::table('products')
-                 ->select('id', 'name', 'sku', 'isbn', 'quantity', 'status')
+                 ->select('id', 'name', 'sku', 'isbn', 'itemid', 'quantity', 'status')
                  ->where('isbn', $isbn)
                  ->first();
     }
