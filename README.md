@@ -70,6 +70,8 @@ Skripta za testiranje je u:
 
 ```bash
 export PELION_API_KEY="tvoj-api-kljuc"
+# opcionalno, default je https://zuzishop.pelionpro.com/api/v1
+export PELION_BASE_URL="https://zuzishop.pelionpro.com/api/v1"
 ```
 
 2. Pokreni test:

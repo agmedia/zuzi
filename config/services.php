@@ -78,7 +78,7 @@ return [
     ],
 
     'pelion' => [
-        'base_url' => env('PELION_BASE_URL', 'https://api.pelionpro.com/api/v1'),
+        'base_url' => env('PELION_BASE_URL', 'https://zuzishop.pelionpro.com/api/v1'),
         'api_key' => env('PELION_API_KEY'),
     ],
 

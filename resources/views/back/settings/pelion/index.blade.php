@@ -20,6 +20,11 @@
                     </div>
                     <div class="block-content block-content-full">
                         <div class="form-group">
+                            <label for="pelion-base-url">Pelion Base URL</label>
+                            <input type="url" class="form-control" id="pelion-base-url" value="{{ $pelionBaseUrl }}" placeholder="https://zuzishop.pelionpro.com/api/v1">
+                        </div>
+
+                        <div class="form-group">
                             <label for="pelion-api-key">Pelion API ključ (opcionalno)</label>
                             <input type="text" class="form-control" id="pelion-api-key" placeholder="Ako je prazno koristi se PELION_API_KEY iz .env">
                         </div>
@@ -93,6 +98,7 @@
                 item_id: $('#pelion-item-id').val() || null,
                 item_group_id: $('#pelion-group-id').val() || null,
                 item_type: $('#pelion-item-type').val() || null,
+                base_url: $('#pelion-base-url').val() || null,
                 api_key: $('#pelion-api-key').val() || null
             };
 

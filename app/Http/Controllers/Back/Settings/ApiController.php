@@ -30,7 +30,9 @@ class ApiController extends Controller
      */
     public function pelion()
     {
-        return view('back.settings.pelion.index');
+        return view('back.settings.pelion.index', [
+            'pelionBaseUrl' => config('services.pelion.base_url'),
+        ]);
     }
 
 
@@ -149,10 +151,11 @@ class ApiController extends Controller
             'item_id' => 'nullable|integer|min:1',
             'item_group_id' => 'nullable|integer|min:1',
             'item_type' => 'nullable|string|in:T,K,U',
+            'base_url' => 'nullable|string|url',
             'api_key' => 'nullable|string',
         ]);
 
-        $apiKey = $data['api_key'] ?: config('services.pelion.api_key');
+        $apiKey = ($data['api_key'] ?? null) ?: config('services.pelion.api_key');
 
         if (!$apiKey) {
             return response()->json([
@@ -160,7 +163,7 @@ class ApiController extends Controller
             ], 422);
         }
 
-        $baseUrl = rtrim(config('services.pelion.base_url', 'https://api.pelionpro.com/api/v1'), '/');
+        $baseUrl = rtrim(($data['base_url'] ?? null) ?: config('services.pelion.base_url', 'https://zuzishop.pelionpro.com/api/v1'), '/');
         $query = [];
         $path = '/itemList';
 

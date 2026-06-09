@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="${PELION_BASE_URL:-https://api.pelionpro.com/api/v1}"
+BASE_URL="${PELION_BASE_URL:-https://zuzishop.pelionpro.com/api/v1}"
 API_KEY="${PELION_API_KEY:-}"
 
 usage() {
@@ -24,7 +24,7 @@ Akcije:
 
 Varijable okoline:
   PELION_API_KEY            -> obavezno
-  PELION_BASE_URL           -> opcionalno (default: https://api.pelionpro.com/api/v1)
+  PELION_BASE_URL           -> opcionalno (default: https://zuzishop.pelionpro.com/api/v1)
 
 Primjer:
   export PELION_API_KEY="tvoj-kljuc"
