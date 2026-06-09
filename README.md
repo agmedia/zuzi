@@ -87,3 +87,5 @@ export PELION_BASE_URL="https://zuzishop.pelionpro.com/api/v1"
 ./scripts/pelion-api-test.sh stock-list
 ./scripts/pelion-api-test.sh stock-by-item 1
 ```
+
+Za brzi dohvat Pelion zalihe po ISBN-u u adminu prvo otvori tablicu iz `database/054_create_pelion_items_table.sql`, zatim pokreni "Osvježi Pelion barcode index", a onda koristi test "/stockList preko ISBN / ITEMBARCODE".

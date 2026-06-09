@@ -35,6 +35,11 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="pelion-isbn">ISBN / ITEMBARCODE</label>
+                            <input type="text" class="form-control" id="pelion-isbn" value="9789533134574">
+                        </div>
+
+                        <div class="form-group">
                             <label for="pelion-group-id">ItemGroupId</label>
                             <input type="number" min="1" class="form-control" id="pelion-group-id" value="23">
                         </div>
@@ -65,6 +70,8 @@
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-primary btn-block" onclick="runPelionTest('item-groups')">/itemGroupList</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-primary btn-block" onclick="runPelionTest('stock-list')">/stockList</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-primary btn-block" onclick="runPelionTest('stock-by-item')">/stockList?ItemId={ItemId}</button></div>
+                            <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-primary btn-block" onclick="runPelionTest('stock-by-isbn')">/stockList preko ISBN / ITEMBARCODE</button></div>
+                            <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-secondary btn-block" onclick="runPelionTest('sync-item-index')">Osvježi Pelion barcode index</button></div>
                         </div>
                     </div>
                 </div>
@@ -96,6 +103,7 @@
             const payload = {
                 action: action,
                 item_id: $('#pelion-item-id').val() || null,
+                isbn: $('#pelion-isbn').val() || null,
                 item_group_id: $('#pelion-group-id').val() || null,
                 item_type: $('#pelion-item-type').val() || null,
                 base_url: $('#pelion-base-url').val() || null,
