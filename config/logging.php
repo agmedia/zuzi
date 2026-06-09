@@ -68,6 +68,13 @@ return [
             'level' => 'debug',
         ],
 
+        'review_requests' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/review-requests.log'),
+            'level' => 'info',
+            'days' => 30,
+        ],
+
         /*******************************************************************************
         *                                Copyright : AGmedia                           *
         *                              email: filip@agmedia.hr                         *

@@ -197,9 +197,13 @@ class SendReviewRequestEmails extends Command
             return false;
         }
 
+        $sentAt = now();
+
+        $this->logReviewRequestSent($order, $promoAction, $reviewItems, $sentAt);
+
         try {
             $order->forceFill([
-                'review_request_sent_at' => now(),
+                'review_request_sent_at' => $sentAt,
             ])->save();
         } catch (\Throwable $e) {
             Log::warning('Review request email was sent, but marking the order as processed failed.', [
@@ -210,6 +214,27 @@ class SendReviewRequestEmails extends Command
         }
 
         return true;
+    }
+
+    private function logReviewRequestSent(Order $order, $promoAction, $reviewItems, $sentAt): void
+    {
+        try {
+            Log::channel('review_requests')->info('Review request email sent.', [
+                'order_id' => (int) $order->id,
+                'payment_email' => $order->payment_email,
+                'customer_name' => trim((string) $order->payment_fname . ' ' . (string) $order->payment_lname),
+                'coupon' => $promoAction->coupon ?? null,
+                'promo_action_id' => $promoAction->id ?? null,
+                'review_items_count' => $reviewItems->count(),
+                'sent_at' => $sentAt->toDateTimeString(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Review request email was sent, but writing the review request log failed.', [
+                'order_id' => $order->id,
+                'payment_email' => $order->payment_email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function positiveIntegerOption(string $option): ?int
