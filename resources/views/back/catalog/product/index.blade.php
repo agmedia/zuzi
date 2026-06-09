@@ -10,6 +10,10 @@
 @section('content')
     @php
         $filtersOpen = request()->cookie('zuzi_admin_products_filters_open', '1') === '1';
+        $missingIdentifiersActive = request()->boolean('missing_identifiers');
+        $missingIdentifiersQuery = $missingIdentifiersActive
+            ? request()->except(['page', 'missing_identifiers'])
+            : array_merge(request()->except(['page']), ['missing_identifiers' => 1]);
     @endphp
 
     <div class="bg-body-light">
@@ -35,6 +39,9 @@
                         <button class="btn btn-outline-primary mr-3 {{ $filtersOpen ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="{{ $filtersOpen ? 'true' : 'false' }}" aria-controls="collapseExample">
                             <i class="fa fa-filter"></i> Filter
                         </button>
+                        <a class="btn {{ $missingIdentifiersActive ? 'btn-warning' : 'btn-outline-warning' }} btn-inline-block mr-3" href="{{ route('products', $missingIdentifiersQuery) }}">
+                            <i class="fa fa-barcode"></i> Bez ItemID/ISBN
+                        </a>
                         <a class="btn btn-primary btn-inline-block" href="{{route('products')}}"><i class=" ci-trash"></i> Očisti filtere</a>
                     </div>
                 </div>
@@ -50,7 +57,7 @@
                                         <input type="text" class="form-control py-3 text-center" name="search" id="search-input" value="{{ request()->input('search') }}" placeholder="Upiši pojam pretraživanja">
                                         <button type="submit" class="btn btn-primary fs-base" onclick="setPageURL('search', $('#search-input').val());"><i class="fa fa-search"></i> </button>
                                     </div>
-                                    <div class="form-text small">Pretraži po imenu, šifri, godini izdanja ili šifri police.</div>
+                                    <div class="form-text small">Pretraži po imenu, šifri, ISBN-u, ItemID-u, godini izdanja ili šifri police.</div>
                                 </div>
                             </div>
 
@@ -122,6 +129,7 @@
                             <th class="text-center text-nowrap" style="width: 90px;">Slika</th>
                             <th style="min-width: 280px;">Naziv</th>
                             <th class="text-nowrap" style="width: 120px;">Šifra</th>
+                            <th class="text-nowrap" style="width: 150px;">ItemID / ISBN</th>
                             <th class="text-right text-nowrap" style="width: 130px;">Cijena</th>
                             <th class="text-center text-nowrap" style="width: 95px;">Polica</th>
                             <th class="text-center text-nowrap" style="width: 75px;">24h</th>
@@ -163,6 +171,10 @@
                                     @endif
                                 </td>
                                 <td class="font-size-sm text-nowrap">{{ $product->sku }}</td>
+                                <td class="font-size-sm text-nowrap">
+                                    <div><span class="text-muted">ItemID:</span> {{ $product->itemid ?: '---' }}</div>
+                                    <div><span class="text-muted">ISBN:</span> {{ $product->isbn ?: '---' }}</div>
+                                </td>
                                 <td class="font-size-sm text-right text-nowrap">
                                     <ag-input-field item='@json($editableProduct)' target="price"></ag-input-field>
                                 </td>
@@ -196,7 +208,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td class="text-center font-size-sm" colspan="11">
+                                <td class="text-center font-size-sm" colspan="12">
                                     <label>Nema proizvoda...</label>
                                 </td>
                             </tr>

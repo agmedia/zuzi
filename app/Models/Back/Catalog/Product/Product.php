@@ -497,8 +497,18 @@ class Product extends Model
                 $query->where('name', 'like', '%' . $search . '%')
                       ->orWhere('sku', 'like', '%' . $search . '%')
                       ->orWhere('isbn', 'like', '%' . $search . '%')
+                      ->orWhere('itemid', 'like', '%' . $search . '%')
                       ->orWhere('polica', 'like', '%' . $search . '%')
                       ->orWhere('year', 'like', $search);
+            });
+        }
+
+        if ($request->boolean('missing_identifiers')) {
+            $query->where(function (Builder $query) {
+                $query->whereNull('itemid')
+                      ->orWhere('itemid', 0)
+                      ->orWhereNull('isbn')
+                      ->orWhereRaw("TRIM(`isbn`) = ''");
             });
         }
 
@@ -574,6 +584,7 @@ class Product extends Model
             'id',
             'name',
             'isbn',
+            'itemid',
             'sku',
             'url',
             'image',
