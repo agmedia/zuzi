@@ -14,6 +14,29 @@ class SendReviewRequestEmailsTest extends TestCase
 {
     use RefreshDatabase;
 
+    private int $productSequence = 0;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('settings.order.status.completed', $this->completedStatusId());
+
+        DB::table('settings')->updateOrInsert(
+            ['code' => 'order', 'key' => 'statuses'],
+            [
+                'user_id' => null,
+                'value' => collect([
+                    ['id' => (int) config('settings.order.status.send'), 'title' => 'Poslana', 'sort_order' => 4],
+                    ['id' => $this->completedStatusId(), 'title' => 'Završeno', 'sort_order' => 9],
+                ])->toJson(),
+                'json' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+    }
+
     public function test_review_request_email_omits_coupon_while_review_promos_are_paused(): void
     {
         Mail::fake();
@@ -68,6 +91,63 @@ class SendReviewRequestEmailsTest extends TestCase
         });
     }
 
+    public function test_review_request_backfill_can_force_coupon_during_pause_window(): void
+    {
+        Mail::fake();
+        Carbon::setTestNow('2026-06-10 09:15:00');
+
+        $orderId = $this->createCompletedReviewableOrder('backfill@example.com', '2026-02-20 09:15:00');
+
+        $this->artisan('send:review-requests', [
+            '--min-days' => 61,
+            '--max-days' => 180,
+            '--limit' => 1,
+            '--force-coupon' => true,
+        ])->assertExitCode(0);
+
+        $action = Action::query()
+            ->where('title', 'Promo za dojam narudzbe #' . $orderId)
+            ->first();
+
+        $this->assertNotNull($action);
+        $this->assertTrue(str_starts_with((string) $action->coupon, 'DOJAM20-'));
+
+        Mail::assertSent(OrderReviewRequest::class, function (OrderReviewRequest $mail) use ($orderId, $action) {
+            $rendered = $this->renderReviewRequestMail($mail);
+
+            return $mail->hasTo('backfill@example.com')
+                && (int) $mail->order->id === $orderId
+                && (int) optional($mail->promoAction)->id === (int) $action->id
+                && str_contains($rendered, 'Vaš kod za sljedeću kupnju')
+                && str_contains($rendered, (string) $action->coupon);
+        });
+
+        $this->assertNotNull(DB::table('orders')->where('id', $orderId)->value('review_request_sent_at'));
+    }
+
+    public function test_review_request_backfill_respects_limit_and_sends_oldest_first(): void
+    {
+        Mail::fake();
+        Carbon::setTestNow('2026-07-01 09:15:00');
+
+        $olderOrderId = $this->createCompletedReviewableOrder('older@example.com', '2026-02-01 09:15:00');
+        $newerOrderId = $this->createCompletedReviewableOrder('newer@example.com', '2026-03-01 09:15:00');
+
+        $this->artisan('send:review-requests', [
+            '--min-days' => 61,
+            '--max-days' => 180,
+            '--limit' => 1,
+            '--force-coupon' => true,
+        ])->assertExitCode(0);
+
+        Mail::assertSent(OrderReviewRequest::class, 1);
+        Mail::assertSent(OrderReviewRequest::class, fn (OrderReviewRequest $mail) => $mail->hasTo('older@example.com'));
+        Mail::assertNotSent(OrderReviewRequest::class, fn (OrderReviewRequest $mail) => $mail->hasTo('newer@example.com'));
+
+        $this->assertNotNull(DB::table('orders')->where('id', $olderOrderId)->value('review_request_sent_at'));
+        $this->assertNull(DB::table('orders')->where('id', $newerOrderId)->value('review_request_sent_at'));
+    }
+
     public function test_review_request_test_email_also_respects_coupon_pause(): void
     {
         Mail::fake();
@@ -104,7 +184,7 @@ class SendReviewRequestEmailsTest extends TestCase
     private function createCompletedReviewableOrder(string $email, string $completedAt): int
     {
         $completedAt = Carbon::parse($completedAt);
-        $completedStatusId = (int) config('settings.order.status.send');
+        $completedStatusId = $this->completedStatusId();
         $productId = $this->createProduct();
 
         $orderId = (int) DB::table('orders')->insertGetId([
@@ -170,16 +250,18 @@ class SendReviewRequestEmailsTest extends TestCase
 
     private function createProduct(): int
     {
+        $suffix = ++$this->productSequence;
+
         return (int) DB::table('products')->insertGetId([
             'author_id' => 0,
             'publisher_id' => 0,
             'action_id' => 0,
             'name' => 'Test knjiga',
-            'sku' => 'REVTEST1',
+            'sku' => 'REVTEST' . $suffix,
             'ean' => null,
             'description' => null,
-            'slug' => 'test-knjiga',
-            'url' => '/knjiga/test-knjiga',
+            'slug' => 'test-knjiga-' . $suffix,
+            'url' => '/knjiga/test-knjiga-' . $suffix,
             'image' => null,
             'price' => 25,
             'quantity' => 1,
@@ -204,6 +286,11 @@ class SendReviewRequestEmailsTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function completedStatusId(): int
+    {
+        return 9;
     }
 
     private function renderReviewRequestMail(OrderReviewRequest $mail): string

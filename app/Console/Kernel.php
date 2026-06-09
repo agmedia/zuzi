@@ -32,6 +32,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('sync:category-actions')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('check:wishlist')->everySixHours();//->everyMinute();
         $schedule->command('send:review-requests')->dailyAt('09:15');
+        $schedule->command('send:review-requests --min-days=61 --max-days=180 --limit=6 --sleep=10 --force-coupon')->everyMinute()->withoutOverlapping();
         $schedule->command('sync:shipment-tracking --limit=50 --stale-minutes=15')->everyFifteenMinutes()->withoutOverlapping();
     }
 
