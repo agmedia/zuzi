@@ -856,6 +856,7 @@ class ApiController extends Controller
 
             $groupShelves = [];
             $skippedInvalidGroups = 0;
+            $skippedGenericGroups = 0;
             $skippedEmptyShelves = 0;
 
             foreach ($groups as $group) {
@@ -874,6 +875,11 @@ class ApiController extends Controller
 
                 if (! $shelf) {
                     $skippedEmptyShelves++;
+                    continue;
+                }
+
+                if ($this->isGenericPelionShelf($shelf)) {
+                    $skippedGenericGroups++;
                     continue;
                 }
 
@@ -911,6 +917,7 @@ class ApiController extends Controller
             $itemExamples = [];
             $skippedInvalidItems = 0;
             $skippedMissingGroup = 0;
+            $skippedGenericItemGroups = 0;
             $skippedDuplicateConflicts = 0;
 
             foreach ($items as $item) {
@@ -928,7 +935,14 @@ class ApiController extends Controller
                 }
 
                 if (! array_key_exists($groupId, $groupShelves)) {
-                    $skippedMissingGroup++;
+                    $rawShelf = $this->normalizePelionShelf($item['ITEMGRUPNAME'] ?? $item['ITEMGROUPNAME'] ?? null);
+
+                    if ($rawShelf && $this->isGenericPelionShelf($rawShelf)) {
+                        $skippedGenericItemGroups++;
+                    } else {
+                        $skippedMissingGroup++;
+                    }
+
                     continue;
                 }
 
@@ -1049,9 +1063,11 @@ class ApiController extends Controller
                     'unchanged' => $unchanged,
                     'missing_products' => $missingProducts,
                     'skipped_invalid_groups' => $skippedInvalidGroups,
+                    'skipped_generic_groups' => $skippedGenericGroups,
                     'skipped_empty_shelves' => $skippedEmptyShelves,
                     'skipped_invalid_items' => $skippedInvalidItems,
                     'skipped_missing_group' => $skippedMissingGroup,
+                    'skipped_generic_item_groups' => $skippedGenericItemGroups,
                     'skipped_duplicate_conflicts' => $skippedDuplicateConflicts,
                     'mapping' => [
                         'ITEMID' => 'products.itemid',
@@ -1137,6 +1153,17 @@ class ApiController extends Controller
         $value = preg_replace('/\s+/', ' ', trim((string) $value));
 
         return $value === '' ? null : $value;
+    }
+
+    private function isGenericPelionShelf(string $shelf): bool
+    {
+        return in_array($shelf, [
+            'Usluga',
+            'Trgovačka roba',
+            'Komisija',
+            'Rezervirano',
+            'Pekarski proizvodi',
+        ], true);
     }
 
     private function findLocalProductByIsbn(string $isbn)
