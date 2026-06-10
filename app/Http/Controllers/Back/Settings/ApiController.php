@@ -149,7 +149,7 @@ class ApiController extends Controller
     public function pelionTest(Request $request)
     {
         $data = $request->validate([
-            'action' => 'required|string|in:item-list,item-list-attrs,item-by-id,group-items,group-active,item-type,item-groups,stock-list,stock-by-item,sync-item-index,sync-product-isbns,sync-product-quantities,stock-by-isbn',
+            'action' => 'required|string|in:item-list,item-list-attrs,item-by-id,group-items,group-active,item-type,item-groups,stock-list,stock-by-item,sync-item-index,sync-product-isbns,sync-product-quantities,sync-product-shelves,stock-by-isbn',
             'item_id' => 'nullable|integer|min:1',
             'item_group_id' => 'nullable|integer|min:1',
             'item_type' => 'nullable|string|in:T,K,U',
@@ -178,6 +178,10 @@ class ApiController extends Controller
 
         if ($data['action'] === 'sync-product-quantities') {
             return $this->syncProductQuantitiesFromPelion($baseUrl, $apiKey);
+        }
+
+        if ($data['action'] === 'sync-product-shelves') {
+            return $this->syncProductShelvesFromPelion($baseUrl, $apiKey);
         }
 
         if ($data['action'] === 'stock-by-isbn') {
@@ -813,6 +817,277 @@ class ApiController extends Controller
         }
     }
 
+    private function syncProductShelvesFromPelion(string $baseUrl, string $apiKey)
+    {
+        if (
+            ! Schema::hasTable('products') ||
+            ! Schema::hasColumn('products', 'itemid') ||
+            ! Schema::hasColumn('products', 'polica')
+        ) {
+            return response()->json([
+                'error' => 'Nedostaje tablica products ili stupci products.itemid / products.polica.'
+            ], 422);
+        }
+
+        $groupsUrl = $baseUrl . '/itemGroupList';
+        $itemsUrl = $baseUrl . '/itemList';
+
+        try {
+            $groupsResponse = Http::timeout(60)
+                                  ->withHeaders($this->pelionHeaders($apiKey))
+                                  ->get($groupsUrl);
+
+            if (! $groupsResponse->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => $groupsResponse->status(),
+                    'url' => $groupsResponse->effectiveUri() ? (string) $groupsResponse->effectiveUri() : $groupsUrl,
+                    'body' => $groupsResponse->json() !== null ? $groupsResponse->json() : $groupsResponse->body(),
+                ], 422);
+            }
+
+            $groups = $groupsResponse->json();
+
+            if (! is_array($groups)) {
+                return response()->json([
+                    'error' => 'Pelion itemGroupList nije vratio očekivani JSON niz.'
+                ], 422);
+            }
+
+            $groupShelves = [];
+            $skippedInvalidGroups = 0;
+            $skippedGenericGroups = 0;
+            $skippedEmptyShelves = 0;
+
+            foreach ($groups as $group) {
+                if (! is_array($group)) {
+                    $skippedInvalidGroups++;
+                    continue;
+                }
+
+                $groupId = $this->normalizePelionGroupId($group['ITEMGROUPID'] ?? null);
+                $shelf = $this->normalizePelionShelf($group['ITEMGROUPNAME'] ?? null);
+
+                if (! $groupId) {
+                    $skippedInvalidGroups++;
+                    continue;
+                }
+
+                if (! $shelf) {
+                    $skippedEmptyShelves++;
+                    continue;
+                }
+
+                if ($this->isGenericPelionShelf($shelf)) {
+                    $skippedGenericGroups++;
+                    continue;
+                }
+
+                $groupShelves[$groupId] = $shelf;
+            }
+
+            if (! $groupShelves) {
+                return response()->json([
+                    'error' => 'Pelion itemGroupList nije vratio nijednu valjanu policu za upis.'
+                ], 422);
+            }
+
+            $itemsResponse = Http::timeout(120)
+                                 ->withHeaders($this->pelionHeaders($apiKey))
+                                 ->get($itemsUrl);
+
+            if (! $itemsResponse->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => $itemsResponse->status(),
+                    'url' => $itemsResponse->effectiveUri() ? (string) $itemsResponse->effectiveUri() : $itemsUrl,
+                    'body' => $itemsResponse->json() !== null ? $itemsResponse->json() : $itemsResponse->body(),
+                ], 422);
+            }
+
+            $items = $itemsResponse->json();
+
+            if (! is_array($items)) {
+                return response()->json([
+                    'error' => 'Pelion itemList nije vratio očekivani JSON niz.'
+                ], 422);
+            }
+
+            $shelvesByItemId = [];
+            $itemExamples = [];
+            $skippedInvalidItems = 0;
+            $skippedMissingGroup = 0;
+            $skippedGenericItemGroups = 0;
+            $skippedDuplicateConflicts = 0;
+
+            foreach ($items as $item) {
+                if (! is_array($item)) {
+                    $skippedInvalidItems++;
+                    continue;
+                }
+
+                $itemId = $this->normalizePelionItemId($item['ITEMID'] ?? null);
+                $groupId = $this->normalizePelionGroupId($item['ITEMGROUPID'] ?? null);
+
+                if (! $itemId || ! $groupId) {
+                    $skippedInvalidItems++;
+                    continue;
+                }
+
+                if (! array_key_exists($groupId, $groupShelves)) {
+                    $rawShelf = $this->normalizePelionShelf($item['ITEMGRUPNAME'] ?? $item['ITEMGROUPNAME'] ?? null);
+
+                    if ($rawShelf && $this->isGenericPelionShelf($rawShelf)) {
+                        $skippedGenericItemGroups++;
+                    } else {
+                        $skippedMissingGroup++;
+                    }
+
+                    continue;
+                }
+
+                $shelf = $groupShelves[$groupId];
+
+                if (isset($shelvesByItemId[$itemId]) && $shelvesByItemId[$itemId]['polica'] !== $shelf) {
+                    unset($shelvesByItemId[$itemId]);
+                    $skippedDuplicateConflicts++;
+                    continue;
+                }
+
+                $shelvesByItemId[$itemId] = [
+                    'polica' => $shelf,
+                    'item_group_id' => $groupId,
+                    'item_code' => trim((string) ($item['ITEMCODE'] ?? '')) ?: null,
+                    'item_name' => trim((string) ($item['ITEMNAME'] ?? '')) ?: null,
+                ];
+
+                if (count($itemExamples) < 10) {
+                    $itemExamples[] = [
+                        'itemid' => $itemId,
+                        'item_group_id' => $groupId,
+                        'polica' => $shelf,
+                        'item_code' => $shelvesByItemId[$itemId]['item_code'],
+                        'item_name' => $shelvesByItemId[$itemId]['item_name'],
+                    ];
+                }
+            }
+
+            if (! $shelvesByItemId) {
+                return response()->json([
+                    'error' => 'Pelion itemList nije vratio nijedan artikl s valjanom policom.'
+                ], 422);
+            }
+
+            $now = now();
+            $updated = 0;
+            $unchanged = 0;
+            $matchedProducts = 0;
+            $missingProducts = 0;
+            $examples = [
+                'updated' => [],
+                'missing_products' => [],
+                'candidate_items' => $itemExamples,
+            ];
+
+            foreach (array_chunk($shelvesByItemId, 500, true) as $chunk) {
+                $products = DB::table('products')
+                              ->select('id', 'name', 'sku', 'itemid', 'polica')
+                              ->whereIn('itemid', array_keys($chunk))
+                              ->get()
+                              ->keyBy(function ($product) {
+                                  return (int) $product->itemid;
+                              });
+
+                foreach ($chunk as $itemId => $pelionItem) {
+                    $product = $products->get($itemId);
+                    $shelf = $pelionItem['polica'];
+
+                    if (! $product) {
+                        $missingProducts++;
+
+                        if (count($examples['missing_products']) < 10) {
+                            $examples['missing_products'][] = [
+                                'itemid' => $itemId,
+                                'item_group_id' => $pelionItem['item_group_id'],
+                                'polica' => $shelf,
+                                'item_code' => $pelionItem['item_code'],
+                                'item_name' => $pelionItem['item_name'],
+                            ];
+                        }
+
+                        continue;
+                    }
+
+                    $matchedProducts++;
+
+                    if ($this->normalizePelionShelf($product->polica ?? null) === $shelf) {
+                        $unchanged++;
+                        continue;
+                    }
+
+                    DB::table('products')
+                      ->where('id', $product->id)
+                      ->update([
+                          'polica' => $shelf,
+                          'updated_at' => $now,
+                      ]);
+
+                    $updated++;
+
+                    if (count($examples['updated']) < 10) {
+                        $examples['updated'][] = [
+                            'id' => $product->id,
+                            'sku' => $product->sku,
+                            'name' => $product->name,
+                            'itemid' => $itemId,
+                            'old_polica' => $product->polica,
+                            'new_polica' => $shelf,
+                            'item_group_id' => $pelionItem['item_group_id'],
+                        ];
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'status' => $itemsResponse->status(),
+                'url' => $itemsResponse->effectiveUri() ? (string) $itemsResponse->effectiveUri() : $itemsUrl,
+                'body' => [
+                    'message' => 'Pelion police su upisane prema ITEMGROUPNAME.',
+                    'groups_received' => count($groups),
+                    'valid_group_shelves' => count($groupShelves),
+                    'items_received' => count($items),
+                    'candidate_items' => count($shelvesByItemId),
+                    'matched_products' => $matchedProducts,
+                    'updated' => $updated,
+                    'unchanged' => $unchanged,
+                    'missing_products' => $missingProducts,
+                    'skipped_invalid_groups' => $skippedInvalidGroups,
+                    'skipped_generic_groups' => $skippedGenericGroups,
+                    'skipped_empty_shelves' => $skippedEmptyShelves,
+                    'skipped_invalid_items' => $skippedInvalidItems,
+                    'skipped_missing_group' => $skippedMissingGroup,
+                    'skipped_generic_item_groups' => $skippedGenericItemGroups,
+                    'skipped_duplicate_conflicts' => $skippedDuplicateConflicts,
+                    'mapping' => [
+                        'ITEMID' => 'products.itemid',
+                        'ITEMGROUPID' => 'itemGroupList.ITEMGROUPID',
+                        'ITEMGROUPNAME' => 'products.polica',
+                    ],
+                    'examples' => $examples,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Pelion product shelf sync failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Greška kod Pelion sinkronizacije polica: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     private function pelionHeaders(string $apiKey): array
     {
         return [
@@ -864,6 +1139,31 @@ class ApiController extends Controller
         $itemid = (int) $value;
 
         return $itemid > 0 ? $itemid : null;
+    }
+
+    private function normalizePelionGroupId($value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function normalizePelionShelf($value): ?string
+    {
+        $value = preg_replace('/\s+/', ' ', trim((string) $value));
+
+        return $value === '' ? null : $value;
+    }
+
+    private function isGenericPelionShelf(string $shelf): bool
+    {
+        return in_array($shelf, [
+            'Usluga',
+            'Trgovačka roba',
+            'Komisija',
+            'Rezervirano',
+            'Pekarski proizvodi',
+        ], true);
     }
 
     private function findLocalProductByIsbn(string $isbn)

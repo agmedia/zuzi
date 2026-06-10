@@ -74,6 +74,7 @@
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-secondary btn-block" onclick="runPelionTest('sync-item-index')">Osvježi Pelion barcode index</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-secondary btn-block" onclick="runPelionTest('sync-product-isbns')">Upiši Pelion ISBN i ItemID po SKU</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-success btn-block" onclick="runPelionTest('sync-product-quantities')">Updejtaj količine po ItemID</button></div>
+                            <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-success btn-block" onclick="runPelionTest('sync-product-shelves')">Upiši police po Pelion grupi</button></div>
                         </div>
                     </div>
                 </div>
@@ -106,6 +107,10 @@
             }
 
             if (action === 'sync-product-quantities' && !confirm('Updejtati products.quantity prema Pelion stockList i products.itemid?')) {
+                return;
+            }
+
+            if (action === 'sync-product-shelves' && !confirm('Upisati products.polica prema Pelion ITEMGROUPNAME i products.itemid?')) {
                 return;
             }
 
@@ -152,17 +157,31 @@
         }
 
         function renderPelionSummary(action, body) {
-            if (action !== 'sync-product-quantities' || !body) {
+            if (!body) {
                 return;
             }
 
-            $('#pelion-summary')
-                .removeClass('d-none')
-                .html(
-                    '<strong>' + (body.message || 'Pelion količine su updejtane.') + '</strong><br>' +
-                    'Updejtano: <strong>' + (body.updated || 0) + '</strong> | ' +
-                    'Količina &gt; 0: <strong>' + (body.quantity_gt_zero || 0) + '</strong>'
-                );
+            if (action === 'sync-product-quantities') {
+                $('#pelion-summary')
+                    .removeClass('d-none')
+                    .html(
+                        '<strong>' + (body.message || 'Pelion količine su updejtane.') + '</strong><br>' +
+                        'Updejtano: <strong>' + (body.updated || 0) + '</strong> | ' +
+                        'Količina &gt; 0: <strong>' + (body.quantity_gt_zero || 0) + '</strong>'
+                    );
+            }
+
+            if (action === 'sync-product-shelves') {
+                $('#pelion-summary')
+                    .removeClass('d-none')
+                    .html(
+                        '<strong>' + (body.message || 'Pelion police su upisane.') + '</strong><br>' +
+                        'Updejtano: <strong>' + (body.updated || 0) + '</strong> | ' +
+                        'Bez promjene: <strong>' + (body.unchanged || 0) + '</strong> | ' +
+                        'Matchano: <strong>' + (body.matched_products || 0) + '</strong> | ' +
+                        'Nema lokalni artikl: <strong>' + (body.missing_products || 0) + '</strong>'
+                    );
+            }
         }
     </script>
 @endpush
