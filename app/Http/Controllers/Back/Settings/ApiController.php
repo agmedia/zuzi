@@ -149,7 +149,7 @@ class ApiController extends Controller
     public function pelionTest(Request $request)
     {
         $data = $request->validate([
-            'action' => 'required|string|in:item-list,item-list-attrs,item-by-id,group-items,group-active,item-type,item-groups,stock-list,stock-by-item,sync-item-index,sync-product-isbns,stock-by-isbn',
+            'action' => 'required|string|in:item-list,item-list-attrs,item-by-id,group-items,group-active,item-type,item-groups,stock-list,stock-by-item,sync-item-index,sync-product-isbns,sync-product-quantities,stock-by-isbn',
             'item_id' => 'nullable|integer|min:1',
             'item_group_id' => 'nullable|integer|min:1',
             'item_type' => 'nullable|string|in:T,K,U',
@@ -174,6 +174,10 @@ class ApiController extends Controller
 
         if ($data['action'] === 'sync-product-isbns') {
             return $this->syncProductIsbnsFromPelion($baseUrl, $apiKey);
+        }
+
+        if ($data['action'] === 'sync-product-quantities') {
+            return $this->syncProductQuantitiesFromPelion($baseUrl, $apiKey);
         }
 
         if ($data['action'] === 'stock-by-isbn') {
@@ -618,6 +622,197 @@ class ApiController extends Controller
         }
     }
 
+    private function syncProductQuantitiesFromPelion(string $baseUrl, string $apiKey)
+    {
+        if (
+            ! Schema::hasTable('products') ||
+            ! Schema::hasColumn('products', 'itemid') ||
+            ! Schema::hasColumn('products', 'quantity')
+        ) {
+            return response()->json([
+                'error' => 'Nedostaje tablica products ili stupci products.itemid / products.quantity.'
+            ], 422);
+        }
+
+        $url = $baseUrl . '/stockList';
+
+        try {
+            $response = Http::timeout(120)
+                            ->withHeaders($this->pelionHeaders($apiKey))
+                            ->get($url);
+
+            if (! $response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => $response->status(),
+                    'url' => $response->effectiveUri() ? (string) $response->effectiveUri() : $url,
+                    'body' => $response->json() !== null ? $response->json() : $response->body(),
+                ], 422);
+            }
+
+            $stockRows = $this->normalizeStockRows($response->json());
+
+            if (! $stockRows) {
+                return response()->json([
+                    'error' => 'Pelion stockList nije vratio očekivani JSON niz zaliha.'
+                ], 422);
+            }
+
+            $stockByItemId = [];
+            $skippedInvalid = 0;
+
+            foreach ($stockRows as $stockRow) {
+                if (! is_array($stockRow)) {
+                    $skippedInvalid++;
+                    continue;
+                }
+
+                $itemId = $this->normalizePelionItemId($stockRow['ITEMID'] ?? $stockRow['ItemId'] ?? $stockRow['itemid'] ?? $stockRow['item_id'] ?? null);
+
+                if (! $itemId) {
+                    $skippedInvalid++;
+                    continue;
+                }
+
+                $stockByItemId[$itemId] = ($stockByItemId[$itemId] ?? 0) + $this->stockQuantityFromRow($stockRow);
+            }
+
+            if (! $stockByItemId) {
+                return response()->json([
+                    'error' => 'Pelion stockList nije vratio nijedan red s valjanim ITEMID.'
+                ], 422);
+            }
+
+            $now = now();
+            $updated = 0;
+            $unchanged = 0;
+            $matchedProducts = 0;
+            $quantityGreaterThanZero = 0;
+            $missingItemidProducts = 0;
+            $notInPelionProducts = 0;
+            $matchedStockItemIds = [];
+            $examples = [
+                'updated' => [],
+                'missing_itemid' => [],
+                'not_in_pelion' => [],
+            ];
+
+            DB::table('products')
+              ->select('id', 'name', 'sku', 'itemid', 'quantity')
+              ->chunkById(500, function ($products) use (
+                  $stockByItemId,
+                  $now,
+                  &$updated,
+                  &$unchanged,
+                  &$matchedProducts,
+                  &$quantityGreaterThanZero,
+                  &$missingItemidProducts,
+                  &$notInPelionProducts,
+                  &$matchedStockItemIds,
+                  &$examples
+              ) {
+                foreach ($products as $product) {
+                    $itemId = $this->normalizePelionItemId($product->itemid);
+                    $quantity = 0;
+
+                    if ($itemId && array_key_exists($itemId, $stockByItemId)) {
+                        $quantity = $this->normalizeProductStockQuantity($stockByItemId[$itemId]);
+                        $matchedProducts++;
+                        $matchedStockItemIds[$itemId] = true;
+                    } elseif (! $itemId) {
+                        $missingItemidProducts++;
+
+                        if (count($examples['missing_itemid']) < 10) {
+                            $examples['missing_itemid'][] = [
+                                'id' => $product->id,
+                                'sku' => $product->sku,
+                                'name' => $product->name,
+                                'old_quantity' => (int) $product->quantity,
+                                'new_quantity' => 0,
+                            ];
+                        }
+                    } else {
+                        $notInPelionProducts++;
+
+                        if (count($examples['not_in_pelion']) < 10) {
+                            $examples['not_in_pelion'][] = [
+                                'id' => $product->id,
+                                'sku' => $product->sku,
+                                'name' => $product->name,
+                                'itemid' => $itemId,
+                                'old_quantity' => (int) $product->quantity,
+                                'new_quantity' => 0,
+                            ];
+                        }
+                    }
+
+                    if ($quantity > 0) {
+                        $quantityGreaterThanZero++;
+                    }
+
+                    if ((int) $product->quantity === $quantity) {
+                        $unchanged++;
+                        continue;
+                    }
+
+                    DB::table('products')
+                      ->where('id', $product->id)
+                      ->update([
+                          'quantity' => $quantity,
+                          'updated_at' => $now,
+                      ]);
+
+                    $updated++;
+
+                    if (count($examples['updated']) < 10) {
+                        $examples['updated'][] = [
+                            'id' => $product->id,
+                            'sku' => $product->sku,
+                            'name' => $product->name,
+                            'itemid' => $itemId,
+                            'old_quantity' => (int) $product->quantity,
+                            'new_quantity' => $quantity,
+                        ];
+                    }
+                }
+              });
+
+            $pelionItemidsWithoutProduct = count(array_diff_key($stockByItemId, $matchedStockItemIds));
+
+            return response()->json([
+                'success' => true,
+                'status' => $response->status(),
+                'url' => $response->effectiveUri() ? (string) $response->effectiveUri() : $url,
+                'body' => [
+                    'message' => 'Pelion količine su updejtane prema products.itemid.',
+                    'stock_rows_received' => count($stockRows),
+                    'stock_itemids_received' => count($stockByItemId),
+                    'matched_products' => $matchedProducts,
+                    'updated' => $updated,
+                    'unchanged' => $unchanged,
+                    'quantity_gt_zero' => $quantityGreaterThanZero,
+                    'missing_itemid_products' => $missingItemidProducts,
+                    'not_in_pelion_products' => $notInPelionProducts,
+                    'pelion_itemids_without_product' => $pelionItemidsWithoutProduct,
+                    'skipped_invalid' => $skippedInvalid,
+                    'mapping' => [
+                        'ITEMID' => 'products.itemid',
+                        'STOCKQUANTITY' => 'products.quantity',
+                    ],
+                    'examples' => $examples,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Pelion product quantity sync failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Greška kod Pelion sinkronizacije količina: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     private function pelionHeaders(string $apiKey): array
     {
         return [
@@ -689,19 +884,35 @@ class ApiController extends Controller
             return [];
         }
 
-        if (isset($stock['STOCKQUANTITY'])) {
+        if (isset($stock['STOCKQUANTITY']) || isset($stock['ITEMID'])) {
             return [$stock];
+        }
+
+        foreach (['stock', 'Stock', 'STOCK', 'data', 'Data', 'items', 'Items'] as $key) {
+            if (isset($stock[$key]) && is_array($stock[$key])) {
+                return $this->normalizeStockRows($stock[$key]);
+            }
         }
 
         return array_values(array_filter($stock, 'is_array'));
     }
 
+    private function stockQuantityFromRow(array $row): float
+    {
+        $quantity = str_replace(',', '.', trim((string) ($row['STOCKQUANTITY'] ?? $row['StockQuantity'] ?? $row['stockquantity'] ?? $row['quantity'] ?? $row['Quantity'] ?? 0)));
+
+        return is_numeric($quantity) ? (float) $quantity : 0;
+    }
+
+    private function normalizeProductStockQuantity($quantity): int
+    {
+        return max(0, (int) floor((float) $quantity));
+    }
+
     private function sumStockQuantity(array $stockRows): float
     {
         return array_reduce($stockRows, function (float $total, array $row) {
-            $quantity = str_replace(',', '.', trim((string) ($row['STOCKQUANTITY'] ?? 0)));
-
-            return $total + (is_numeric($quantity) ? (float) $quantity : 0);
+            return $total + $this->stockQuantityFromRow($row);
         }, 0.0);
     }
 

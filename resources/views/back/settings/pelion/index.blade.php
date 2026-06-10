@@ -73,6 +73,7 @@
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-primary btn-block" onclick="runPelionTest('stock-by-isbn')">/stockList preko ISBN / ITEMBARCODE</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-secondary btn-block" onclick="runPelionTest('sync-item-index')">Osvježi Pelion barcode index</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-secondary btn-block" onclick="runPelionTest('sync-product-isbns')">Upiši Pelion ISBN i ItemID po SKU</button></div>
+                            <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-success btn-block" onclick="runPelionTest('sync-product-quantities')">Updejtaj količine po ItemID</button></div>
                         </div>
                     </div>
                 </div>
@@ -84,6 +85,7 @@
                         <h3 class="block-title">Rezultat</h3>
                     </div>
                     <div class="block-content block-content-full">
+                        <div id="pelion-summary" class="alert alert-info d-none mb-3"></div>
                         <div class="mb-2">
                             <strong>Status:</strong> <span id="pelion-status">-</span><br>
                             <strong>URL:</strong> <span id="pelion-url">-</span>
@@ -103,6 +105,10 @@
                 return;
             }
 
+            if (action === 'sync-product-quantities' && !confirm('Updejtati products.quantity prema Pelion stockList i products.itemid?')) {
+                return;
+            }
+
             let block = $('#pelion-result-block');
 
             const payload = {
@@ -116,14 +122,18 @@
             };
 
             block.addClass('block-mode-loading');
+            $('#pelion-summary').addClass('d-none').empty();
 
             axios.post('{{ route('api.api.pelion.test') }}', payload)
                 .then(response => {
                     const data = response.data || {};
+                    const body = data.body || {};
 
                     $('#pelion-status').text(data.status || response.status);
                     $('#pelion-url').text(data.url || '-');
                     $('#pelion-result').text(JSON.stringify(data.body ?? data, null, 2));
+
+                    renderPelionSummary(action, body);
 
                     successToast.fire();
                 })
@@ -139,6 +149,20 @@
                 .finally(() => {
                     block.removeClass('block-mode-loading');
                 });
+        }
+
+        function renderPelionSummary(action, body) {
+            if (action !== 'sync-product-quantities' || !body) {
+                return;
+            }
+
+            $('#pelion-summary')
+                .removeClass('d-none')
+                .html(
+                    '<strong>' + (body.message || 'Pelion količine su updejtane.') + '</strong><br>' +
+                    'Updejtano: <strong>' + (body.updated || 0) + '</strong> | ' +
+                    'Količina &gt; 0: <strong>' + (body.quantity_gt_zero || 0) + '</strong>'
+                );
         }
     </script>
 @endpush
