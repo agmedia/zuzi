@@ -75,7 +75,6 @@
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-secondary btn-block" onclick="runPelionTest('sync-product-isbns')">Upiši Pelion ISBN i ItemID po SKU</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-success btn-block" onclick="runPelionTest('sync-product-quantities')">Updejtaj količine po ItemID</button></div>
                             <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-success btn-block" onclick="runPelionTest('sync-product-shelves')">Upiši police po Pelion grupi</button></div>
-                            <div class="col-12 mb-2"><button class="btn btn-sm btn-alt-warning btn-block" onclick="runPelionTest('sync-products-from-new-sku-file')">TEMP: ISBN/ItemID iz USPOREDBA po NOVI SKU</button></div>
                         </div>
                     </div>
                 </div>
@@ -112,10 +111,6 @@
             }
 
             if (action === 'sync-product-shelves' && !confirm('Upisati products.polica prema Pelion ITEMGROUPNAME i products.itemid?')) {
-                return;
-            }
-
-            if (action === 'sync-products-from-new-sku-file' && !confirm('Pregaziti products.isbn i products.itemid iz public/USPOREDBA_kasa_novi_SKU.xlsx prema NOVI SKU = products.sku?')) {
                 return;
             }
 
@@ -186,18 +181,6 @@
                         'Bez promjene: <strong>' + (body.unchanged || 0) + '</strong> | ' +
                         'Matchano: <strong>' + (body.matched_products || 0) + '</strong> | ' +
                         'Nema lokalni artikl: <strong>' + (body.missing_products || 0) + '</strong>'
-                    );
-            }
-
-            if (action === 'sync-products-from-new-sku-file') {
-                $('#pelion-summary')
-                    .removeClass('d-none')
-                    .html(
-                        '<strong>' + (body.message || 'Import je završen.') + '</strong><br>' +
-                        'Updejtano: <strong>' + (body.updated || 0) + '</strong> | ' +
-                        'Matchano: <strong>' + (body.matched_products || 0) + '</strong> | ' +
-                        'Promijenjeno: <strong>' + (body.matched_products_that_changed || 0) + '</strong> | ' +
-                        'Dupli ItemID nakon: <strong>' + (body.duplicate_non_null_itemids_after || 0) + '</strong>'
                     );
             }
         }
