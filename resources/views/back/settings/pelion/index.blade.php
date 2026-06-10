@@ -149,12 +149,13 @@
                 })
                 .catch(error => {
                     const data = error.response ? error.response.data : {error: error.message};
+                    const message = (data && data.error) ? data.error : (typeof data === 'string' && data ? data : 'Server je vratio praznu 500 grešku. Provjeri Laravel/PHP log.');
 
                     $('#pelion-status').text(error.response ? error.response.status : '500');
                     $('#pelion-url').text('-');
-                    $('#pelion-result').text(JSON.stringify(data, null, 2));
+                    $('#pelion-result').text(typeof data === 'string' ? (data || message) : JSON.stringify(data, null, 2));
 
-                    errorToast.fire(data.error || 'Greška kod Pelion API poziva.');
+                    errorToast.fire(message);
                 })
                 .finally(() => {
                     block.removeClass('block-mode-loading');

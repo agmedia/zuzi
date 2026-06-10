@@ -457,6 +457,7 @@ class ApiController extends Controller
         }
 
         @set_time_limit(0);
+        @ini_set('memory_limit', '1024M');
 
         $excelPath = public_path('USPOREDBA_kasa_novi_SKU.xlsx');
 
@@ -682,13 +683,14 @@ class ApiController extends Controller
             }
 
             $updatesThatChange = array_filter($updates, fn ($update) => ($update['old_isbn'] ?? null) !== ($update['new_isbn'] ?? null) || ($update['old_itemid'] ?? null) !== ($update['new_itemid'] ?? null));
+            $updatesToApply = $updatesThatChange;
             $backupPath = null;
             $freedItemidRows = 0;
             $updatedRows = 0;
 
-            if ($updates) {
-                $targetProductIds = array_keys($updates);
-                $incomingItemids = array_values(array_unique(array_map(fn ($update) => (int) $update['new_itemid'], $updates)));
+            if ($updatesToApply) {
+                $targetProductIds = array_keys($updatesToApply);
+                $incomingItemids = array_values(array_unique(array_map(fn ($update) => (int) $update['new_itemid'], $updatesToApply)));
                 $backupRowsById = [];
 
                 foreach (array_chunk($targetProductIds, 1000) as $chunk) {
@@ -731,7 +733,7 @@ class ApiController extends Controller
                 $backupPath = 'pelion-product-import-backups/products_before_new_sku_update_' . now()->format('Ymd_His') . '.json';
                 Storage::put($backupPath, json_encode($backupRows, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-                DB::transaction(function () use ($updates, $incomingItemids, &$freedItemidRows, &$updatedRows, &$examples): void {
+                DB::transaction(function () use ($updatesToApply, $incomingItemids, &$freedItemidRows, &$updatedRows, &$examples): void {
                     $now = now();
 
                     foreach (array_chunk($incomingItemids, 1000) as $chunk) {
@@ -743,7 +745,7 @@ class ApiController extends Controller
                             ]);
                     }
 
-                    foreach ($updates as $productId => $update) {
+                    foreach ($updatesToApply as $productId => $update) {
                         $updatedRows += DB::table('products')
                             ->where('id', $productId)
                             ->update([
@@ -1578,19 +1580,19 @@ class ApiController extends Controller
     {
         $confidence = mb_strtoupper($confidence, 'UTF-8');
 
-        if (str_contains($confidence, 'ZLATNO')) {
+        if (mb_strpos($confidence, 'ZLATNO') !== false) {
             return 4;
         }
 
-        if (str_contains($confidence, 'VISOKO')) {
+        if (mb_strpos($confidence, 'VISOKO') !== false) {
             return 3;
         }
 
-        if (str_contains($confidence, 'SREDNJE')) {
+        if (mb_strpos($confidence, 'SREDNJE') !== false) {
             return 2;
         }
 
-        if (str_contains($confidence, 'PROVJERU')) {
+        if (mb_strpos($confidence, 'PROVJERU') !== false) {
             return 1;
         }
 
