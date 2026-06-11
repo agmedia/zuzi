@@ -2,18 +2,19 @@
  @php
     $homeHeroCarouselOptions = [
         'items' => 1,
-        'mode' => 'gallery',
+        'mode' => 'carousel',
         'nav' => true,
         'autoplay' => true,
         'autoplayTimeout' => 7000,
         'loop' => true,
+        'mouseDrag' => true,
         'touch' => true,
         'swipeAngle' => 30,
         'preventActionWhenRunning' => true,
         'preventScrollOnTouch' => 'auto',
         'responsive' => [
             0 => ['nav' => true, 'controls' => false],
-            576 => ['nav' => false, 'controls' => true],
+            576 => ['nav' => true, 'controls' => true],
         ],
     ];
     $countdownTarget = \Carbon\CarbonImmutable::create(2026, 5, 1, 0, 0, 0, config('app.timezone', 'Europe/Zagreb'));
