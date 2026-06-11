@@ -762,7 +762,7 @@ class Helper
             }
 
             if (static::isDescriptionTarget($data, 'reviews')) {
-                $items     = static::reviews($data)->get();
+                $items     = static::reviews($data)->limit(8)->get();
                 $tablename = 'reviews';
             }
 
@@ -1027,7 +1027,8 @@ class Helper
     {
         $reviews = (new Review())->newQuery()
             ->with(['product:id,name,url,image'])
-            ->where('status', 1);
+            ->where('status', 1)
+            ->where('featured', 1);
 
         if (isset($data['popular']) && $data['popular'] == 'on') {
             $reviews->where('featured', 1);
@@ -1042,8 +1043,6 @@ class Helper
         }
 
         return $reviews
-            ->orderByDesc('featured')
-            ->orderBy('sort_order')
             ->orderByDesc('created_at');
     }
 

@@ -423,6 +423,7 @@ Route::get('/savjeti-za-poklone/{recipient?}', [GiftVoucherController::class, 'g
 
 Route::post('/dodaj-u-listu-zelja', [HomeController::class, 'wishlist'])->name('wishlist');
 Route::post('/komentar/proizvoda/posalji', [HomeController::class, 'sendProductComment'])->name('komentar.proizvoda');
+Route::get('/dojmovi', [HomeController::class, 'reviews'])->name('dojmovi');
 Route::post('/dojmovi/{review}/koristan', [HomeController::class, 'markReviewHelpful'])->name('dojmovi.koristan');
 //
 Route::get('/kosarica', [CheckoutController::class, 'cart'])->name('kosarica');

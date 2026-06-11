@@ -184,6 +184,18 @@ class HomeController extends Controller
     }
 
 
+    public function reviews(Request $request)
+    {
+        $reviews = Review::query()
+            ->with(['product:id,name,url,image'])
+            ->where('status', 1)
+            ->latest('created_at')
+            ->paginate(60);
+
+        return view('front.reviews.index', compact('reviews'));
+    }
+
+
     /**
      * @param Request $request
      *

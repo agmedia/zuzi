@@ -57,9 +57,12 @@
     $hasContainer = ! empty($data['container']);
     $customCss = trim((string) ($data['css'] ?? ''));
     $reviewInitialLimit = 8;
-    $reviewBatchSize = 8;
     $reviewItems = $isReviewWidget
-        ? collect($data['items'] ?? [])->sortByDesc('created_at')->values()
+        ? collect($data['items'] ?? [])
+            ->filter(fn ($review) => (bool) data_get($review, 'featured'))
+            ->sortByDesc('created_at')
+            ->take($reviewInitialLimit)
+            ->values()
         : collect();
     $sectionClasses = collect([
         'page-carousel-widget',
@@ -113,7 +116,7 @@
 
     @elseif ($data['tablename'] == 'reviews')
 
-        <div class="review-widget-masonry" data-review-masonry data-review-batch="{{ $reviewBatchSize }}" style="columns: 15rem 4; column-gap: 1.25rem;">
+        <div class="review-widget-masonry" data-review-masonry style="columns: 15rem 4; column-gap: 1.25rem;">
             @foreach ($reviewItems as $review)
                 @php
                     $reviewProduct = $review->product;
@@ -137,8 +140,13 @@
                     }
 
                     $reviewProductImageAlt = 'Naslovnica knjige ' . $reviewProductTitle;
+                    $reviewExcerpt = \Illuminate\Support\Str::limit(
+                        trim(preg_replace('/\s+/', ' ', strip_tags((string) $review->message))),
+                        200,
+                        '...'
+                    );
                 @endphp
-                <div class="review-widget-masonry-item" data-review-item @if($loop->index >= $reviewInitialLimit) hidden @endif style="display: inline-block; width: 100%; margin-bottom: 1rem; break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid;">
+                <div class="review-widget-masonry-item" data-review-item style="display: inline-block; width: 100%; margin-bottom: 1rem; break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid;">
                     <blockquote class="review-widget-quote">
                         <div class="card card-body fs-md text-muted shadow review-widget-card">
                             <div class="review-widget-product-head" style="display: flex; align-items: flex-start; gap: .75rem; margin-bottom: .75rem;">
@@ -178,10 +186,11 @@
                             @if($review->title)
                                 <div class="review-widget-review-title mb-2" style="color: #373f50; font-weight: 700; line-height: 1.35;">{{ $review->title }}</div>
                             @endif
-                            <div class="review-widget-message" style="display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6; max-height: 12.8em; text-overflow: ellipsis;">{{ strip_tags($review->message) }}</div>
+                            <div class="review-widget-message" style="display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6; max-height: 9.6em; text-overflow: ellipsis;">{{ $reviewExcerpt }}</div>
                             <footer class="review-widget-card-footer d-flex flex-wrap justify-content-between align-items-center pt-3 mt-auto">
                                 <span class="review-widget-author d-inline-flex align-items-center">
-                                    <i class="ci-user me-2"></i>{{ $review->fname }} {{ $review->lname }}
+                                    <i class="ci-user me-2"></i>
+                                    <span class="review-widget-author-name">{{ trim($review->fname . ' ' . $review->lname) }}</span>
                                 </span>
                                 @if ($reviewReviewsUrl)
                                     <a class="review-widget-link text-decoration-none" href="{{ $reviewReviewsUrl }}" style="line-height: 1.2; text-align: right;">Pročitaj više</a>
@@ -193,11 +202,11 @@
                 @endforeach
         </div>
 
-        @if ($reviewItems->count() > $reviewInitialLimit)
+        @if ($reviewItems->isNotEmpty())
             <div class="text-center pt-2">
-                <button class="btn btn-outline-primary" type="button" data-review-load-more>
+                <a class="btn btn-outline-primary" href="{{ route('dojmovi') }}">
                     Vidi još
-                </button>
+                </a>
             </div>
         @endif
 

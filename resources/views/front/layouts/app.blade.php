@@ -309,16 +309,20 @@
         }
 
         .review-widget-heading {
+            flex: 1 1 auto;
             min-width: 0;
         }
 
         .review-widget-cta {
             display: inline-flex;
+            flex: 0 0 auto;
             align-items: center;
         }
 
         .review-widget-cta .btn {
             border-radius: 999px;
+            padding-right: .95rem;
+            padding-left: .95rem;
             white-space: nowrap;
         }
 
@@ -425,18 +429,19 @@
 
         .review-widget-message {
             display: -webkit-box !important;
-            -webkit-line-clamp: 8;
+            -webkit-line-clamp: 6;
             -webkit-box-orient: vertical;
             overflow: hidden !important;
             color: #4b566b;
             line-height: 1.6;
             height: auto !important;
-            max-height: 12.8em !important;
+            max-height: 9.6em !important;
             min-height: 0;
             text-overflow: ellipsis;
         }
 
         .review-widget-card-footer {
+            flex-wrap: nowrap !important;
             gap: .75rem;
             margin-top: 1.15rem !important;
             border-top: 1px solid rgba(var(--cz-primary-rgb), .1);
@@ -445,15 +450,27 @@
         .review-widget-author {
             flex: 1 1 0;
             min-width: 0;
+            overflow: hidden;
             color: #373f50;
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .review-widget-author i {
+            flex: 0 0 auto;
             color: #e50077;
         }
 
+        .review-widget-author-name {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .review-widget-link {
+            flex: 0 0 auto;
             color: #e50077;
             font-size: inherit;
             font-weight: 700;
@@ -479,6 +496,21 @@
         }
 
         @media (max-width: 767.98px) {
+            .review-widget-section .page-carousel-widget__header {
+                flex-wrap: nowrap !important;
+                align-items: flex-start !important;
+                gap: .75rem;
+            }
+
+            .review-widget-heading h2 {
+                font-size: 1.35rem;
+                line-height: 1.2;
+            }
+
+            .review-widget-heading h2 .fs-base {
+                font-size: .9rem !important;
+            }
+
             .page-carousel-widget--background,
             .page-carousel-widget--container:not(.page-carousel-widget--background) {
                 margin-right: -.25rem;
@@ -488,12 +520,14 @@
             }
 
             .review-widget-cta {
-                width: 100%;
-                justify-content: stretch;
+                width: auto;
+                justify-content: flex-end;
             }
 
             .review-widget-cta .btn {
-                width: 100%;
+                width: auto;
+                padding: .44rem .8rem;
+                font-size: .78rem;
             }
 
             .review-widget-card {
