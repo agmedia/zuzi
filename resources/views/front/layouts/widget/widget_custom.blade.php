@@ -4,6 +4,9 @@
         'items' => 1,
         'mode' => 'gallery',
         'nav' => true,
+        'autoplay' => true,
+        'autoplayTimeout' => 7000,
+        'loop' => true,
         'touch' => true,
         'swipeAngle' => 30,
         'preventActionWhenRunning' => true,
@@ -82,7 +85,11 @@
                                 </div>
                             </div>
                                 --}}
-                            <h1 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h1>
+                            @if ($loop->first)
+                                <h1 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h1>
+                            @else
+                                <h2 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h2>
+                            @endif
 
                             <p class="text-dark  ">{{ $widget['subtitle'] }}</p>
                             <div class="d-flex flex-wrap justify-content-center justify-content-xl-start"><a class="btn btn-primary btn-shadow me-2 mb-2 slider-focus-btn" href="{{ $homeHeroLink['href'] }}" role="button" @if($homeHeroLink['tab']) data-bs-toggle="modal" data-bs-target="#signin-modal" data-tab-id="{{ $homeHeroLink['tab'] }}" @endif>
@@ -124,6 +131,22 @@
 
             const carousels = document.querySelectorAll('.widget-custom-hero-carousel');
 
+            const demoteClonedCarouselHeadings = (carousel) => {
+                carousel.querySelectorAll('.tns-slide-cloned h1').forEach((heading) => {
+                    const replacement = document.createElement('h2');
+
+                    Array.from(heading.attributes).forEach((attribute) => {
+                        replacement.setAttribute(attribute.name, attribute.value);
+                    });
+
+                    while (heading.firstChild) {
+                        replacement.appendChild(heading.firstChild);
+                    }
+
+                    heading.replaceWith(replacement);
+                });
+            };
+
             const syncCarouselVideos = (carousel) => {
                 const videos = carousel.querySelectorAll('.js-widget-custom-video');
 
@@ -152,6 +175,7 @@
                     window.requestAnimationFrame(() => syncCarouselVideos(carousel));
                 };
 
+                demoteClonedCarouselHeadings(carousel);
                 sync();
 
                 carousel.querySelectorAll('.js-widget-custom-video').forEach((video) => {
