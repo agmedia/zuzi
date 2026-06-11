@@ -178,6 +178,10 @@
                         </div>
 
                         <div class="accordion-item border-bottom">
+                            <h3 class="accordion-header px-grid-gutter"><a class="nav-link-style d-block fs-md  py-3" href="{{ route('dojmovi') }}"><span class="d-flex align-items-center"><i class="ci-star opacity-60 me-2"></i>Dojmovi kupaca</span></a></h3>
+                        </div>
+
+                        <div class="accordion-item border-bottom">
                             <h3 class="accordion-header px-grid-gutter"><a class="nav-link-style d-block fs-md  py-3" href="{{ route('kontakt') }}"><span class="d-flex align-items-center">Kontaktirajte nas</span></a></h3>
                         </div>
 
