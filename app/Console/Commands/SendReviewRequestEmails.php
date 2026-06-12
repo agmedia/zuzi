@@ -8,6 +8,7 @@ use App\Models\Back\Orders\OrderHistory;
 use App\Models\Back\Settings\Settings;
 use App\Services\ReviewRequestPromoService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
@@ -104,11 +105,13 @@ class SendReviewRequestEmails extends Command
                 }
 
                 $wasSent = $this->sendReviewRequestForOrder($order, $promoService, $shouldIssuePromoCoupons);
+                $this->releaseDatabaseConnection();
 
                 if ($wasSent) {
                     $sent++;
 
                     if ($sent < $limit && $sleepSeconds > 0) {
+                        $this->releaseDatabaseConnection();
                         sleep($sleepSeconds);
                     }
                 }
@@ -120,12 +123,14 @@ class SendReviewRequestEmails extends Command
                 ->chunkById(50, function ($orders) use ($promoService, $shouldIssuePromoCoupons, $sleepSeconds, &$sent) {
                     foreach ($orders as $order) {
                         $wasSent = $this->sendReviewRequestForOrder($order, $promoService, $shouldIssuePromoCoupons);
+                        $this->releaseDatabaseConnection();
 
                         if ($wasSent) {
                             $sent++;
                         }
 
                         if ($wasSent && $sleepSeconds > 0) {
+                            $this->releaseDatabaseConnection();
                             sleep($sleepSeconds);
                         }
                     }
@@ -133,6 +138,7 @@ class SendReviewRequestEmails extends Command
         }
 
         $this->info("Sent {$sent} review request email(s).");
+        $this->releaseDatabaseConnection();
 
         return self::SUCCESS;
     }
@@ -173,6 +179,7 @@ class SendReviewRequestEmails extends Command
         }
 
         try {
+            $this->releaseDatabaseConnection();
             Mail::to($order->payment_email)->send(new OrderReviewRequest($order, $promoAction, $reviewItems));
         } catch (\Throwable $e) {
             if ($createdPromoAction && $promoAction) {
@@ -211,6 +218,8 @@ class SendReviewRequestEmails extends Command
                 'coupon' => $promoAction->coupon ?? null,
                 'error' => $e->getMessage(),
             ]);
+        } finally {
+            $this->releaseDatabaseConnection();
         }
 
         return true;
@@ -285,5 +294,14 @@ class SendReviewRequestEmails extends Command
         $normalized = Str::lower(Str::ascii($title));
 
         return trim((string) preg_replace('/\s+/', ' ', $normalized));
+    }
+
+    private function releaseDatabaseConnection(): void
+    {
+        try {
+            DB::disconnect();
+        } catch (\Throwable $e) {
+            // Releasing the connection is a best-effort pressure relief for long mail/sleep waits.
+        }
     }
 }

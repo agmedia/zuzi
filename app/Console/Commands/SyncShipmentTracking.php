@@ -7,6 +7,7 @@ use App\Services\Shipping\BoxNowService;
 use App\Services\Shipping\GlsTrackingService;
 use App\Services\Shipping\OrderTrackingService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
@@ -63,6 +64,7 @@ class SyncShipmentTracking extends Command
 
         foreach ($orders as $order) {
             try {
+                $this->releaseDatabaseConnection();
                 $result = $trackingService->refresh($order);
 
                 if ($result['updated']) {
@@ -75,11 +77,23 @@ class SyncShipmentTracking extends Command
                     'order_id' => $order->id,
                     'error' => $e->getMessage(),
                 ]);
+            } finally {
+                $this->releaseDatabaseConnection();
             }
         }
 
         $this->info("Shipment tracking refreshed. Updated: {$updated}. Failed: {$failed}.");
+        $this->releaseDatabaseConnection();
 
         return self::SUCCESS;
+    }
+
+    private function releaseDatabaseConnection(): void
+    {
+        try {
+            DB::disconnect();
+        } catch (\Throwable $e) {
+            // Best-effort release while this command waits on carrier APIs or mail delivery.
+        }
     }
 }

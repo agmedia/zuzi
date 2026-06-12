@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Helpers\Recaptcha;
@@ -220,6 +221,8 @@ class Wishlist extends Model
             return false;
         }
 
+        static::releaseDatabaseConnection();
+
         dispatch(function () use ($wishlistEntry, $product) {
             Mail::to($wishlistEntry->email)->send(new WishlistArrived($product));
         });
@@ -232,6 +235,8 @@ class Wishlist extends Model
             'sent_at' => $sentAt,
         ]);
 
+        static::releaseDatabaseConnection();
+
         Log::info('__Wishlist Notification Sent', [
             'wishlist_id' => $wishlistEntry->id,
             'product_id' => $product->id,
@@ -241,6 +246,15 @@ class Wishlist extends Model
         ]);
 
         return true;
+    }
+
+    private static function releaseDatabaseConnection(): void
+    {
+        try {
+            DB::disconnect();
+        } catch (\Throwable $e) {
+            // Best-effort release while mail transport is doing work outside MySQL.
+        }
     }
 
 }
