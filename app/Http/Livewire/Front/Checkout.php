@@ -86,9 +86,21 @@ class Checkout extends Component
 
     public $gdl_payment = false;
 
-    protected $cart = false;
+    protected $cart = null;
+
+    protected $cartData = null;
+
+    protected $geoZone = null;
+
+    protected $shippingMethods = null;
+
+    protected $paymentMethods = null;
+
+    protected $countries = null;
 
     public $giftVoucherOnly = false;
+
+    public $giftVoucherInCart = false;
 
     public $newsletter = false;
 
@@ -260,9 +272,9 @@ class Checkout extends Component
     /**
      * @param string $step
      */
-    public function changeStep(string $step = '', bool $redirect = true)
+    public function changeStep(string $step = '', bool $redirect = false)
     {
-        $this->checkCart();
+        $this->ensureCart();
         CheckoutSession::setNewsletter((bool) $this->newsletter);
 
         if ($this->giftVoucherOnly && ! $this->shipping) {
@@ -271,7 +283,7 @@ class Checkout extends Component
         }
 
         if (in_array($step, ['', 'podaci']) && $this->cart) {
-            $this->gdl = TagManager::getGoogleCartDataLayer($this->cart->get());
+            $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
             $this->gdl_event = 'begin_checkout';
             $this->gdl_shipping = false;
             $this->gdl_payment = false;
@@ -289,17 +301,17 @@ class Checkout extends Component
         if (in_array($step, ['dostava', 'placanje']) && $this->cart) {
             $this->setAddress($this->address);
             $this->validate($this->address_rules);
-            $this->selectSingleShippingMethod($this->shippingMethodsForCurrentAddress());
+            $this->selectSingleShippingMethod($this->checkoutShippingMethods());
 
             if ($step == 'dostava' && $this->shipping != '') {
                 $this->checkShipping($this->shipping);
-                $this->gdl = TagManager::getGoogleCartDataLayer($this->cart->get());
+                $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
                 $this->gdl_event = 'add_shipping_info';
             }
 
             if ($step == 'placanje' && $this->payment != '') {
                 $this->checkPayment($this->payment);
-                $this->gdl = TagManager::getGoogleCartDataLayer($this->cart->get());
+                $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
                 $this->gdl_event = 'add_payment_info';
             }
         }
@@ -363,7 +375,7 @@ class Checkout extends Component
             }
         }
 
-        $this->render();
+        $this->clearCheckoutMethodCache();
     }
 
 
@@ -382,7 +394,6 @@ class Checkout extends Component
         if ($shipping == 'gls_eu') {
             CheckoutSession::setComment('');
         }
-        return redirect()->route('naplata', ['step' => 'dostava']);
     }
 
 
@@ -441,7 +452,7 @@ class Checkout extends Component
      */
     public function render()
     {
-        $geo = $this->currentGeoZone();
+        $this->ensureCart();
 
         if ($this->giftVoucherOnly && ! $this->shipping) {
             $this->shipping = GiftVoucherService::SHIPPING_CODE;
@@ -455,14 +466,28 @@ class Checkout extends Component
             }
         }
 
-        $shippingMethods = (new ShippingMethod())->findGeo($geo->id);
-        $this->selectSingleShippingMethod($shippingMethods);
+        $shippingMethods = collect();
+        $paymentMethods = collect();
+        $countries = collect();
+
+        if (in_array($this->step, ['dostava', 'placanje'], true)) {
+            $shippingMethods = $this->checkoutShippingMethods();
+            $this->selectSingleShippingMethod($shippingMethods);
+        }
+
+        if ($this->step === 'placanje') {
+            $paymentMethods = $this->checkoutPaymentMethods();
+        }
+
+        if ($this->step === 'podaci' || $this->step === '') {
+            $countries = $this->checkoutCountries();
+        }
 
         return view('livewire.front.checkout', [
             'shippingMethods' => $shippingMethods,
-            'paymentMethods' => (new PaymentMethod())->findGeo($geo->id)->checkShipping($this->shipping)->resolve(),
-            'countries' => Country::list(),
-            'cartSubtotal' => $this->cart ? (float) $this->cart->get()['subtotal'] : 0.0,
+            'paymentMethods' => $paymentMethods,
+            'countries' => $countries,
+            'cartSubtotal' => (float) data_get($this->cartData(), 'subtotal', 0),
             'giftVoucherOnly' => $this->giftVoucherOnly,
         ]);
     }
@@ -591,6 +616,8 @@ class Checkout extends Component
         }
 
         CheckoutSession::setAddress($this->address);
+
+        $this->clearCheckoutMethodCache();
     }
 
 
@@ -679,7 +706,7 @@ class Checkout extends Component
      */
     private function shippingMethodsForCurrentAddress()
     {
-        return (new ShippingMethod())->findGeo($this->currentGeoZone()->id);
+        return $this->checkoutShippingMethods();
     }
 
 
@@ -692,13 +719,17 @@ class Checkout extends Component
             $this->address['state'] = self::DEFAULT_COUNTRY;
         }
 
+        if ($this->geoZone) {
+            return $this->geoZone;
+        }
+
         $geo = (new GeoZone())->findState($this->address['state'] ?: self::DEFAULT_COUNTRY);
 
         if ( ! isset($geo->id)) {
             $geo->id = 1;
         }
 
-        return $geo;
+        return $this->geoZone = $geo;
     }
 
 
@@ -707,12 +738,80 @@ class Checkout extends Component
      */
     private function checkCart(): void
     {
+        $this->cartData = null;
+
         if (session()->has(config('session.cart'))) {
             $this->cart = new AgCart(session(config('session.cart')));
-            $this->giftVoucherOnly = (bool) data_get($this->cart->get(), 'gift_voucher_only', false);
+            $cart = $this->cartData();
+            $this->giftVoucherOnly = (bool) data_get($cart, 'gift_voucher_only', false);
+            $this->giftVoucherInCart = (bool) data_get($cart, 'has_gift_voucher', false);
         } else {
             $this->cart = false;
             $this->giftVoucherOnly = false;
+            $this->giftVoucherInCart = false;
         }
+    }
+
+    private function ensureCart(): void
+    {
+        if ($this->cart !== null) {
+            return;
+        }
+
+        $this->checkCart();
+    }
+
+    private function cartData(): array
+    {
+        if ($this->cartData !== null) {
+            return $this->cartData;
+        }
+
+        if (! $this->cart) {
+            return $this->cartData = [];
+        }
+
+        return $this->cartData = $this->cart->get();
+    }
+
+    private function checkoutShippingMethods()
+    {
+        if ($this->shippingMethods !== null) {
+            return $this->shippingMethods;
+        }
+
+        if ($this->giftVoucherOnly) {
+            return $this->shippingMethods = collect([GiftVoucherService::shippingMethod()]);
+        }
+
+        return $this->shippingMethods = (new ShippingMethod())->findGeo($this->currentGeoZone()->id);
+    }
+
+    private function checkoutPaymentMethods()
+    {
+        if ($this->paymentMethods !== null) {
+            return $this->paymentMethods;
+        }
+
+        return $this->paymentMethods = (new PaymentMethod())
+            ->findGeo($this->currentGeoZone()->id)
+            ->checkShipping($this->shipping)
+            ->resolve();
+    }
+
+    private function checkoutCountries()
+    {
+        if ($this->countries !== null) {
+            return $this->countries;
+        }
+
+        return $this->countries = Country::list();
+    }
+
+    private function clearCheckoutMethodCache(): void
+    {
+        $this->geoZone = null;
+        $this->shippingMethods = null;
+        $this->paymentMethods = null;
     }
 }

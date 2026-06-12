@@ -67,7 +67,7 @@ class AgService {
     getCart() {
         return axios.get('cart/get')
         .then(response => { return response.data })
-        .catch(error => { return this.returnError(messages.error) })
+        .catch(error => this.returnSilentError(error))
     }
 
     /**
@@ -78,7 +78,7 @@ class AgService {
     checkCart(ids) {
         return axios.post('cart/check', {ids: ids})
         .then(response => { return response.data })
-        .catch(error => { return this.returnError(messages.error) })
+        .catch(error => this.returnSilentError(error))
     }
 
 
@@ -181,7 +181,7 @@ class AgService {
 
         return axios.get('cart/loyalty/' + loyalty)
             .then(response => response.data)
-            .catch(error => { return this.returnError(messages.error) })
+            .catch(error => this.returnSilentError(error))
     }
 
 
@@ -192,7 +192,7 @@ class AgService {
     getSettings() {
         return axios.get('settings/get')
         .then(response => { return response.data })
-        .catch(error => { return this.returnError(messages.error) })
+        .catch(error => this.returnSilentError(error))
     }
 
     ensureSettingsLoaded() {
@@ -225,7 +225,19 @@ class AgService {
      * @returns {*}
      */
     returnError(msg) {
-        window.ToastWarning.fire(msg);
+        if (window.ToastWarning && typeof window.ToastWarning.fire === 'function') {
+            window.ToastWarning.fire(msg);
+        } else {
+            console.warn(msg);
+        }
+    }
+
+    returnSilentError(error) {
+        if (window.console && typeof window.console.warn === 'function') {
+            console.warn('Cart request failed.', error);
+        }
+
+        return false;
     }
 
     /**

@@ -5610,7 +5610,7 @@ var AgService = /*#__PURE__*/function () {
       return axios.get('cart/get').then(function (response) {
         return response.data;
       })["catch"](function (error) {
-        return _this.returnError(messages.error);
+        return _this.returnSilentError(error);
       });
     }
 
@@ -5628,7 +5628,7 @@ var AgService = /*#__PURE__*/function () {
       }).then(function (response) {
         return response.data;
       })["catch"](function (error) {
-        return _this2.returnError(messages.error);
+        return _this2.returnSilentError(error);
       });
     }
 
@@ -5751,7 +5751,7 @@ var AgService = /*#__PURE__*/function () {
       return axios.get('cart/loyalty/' + loyalty).then(function (response) {
         return response.data;
       })["catch"](function (error) {
-        return _this6.returnError(messages.error);
+        return _this6.returnSilentError(error);
       });
     }
 
@@ -5766,7 +5766,7 @@ var AgService = /*#__PURE__*/function () {
       return axios.get('settings/get').then(function (response) {
         return response.data;
       })["catch"](function (error) {
-        return _this7.returnError(messages.error);
+        return _this7.returnSilentError(error);
       });
     }
   }, {
@@ -5802,7 +5802,19 @@ var AgService = /*#__PURE__*/function () {
   }, {
     key: "returnError",
     value: function returnError(msg) {
-      window.ToastWarning.fire(msg);
+      if (window.ToastWarning && typeof window.ToastWarning.fire === 'function') {
+        window.ToastWarning.fire(msg);
+      } else {
+        console.warn(msg);
+      }
+    }
+  }, {
+    key: "returnSilentError",
+    value: function returnSilentError(error) {
+      if (window.console && typeof window.console.warn === 'function') {
+        console.warn('Cart request failed.', error);
+      }
+      return false;
     }
 
     /**
@@ -15625,7 +15637,6 @@ var VueSweetalert2 = (function () {
     return VueSweetalert2;
 }());
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (VueSweetalert2);
-//# sourceMappingURL=index.js.map
 
 /***/ }),
 

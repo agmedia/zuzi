@@ -1,4 +1,21 @@
+const fs = require('fs');
+const path = require('path');
 const mix = require('laravel-mix');
+
+function stripSourceMapReferences(assetPath) {
+    const fullPath = path.resolve(__dirname, assetPath);
+
+    if (!fs.existsSync(fullPath)) {
+        return;
+    }
+
+    const source = fs.readFileSync(fullPath, 'utf8');
+    const stripped = source.replace(/^\s*\/\/# sourceMappingURL=.*\.map\s*$/gm, '');
+
+    if (stripped !== source) {
+        fs.writeFileSync(fullPath, stripped);
+    }
+}
 
 /*
  |--------------------------------------------------------------------------
@@ -55,3 +72,7 @@ mix
 .options({
     processCssUrls: false
 })*/;
+
+mix.then(() => {
+    stripSourceMapReferences('public/js/cart.js');
+});
