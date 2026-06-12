@@ -31,8 +31,22 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('sync:category-actions')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('check:wishlist')->everySixHours();//->everyMinute();
-        $schedule->command('send:review-requests')->dailyAt('09:15');
-        $schedule->command('send:review-requests --min-days=500 --max-days=600 --limit=6 --sleep=10 --force-coupon')->everyMinute()->withoutOverlapping();
+        $schedule->command('send:review-requests')->dailyAt('09:15')->withoutOverlapping();
+
+        $reviewRequestBackfill = (array) config('settings.order.review_request.backfill', []);
+
+        if ((bool) data_get($reviewRequestBackfill, 'enabled', false)) {
+            $command = sprintf(
+                'send:review-requests --min-days=%d --max-days=%d --limit=%d --sleep=%d%s',
+                max(1, (int) data_get($reviewRequestBackfill, 'min_days', 500)),
+                max(1, (int) data_get($reviewRequestBackfill, 'max_days', 600)),
+                max(1, (int) data_get($reviewRequestBackfill, 'limit', 6)),
+                max(0, (int) data_get($reviewRequestBackfill, 'sleep', 10)),
+                (bool) data_get($reviewRequestBackfill, 'force_coupon', false) ? ' --force-coupon' : ''
+            );
+
+            $schedule->command($command)->everyMinute()->withoutOverlapping();
+        }
         $schedule->command('sync:shipment-tracking --limit=50 --stale-minutes=15')->everyFifteenMinutes()->withoutOverlapping();
     }
 

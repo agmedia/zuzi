@@ -117,6 +117,14 @@ return [
             'status_titles' => ['Završeno'],
             'promo_paused_from' => '2026-06-01 00:00:00',
             'promo_paused_until' => '2026-07-01 00:00:00',
+            'backfill' => [
+                'enabled' => (bool) env('REVIEW_REQUEST_BACKFILL_ENABLED', false),
+                'min_days' => (int) env('REVIEW_REQUEST_BACKFILL_MIN_DAYS', 500),
+                'max_days' => (int) env('REVIEW_REQUEST_BACKFILL_MAX_DAYS', 600),
+                'limit' => (int) env('REVIEW_REQUEST_BACKFILL_LIMIT', 6),
+                'sleep' => (int) env('REVIEW_REQUEST_BACKFILL_SLEEP', 10),
+                'force_coupon' => (bool) env('REVIEW_REQUEST_BACKFILL_FORCE_COUPON', false),
+            ],
         ],
         // Can be number or array.
         'new_status' => 1,
