@@ -4,15 +4,15 @@
             <div class="step-progress"><span class="step-count">1</span></div>
             <div class="step-label"><i class="ci-cart"></i>Košarica</div>
         </a>
-        <a class="step-item checkout-step-link @if($step == 'podaci') current @endif @if(in_array($step, ['podaci', 'dostava', 'placanje'])) active @endif" href="{{ route('naplata', ['step' => 'podaci']) }}" wire:click.prevent="changeStep('podaci')">
+        <a class="step-item checkout-step-link @if($step == 'podaci') current @endif @if(in_array($step, ['podaci', 'dostava', 'placanje'])) active @endif" href="{{ route('naplata', ['step' => 'podaci']) }}">
             <div class="step-progress"><span class="step-count">2</span></div>
             <div class="step-label"><i class="ci-user-circle"></i>Podaci</div>
         </a>
-        <a class="step-item checkout-step-link @if($step == 'dostava') current @endif @if(in_array($step, ['dostava', 'placanje'])) active @endif" href="{{ route('naplata', ['step' => 'dostava']) }}" wire:click.prevent="changeStep('dostava')">
+        <a class="step-item checkout-step-link @if($step == 'dostava') current @endif @if(in_array($step, ['dostava', 'placanje'])) active @endif" href="{{ route('naplata', ['step' => 'dostava']) }}" @if(in_array($step, ['', 'podaci'], true)) wire:click.prevent="changeStep('dostava')" @endif>
             <div class="step-progress"><span class="step-count">3</span></div>
             <div class="step-label"><i class="ci-package"></i>Dostava</div>
         </a>
-        <a class="step-item checkout-step-link @if($step == 'placanje') current @endif @if(in_array($step, ['placanje'])) active @endif" href="{{ route('naplata', ['step' => 'placanje']) }}" wire:click.prevent="changeStep('placanje')">
+        <a class="step-item checkout-step-link @if($step == 'placanje') current @endif @if(in_array($step, ['placanje'])) active @endif" href="{{ route('naplata', ['step' => 'placanje']) }}" @if($step !== 'placanje') wire:click.prevent="changeStep('placanje')" @endif>
             <div class="step-progress"><span class="step-count">4</span></div>
             <div class="step-label"><i class="ci-card"></i>Plaćanje</div>
         </a>
@@ -381,7 +381,7 @@
 
         @error('shipping') <small class="text-danger">Način dostave je obvezan</small> @enderror
         <div class=" d-flex pt-4 mt-3">
-            <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100 checkout-step-link" wire:click.prevent="changeStep('podaci')" href="{{ route('naplata', ['step' => 'podaci']) }}"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na unos podataka</span><span class="d-inline d-sm-none">Povratak</span></a></div>
+            <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100 checkout-step-link" href="{{ route('naplata', ['step' => 'podaci']) }}"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na unos podataka</span><span class="d-inline d-sm-none">Povratak</span></a></div>
             <div class="w-50 ps-2"><a class="btn btn-primary d-block w-100 checkout-step-link" wire:click.prevent="changeStep('placanje')" href="{{ route('naplata', ['step' => 'placanje']) }}"><span class="d-none d-sm-inline">Na odabir plaćanja</span><span class="d-inline d-sm-none">Nastavi</span><i class="ci-arrow-right mt-sm-0 ms-1"></i></a></div>
         </div>
     @endif
@@ -430,7 +430,7 @@
         </div>
         @error('payment') <small class="text-danger">Način plaćanja je obvezan</small> @enderror
         <div class=" d-flex pt-4 mt-3">
-            <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100 checkout-step-link" wire:click.prevent="changeStep('dostava')" href="{{ route('naplata', ['step' => 'dostava']) }}"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na odabir dostave</span><span class="d-inline d-sm-none">Povratak</span></a></div>
+            <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100 checkout-step-link" href="{{ route('naplata', ['step' => 'dostava']) }}"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na odabir dostave</span><span class="d-inline d-sm-none">Povratak</span></a></div>
             <div class="w-50 ps-2"><a class="btn btn-primary d-block w-100" href="{{ ($payment != '') ? route('pregled') : '#' }}"><span class="d-none d-sm-inline">Pregledajte narudžbu</span><span class="d-inline d-sm-none">Nastavi</span><i class="ci-arrow-right mt-sm-0 ms-1"></i></a></div>
         </div>
     @endif

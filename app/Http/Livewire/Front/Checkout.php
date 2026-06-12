@@ -282,12 +282,6 @@ class Checkout extends Component
             CheckoutSession::setShipping($this->shipping);
         }
 
-        if (in_array($step, ['', 'podaci']) && $this->cart) {
-            $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
-            $this->gdl_event = 'begin_checkout';
-            $this->gdl_shipping = false;
-            $this->gdl_payment = false;
-        }
         // Podaci
         if ($step == '') {
             $step = 'podaci';
@@ -297,22 +291,34 @@ class Checkout extends Component
             }
         }
 
+        if (! $redirect && $step === 'podaci' && $this->cart) {
+            $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
+            $this->gdl_event = 'begin_checkout';
+            $this->gdl_shipping = false;
+            $this->gdl_payment = false;
+        }
+
         // Dostava
         if (in_array($step, ['dostava', 'placanje']) && $this->cart) {
             $this->setAddress($this->address);
             $this->validate($this->address_rules);
-            $this->selectSingleShippingMethod($this->checkoutShippingMethods());
 
-            if ($step == 'dostava' && $this->shipping != '') {
-                $this->checkShipping($this->shipping);
-                $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
-                $this->gdl_event = 'add_shipping_info';
+            if (! $redirect && ($step === 'dostava' || $this->shipping === '')) {
+                $this->selectSingleShippingMethod($this->checkoutShippingMethods());
             }
 
-            if ($step == 'placanje' && $this->payment != '') {
-                $this->checkPayment($this->payment);
-                $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
-                $this->gdl_event = 'add_payment_info';
+            if (! $redirect) {
+                if ($step == 'dostava' && $this->shipping != '') {
+                    $this->checkShipping($this->shipping);
+                    $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
+                    $this->gdl_event = 'add_shipping_info';
+                }
+
+                if ($step == 'placanje' && $this->payment != '') {
+                    $this->checkPayment($this->payment);
+                    $this->gdl = TagManager::getGoogleCartDataLayer($this->cartData());
+                    $this->gdl_event = 'add_payment_info';
+                }
             }
         }
 
@@ -337,11 +343,12 @@ class Checkout extends Component
         $this->step = $step;
 
         CheckoutSession::setStep($step);
-        $this->dispatchBrowserEvent('checkout-step-changed');
 
         if ($redirect) {
             return redirect()->route('naplata', ['step' => $step]);
         }
+
+        $this->dispatchBrowserEvent('checkout-step-changed');
     }
 
 
