@@ -272,7 +272,7 @@ class Checkout extends Component
     /**
      * @param string $step
      */
-    public function changeStep(string $step = '', bool $redirect = false)
+    public function changeStep(string $step = '', bool $redirect = true)
     {
         $this->ensureCart();
         CheckoutSession::setNewsletter((bool) $this->newsletter);
