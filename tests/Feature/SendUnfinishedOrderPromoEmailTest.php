@@ -235,6 +235,35 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         $response->assertSee('data-unfinished-promo-btn="' . $availableOrderId . '"', false);
     }
 
+    public function test_orders_index_hides_unfinished_promo_button_when_order_total_uses_action_title(): void
+    {
+        $user = User::factory()->create();
+        $blockedOrderId = $this->createOrder(config('settings.order.status.unfinished'), 'coupon-title@example.com');
+        $availableOrderId = $this->createOrder(config('settings.order.status.unfinished'), 'available-title@example.com');
+        $title = 'Legacy coupon action title';
+
+        Action::query()->create([
+            'title' => $title,
+            'type' => 'P',
+            'discount' => 10,
+            'group' => 'total',
+            'links' => json_encode(['total']),
+            'date_start' => now()->subDay(),
+            'date_end' => now()->addDay(),
+            'coupon' => 'LEGACY10',
+            'quantity' => 1,
+            'status' => 1,
+        ]);
+
+        $this->addOrderTotal($blockedOrderId, 'special', $title, -2.50);
+
+        $response = $this->actingAs($user)->get(route('orders'));
+
+        $response->assertOk();
+        $response->assertDontSee('data-unfinished-promo-btn="' . $blockedOrderId . '"', false);
+        $response->assertSee('data-unfinished-promo-btn="' . $availableOrderId . '"', false);
+    }
+
     public function test_unfinished_order_reminder_email_can_be_sent_without_promo_code(): void
     {
         Mail::fake();

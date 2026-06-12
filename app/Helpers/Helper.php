@@ -1342,6 +1342,7 @@ class Helper
     {
         $condition = false;
         $discountableTotal = self::discountableCartTotal($cart);
+        $coupon = self::normalizeCoupon($coupon);
 
         if (! Schema::hasTable('product_actions')) {
             return false;
@@ -1351,7 +1352,17 @@ class Helper
             return false;
         }
 
-        $actions   = Action::query()->where('group', 'total')->get();
+        $actions = Action::query()
+            ->where('group', 'total')
+            ->when($coupon !== '', function ($query) use ($coupon) {
+                $query->where('coupon', $coupon);
+            }, function ($query) {
+                $query->where(function ($query) {
+                    $query->whereNull('coupon')
+                        ->orWhere('coupon', '');
+                });
+            })
+            ->get();
 
         if ($actions->count()) {
             foreach ($actions as $action) {

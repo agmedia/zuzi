@@ -79,19 +79,29 @@ class UnfinishedOrderPromoService
             return collect();
         }
 
-        $couponActionTitles = $this->couponActionTitles();
-
-        return DB::table('order_total as totals')
+        $specialTotals = DB::table('order_total as totals')
             ->whereIn('totals.order_id', $orderIds->all())
             ->where('totals.code', 'special')
-            ->where(function ($query) use ($couponActionTitles) {
-                $query->where('totals.title', 'like', 'Kupon %');
+            ->get(['totals.order_id', 'totals.title']);
 
-                if ($couponActionTitles->isNotEmpty()) {
-                    $query->orWhereIn('totals.title', $couponActionTitles->all());
-                }
+        if ($specialTotals->isEmpty()) {
+            return collect();
+        }
+
+        $couponActionTitles = $this->couponActionTitles(
+            $specialTotals
+                ->pluck('title')
+                ->reject(fn ($title) => Str::startsWith(trim((string) $title), 'Kupon '))
+        );
+
+        return $specialTotals
+            ->filter(function ($total) use ($couponActionTitles) {
+                $title = trim((string) $total->title);
+
+                return Str::startsWith($title, 'Kupon ')
+                    || $couponActionTitles->contains($title);
             })
-            ->pluck('totals.order_id')
+            ->pluck('order_id')
             ->map(fn ($orderId) => (int) $orderId)
             ->unique()
             ->values();
@@ -118,12 +128,23 @@ class UnfinishedOrderPromoService
         return in_array($discount, self::ALLOWED_DISCOUNTS, true);
     }
 
-    private function couponActionTitles(): Collection
+    private function couponActionTitles(Collection $titles): Collection
     {
+        $titles = $titles
+            ->map(fn ($title) => trim((string) $title))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($titles->isEmpty()) {
+            return collect();
+        }
+
         return Action::query()
             ->where('group', 'total')
             ->whereNotNull('coupon')
             ->where('coupon', '!=', '')
+            ->whereIn('title', $titles->all())
             ->pluck('title')
             ->map(fn ($title) => trim((string) $title))
             ->filter()

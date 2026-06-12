@@ -353,6 +353,7 @@ class AgCart extends Model
         return Action::query()
             ->whereNotNull('coupon')
             ->where('coupon', '!=', '')
+            ->where('coupon', $coupon)
             ->get()
             ->contains(fn (Action $action) => $action->isValid($coupon));
     }
