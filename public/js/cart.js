@@ -2496,6 +2496,26 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   //
+  computed: {
+    cart: function cart() {
+      return this.$store.state.cart || {
+        count: 0,
+        items: {},
+        total: 0,
+        secondary_price: false
+      };
+    },
+    cartCount: function cartCount() {
+      return Number(this.cart.count) || 0;
+    },
+    hasCart: function hasCart() {
+      return this.cartCount > 0;
+    },
+    cartItems: function cartItems() {
+      return this.cart.items || {};
+    }
+  },
+  //
   mounted: function mounted() {
     this.checkCart();
     if (window.location.pathname == '/kosarica/success') {
@@ -2513,6 +2533,9 @@ __webpack_require__.r(__webpack_exports__);
     isGiftWrap: function isGiftWrap(item) {
       var _item$attributes;
       return (item === null || item === void 0 ? void 0 : (_item$attributes = item.attributes) === null || _item$attributes === void 0 ? void 0 : _item$attributes.item_type) === 'gift_wrap';
+    },
+    hasConditions: function hasConditions(item) {
+      return Object.keys((item === null || item === void 0 ? void 0 : item.conditions) || {}).length > 0;
     },
     /**
      *
@@ -5509,21 +5532,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 /* */
 var storage_cart = {
   name: 'sl_cart',
-  cart: {
-    count: 0
-  }
+  cart: defaultCart()
 };
 var messages = {
   error: 'Whoops!... Greška u vezi sa poslužiteljem!',
@@ -5537,6 +5558,31 @@ var messages = {
   loyaltyRemoved: 'Loyalty popust je uklonjen.',
   loyaltyError: 'Loyalty popust nije moguće primijeniti.'
 };
+function defaultCart() {
+  return {
+    count: 0,
+    items: {},
+    subtotal: 0,
+    total: 0,
+    conditions: {},
+    detail_con: [],
+    secondary_price: false,
+    coupon: '',
+    has_gift_voucher: false,
+    has_loyalty: 0
+  };
+}
+function normalizeCart(cart) {
+  if (!cart || _typeof(cart) !== 'object') {
+    return defaultCart();
+  }
+  return _objectSpread(_objectSpread(_objectSpread({}, defaultCart()), cart), {}, {
+    count: Number(cart.count) || 0,
+    items: cart.items && _typeof(cart.items) === 'object' ? cart.items : {},
+    conditions: cart.conditions && _typeof(cart.conditions) === 'object' ? cart.conditions : {},
+    detail_con: Array.isArray(cart.detail_con) ? cart.detail_con : []
+  });
+}
 var AgService = /*#__PURE__*/function () {
   function AgService() {
     _classCallCheck(this, AgService);
@@ -5938,7 +5984,11 @@ var AgStorage = /*#__PURE__*/function () {
      */
     function getCart() {
       var item = localStorage.getItem(storage_cart.name);
-      return item && item != 'undefined' ? JSON.parse(item) : null;
+      try {
+        return item && item != 'undefined' ? normalizeCart(JSON.parse(item)) : null;
+      } catch (error) {
+        return null;
+      }
     }
 
     /**
@@ -5949,14 +5999,14 @@ var AgStorage = /*#__PURE__*/function () {
   }, {
     key: "setCart",
     value: function setCart(value) {
-      return localStorage.setItem(storage_cart.name, JSON.stringify(value));
+      return localStorage.setItem(storage_cart.name, JSON.stringify(normalizeCart(value)));
     }
   }]);
   return AgStorage;
 }();
 /**/
 var storage = new AgStorage();
-var initialCart = storage.getCart() || storage_cart.cart;
+var initialCart = normalizeCart(storage.getCart() || storage_cart.cart);
 var store = {
   state: {
     storage: storage,
@@ -5979,9 +6029,11 @@ var store = {
         return state.cartRequest;
       }
       state.cartRequest = state.service.getCart().then(function (cart) {
-        context.commit('setCart', cart);
-        state.storage.setCart(cart);
-        return cart;
+        if (cart && _typeof(cart) === 'object') {
+          context.commit('setCart', cart);
+          state.storage.setCart(context.state.cart);
+        }
+        return context.state.cart;
       })["finally"](function () {
         state.cartRequest = null;
       });
@@ -5997,9 +6049,9 @@ var store = {
       return state.service.addToCart(item).then(function (cart) {
         if (cart) {
           state.storage.setCart(cart);
-          state.cart = cart;
+          context.commit('setCart', cart);
         }
-        return cart;
+        return state.cart;
       });
     },
     /**
@@ -6012,9 +6064,9 @@ var store = {
       return state.service.updateCart(item).then(function (cart) {
         if (cart) {
           state.storage.setCart(cart);
-          state.cart = cart;
+          context.commit('setCart', cart);
         }
-        return cart;
+        return state.cart;
       });
     },
     /**
@@ -6025,9 +6077,11 @@ var store = {
     removeFromCart: function removeFromCart(context, item) {
       var state = context.state;
       return state.service.removeItem(item).then(function (cart) {
-        state.storage.setCart(cart);
-        state.cart = cart;
-        return cart;
+        if (cart && _typeof(cart) === 'object') {
+          state.storage.setCart(cart);
+          context.commit('setCart', cart);
+        }
+        return state.cart;
       });
     },
     /**
@@ -6132,7 +6186,7 @@ var store = {
   },
   mutations: {
     setCart: function setCart(state, cart) {
-      state.cart = cart;
+      state.cart = normalizeCart(cart);
     },
     setSettings: function setSettings(state, settings) {
       state.settings = settings;
@@ -8185,16 +8239,14 @@ var render = function() {
       },
       [
         _c("span", { staticClass: "navbar-tool-label" }, [
-          _vm._v(
-            _vm._s(_vm.$store.state.cart ? _vm.$store.state.cart.count : 0)
-          )
+          _vm._v(_vm._s(_vm.cartCount))
         ]),
         _c("i", { staticClass: "navbar-tool-icon ci-bag" })
       ]
     ),
     _vm._v(" "),
     _c("div", { staticClass: "dropdown-menu dropdown-menu-end" }, [
-      _vm.$store.state.cart.count
+      _vm.hasCart
         ? _c(
             "div",
             {
@@ -8202,7 +8254,7 @@ var render = function() {
               staticStyle: { width: "24rem" }
             },
             [
-              _vm._l(_vm.$store.state.cart.items, function(item) {
+              _vm._l(_vm.cartItems, function(item) {
                 return _c(
                   "div",
                   { attrs: { "data-simplebar-auto-hide": "false" } },
@@ -8301,7 +8353,7 @@ var render = function() {
                                     [
                                       _vm._v(
                                         _vm._s(
-                                          Object.keys(item.conditions).length
+                                          _vm.hasConditions(item)
                                             ? item.associatedModel
                                                 .main_special_text
                                             : item.associatedModel
@@ -8327,8 +8379,7 @@ var render = function() {
                                         [
                                           _vm._v(
                                             _vm._s(
-                                              Object.keys(item.conditions)
-                                                .length
+                                              _vm.hasConditions(item)
                                                 ? item.associatedModel
                                                     .secondary_special_text
                                                 : item.associatedModel
@@ -8367,18 +8418,18 @@ var render = function() {
                       _vm._v(
                         _vm._s(
                           _vm.$store.state.service.formatMainPrice(
-                            _vm.$store.state.cart.total
+                            _vm.cart.total
                           )
                         )
                       )
                     ]),
                     _vm._v(" "),
-                    _vm.$store.state.cart.secondary_price
+                    _vm.cart.secondary_price
                       ? _c("span", { staticClass: "text-muted" }, [
                           _vm._v(
                             _vm._s(
                               _vm.$store.state.service.formatSecondaryPrice(
-                                _vm.$store.state.cart.total
+                                _vm.cart.total
                               )
                             )
                           )

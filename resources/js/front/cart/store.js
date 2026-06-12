@@ -1,7 +1,7 @@
 /* */
 let storage_cart = {
     name: 'sl_cart',
-    cart: { count: 0 }
+    cart: defaultCart()
 };
 let messages = {
     error: 'Whoops!... Greška u vezi sa poslužiteljem!',
@@ -14,6 +14,36 @@ let messages = {
     loyaltySuccess: 'Loyalty popust je uspješno primijenjen.',
     loyaltyRemoved: 'Loyalty popust je uklonjen.',
     loyaltyError: 'Loyalty popust nije moguće primijeniti.',
+}
+
+function defaultCart() {
+    return {
+        count: 0,
+        items: {},
+        subtotal: 0,
+        total: 0,
+        conditions: {},
+        detail_con: [],
+        secondary_price: false,
+        coupon: '',
+        has_gift_voucher: false,
+        has_loyalty: 0,
+    };
+}
+
+function normalizeCart(cart) {
+    if (!cart || typeof cart !== 'object') {
+        return defaultCart();
+    }
+
+    return {
+        ...defaultCart(),
+        ...cart,
+        count: Number(cart.count) || 0,
+        items: cart.items && typeof cart.items === 'object' ? cart.items : {},
+        conditions: cart.conditions && typeof cart.conditions === 'object' ? cart.conditions : {},
+        detail_con: Array.isArray(cart.detail_con) ? cart.detail_con : [],
+    };
 }
 
 
@@ -368,7 +398,11 @@ class AgStorage {
     getCart() {
         let item = localStorage.getItem(storage_cart.name);
 
-        return (item && item != 'undefined') ? JSON.parse(item) : null;
+        try {
+            return (item && item != 'undefined') ? normalizeCart(JSON.parse(item)) : null;
+        } catch (error) {
+            return null;
+        }
     }
 
     /**
@@ -377,13 +411,13 @@ class AgStorage {
      * @returns localStorage item
      */
     setCart(value) {
-        return localStorage.setItem(storage_cart.name, JSON.stringify(value));
+        return localStorage.setItem(storage_cart.name, JSON.stringify(normalizeCart(value)));
     }
 }
 
 /**/
 const storage = new AgStorage();
-const initialCart = storage.getCart() || storage_cart.cart;
+const initialCart = normalizeCart(storage.getCart() || storage_cart.cart);
 
 const store = {
     state: {
@@ -410,10 +444,12 @@ const store = {
             }
 
             state.cartRequest = state.service.getCart().then(cart => {
-                context.commit('setCart', cart);
-                state.storage.setCart(cart);
+                if (cart && typeof cart === 'object') {
+                    context.commit('setCart', cart);
+                    state.storage.setCart(context.state.cart);
+                }
 
-                return cart;
+                return context.state.cart;
             }).finally(() => {
                 state.cartRequest = null;
             });
@@ -432,10 +468,10 @@ const store = {
             return state.service.addToCart(item).then(cart => {
                 if (cart) {
                     state.storage.setCart(cart);
-                    state.cart = cart;
+                    context.commit('setCart', cart);
                 }
 
-                return cart;
+                return state.cart;
             });
         },
 
@@ -450,10 +486,10 @@ const store = {
             return state.service.updateCart(item).then(cart => {
                 if (cart) {
                     state.storage.setCart(cart);
-                    state.cart = cart;
+                    context.commit('setCart', cart);
                 }
 
-                return cart;
+                return state.cart;
             });
         },
 
@@ -466,10 +502,12 @@ const store = {
             let state = context.state;
 
             return state.service.removeItem(item).then(cart => {
-                state.storage.setCart(cart);
-                state.cart = cart;
+                if (cart && typeof cart === 'object') {
+                    state.storage.setCart(cart);
+                    context.commit('setCart', cart);
+                }
 
-                return cart;
+                return state.cart;
             });
         },
 
@@ -597,7 +635,7 @@ const store = {
 
     mutations: {
         setCart(state, cart) {
-            state.cart = cart;
+            state.cart = normalizeCart(cart);
         },
 
         setSettings(state, settings) {
