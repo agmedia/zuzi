@@ -2,9 +2,6 @@
 
 @section('content')
     @php($expiresAt = $promoAction ? \Illuminate\Support\Carbon::make($promoAction->date_end) : null)
-    @php($shareReviewUrl = route('dojmovi.podijeli'))
-    @php($googleReviewUrl = config('settings.order.review_request.google_review_url'))
-    @php($facebookReviewUrl = config('settings.order.review_request.facebook_review_url'))
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
             <td class="ag-mail-tableset" style="padding-bottom: 4px;">
@@ -94,35 +91,6 @@
                 </td>
             </tr>
         @endforeach
-
-        <tr>
-            <td class="ag-mail-tableset" style="padding-top: 0;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px;">
-                    <tr>
-                        <td style="padding: 20px; font-size: 15px; line-height: 1.8; color: #373f50;">
-                            <h3 style="margin: 0 0 10px; font-size: 18px; color: #1f2937;">Podijelite dojam i na Googleu ili Facebooku</h3>
-                            <p style="margin: 0 0 14px;">
-                                Ako želite, isti tekst možete napisati jednom, kopirati ga i zatim zalijepiti na Google ili Facebook.
-                            </p>
-
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                                <tr>
-                                    <td style="padding: 0 10px 10px 0;">
-                                        <a href="{{ $shareReviewUrl }}" class="ag-btn" style="width: 150px; background-color: #111827; color: #ffffff !important;">Kopiraj review</a>
-                                    </td>
-                                    <td style="padding: 0 10px 10px 0;">
-                                        <a href="{{ $googleReviewUrl }}" class="ag-btn" style="width: 120px; background-color: #4285f4; color: #ffffff !important;">Google</a>
-                                    </td>
-                                    <td style="padding: 0 0 10px;">
-                                        <a href="{{ $facebookReviewUrl }}" class="ag-btn" style="width: 120px; background-color: #1877f2; color: #ffffff !important;">Facebook</a>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
 
         <tr>
             <td class="ag-mail-tableset" style="padding-top: 6px;">

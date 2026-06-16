@@ -47,6 +47,10 @@
 
     $helpfulReviewIds = $helpfulReviewIds->unique()->values()->all();
     $shouldOpenReviewForm = $hasReviewErrors || session('review_submitted');
+    $reviewWasSubmittedSuccessfully = session('review_submitted') && session('success');
+    $shareReviewText = session('share_review_text');
+    $googleReviewUrl = trim((string) config('settings.order.review_request.google_review_url'));
+    $facebookReviewUrl = trim((string) config('settings.order.review_request.facebook_review_url'));
     $reviewFormButtonText = $reviewsCount ? 'Podijelite dojam' : 'Podijelite prvi dojam';
     $reviewCountLabel = function (int $count): string {
         $last = $count % 10;
@@ -313,6 +317,58 @@
             border-radius: 0.5rem;
             background: #fff9fc;
             box-shadow: none;
+        }
+
+        .product-review-share-panel {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid rgba(43, 52, 69, 0.1);
+            border-radius: 0.5rem;
+            background: #fff;
+        }
+
+        .product-review-share-panel__title {
+            margin: 0 0 0.35rem;
+            color: #2b3445;
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .product-review-share-panel__text {
+            min-height: 6.5rem;
+            margin-top: 0.75rem;
+            line-height: 1.55;
+            resize: vertical;
+        }
+
+        .product-review-share-panel__actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.65rem;
+            margin-top: 0.75rem;
+        }
+
+        .product-review-share-panel__actions .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 2.75rem;
+            border-radius: 0.4rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .product-review-share-panel__actions .btn i {
+            margin-right: 0.42rem;
+        }
+
+        .product-review-share-panel__status {
+            min-height: 1.25rem;
+            margin-top: 0.5rem;
+            color: #1f7a4d;
+            font-size: 0.86rem;
+            font-weight: 700;
         }
 
         .product-review-form-panel__header {
@@ -1061,6 +1117,10 @@
                 grid-template-columns: minmax(0, 1fr);
             }
 
+            .product-review-share-panel__actions {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
             .product-purchase-box {
                 padding: 0.8rem;
             }
@@ -1696,6 +1756,29 @@
                            <div class="alert alert-success" role="alert">
                                {{ session('success') }}
                            </div>
+
+                           @if (filled($shareReviewText))
+                               <div class="product-review-share-panel" data-product-review-share>
+                                   <p class="product-review-share-panel__title">Želite isti dojam podijeliti i na Googleu ili Facebooku?</p>
+                                   <p class="fs-sm text-muted mb-0">Kopirajte svoj tekst i zalijepite ga na odabranoj platformi.</p>
+                                   <textarea class="form-control product-review-share-panel__text" data-product-review-share-text>{{ $shareReviewText }}</textarea>
+                                   <div class="product-review-share-panel__actions">
+                                       <button class="btn btn-dark" type="button" data-product-review-copy>
+                                           <i class="ci-document-alt" aria-hidden="true"></i>
+                                           <span data-product-review-copy-label>Kopiraj review</span>
+                                       </button>
+                                       <a class="btn btn-outline-primary" href="{{ $googleReviewUrl }}" target="_blank" rel="noopener">
+                                           <i class="ci-google" aria-hidden="true"></i>
+                                           Google
+                                       </a>
+                                       <a class="btn btn-outline-primary" href="{{ $facebookReviewUrl }}" target="_blank" rel="noopener">
+                                           <i class="ci-facebook" aria-hidden="true"></i>
+                                           Facebook
+                                       </a>
+                                   </div>
+                                   <div class="product-review-share-panel__status" data-product-review-copy-status role="status" aria-live="polite"></div>
+                               </div>
+                           @endif
                        @endif
 
                        @if (session('review_submitted') && session('error'))
@@ -1704,6 +1787,7 @@
                            </div>
                        @endif
 
+                       @if (! $reviewWasSubmittedSuccessfully)
                        <form class="needs-validation" method="post" action="{{ route('komentar.proizvoda') }}" novalidate>
                            @csrf
 
@@ -1857,6 +1941,7 @@
 
                            <button class="btn btn-primary" type="submit">Pošalji dojam</button>
                        </form>
+                       @endif
                    </div>
                </div>
 
@@ -2151,6 +2236,66 @@
 
         target.value = answerButton.dataset.value || '';
         answerButton.classList.add('is-active');
+    });
+
+    document.addEventListener('click', function(event) {
+        const copyButton = event.target.closest('[data-product-review-copy]');
+
+        if (!copyButton) {
+            return;
+        }
+
+        const sharePanel = copyButton.closest('[data-product-review-share]');
+        const textInput = sharePanel ? sharePanel.querySelector('[data-product-review-share-text]') : null;
+        const label = sharePanel ? sharePanel.querySelector('[data-product-review-copy-label]') : null;
+        const status = sharePanel ? sharePanel.querySelector('[data-product-review-copy-status]') : null;
+        const text = textInput ? textInput.value.trim() : '';
+
+        if (!textInput || !label || !status) {
+            return;
+        }
+
+        function setCopyStatus(message, isError) {
+            status.textContent = message;
+            status.style.color = isError ? '#b42318' : '#1f7a4d';
+        }
+
+        function fallbackCopyReview() {
+            textInput.focus();
+            textInput.select();
+            textInput.setSelectionRange(0, textInput.value.length);
+
+            return document.execCommand('copy');
+        }
+
+        if (!text) {
+            setCopyStatus('Tekst dojma je prazan.', true);
+            textInput.focus();
+            return;
+        }
+
+        const copied = navigator.clipboard && window.isSecureContext
+            ? navigator.clipboard.writeText(text)
+            : new Promise(function(resolve, reject) {
+                fallbackCopyReview() ? resolve() : reject();
+            });
+
+        copied
+            .then(function() {
+                label.textContent = 'Kopirano';
+                copyButton.classList.remove('btn-dark');
+                copyButton.classList.add('btn-success');
+                setCopyStatus('Review je kopiran. Sada otvorite Google ili Facebook.', false);
+
+                setTimeout(function() {
+                    label.textContent = 'Kopiraj review';
+                    copyButton.classList.remove('btn-success');
+                    copyButton.classList.add('btn-dark');
+                }, 2200);
+            })
+            .catch(function() {
+                setCopyStatus('Kopiranje nije uspjelo. Označite tekst i kopirajte ga ručno.', true);
+            });
     });
 
     document.addEventListener('click', function(event) {

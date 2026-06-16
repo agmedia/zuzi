@@ -138,6 +138,7 @@ class HomeController extends Controller
             return back()->with([
                 'success'          => 'Hvala vam na dojmu. Nakon odobrenja bit će vidljiv na stranici, a registrirani kupci dobivaju ' . $points . ' loyalty bodova po odobrenom dojmu, do ' . $limit . ' mjesečno.',
                 'review_submitted' => true,
+                'share_review_text' => trim((string) $request->input('message')),
             ]);
         }
 
@@ -193,21 +194,6 @@ class HomeController extends Controller
             ->paginate(60);
 
         return view('front.reviews.index', compact('reviews'));
-    }
-
-
-    public function shareReview(Request $request)
-    {
-        $book = trim(strip_tags((string) $request->query('knjiga', '')));
-        $book = \Illuminate\Support\Str::limit($book, 120, '');
-
-        $reviewText = trim((string) $request->query('tekst', ''));
-        $reviewText = \Illuminate\Support\Str::limit($reviewText, 1600, '');
-
-        $googleReviewUrl = trim((string) config('settings.order.review_request.google_review_url'));
-        $facebookReviewUrl = trim((string) config('settings.order.review_request.facebook_review_url'));
-
-        return view('front.reviews.share', compact('book', 'reviewText', 'googleReviewUrl', 'facebookReviewUrl'));
     }
 
 
