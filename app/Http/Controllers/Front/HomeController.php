@@ -196,6 +196,21 @@ class HomeController extends Controller
     }
 
 
+    public function shareReview(Request $request)
+    {
+        $book = trim(strip_tags((string) $request->query('knjiga', '')));
+        $book = \Illuminate\Support\Str::limit($book, 120, '');
+
+        $reviewText = trim((string) $request->query('tekst', ''));
+        $reviewText = \Illuminate\Support\Str::limit($reviewText, 1600, '');
+
+        $googleReviewUrl = trim((string) config('settings.order.review_request.google_review_url'));
+        $facebookReviewUrl = trim((string) config('settings.order.review_request.facebook_review_url'));
+
+        return view('front.reviews.share', compact('book', 'reviewText', 'googleReviewUrl', 'facebookReviewUrl'));
+    }
+
+
     /**
      * @param Request $request
      *

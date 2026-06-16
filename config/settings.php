@@ -115,6 +115,8 @@ return [
             'days_after_completed' => 20,
             'max_order_age_days' => 30,
             'status_titles' => ['Završeno'],
+            'google_review_url' => env('GOOGLE_REVIEW_URL', 'https://www.google.com/maps?cid=11777162188273973806'),
+            'facebook_review_url' => env('FACEBOOK_REVIEW_URL', 'https://www.facebook.com/zuziobrt/reviews/'),
             'promo_paused_from' => '2026-06-01 00:00:00',
             'promo_paused_until' => '2026-07-01 00:00:00',
             'backfill' => [
