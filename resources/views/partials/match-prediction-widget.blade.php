@@ -277,6 +277,14 @@
                                 <input type="text" id="match-prediction-website" name="website" tabindex="-1" autocomplete="off">
                             </div>
 
+                            <input type="hidden" name="recaptcha" id="match-prediction-recaptcha">
+
+                            @if ($matchPredictionErrors->has('recaptcha'))
+                                <div class="alert alert-danger" role="alert">
+                                    {{ $matchPredictionErrors->first('recaptcha') }}
+                                </div>
+                            @endif
+
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label" for="match-prediction-first-name">Ime <span class="text-danger">*</span></label>

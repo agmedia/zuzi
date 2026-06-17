@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Recaptcha;
 use App\Models\MatchPrediction;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -54,6 +55,15 @@ class MatchPredictionController extends Controller
         if ($validator->fails()) {
             return back()
                 ->withErrors($validator, 'matchPrediction')
+                ->withInput()
+                ->withFragment('pogodi-rezultat');
+        }
+
+        $recaptcha = (new Recaptcha())->check($request->toArray());
+
+        if (! $recaptcha || ! $recaptcha->ok()) {
+            return back()
+                ->withErrors(['recaptcha' => 'ReCaptcha provjera nije uspjela. Pokušajte ponovno.'], 'matchPrediction')
                 ->withInput()
                 ->withFragment('pogodi-rezultat');
         }
