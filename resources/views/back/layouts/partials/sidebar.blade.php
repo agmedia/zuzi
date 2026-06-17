@@ -98,7 +98,7 @@
                     </a>
                 </li>
 
-                <li class="nav-main-item{{ request()->is(['admin/marketing/*']) ? ' open' : '' }}">
+                <li class="nav-main-item{{ request()->is(['admin/marketing/*', 'admin/match-predictions*']) ? ' open' : '' }}">
                     <a class="nav-main-link nav-main-link-submenu" data-toggle="submenu" aria-haspopup="true" aria-expanded="true" href="#">
                         <i class="nav-main-link-icon si si-bar-chart"></i>
                         <span class="nav-main-link-name">Marketing</span>
@@ -127,6 +127,11 @@
                         <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs(['marketing.statistics']) ? ' active' : '' }}" href="{{ route('marketing.statistics') }}">
                                 <span class="nav-main-link-name">Statistike</span>
+                            </a>
+                        </li>
+                        <li class="nav-main-item">
+                            <a class="nav-main-link{{ request()->routeIs(['admin.match-predictions.*']) ? ' active' : '' }}" href="{{ route('admin.match-predictions.index') }}">
+                                <span class="nav-main-link-name">Prognoze utakmice</span>
                             </a>
                         </li>
                         <li class="nav-main-item">

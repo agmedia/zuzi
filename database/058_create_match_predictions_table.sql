@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS `match_predictions` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `first_name` VARCHAR(100) NOT NULL,
+  `last_name` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `croatia_goals` TINYINT UNSIGNED NOT NULL,
+  `england_goals` TINYINT UNSIGNED NOT NULL,
+  `first_goal_minute` TINYINT UNSIGNED NULL DEFAULT NULL,
+  `yellow_cards_total` TINYINT UNSIGNED NULL DEFAULT NULL,
+  `ip_address` VARCHAR(45) NULL DEFAULT NULL,
+  `user_agent` TEXT NULL DEFAULT NULL,
+  `accepted_rules` TINYINT(1) NOT NULL DEFAULT 0,
+  `accepted_privacy` TINYINT(1) NOT NULL DEFAULT 0,
+  `newsletter_consent` TINYINT(1) NOT NULL DEFAULT 0,
+  `winner_score` INT NULL DEFAULT NULL,
+  `is_winner` TINYINT(1) NOT NULL DEFAULT 0,
+  `contacted_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `match_predictions_email_unique` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

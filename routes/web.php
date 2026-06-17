@@ -14,6 +14,7 @@ use App\Http\Controllers\Back\Marketing\ActionController;
 use App\Http\Controllers\Back\Marketing\BogoController;
 use App\Http\Controllers\Back\Marketing\BlogController;
 use App\Http\Controllers\Back\Marketing\GiftVoucherController as AdminGiftVoucherController;
+use App\Http\Controllers\Back\Marketing\MatchPredictionController as AdminMatchPredictionController;
 use App\Http\Controllers\Back\Marketing\ReviewController;
 use App\Http\Controllers\Back\Marketing\StatsController;
 use App\Http\Controllers\Back\Settings\App\CurrencyController;
@@ -37,6 +38,7 @@ use App\Http\Controllers\Front\CustomerController;
 use App\Http\Controllers\Front\GiftVoucherController;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\NewsletterController;
+use App\Http\Controllers\MatchPredictionController;
 use App\Http\Responses\LogoutResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -170,6 +172,11 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('account-notice', [AccountNoticeController::class, 'edit'])->name('account.notice');
         Route::patch('account-notice', [AccountNoticeController::class, 'update'])->name('account.notice.update');
     });
+
+    Route::get('match-predictions', [AdminMatchPredictionController::class, 'index'])->name('admin.match-predictions.index');
+    Route::get('match-predictions/export', [AdminMatchPredictionController::class, 'export'])->name('admin.match-predictions.export');
+    Route::post('match-predictions/calculate-winner', [AdminMatchPredictionController::class, 'calculateWinner'])->name('admin.match-predictions.calculate-winner');
+    Route::post('match-predictions/{matchPrediction}/mark-contacted', [AdminMatchPredictionController::class, 'markContacted'])->name('admin.match-predictions.mark-contacted');
 
     // KORISNICI
     Route::get('users', [UserController::class, 'index'])->name('users');
@@ -415,6 +422,9 @@ Route::get('/logout', function (Request $request) {
 Route::get('/kontakt', [HomeController::class, 'contact'])->name('kontakt');
 Route::post('/kontakt/posalji', [HomeController::class, 'sendContactMessage'])->name('poruka');
 Route::post('/newsletter/prijava', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+Route::get('/pogodi-rezultat-hrvatska-engleska', [MatchPredictionController::class, 'create'])->name('match-predictions.create');
+Route::get('/pravila/promotivno-natjecanje-hrvatska-engleska', [MatchPredictionController::class, 'rules'])->name('match-predictions.rules');
+Route::post('/match-predictions', [MatchPredictionController::class, 'store'])->middleware('throttle:5,10')->name('match-predictions.store');
 Route::get('/faq', [CatalogRouteController::class, 'faq'])->name('faq');
 Route::get('/poklon-bon', [GiftVoucherController::class, 'create'])->name('poklon.bon');
 Route::post('/poklon-bon', [GiftVoucherController::class, 'store'])->name('poklon.bon.store');
