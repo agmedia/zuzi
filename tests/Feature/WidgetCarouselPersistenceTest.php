@@ -274,6 +274,33 @@ class WidgetCarouselPersistenceTest extends TestCase
         $this->assertStringNotContainsString('<img', $output);
     }
 
+    public function test_custom_slider_uses_widget_56_as_primary_h1_even_when_not_first(): void
+    {
+        $groupId = $this->createWidgetGroup('custom', 'Slider Index');
+        $groupSlug = (string) DB::table('widget_groups')->where('id', $groupId)->value('slug');
+
+        $this->insertCustomWidget([
+            'id' => 55,
+            'group_id' => $groupId,
+            'title' => 'Prvi slide',
+            'sort_order' => 0,
+        ]);
+
+        $this->insertCustomWidget([
+            'id' => 56,
+            'group_id' => $groupId,
+            'title' => 'Broj 1 online knjizara i antikvarijat u Hrvatskoj',
+            'sort_order' => 10,
+        ]);
+
+        $output = Helper::setDescription('++' . $groupSlug . '++');
+
+        $this->assertSame(1, substr_count($output, '<h1'));
+        $this->assertSame(1, preg_match('/<h1[^>]*>\s*Broj 1 online knjizara i antikvarijat u Hrvatskoj\s*<\/h1>/', $output));
+        $this->assertSame(1, preg_match('/<h2[^>]*>\s*Prvi slide\s*<\/h2>/', $output));
+        $this->assertSame(0, preg_match('/<h1[^>]*>\s*Prvi slide\s*<\/h1>/', $output));
+    }
+
     private function createWidgetGroup(string $template, string $title): int
     {
         return (int) DB::table('widget_groups')->insertGetId([
@@ -286,6 +313,28 @@ class WidgetCarouselPersistenceTest extends TestCase
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
+    }
+
+    private function insertCustomWidget(array $overrides = []): int
+    {
+        return (int) DB::table('widgets')->insertGetId(array_merge([
+            'group_id' => $overrides['group_id'],
+            'title' => 'Widget',
+            'subtitle' => null,
+            'description' => null,
+            'data' => serialize([]),
+            'image' => null,
+            'video' => null,
+            'link' => null,
+            'link_id' => null,
+            'url' => '/',
+            'badge' => null,
+            'width' => 12,
+            'sort_order' => 0,
+            'status' => 1,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ], $overrides));
     }
 
     private function createCategory(string $title, int $parentId = 0): int

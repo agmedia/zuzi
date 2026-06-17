@@ -26,6 +26,7 @@
     $countdownSeconds = $countdownDiff % 60;
     $homeHeroMediaWrapStyle = 'width: min(350px, 100%);';
     $homeHeroMediaStyle = 'display: block; width: 100%; aspect-ratio: 1 / 1; height: auto; object-fit: cover; border-radius: 10px;';
+    $homeHeroPrimaryHeadingWidgetId = 56;
     $resolveHomeHeroLink = function ($url) {
         $value = trim((string) $url);
         $normalized = ltrim($value, '/');
@@ -58,6 +59,7 @@
         @foreach($data as  $widget)
             @php
                 $homeHeroLink = $resolveHomeHeroLink($widget['url'] ?? '');
+                $isHomeHeroPrimaryHeading = (int) ($widget['id'] ?? 0) === $homeHeroPrimaryHeadingWidgetId;
             @endphp
 
             <div>
@@ -86,7 +88,7 @@
                                 </div>
                             </div>
                                 --}}
-                            @if ($loop->first)
+                            @if ($isHomeHeroPrimaryHeading)
                                 <h1 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h1>
                             @else
                                 <h2 class="h2 text-primary font-title mb-3 mb-sm-1">{{ $widget['title'] }} </h2>

@@ -788,6 +788,7 @@ class Helper
 
 
                 $widgets[] = [
+                    'id'       => (int) $widget->id,
                     'title'    => $widget->title,
                     'subtitle' => $widget->subtitle,
                     'button_text' => trim((string) ($data['button_text'] ?? '')) ?: 'Pogledajte ponudu',
