@@ -47,9 +47,28 @@ class MatchPredictionController extends Controller
             'accepted_privacy' => ['accepted'],
             'newsletter_consent' => ['nullable', 'boolean'],
         ], [
+            'required' => 'Polje :attribute je obavezno.',
+            'string' => 'Polje :attribute mora biti tekst.',
+            'email.email' => 'Upišite ispravnu email adresu.',
+            'max.string' => 'Polje :attribute ne smije imati više od :max znakova.',
+            'integer' => 'Polje :attribute mora biti cijeli broj.',
+            'min.numeric' => 'Polje :attribute mora biti najmanje :min.',
+            'max.numeric' => 'Polje :attribute ne smije biti veće od :max.',
+            'boolean' => 'Polje :attribute mora biti da ili ne.',
             'email.unique' => 'Za ovaj email već postoji zaprimljena prognoza.',
             'accepted_rules.accepted' => 'Potrebno je prihvatiti pravila promotivnog natjecanja.',
             'accepted_privacy.accepted' => 'Potrebno je prihvatiti obradu osobnih podataka.',
+        ], [
+            'first_name' => 'ime',
+            'last_name' => 'prezime',
+            'email' => 'email',
+            'croatia_goals' => 'golovi Hrvatske',
+            'england_goals' => 'golovi Engleske',
+            'first_goal_minute' => 'minuta prvog gola',
+            'yellow_cards_total' => 'ukupan broj žutih kartona',
+            'accepted_rules' => 'pravila promotivnog natjecanja',
+            'accepted_privacy' => 'obrada osobnih podataka',
+            'newsletter_consent' => 'newsletter privola',
         ]);
 
         if ($validator->fails()) {

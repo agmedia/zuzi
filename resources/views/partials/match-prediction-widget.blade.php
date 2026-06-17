@@ -375,7 +375,7 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label" for="match-prediction-first-goal-minute">
-                                        Minuta prvog gola <span class="text-muted">(opcionalno, preporučeno)</span>
+                                        Minuta prvog gola <span class="text-muted">(preporučeno)</span>
                                     </label>
                                     <input
                                         type="number"
@@ -394,7 +394,7 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label" for="match-prediction-yellow-cards-total">
-                                        Ukupan broj žutih kartona <span class="text-muted">(opcionalno, preporučeno)</span>
+                                        Ukupan broj žutih kartona <span class="text-muted">(preporučeno)</span>
                                     </label>
                                     <input
                                         type="number"
