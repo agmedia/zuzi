@@ -249,7 +249,11 @@
                                         @if ($order->shipping_code == \App\Services\GiftVoucherService::SHIPPING_CODE)
                                             <span class="badge badge-success">E-mail</span>
                                         @elseif (\Illuminate\Support\Str::contains($shipmentCarrierHint, ['boxnow', 'box now']))
-                                            <button type="button" class="btn btn-light btn-sm" onclick="sendBoxNow({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
+                                            @if (filled($order->shipping_parcel_id) || filled($order->tracking_code))
+                                                <i class="fa fa-fw fa-check text-success"></i>
+                                            @else
+                                                <button type="button" class="btn btn-light btn-sm" onclick="sendBoxNow({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
+                                            @endif
                                         @elseif ($order->shipping_code == 'hp_paketomat')
                                             <button type="button" class="btn btn-light btn-sm" onclick="sendHPPak({{ $order->id }})"><i class="fa fa-shipping-fast ml-1"></i></button>
                                         @elseif ($order->shipping_code == 'wolt_drive')
