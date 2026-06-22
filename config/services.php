@@ -80,6 +80,12 @@ return [
     'pelion' => [
         'base_url' => env('PELION_BASE_URL', 'https://zuzishop.pelionpro.com/api/v1'),
         'api_key' => env('PELION_API_KEY'),
+        'incoming_token' => env('PELION_INCOMING_TOKEN'),
+        'orders_from' => env('PELION_ORDERS_FROM', '2026-06-19'),
+        'order_prefix' => env('PELION_ORDER_PREFIX', 'WEB-'),
+        'currency' => env('PELION_CURRENCY', 'EUR'),
+        'default_product_tax_rate' => (float) env('PELION_DEFAULT_PRODUCT_TAX_RATE', 5),
+        'shipping_tax_rate' => (float) env('PELION_SHIPPING_TAX_RATE', 25),
     ],
 
     /*******************************************************************************

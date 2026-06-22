@@ -40,6 +40,9 @@ class Order extends Model
         'shipping_tracking_updated_at' => 'datetime',
         'shipping_tracking_email_sent_at' => 'datetime',
         'shipping_tracking_payload' => 'array',
+        'pelion_invoice_date' => 'date',
+        'pelion_imported_at' => 'datetime',
+        'pelion_invoiced_at' => 'datetime',
     ];
 
     /**
@@ -103,6 +106,15 @@ class Order extends Model
     public function totals()
     {
         return $this->hasMany(OrderTotal::class, 'order_id')->orderBy('sort_order');
+    }
+
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'order_id');
     }
 
 

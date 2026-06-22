@@ -64,7 +64,8 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'no.customers' => \App\Http\Middleware\RedirectCustomer::class,
-        'affiliate.track' => TrackAffiliateLoyaltyUser::class
+        'affiliate.track' => TrackAffiliateLoyaltyUser::class,
+        'pelion.api' => \App\Http\Middleware\AuthenticatePelionApi::class,
     ];
 
     public function removeMiddleware(string $middleware): void
