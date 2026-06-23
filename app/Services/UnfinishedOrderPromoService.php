@@ -8,6 +8,7 @@ use App\Models\GiftVoucher;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class UnfinishedOrderPromoService
@@ -62,6 +63,12 @@ class UnfinishedOrderPromoService
             ->first();
     }
 
+    public function hasSentPromoForOrder(Order $order, ?int $discount = null): bool
+    {
+        return $this->sentOrderIdsForOrderIds(collect([(int) $order->id]), $discount)
+            ->contains((int) $order->id);
+    }
+
     public function shouldSuppressSendButtonForOrder(Order $order): bool
     {
         return $this->orderIdsWithAppliedCoupons(collect([(int) $order->id]))->contains((int) $order->id);
@@ -107,18 +114,49 @@ class UnfinishedOrderPromoService
             ->values();
     }
 
-    public function sentOrderIds(): Collection
+    public function sentOrderIds(?int $discount = null): Collection
     {
-        return Action::query()
-            ->where('title', 'like', self::TITLE_PREFIX . '%')
-            ->where('group', 'total')
-            ->pluck('title')
-            ->map(function ($title) {
-                $orderId = Str::after((string) $title, self::TITLE_PREFIX);
+        $orderIds = $this->sentOrderIdsFromActionTable('product_actions', $discount)
+            ->merge($this->sentOrderIdsFromHistory($discount));
 
-                return ctype_digit($orderId) ? (int) $orderId : 0;
-            })
+        if (Schema::hasTable('product_action_archives')) {
+            $orderIds = $orderIds->merge($this->sentOrderIdsFromActionTable('product_action_archives', $discount));
+        }
+
+        return $orderIds
             ->filter(fn ($orderId) => $orderId > 0)
+            ->unique()
+            ->values();
+    }
+
+    public function sentOrderIdsForOrderIds(Collection $orderIds, ?int $discount = null): Collection
+    {
+        $orderIds = $orderIds
+            ->map(fn ($orderId) => (int) $orderId)
+            ->filter(fn ($orderId) => $orderId > 0)
+            ->unique()
+            ->values();
+
+        if ($orderIds->isEmpty()) {
+            return collect();
+        }
+
+        $titles = $orderIds
+            ->map(fn ($orderId) => self::TITLE_PREFIX . $orderId)
+            ->values()
+            ->all();
+
+        $sentOrderIds = $this->sentOrderIdsFromActionTable('product_actions', $discount, $titles)
+            ->merge($this->sentOrderIdsFromHistory($discount, $orderIds));
+
+        if (Schema::hasTable('product_action_archives')) {
+            $sentOrderIds = $sentOrderIds->merge(
+                $this->sentOrderIdsFromActionTable('product_action_archives', $discount, $titles)
+            );
+        }
+
+        return $sentOrderIds
+            ->filter(fn ($orderId) => $orderIds->contains((int) $orderId))
             ->unique()
             ->values();
     }
@@ -140,12 +178,25 @@ class UnfinishedOrderPromoService
             return collect();
         }
 
-        return Action::query()
+        $couponTitles = Action::query()
             ->where('group', 'total')
             ->whereNotNull('coupon')
             ->where('coupon', '!=', '')
             ->whereIn('title', $titles->all())
-            ->pluck('title')
+            ->pluck('title');
+
+        if (Schema::hasTable('product_action_archives')) {
+            $couponTitles = $couponTitles->merge(
+                DB::table('product_action_archives')
+                    ->where('group', 'total')
+                    ->whereNotNull('coupon')
+                    ->where('coupon', '!=', '')
+                    ->whereIn('title', $titles->all())
+                    ->pluck('title')
+            );
+        }
+
+        return $couponTitles
             ->map(fn ($title) => trim((string) $title))
             ->filter()
             ->unique()
@@ -162,5 +213,63 @@ class UnfinishedOrderPromoService
         );
 
         return $code;
+    }
+
+    private function sentOrderIdsFromActionTable(string $table, ?int $discount = null, ?array $titles = null): Collection
+    {
+        $query = DB::table($table)
+            ->where('title', 'like', self::TITLE_PREFIX . '%')
+            ->where('group', 'total');
+
+        if ($titles !== null) {
+            $query->whereIn('title', $titles);
+        }
+
+        $query->where(function ($query) use ($discount) {
+            if ($discount !== null) {
+                $query->where('discount', $discount)
+                    ->orWhere('coupon', 'like', 'HVALA' . $discount . '-%')
+                    ->orWhere('data', 'like', '%"discount":' . $discount . '%');
+
+                return;
+            }
+
+            $query->where('coupon', 'like', 'HVALA%-%')
+                ->orWhere('data', 'like', '%"source":"unfinished_order_promo"%');
+        });
+
+        return $query
+            ->pluck('title')
+            ->map(fn ($title) => $this->orderIdFromPromoTitle((string) $title))
+            ->filter();
+    }
+
+    private function sentOrderIdsFromHistory(?int $discount = null, ?Collection $orderIds = null): Collection
+    {
+        $query = DB::table('order_history')
+            ->where('comment', 'like', 'Poslan promo email za nedovrsenu narudzbu.%Kod:%');
+
+        if ($orderIds !== null) {
+            $query->whereIn('order_id', $orderIds->all());
+        }
+
+        if ($discount !== null) {
+            $query->where(function ($query) use ($discount) {
+                $query->where('comment', 'like', '%Kod: HVALA' . $discount . '-%')
+                    ->orWhere('comment', 'like', '%Popust: -' . $discount . '%');
+            });
+        }
+
+        return $query
+            ->pluck('order_id')
+            ->map(fn ($orderId) => (int) $orderId)
+            ->filter();
+    }
+
+    private function orderIdFromPromoTitle(string $title): int
+    {
+        $orderId = Str::after($title, self::TITLE_PREFIX);
+
+        return ctype_digit($orderId) ? (int) $orderId : 0;
     }
 }

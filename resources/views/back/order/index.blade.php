@@ -179,9 +179,10 @@
                         <tbody>
                         @forelse ($orders->sortByDesc('id') as $order)
                             @php($sentPromoAction = $sentPromoActions->get($order->id))
+                            @php($promoAlreadySent = $sentPromoAction || $sentPromoOrderIds->contains((int) $order->id))
                             @php($sentReminderHistory = $sentReminderHistories->get($order->id))
                             @php($hasAppliedCoupon = $appliedCouponOrderIds->contains((int) $order->id))
-                            @php($canSendUnfinishedPromo = ! $sentPromoAction && ! $hasAppliedCoupon && filled($order->payment_email))
+                            @php($canSendUnfinishedPromo = ! $promoAlreadySent && ! $hasAppliedCoupon && filled($order->payment_email))
                             @php($canSendUnfinishedReminder = ! $sentReminderHistory && (int) $order->order_status_id === (int) config('settings.order.status.unfinished') && filled($order->payment_email))
                             @php($canShowUnfinishedMailButton = $canSendUnfinishedPromo || $canSendUnfinishedReminder)
                             <tr>
@@ -270,6 +271,10 @@
                                         <div class="d-inline-flex flex-column align-items-end mr-1">
                                             <span class="badge badge-success">Poslano -{{ (int) $sentPromoAction->discount }}%</span>
                                             <span class="text-muted small mt-1">{{ \Illuminate\Support\Carbon::make(data_get($sentPromoAction->data, 'sent_at', $sentPromoAction->created_at))->format('d.m.Y H:i') }}</span>
+                                        </div>
+                                    @elseif ($promoAlreadySent)
+                                        <div class="d-inline-flex flex-column align-items-end mr-1">
+                                            <span class="badge badge-success">Poslano</span>
                                         </div>
                                     @endif
                                     @if ($sentReminderHistory)

@@ -13,6 +13,7 @@ use App\Http\Controllers\Back\Marketing\AccountNoticeController;
 use App\Http\Controllers\Back\Marketing\ActionController;
 use App\Http\Controllers\Back\Marketing\BogoController;
 use App\Http\Controllers\Back\Marketing\BlogController;
+use App\Http\Controllers\Back\Marketing\CompletedPromoController;
 use App\Http\Controllers\Back\Marketing\GiftVoucherController as AdminGiftVoucherController;
 use App\Http\Controllers\Back\Marketing\MatchPredictionController as AdminMatchPredictionController;
 use App\Http\Controllers\Back\Marketing\ReviewController;
@@ -167,6 +168,10 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         // STATISTIKE
         Route::get('statistics', [StatsController::class, 'index'])->name('marketing.statistics');
         Route::post('statistics/expired-coupons', [StatsController::class, 'destroyExpiredCoupons'])->name('marketing.statistics.expired-coupons.destroy');
+
+        // PROMO MAILOVI
+        Route::get('completed-promo', [CompletedPromoController::class, 'index'])->name('marketing.completed-promo');
+        Route::post('completed-promo/candidates', [CompletedPromoController::class, 'candidates'])->name('marketing.completed-promo.candidates');
 
         // OBAVIJESTI U KORISNIČKOM RAČUNU
         Route::get('account-notice', [AccountNoticeController::class, 'edit'])->name('account.notice');

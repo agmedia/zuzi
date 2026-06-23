@@ -130,6 +130,11 @@
                             </a>
                         </li>
                         <li class="nav-main-item">
+                            <a class="nav-main-link{{ request()->routeIs(['marketing.completed-promo']) ? ' active' : '' }}" href="{{ route('marketing.completed-promo') }}">
+                                <span class="nav-main-link-name">Promo mailovi</span>
+                            </a>
+                        </li>
+                        <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs(['admin.match-predictions.*']) ? ' active' : '' }}" href="{{ route('admin.match-predictions.index') }}">
                                 <span class="nav-main-link-name">Prognoze utakmice</span>
                             </a>

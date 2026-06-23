@@ -35,7 +35,6 @@ use App\Services\WoltDrive\WoltDriveService;
 
 class OrderController extends Controller
 {
-
     /**
      * Display a listing of the resource.
      *
@@ -50,11 +49,13 @@ class OrderController extends Controller
         $statuses = Settings::get('order', 'statuses');
         $promoService = app(UnfinishedOrderPromoService::class);
         $sentPromoActions = collect();
+        $sentPromoOrderIds = collect();
         $sentReminderHistories = collect();
         $appliedCouponOrderIds = collect();
 
         if ($orders->count()) {
             $orderIds = $orders->getCollection()->pluck('id');
+            $sentPromoOrderIds = $promoService->sentOrderIdsForOrderIds($orderIds);
             $promoTitles = $orders->getCollection()
                 ->map(fn (Order $listedOrder) => $promoService->titleForOrder($listedOrder))
                 ->values();
@@ -85,7 +86,7 @@ class OrderController extends Controller
                 ->keyBy('order_id');
         }
 
-        return view('back.order.index', compact('orders', 'statuses', 'sentPromoActions', 'sentReminderHistories', 'appliedCouponOrderIds'));
+        return view('back.order.index', compact('orders', 'statuses', 'sentPromoActions', 'sentPromoOrderIds', 'sentReminderHistories', 'appliedCouponOrderIds'));
     }
 
 
@@ -355,9 +356,7 @@ class OrderController extends Controller
             return response()->json(['error' => 'Narudžba nema e-mail adresu kupca.'], 422);
         }
 
-        $existingPromoAction = $unfinishedOrderPromoService->findForOrder($order);
-
-        if ($existingPromoAction) {
+        if ($unfinishedOrderPromoService->hasSentPromoForOrder($order)) {
             return response()->json(['error' => 'Promo mail je već poslan za ovu narudžbu.'], 422);
         }
 

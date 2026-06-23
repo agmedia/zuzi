@@ -16,7 +16,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Bouncer;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class Order extends Model
@@ -497,6 +499,14 @@ class Order extends Model
                                 ->where('group', 'total')
                                 ->whereNotNull('coupon')
                                 ->where('coupon', '!=', ''));
+
+                        if (Schema::hasTable('product_action_archives')) {
+                            $query->orWhereIn('title', DB::table('product_action_archives')
+                                ->select('title')
+                                ->where('group', 'total')
+                                ->whereNotNull('coupon')
+                                ->where('coupon', '!=', ''));
+                        }
                     });
             });
         } else {
