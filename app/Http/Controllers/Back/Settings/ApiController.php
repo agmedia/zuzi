@@ -246,11 +246,20 @@ class ApiController extends Controller
                             ])
                             ->get($url, $query);
 
+            $json = $response->json();
+            $body = $json !== null ? $json : $response->body();
+            $summary = null;
+
+            if ($path === '/stockList' && $json !== null) {
+                $summary = $this->stockSummaryFromRows($this->normalizeStockRows($json));
+            }
+
             return response()->json([
                 'success' => true,
                 'status' => $response->status(),
                 'url' => $response->effectiveUri() ? (string) $response->effectiveUri() : $url,
-                'body' => $response->json() !== null ? $response->json() : $response->body(),
+                'summary' => $summary,
+                'body' => $body,
             ], $response->successful() ? 200 : 422);
         } catch (\Throwable $e) {
             Log::error('Pelion API test failed', [
@@ -630,10 +639,11 @@ class ApiController extends Controller
         if (
             ! Schema::hasTable('products') ||
             ! Schema::hasColumn('products', 'itemid') ||
-            ! Schema::hasColumn('products', 'quantity')
+            ! Schema::hasColumn('products', 'quantity') ||
+            ! Schema::hasColumn('products', 'delivery_24h')
         ) {
             return response()->json([
-                'error' => 'Nedostaje tablica products ili stupci products.itemid / products.quantity.'
+                'error' => 'Nedostaje tablica products ili stupci products.itemid / products.quantity / products.delivery_24h.'
             ], 422);
         }
 
@@ -663,6 +673,7 @@ class ApiController extends Controller
 
             $stockByItemId = [];
             $skippedInvalid = 0;
+            $stockSummary = $this->stockSummaryFromRows($stockRows);
 
             foreach ($stockRows as $stockRow) {
                 if (! is_array($stockRow)) {
@@ -670,7 +681,7 @@ class ApiController extends Controller
                     continue;
                 }
 
-                $itemId = $this->normalizePelionItemId($stockRow['ITEMID'] ?? $stockRow['ItemId'] ?? $stockRow['itemid'] ?? $stockRow['item_id'] ?? null);
+                $itemId = $this->stockRowItemId($stockRow);
 
                 if (! $itemId) {
                     $skippedInvalid++;
@@ -693,15 +704,17 @@ class ApiController extends Controller
             $quantityGreaterThanZero = 0;
             $missingItemidProducts = 0;
             $notInPelionProducts = 0;
+            $skippedDelivery24hProducts = 0;
             $matchedStockItemIds = [];
             $examples = [
                 'updated' => [],
                 'missing_itemid' => [],
                 'not_in_pelion' => [],
+                'skipped_delivery_24h' => [],
             ];
 
             DB::table('products')
-              ->select('id', 'name', 'sku', 'itemid', 'quantity')
+              ->select('id', 'name', 'sku', 'itemid', 'quantity', 'delivery_24h')
               ->chunkById(500, function ($products) use (
                   $stockByItemId,
                   $now,
@@ -711,11 +724,33 @@ class ApiController extends Controller
                   &$quantityGreaterThanZero,
                   &$missingItemidProducts,
                   &$notInPelionProducts,
+                  &$skippedDelivery24hProducts,
                   &$matchedStockItemIds,
                   &$examples
               ) {
                 foreach ($products as $product) {
                     $itemId = $this->normalizePelionItemId($product->itemid);
+
+                    if ((int) $product->delivery_24h === 1) {
+                        $skippedDelivery24hProducts++;
+
+                        if ($itemId && array_key_exists($itemId, $stockByItemId)) {
+                            $matchedStockItemIds[$itemId] = true;
+                        }
+
+                        if (count($examples['skipped_delivery_24h']) < 10) {
+                            $examples['skipped_delivery_24h'][] = [
+                                'id' => $product->id,
+                                'sku' => $product->sku,
+                                'name' => $product->name,
+                                'itemid' => $itemId,
+                                'quantity' => (int) $product->quantity,
+                            ];
+                        }
+
+                        continue;
+                    }
+
                     $quantity = 0;
 
                     if ($itemId && array_key_exists($itemId, $stockByItemId)) {
@@ -790,12 +825,15 @@ class ApiController extends Controller
                     'message' => 'Pelion količine su updejtane prema products.itemid.',
                     'stock_rows_received' => count($stockRows),
                     'stock_itemids_received' => count($stockByItemId),
+                    'pelion_stock_items_quantity_gt_1' => $stockSummary['stock_items_quantity_gt_1'],
+                    'pelion_stock_rows_quantity_gt_1' => $stockSummary['stock_rows_quantity_gt_1'],
                     'matched_products' => $matchedProducts,
                     'updated' => $updated,
                     'unchanged' => $unchanged,
                     'quantity_gt_zero' => $quantityGreaterThanZero,
                     'missing_itemid_products' => $missingItemidProducts,
                     'not_in_pelion_products' => $notInPelionProducts,
+                    'skipped_delivery_24h_products' => $skippedDelivery24hProducts,
                     'pelion_itemids_without_product' => $pelionItemidsWithoutProduct,
                     'skipped_invalid' => $skippedInvalid,
                     'mapping' => [
@@ -1201,6 +1239,50 @@ class ApiController extends Controller
         $quantity = str_replace(',', '.', trim((string) ($row['STOCKQUANTITY'] ?? $row['StockQuantity'] ?? $row['stockquantity'] ?? $row['quantity'] ?? $row['Quantity'] ?? 0)));
 
         return is_numeric($quantity) ? (float) $quantity : 0;
+    }
+
+    private function stockRowItemId(array $row): ?int
+    {
+        return $this->normalizePelionItemId($row['ITEMID'] ?? $row['ItemId'] ?? $row['itemid'] ?? $row['item_id'] ?? null);
+    }
+
+    private function stockSummaryFromRows(array $stockRows): array
+    {
+        $stockByItemId = [];
+        $rowsQuantityGreaterThanOne = 0;
+        $skippedInvalid = 0;
+
+        foreach ($stockRows as $stockRow) {
+            if (! is_array($stockRow)) {
+                $skippedInvalid++;
+                continue;
+            }
+
+            $quantity = $this->stockQuantityFromRow($stockRow);
+
+            if ($quantity > 1) {
+                $rowsQuantityGreaterThanOne++;
+            }
+
+            $itemId = $this->stockRowItemId($stockRow);
+
+            if (! $itemId) {
+                $skippedInvalid++;
+                continue;
+            }
+
+            $stockByItemId[$itemId] = ($stockByItemId[$itemId] ?? 0) + $quantity;
+        }
+
+        return [
+            'stock_rows_received' => count($stockRows),
+            'stock_itemids_received' => count($stockByItemId),
+            'stock_items_quantity_gt_1' => count(array_filter($stockByItemId, function (float $quantity) {
+                return $quantity > 1;
+            })),
+            'stock_rows_quantity_gt_1' => $rowsQuantityGreaterThanOne,
+            'skipped_invalid' => $skippedInvalid,
+        ];
     }
 
     private function normalizeProductStockQuantity($quantity): int

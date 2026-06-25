@@ -325,7 +325,7 @@ class Product extends Model
             'price'            => isset($this->request->price) ? $this->request->price : 0,
             'quantity'         => $this->resolveQuantity($insert),
             'delivery_24h'     => $this->request->has('delivery_24h') ? 1 : 0,
-            'decrease'         => (isset($this->request->decrease) and $this->request->decrease == 'on') ? 0 : 1,
+            'decrease'         => 1,
             'tax_id'           => $this->request->tax_id ?: 1,
             'special'          => $this->request->special,
             'special_from'     => $this->request->special_from ? Carbon::make($this->request->special_from) : null,

@@ -47,11 +47,6 @@
                             <i class="fas fa-save mr-1"></i> Snimi i ostani
                         </button>
                         <div class="dropdown">
-                            <div class="custom-control custom-switch custom-control-info block-options-item ml-4">
-                                <input type="checkbox" class="custom-control-input" id="product-decrease-switch" name="decrease"{{ (isset($product) && isset($product->decrease) && ! $product->decrease) ? 'checked' : '' }}>
-                                <label class="custom-control-label pt-1" for="product-decrease-switch">Neograničena Količina</label>
-                            </div>
-
                             <div class="custom-control custom-switch custom-control-success block-options-item ml-4">
                                 <input type="checkbox" class="custom-control-input" id="product-switch" name="status"{{ (isset($product->status) and $product->status) ? 'checked' : '' }}>
                                 <label class="custom-control-label pt-1" for="product-switch">Aktiviraj</label>
