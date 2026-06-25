@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\Pelion\PelionStockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +58,7 @@ class PelionStockSyncTest extends TestCase
         $response->assertJsonPath('body.skipped_delivery_24h_products', 2);
         $response->assertJsonPath('body.pelion_itemids_without_product', 1);
         $response->assertJsonPath('body.skipped_invalid', 1);
-        $response->assertJsonPath('body.pelion_stock_items_quantity_gt_1', 2);
+        $response->assertJsonPath('body.pelion_stock_items_quantity_gt_0', 2);
 
         $this->assertDatabaseHas('products', [
             'sku' => 'PELSTOCK001',
@@ -98,7 +99,7 @@ class PelionStockSyncTest extends TestCase
         ]);
     }
 
-    public function test_pelion_stock_list_reports_items_with_quantity_greater_than_one(): void
+    public function test_pelion_stock_list_reports_items_with_quantity_greater_than_zero(): void
     {
         config(['services.pelion.api_key' => 'test-pelion-key']);
 
@@ -120,9 +121,101 @@ class PelionStockSyncTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('summary.stock_rows_received', 5);
         $response->assertJsonPath('summary.stock_itemids_received', 3);
-        $response->assertJsonPath('summary.stock_items_quantity_gt_1', 2);
-        $response->assertJsonPath('summary.stock_rows_quantity_gt_1', 2);
+        $response->assertJsonPath('summary.stock_items_quantity_gt_0', 3);
+        $response->assertJsonPath('summary.stock_rows_quantity_gt_0', 4);
         $response->assertJsonPath('summary.skipped_invalid', 1);
+    }
+
+    public function test_pelion_stock_service_rejects_checkout_and_zeroes_product_when_pelion_is_out_of_stock(): void
+    {
+        config(['services.pelion.api_key' => 'test-pelion-key']);
+
+        $productId = $this->createProduct('Checkout Pelion stock', 'PELCHECK001', 2001, 5);
+
+        Http::fake([
+            'https://pelion.test/api/v1/stockList*ItemId=2001*' => Http::response([
+                ['ITEMID' => '2001', 'STOCKQUANTITY' => '0'],
+            ]),
+        ]);
+
+        $result = app(PelionStockService::class)->validateCheckoutItems(collect([
+            (object) [
+                'id' => $productId,
+                'name' => 'Checkout Pelion stock',
+                'quantity' => 2,
+                'attributes' => [],
+            ],
+        ]), 'https://pelion.test/api/v1');
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('out_of_stock', $result['unavailable'][0]['reason']);
+        $this->assertSame(0, $result['unavailable'][0]['available']);
+        $this->assertSame(2, $result['unavailable'][0]['requested']);
+        $this->assertSame([$productId], $result['zeroed_product_ids']);
+        $this->assertStringContainsString('nije dostupan', $result['message']);
+        $this->assertStringContainsString('maknite taj artikl iz košarice', $result['message']);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $productId,
+            'quantity' => 0,
+        ]);
+    }
+
+    public function test_pelion_stock_service_allows_checkout_when_pelion_is_unavailable(): void
+    {
+        config(['services.pelion.api_key' => 'test-pelion-key']);
+
+        $productId = $this->createProduct('Checkout Pelion unavailable', 'PELCHECK002', 2002, 5);
+
+        Http::fake([
+            'https://pelion.test/api/v1/stockList*ItemId=2002*' => Http::response([], 503),
+        ]);
+
+        $result = app(PelionStockService::class)->validateCheckoutItems(collect([
+            (object) [
+                'id' => $productId,
+                'name' => 'Checkout Pelion unavailable',
+                'quantity' => 2,
+                'attributes' => [],
+            ],
+        ]), 'https://pelion.test/api/v1');
+
+        $this->assertTrue($result['ok']);
+        $this->assertTrue($result['stock_check_skipped']);
+        $this->assertSame('pelion_unavailable', $result['skip_reason']);
+        $this->assertSame([], $result['unavailable']);
+        $this->assertSame([], $result['zeroed_product_ids']);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $productId,
+            'quantity' => 5,
+        ]);
+    }
+
+    public function test_pelion_stock_service_allows_checkout_when_product_has_no_itemid(): void
+    {
+        config(['services.pelion.api_key' => 'test-pelion-key']);
+
+        $productId = $this->createProduct('Checkout missing ItemID', 'PELCHECK003', null, 5);
+
+        $result = app(PelionStockService::class)->validateCheckoutItems(collect([
+            (object) [
+                'id' => $productId,
+                'name' => 'Checkout missing ItemID',
+                'quantity' => 2,
+                'attributes' => [],
+            ],
+        ]), 'https://pelion.test/api/v1');
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame('missing_itemid', $result['skipped'][0]['reason']);
+        $this->assertSame([], $result['unavailable']);
+        $this->assertSame([], $result['zeroed_product_ids']);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $productId,
+            'quantity' => 5,
+        ]);
     }
 
     private function createProduct(string $name, string $sku, ?int $itemid, int $quantity, bool $delivery24h = false): int

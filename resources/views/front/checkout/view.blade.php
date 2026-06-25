@@ -63,6 +63,15 @@
             <section class="col-lg-8">
                 <div class="card p-3">
                <h2 class="h5 pt-1 pb-3 mb-3">Pregledaj i potvrdi narudžbu</h2>
+               @if($errors->has('stock'))
+                   <div class="alert alert-danger d-flex mb-3" role="alert">
+                       <div class="alert-icon">
+                           <i class="ci-close-circle"></i>
+                       </div>
+                       <div class="fs-sm">{{ $errors->first('stock') }}</div>
+                   </div>
+               @endif
+               <div id="checkout-stock-alert" class="alert alert-danger d-none mb-3" role="alert"></div>
                @if($showsTermsNoticeLink)
                    <div class="alert alert-info d-flex mb-3" role="alert">
                        <div class="alert-icon">
@@ -197,6 +206,63 @@
                     if (target) {
                         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
+                });
+            });
+
+            document.querySelectorAll('form[name="pay"]').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (form.dataset.pelionStockChecked === '1') {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    const submitButtons = form.querySelectorAll('button[type="submit"]');
+                    submitButtons.forEach(function (button) {
+                        button.dataset.originalHtml = button.innerHTML;
+                        button.disabled = true;
+                        button.innerHTML = 'Provjera stanja...';
+                    });
+
+                    fetch('{{ route('checkout.stock-check') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({})
+                    })
+                        .then(function (response) {
+                            return response.json().then(function (data) {
+                                if (!response.ok || !data.ok) {
+                                    throw data;
+                                }
+
+                                return data;
+                            });
+                        })
+                        .then(function () {
+                            form.dataset.pelionStockChecked = '1';
+                            form.submit();
+                        })
+                        .catch(function (data) {
+                            const alert = document.getElementById('checkout-stock-alert');
+                            const message = data && data.message
+                                ? data.message
+                                : 'Trenutno ne možemo provjeriti stanje artikala. Molimo pokušajte ponovno.';
+
+                            if (alert) {
+                                alert.textContent = message;
+                                alert.classList.remove('d-none');
+                                alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+
+                            submitButtons.forEach(function (button) {
+                                button.disabled = false;
+                                button.innerHTML = button.dataset.originalHtml || 'Završi kupnju';
+                            });
+                        });
                 });
             });
         });

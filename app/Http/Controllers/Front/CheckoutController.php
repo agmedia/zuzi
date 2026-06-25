@@ -20,6 +20,7 @@ use App\Models\Front\Page;
 use App\Services\GoogleAnalyticsService;
 use App\Services\GiftVoucherService;
 use App\Services\ProductRecommendationService;
+use App\Services\Pelion\PelionStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
@@ -253,6 +254,15 @@ class CheckoutController extends Controller
             $order->setData($request->input('order_number'));
         }
 
+        $stockCheck = $this->pelionCheckoutStockCheck(app(PelionStockService::class));
+
+        if (! $stockCheck['ok']) {
+            return redirect()
+                ->route('pregled')
+                ->withErrors(['stock' => $stockCheck['message']])
+                ->withInput();
+        }
+
         if ($order->finish($request)) {
             if ($order->getData()) {
                 CheckoutSession::setOrder($order->getData());
@@ -264,6 +274,13 @@ class CheckoutController extends Controller
         }
 
         return redirect()->route('checkout.error');
+    }
+
+    public function checkPelionStock(Request $request, PelionStockService $stockService)
+    {
+        $stockCheck = $this->pelionCheckoutStockCheck($stockService);
+
+        return response()->json($stockCheck, $stockCheck['ok'] ? 200 : 422);
     }
 
 
@@ -335,6 +352,30 @@ class CheckoutController extends Controller
         }
 
         return new AgCart(config('session.cart'));
+    }
+
+    private function pelionCheckoutStockCheck(PelionStockService $stockService): array
+    {
+        try {
+            $cart = $this->shoppingCart()->get();
+
+            return $stockService->validateCheckoutItems($cart['items'] ?? []);
+        } catch (\Throwable $e) {
+            Log::warning('Pelion checkout stock check skipped', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return [
+                'ok' => true,
+                'message' => null,
+                'checked' => [],
+                'skipped' => [],
+                'unavailable' => [],
+                'zeroed_product_ids' => [],
+                'stock_check_skipped' => true,
+                'skip_reason' => 'pelion_unavailable',
+            ];
+        }
     }
 
 

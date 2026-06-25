@@ -444,6 +444,7 @@ Route::get('/kosarica', [CheckoutController::class, 'cart'])->name('kosarica');
 Route::get('/naplata', [CheckoutController::class, 'checkout'])->name('naplata');
 Route::get('/naplata/wallet/{wallet}', [CheckoutController::class, 'wallet'])->name('checkout.wallet');
 Route::get('/pregled', [CheckoutController::class, 'view'])->name('pregled');
+Route::post('/pregled/provjera-stanja', [CheckoutController::class, 'checkPelionStock'])->name('checkout.stock-check');
 Route::get('/narudzba', [CheckoutController::class, 'order'])->name('checkout');
 Route::get('/uspjeh', [CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/greska', [CheckoutController::class, 'error'])->name('checkout.error');
