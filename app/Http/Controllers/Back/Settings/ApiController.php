@@ -825,8 +825,8 @@ class ApiController extends Controller
                     'message' => 'Pelion količine su updejtane prema products.itemid.',
                     'stock_rows_received' => count($stockRows),
                     'stock_itemids_received' => count($stockByItemId),
-                    'pelion_stock_items_quantity_gt_1' => $stockSummary['stock_items_quantity_gt_1'],
-                    'pelion_stock_rows_quantity_gt_1' => $stockSummary['stock_rows_quantity_gt_1'],
+                    'pelion_stock_items_quantity_gt_0' => $stockSummary['stock_items_quantity_gt_0'],
+                    'pelion_stock_rows_quantity_gt_0' => $stockSummary['stock_rows_quantity_gt_0'],
                     'matched_products' => $matchedProducts,
                     'updated' => $updated,
                     'unchanged' => $unchanged,
@@ -1249,19 +1249,13 @@ class ApiController extends Controller
     private function stockSummaryFromRows(array $stockRows): array
     {
         $stockByItemId = [];
-        $rowsQuantityGreaterThanOne = 0;
+        $rowsQuantityGreaterThanZero = 0;
         $skippedInvalid = 0;
 
         foreach ($stockRows as $stockRow) {
             if (! is_array($stockRow)) {
                 $skippedInvalid++;
                 continue;
-            }
-
-            $quantity = $this->stockQuantityFromRow($stockRow);
-
-            if ($quantity > 1) {
-                $rowsQuantityGreaterThanOne++;
             }
 
             $itemId = $this->stockRowItemId($stockRow);
@@ -1271,16 +1265,22 @@ class ApiController extends Controller
                 continue;
             }
 
+            $quantity = $this->stockQuantityFromRow($stockRow);
+
+            if ($quantity > 0) {
+                $rowsQuantityGreaterThanZero++;
+            }
+
             $stockByItemId[$itemId] = ($stockByItemId[$itemId] ?? 0) + $quantity;
         }
 
         return [
             'stock_rows_received' => count($stockRows),
             'stock_itemids_received' => count($stockByItemId),
-            'stock_items_quantity_gt_1' => count(array_filter($stockByItemId, function (float $quantity) {
-                return $quantity > 1;
+            'stock_items_quantity_gt_0' => count(array_filter($stockByItemId, function (float $quantity) {
+                return $quantity > 0;
             })),
-            'stock_rows_quantity_gt_1' => $rowsQuantityGreaterThanOne,
+            'stock_rows_quantity_gt_0' => $rowsQuantityGreaterThanZero,
             'skipped_invalid' => $skippedInvalid,
         ];
     }

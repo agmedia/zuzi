@@ -169,7 +169,7 @@
                     .removeClass('d-none')
                     .html(
                         '<strong>Pelion stockList je dohvaćen.</strong><br>' +
-                        'Artikala sa stanjem &gt; 1: <strong>' + (summary.stock_items_quantity_gt_1 || 0) + '</strong> | ' +
+                        'Artikala sa stanjem &gt; 0: <strong>' + (summary.stock_items_quantity_gt_0 || 0) + '</strong> | ' +
                         'ItemID-a ukupno: <strong>' + (summary.stock_itemids_received || 0) + '</strong> | ' +
                         'Redova ukupno: <strong>' + (summary.stock_rows_received || 0) + '</strong>'
                     );
@@ -180,7 +180,7 @@
                     .removeClass('d-none')
                     .html(
                         '<strong>' + (body.message || 'Pelion količine su updejtane.') + '</strong><br>' +
-                        'Pelion artikala sa stanjem &gt; 1: <strong>' + (body.pelion_stock_items_quantity_gt_1 || 0) + '</strong> | ' +
+                        'Pelion artikala sa stanjem &gt; 0: <strong>' + (body.pelion_stock_items_quantity_gt_0 || 0) + '</strong> | ' +
                         'Updejtano: <strong>' + (body.updated || 0) + '</strong> | ' +
                         'Delivery 24h preskočeno: <strong>' + (body.skipped_delivery_24h_products || 0) + '</strong> | ' +
                         'Količina &gt; 0: <strong>' + (body.quantity_gt_zero || 0) + '</strong>'
