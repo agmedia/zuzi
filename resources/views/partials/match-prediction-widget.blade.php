@@ -4,7 +4,6 @@
     $isMatchPredictionOpen = (bool) config('match_prediction.enabled') && \Carbon\Carbon::now($timezone)->lt($deadline);
     $matchName = (string) config('match_prediction.match_name', 'Hrvatska – Gana');
     $prizeName = (string) config('match_prediction.prize_name', '30 EUR poklon bon');
-    $prizeUrl = (string) config('match_prediction.prize_url');
     $matchPredictionErrors = $errors->matchPrediction;
     $croatiaFlag = asset('media/match-prediction/flag-croatia.png');
     $ghanaFlag = asset('media/match-prediction/flag-ghana.png');
@@ -132,16 +131,16 @@
                 line-height: 1.2;
             }
 
-            .match-prediction-prize-link {
-                color: #e50077;
-                border-color: rgba(229, 0, 119, .34);
-                background: rgba(255, 255, 255, .66);
-            }
-
-            .match-prediction-prize-link:hover {
-                color: #fff;
-                background: #e50077;
-                border-color: #e50077;
+            .match-prediction-prize-note {
+                display: inline-flex;
+                max-width: 28rem;
+                padding: .75rem .9rem;
+                border-radius: .6rem;
+                border: 1px solid rgba(229, 0, 119, .18);
+                background: #fff;
+                color: #4b5568;
+                font-size: .92rem;
+                line-height: 1.45;
             }
 
             .match-prediction-form-panel .form-control {
@@ -234,11 +233,9 @@
                     <span class="match-prediction-versus">VS</span>
                 </div>
 
-                @if ($prizeUrl)
-                    <a class="btn btn-outline-light btn-sm match-prediction-prize-link" href="{{ $prizeUrl }}" target="_blank" rel="noopener">
-                        Pogledaj nagradu <i class="ci-arrow-right ms-1"></i>
-                    </a>
-                @endif
+                <p class="match-prediction-prize-note mb-0">
+                    Dobitnik može izabrati knjigu ili knjige po želji u vrijednosti do 30 EUR.
+                </p>
             </div>
 
             <div class="match-prediction-meta">

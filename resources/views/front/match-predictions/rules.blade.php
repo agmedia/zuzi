@@ -31,7 +31,7 @@
 
         <h2 class="h4 mt-4">Nagrada</h2>
         <p>
-            Nagrada je {{ config('match_prediction.prize_name') }}. Nagrada se ne može zamijeniti za novac.
+            Nagrada je {{ config('match_prediction.prize_name') }}, koji dobitnik može iskoristiti za knjigu ili knjige po želji u toj vrijednosti. Nagrada se ne može zamijeniti za novac.
         </p>
 
         <h2 class="h4 mt-4">Odabir dobitnika</h2>
