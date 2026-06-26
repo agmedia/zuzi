@@ -22,6 +22,7 @@ return [
     ],
 
     'search_keyword'    => 'pojam',
+    'search_collation'  => env('DB_SEARCH_COLLATION', 'utf8mb4_unicode_ci'),
     'author_path'       => 'autor',
     'publisher_path'    => 'nakladnik',
     'group_path'        => 'Kategorija proizvoda',

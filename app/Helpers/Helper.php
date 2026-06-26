@@ -30,6 +30,9 @@ use Illuminate\Support\Facades\DB;
 
 class Helper
 {
+    private const DEFAULT_SEARCH_COLLATION = 'utf8mb4_unicode_ci';
+    private const FUZZY_AUTHOR_SEARCH_MIN_LENGTH = 4;
+    private const FUZZY_AUTHOR_SEARCH_MAX_LENGTH = 80;
     private const RANDOMIZED_PRODUCT_POOL_MULTIPLIER = 6;
     private const RANDOMIZED_PRODUCT_POOL_MINIMUM = 24;
 
@@ -129,9 +132,9 @@ class Helper
 
         $len = max(1, mb_strlen($raw, 'UTF-8'));
 
-        // accent-insensitive collation
-        $has0900     = collect(DB::select("SHOW COLLATION LIKE 'utf8mb4_0900_ai_ci'"))->isNotEmpty();
-        $aiCollation = $has0900 ? 'utf8mb4_0900_ai_ci' : 'utf8mb4_unicode_ci';
+        // Accent-insensitive collation. Keep this config-based so search does not
+        // add a metadata query to every autocomplete request.
+        $aiCollation = self::searchCollation();
 
         // kratki/dugi tokeni (duge dodatno bodujemo, ali match mora ostati strog)
         $longTokens  = $tokens->filter(fn($t) => mb_strlen($t,'UTF-8') >= 4)->values();
@@ -298,7 +301,7 @@ class Helper
         $fuzzyAuthorId   = null;
         $fuzzyAuthorName = null;
 
-        if (empty($authorIds) || $totalAll === 0) {
+        if ((empty($authorIds) || $totalAll === 0) && self::shouldRunFuzzyAuthorSearch($raw)) {
             $candAuthors = \App\Models\Front\Catalog\Author::query()
                 ->select('id','title')
                 ->where('status', 1)
@@ -442,6 +445,32 @@ class Helper
     private static function escapeLike(string $value): string
     {
         return addcslashes($value, "\\%_");
+    }
+
+    private static function searchCollation(): string
+    {
+        $connection = (string) config('database.default', 'mysql');
+        $configured = config('settings.search_collation')
+            ?: config("database.connections.{$connection}.search_collation")
+            ?: config("database.connections.{$connection}.collation")
+            ?: self::DEFAULT_SEARCH_COLLATION;
+
+        $configured = (string) $configured;
+
+        return preg_match('/\A[a-zA-Z0-9_]+\z/', $configured)
+            ? $configured
+            : self::DEFAULT_SEARCH_COLLATION;
+    }
+
+    private static function shouldRunFuzzyAuthorSearch(string $raw): bool
+    {
+        $length = mb_strlen($raw, 'UTF-8');
+
+        if ($length < self::FUZZY_AUTHOR_SEARCH_MIN_LENGTH || $length > self::FUZZY_AUTHOR_SEARCH_MAX_LENGTH) {
+            return false;
+        }
+
+        return preg_match('/\p{Latin}/u', $raw) === 1;
     }
 
     private static function resolveTitleIdsByToken(string $modelClass, Collection $tokens, string $aiCollation): array

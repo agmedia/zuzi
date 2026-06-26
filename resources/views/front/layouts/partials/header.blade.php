@@ -25,7 +25,7 @@
                         <input class="form-control rounded-start ps-5" type="text"
                                name="{{ config('settings.search_keyword') }}"
                                value="{{ request()->query('pojam') ?: '' }}"
-                               placeholder="Probaj me — sad sam još bolja 📚" id="search_box" data-toggle="dropdown" aria-haspopup="true" autocomplete="off" aria-expanded="false" onkeyup="javascript:load_data(this.value)">
+                               placeholder="Probaj me — sad sam još bolja 📚" id="search_box" data-toggle="dropdown" aria-haspopup="true" autocomplete="off" aria-expanded="false">
                     </div>
                     <div id="search_result" class="live-search"></div>
                 </div>

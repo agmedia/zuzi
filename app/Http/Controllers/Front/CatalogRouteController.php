@@ -348,6 +348,21 @@ class CatalogRouteController extends Controller
         if ($request->has(config('settings.search_keyword') . '_api')) {
 
             $q = (string) $request->input(config('settings.search_keyword') . '_api', '');
+            $q = trim($q);
+
+            if (mb_strlen($q, 'UTF-8') <= 2) {
+                return response()->json([
+                    'counts'     => [
+                        'products'   => 0,
+                        'authors'    => 0,
+                        'categories' => 0,
+                    ],
+                    'products'   => [],
+                    'categories' => [],
+                    'authors'    => [],
+                    'meta'       => [],
+                ])->header('X-Total-Count', 0);
+            }
 
             // group iz requesta (za URL-ove kategorija), default 'knjige'
             $group = trim((string) $request->input('group', 'kategorija-proizvoda'), '/');
@@ -394,14 +409,8 @@ class CatalogRouteController extends Controller
             $catsBase = Category::query()
                 ->when(method_exists(Category::class, 'scopeActive'), fn ($q2) => $q2->active())
                 ->where(function ($w) use ($q) {
-                    $w->where('title', 'like', '%' . $q . '%');
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'description')) {
-                        $w->orWhere('description', 'like', '%' . $q . '%');
-                    } elseif (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'meta_description')) {
-                        $w->orWhere('meta_description', 'like', '%' . $q . '%');
-                    } elseif (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'content')) {
-                        $w->orWhere('content', 'like', '%' . $q . '%');
-                    }
+                    $w->where('title', 'like', '%' . $q . '%')
+                        ->orWhere('description', 'like', '%' . $q . '%');
                 });
 
             $totalCategories = (clone $catsBase)->count();
