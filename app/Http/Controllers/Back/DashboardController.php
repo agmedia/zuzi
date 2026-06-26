@@ -24,6 +24,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Bouncer;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -37,55 +38,68 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $todayOrders = Order::whereDate('created_at', Carbon::today())
+        $now = Carbon::now();
+        $todayStart = $now->copy()->startOfDay();
+        $todayEnd = $now->copy()->endOfDay();
+        $monthStart = $now->copy()->startOfMonth();
+        $monthEnd = $now->copy()->endOfMonth();
+        $yearStart = $now->copy()->startOfYear();
+        $yearEnd = $now->copy()->endOfYear();
+
+        $todayOrders = Order::query()
+            ->whereBetween('orders.created_at', [$todayStart, $todayEnd])
             ->dashboardSales();
-        $processingOrders = Order::whereIn('order_status_id', Order::dashboardProcessingStatusIds());
-        $finishedOrders = Order::whereYear('created_at', Carbon::now()->year)
-            ->whereIn('order_status_id', Order::completedStatusIds());
-        $thisMonthOrders = Order::whereYear('created_at', Carbon::now()->year)
-            ->whereMonth('created_at', Carbon::now()->month)
+        $processingOrders = Order::query()
+            ->whereIn('orders.order_status_id', Order::dashboardProcessingStatusIds());
+        $finishedOrders = Order::query()
+            ->whereBetween('orders.created_at', [$yearStart, $yearEnd])
+            ->whereIn('orders.order_status_id', Order::completedStatusIds());
+        $thisMonthOrders = Order::query()
+            ->whereBetween('orders.created_at', [$monthStart, $monthEnd])
             ->dashboardSales();
 
-        $data['today'] = (clone $todayOrders)->count();
-        $data['today_total'] = (clone $todayOrders)->sum('total');
-        $data['today_items_average'] = $this->averageProductItemsPerOrder($todayOrders);
-        $data['proccess'] = (clone $processingOrders)->count();
-        $data['processing_total'] = (clone $processingOrders)->sum('total');
-        $data['finished'] = (clone $finishedOrders)->count();
-        $data['finished_total'] = (clone $finishedOrders)->sum('total');
+        $todayStats = $this->orderStats($todayOrders);
+        $processingStats = $this->orderStats($processingOrders);
+        $finishedStats = $this->orderStats($finishedOrders);
+        $thisMonthStats = $this->orderStats($thisMonthOrders);
+
+        $data['today'] = $todayStats['orders'];
+        $data['today_total'] = $todayStats['total'];
+        $data['today_items_average'] = $this->averageItems($this->productItemQuantity($todayOrders), $todayStats['orders']);
+        $data['proccess'] = $processingStats['orders'];
+        $data['processing_total'] = $processingStats['total'];
+        $data['finished'] = $finishedStats['orders'];
+        $data['finished_total'] = $finishedStats['total'];
 
         // broj narudžbi u TEKUĆEM mjesecu
-        $data['this_month'] = (clone $thisMonthOrders)->count();
-        $data['this_month_total'] = (clone $thisMonthOrders)->sum('total');
-        $data['this_month_items_average'] = $this->averageProductItemsPerOrder($thisMonthOrders);
+        $data['this_month'] = $thisMonthStats['orders'];
+        $data['this_month_total'] = $thisMonthStats['total'];
+        $data['this_month_items_average'] = $this->averageItems($this->productItemQuantity($thisMonthOrders), $thisMonthStats['orders']);
 
         $orders = Order::query()
             ->select(['id', 'payment_fname', 'payment_lname', 'total', 'order_status_id', 'created_at'])
-            ->with([
-                'products' => function ($query) {
-                    $query->select(['id', 'order_id', 'product_id', 'name', 'price']);
-                },
-            ])
             ->last()
             ->get();
 
-        $products = $orders->pluck('products')->flatten(1);
+        $products = OrderProduct::query()
+            ->select(['id', 'product_id', 'name', 'price', 'created_at'])
+            ->where('product_id', '>', 0)
+            ->orderByDesc('created_at')
+            ->limit(9)
+            ->get();
 
-        $chart     = new Chart();
-        $this_year = json_encode($chart->setDataByYear(
-            Order::chartData($chart->setQueryParams())
-        ));
-        $last_year = json_encode($chart->setDataByYear(
-            Order::chartData($chart->setQueryParams(true))
-        ));
+        $this_year = json_encode($this->dashboardYearSeries((int) $now->year));
+        $last_year = json_encode($this->dashboardYearSeries((int) $now->copy()->subYear()->year));
 
         // ---- NOVO: samo GODINE koje zaista imaju podatke (bar 1 narudžba) ----
-        $yearsWithOrders = Order::query()
-            ->selectRaw('YEAR(created_at) as year')
-            ->whereNotNull('created_at')
-            ->groupBy('year')
-            ->orderBy('year', 'desc')
-            ->pluck('year');
+        $yearsWithOrders = Cache::remember('dashboard.years_with_orders', now()->addMinutes(30), function () {
+            return Order::query()
+                ->selectRaw('YEAR(created_at) as year')
+                ->whereNotNull('created_at')
+                ->groupBy('year')
+                ->orderBy('year', 'desc')
+                ->pluck('year');
+        });
 
         return view('back.dashboard', compact(
             'data',
@@ -478,10 +492,12 @@ class DashboardController extends Controller
     public function chartByDay(Request $request)
     {
         $date = $request->get('date', Carbon::today()->toDateString());
+        $from = Carbon::parse($date)->startOfDay();
+        $to = Carbon::parse($date)->endOfDay();
 
         $data = Order::query()
             ->selectRaw('HOUR(created_at) as hour, SUM(total) as total, COUNT(id) as orders')
-            ->whereDate('created_at', $date)
+            ->whereBetween('created_at', [$from, $to])
             ->dashboardSales()
             ->groupBy('hour')
             ->orderBy('hour')
@@ -509,15 +525,40 @@ class DashboardController extends Controller
         return response()->json($data);
     }
 
-    private function averageProductItemsPerOrder($ordersQuery): float
+    private function dashboardYearSeries(int $year): array
     {
-        $orders = (int) (clone $ordersQuery)->count();
+        $from = Carbon::create($year, 1, 1)->startOfYear();
+        $to = (clone $from)->endOfYear();
+        $chart = new Chart();
 
-        if ($orders === 0) {
-            return 0;
-        }
+        $totalsByMonth = Order::query()
+            ->whereBetween('orders.created_at', [$from, $to])
+            ->dashboardSales()
+            ->selectRaw('MONTH(orders.created_at) as month, SUM(orders.total) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month');
 
-        return $this->averageItems($this->productItemQuantity($ordersQuery), $orders);
+        return collect($chart->months)
+            ->map(function (string $month, int $index) use ($chart, $totalsByMonth) {
+                return [
+                    'title' => $chart->month_names[$index],
+                    'value' => (float) ($totalsByMonth[(int) $month] ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function orderStats($ordersQuery): array
+    {
+        $stats = (clone $ordersQuery)
+            ->selectRaw('COUNT(orders.id) as orders_count, COALESCE(SUM(orders.total), 0) as total')
+            ->first();
+
+        return [
+            'orders' => (int) ($stats->orders_count ?? 0),
+            'total' => (float) ($stats->total ?? 0),
+        ];
     }
 
     private function averageItems(int $itemQuantity, int $orders): float
@@ -538,11 +579,12 @@ class DashboardController extends Controller
 
     private function salesSummary($ordersQuery, ?int $orderCount = null, ?int $itemQuantity = null): array
     {
-        $orders = $orderCount ?? (int) (clone $ordersQuery)->count();
+        $stats = $this->orderStats($ordersQuery);
+        $orders = $orderCount ?? $stats['orders'];
         $items = $itemQuantity ?? $this->productItemQuantity($ordersQuery);
 
         return [
-            'total' => (float) (clone $ordersQuery)->sum('orders.total'),
+            'total' => $stats['total'],
             'orders' => $orders,
             'item_quantity' => $items,
             'avg_items' => $this->averageItems($items, $orders),
