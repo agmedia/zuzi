@@ -39,7 +39,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="official-england-goals">Engleska golovi <span class="text-danger">*</span></label>
+                                <label for="official-england-goals">Gana golovi <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('england_goals') is-invalid @enderror" id="official-england-goals" name="england_goals" value="{{ old('england_goals') }}" min="0" max="20" step="1">
                                 @error('england_goals') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>

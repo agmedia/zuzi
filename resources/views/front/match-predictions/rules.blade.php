@@ -1,7 +1,7 @@
 @extends('front.layouts.app')
 
 @section('title', \App\Models\Seo::appendBrand('Pravila promotivnog natjecanja'))
-@section('description', 'Pravila promotivnog natjecanja Pogodi rezultat Hrvatska – Engleska na Zuzi.hr.')
+@section('description', 'Pravila promotivnog natjecanja Pogodi rezultat Hrvatska – Gana na Zuzi.hr.')
 
 @section('content')
     <nav class="mb-4" aria-label="breadcrumb">
@@ -12,7 +12,7 @@
     </nav>
 
     <section class="mb-4 pb-2">
-        <h1 class="h2 mb-3">Promotivno natjecanje &ldquo;Pogodi rezultat Hrvatska – Engleska&rdquo;</h1>
+        <h1 class="h2 mb-3">Promotivno natjecanje &ldquo;Pogodi rezultat Hrvatska – Gana&rdquo;</h1>
         <p class="text-muted mb-0">
             Trajanje: do {{ $deadline->format('d.m.Y. H:i') }} prema vremenskoj zoni {{ config('match_prediction.timezone') }}.
         </p>
@@ -31,7 +31,7 @@
 
         <h2 class="h4 mt-4">Nagrada</h2>
         <p>
-            Nagrada je knjiga &ldquo;{{ config('match_prediction.prize_name') }}&rdquo;. Nagrada se ne može zamijeniti za novac.
+            Nagrada je {{ config('match_prediction.prize_name') }}. Nagrada se ne može zamijeniti za novac.
         </p>
 
         <h2 class="h4 mt-4">Odabir dobitnika</h2>

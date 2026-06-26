@@ -55,7 +55,7 @@ class MatchPredictionController extends Controller
                 'Prezime',
                 'Email',
                 'Hrvatska golovi',
-                'Engleska golovi',
+                'Gana golovi',
                 'Minuta prvog gola',
                 'Ukupan broj žutih kartona',
                 'IP adresa',

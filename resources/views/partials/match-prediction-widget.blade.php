@@ -2,12 +2,12 @@
     $timezone = (string) config('match_prediction.timezone', config('app.timezone', 'Europe/Zagreb'));
     $deadline = \Carbon\Carbon::parse((string) config('match_prediction.deadline'), $timezone);
     $isMatchPredictionOpen = (bool) config('match_prediction.enabled') && \Carbon\Carbon::now($timezone)->lt($deadline);
-    $matchName = (string) config('match_prediction.match_name', 'Hrvatska – Engleska');
-    $prizeName = (string) config('match_prediction.prize_name', '555 najvećih nogometnih utakmica 21. stoljeća');
+    $matchName = (string) config('match_prediction.match_name', 'Hrvatska – Gana');
+    $prizeName = (string) config('match_prediction.prize_name', '30 EUR poklon bon');
     $prizeUrl = (string) config('match_prediction.prize_url');
     $matchPredictionErrors = $errors->matchPrediction;
     $croatiaFlag = asset('media/match-prediction/flag-croatia.png');
-    $englandFlag = asset('media/match-prediction/flag-england.png');
+    $ghanaFlag = asset('media/match-prediction/flag-ghana.png');
 @endphp
 
 @once
@@ -221,7 +221,7 @@
 
                 <h1 class="match-prediction-title font-title mb-3">Pogodi rezultat: {{ $matchName }}</h1>
                 <p class="match-prediction-hero-copy fs-lg mb-0">
-                    Osvoji knjigu &ldquo;{{ $prizeName }}&rdquo;.
+                    Osvoji {{ $prizeName }}.
                 </p>
 
                 <div class="match-prediction-flags" aria-label="{{ $matchName }}">
@@ -229,7 +229,7 @@
                         <img src="{{ $croatiaFlag }}" alt="Zastava Hrvatske" width="640" height="320" loading="eager">
                     </div>
                     <div class="match-prediction-flag">
-                        <img src="{{ $englandFlag }}" alt="Zastava Engleske" width="640" height="384" loading="eager">
+                        <img src="{{ $ghanaFlag }}" alt="Zastava Gane" width="640" height="427" loading="eager">
                     </div>
                     <span class="match-prediction-versus">VS</span>
                 </div>
@@ -364,7 +364,7 @@
                                                 min="0"
                                                 max="20"
                                                 step="1"
-                                                placeholder="Engleska"
+                                                placeholder="Gana"
                                             >
                                             @if ($matchPredictionErrors->has('england_goals'))
                                                 <div class="invalid-feedback">{{ $matchPredictionErrors->first('england_goals') }}</div>

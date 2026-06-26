@@ -63,7 +63,7 @@ class MatchPredictionController extends Controller
             'last_name' => 'prezime',
             'email' => 'email',
             'croatia_goals' => 'golovi Hrvatske',
-            'england_goals' => 'golovi Engleske',
+            'england_goals' => 'golovi Gane',
             'first_goal_minute' => 'minuta prvog gola',
             'yellow_cards_total' => 'ukupan broj žutih kartona',
             'accepted_rules' => 'pravila promotivnog natjecanja',

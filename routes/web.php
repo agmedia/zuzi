@@ -430,8 +430,10 @@ Route::get('/logout', function (Request $request) {
 Route::get('/kontakt', [HomeController::class, 'contact'])->name('kontakt');
 Route::post('/kontakt/posalji', [HomeController::class, 'sendContactMessage'])->name('poruka');
 Route::post('/newsletter/prijava', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
-Route::get('/pogodi-rezultat-hrvatska-engleska', [MatchPredictionController::class, 'create'])->name('match-predictions.create');
-Route::get('/pravila/promotivno-natjecanje-hrvatska-engleska', [MatchPredictionController::class, 'rules'])->name('match-predictions.rules');
+Route::permanentRedirect('/pogodi-rezultat-hrvatska-engleska', '/pogodi-rezultat-hrvatska-gana');
+Route::permanentRedirect('/pravila/promotivno-natjecanje-hrvatska-engleska', '/pravila/promotivno-natjecanje-hrvatska-gana');
+Route::get('/pogodi-rezultat-hrvatska-gana', [MatchPredictionController::class, 'create'])->name('match-predictions.create');
+Route::get('/pravila/promotivno-natjecanje-hrvatska-gana', [MatchPredictionController::class, 'rules'])->name('match-predictions.rules');
 Route::post('/match-predictions', [MatchPredictionController::class, 'store'])->middleware('throttle:5,10')->name('match-predictions.store');
 Route::get('/faq', [CatalogRouteController::class, 'faq'])->name('faq');
 Route::get('/poklon-bon', [GiftVoucherController::class, 'create'])->name('poklon.bon');
