@@ -134,4 +134,5 @@ class MatchPredictionController extends Controller
     {
         return (string) config('match_prediction.timezone', config('app.timezone', 'Europe/Zagreb'));
     }
+
 }
