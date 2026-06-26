@@ -80,6 +80,7 @@ return [
     'pelion' => [
         'base_url' => env('PELION_BASE_URL', 'https://zuzishop.pelionpro.com/api/v1'),
         'api_key' => env('PELION_API_KEY'),
+        'checkout_stock_check_enabled' => env('PELION_CHECKOUT_STOCK_CHECK_ENABLED', false),
         'checkout_connect_timeout' => (float) env('PELION_CHECKOUT_CONNECT_TIMEOUT', 1),
         'checkout_timeout' => (float) env('PELION_CHECKOUT_TIMEOUT', 2),
         'incoming_token' => env('PELION_INCOMING_TOKEN'),

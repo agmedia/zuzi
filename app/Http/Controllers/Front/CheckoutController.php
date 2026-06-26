@@ -356,6 +356,19 @@ class CheckoutController extends Controller
 
     private function pelionCheckoutStockCheck(PelionStockService $stockService): array
     {
+        if (! config('services.pelion.checkout_stock_check_enabled', false)) {
+            return [
+                'ok' => true,
+                'message' => null,
+                'checked' => [],
+                'skipped' => [],
+                'unavailable' => [],
+                'zeroed_product_ids' => [],
+                'stock_check_skipped' => true,
+                'skip_reason' => 'pelion_checkout_disabled',
+            ];
+        }
+
         try {
             $cart = $this->shoppingCart()->get();
 
