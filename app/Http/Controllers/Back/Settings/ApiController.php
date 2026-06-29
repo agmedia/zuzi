@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class ApiController extends Controller
 {
@@ -148,13 +149,19 @@ class ApiController extends Controller
     public function pelionTest(Request $request)
     {
         $data = $request->validate([
-            'action' => 'required|string|in:item-list,item-list-attrs,item-by-id,group-items,group-active,item-type,item-groups,stock-list,stock-by-item,sync-item-index,sync-product-isbns,sync-product-quantities,sync-product-shelves,stock-by-isbn',
+            'action' => 'required|string|in:item-list,item-list-attrs,item-by-id,group-items,group-active,item-type,item-groups,stock-list,stock-by-item,sync-item-index,sync-product-isbns,sync-product-quantities,sync-product-shelves,stock-by-isbn,scan-name-mismatches,apply-name-mismatches',
             'item_id' => 'nullable|integer|min:1',
             'item_group_id' => 'nullable|integer|min:1',
             'item_type' => 'nullable|string|in:T,K,U',
             'isbn' => 'nullable|string|max:32',
             'base_url' => 'nullable|string|url',
             'api_key' => 'nullable|string',
+            'min_score' => 'nullable|integer|min:50|max:100',
+            'limit' => 'nullable|integer|min:1|max:500',
+            'update_sku' => 'nullable|boolean',
+            'matches' => 'nullable|array|max:500',
+            'matches.*.product_id' => 'required_with:matches|integer|min:1',
+            'matches.*.item_id' => 'required_with:matches|integer|min:1',
         ]);
 
         $apiKey = ($data['api_key'] ?? null) ?: config('services.pelion.api_key');
@@ -185,6 +192,19 @@ class ApiController extends Controller
 
         if ($data['action'] === 'stock-by-isbn') {
             return $this->pelionStockByIsbn($data, $baseUrl, $apiKey);
+        }
+
+        if ($data['action'] === 'scan-name-mismatches') {
+            return $this->scanPelionNameMismatches(
+                $baseUrl,
+                $apiKey,
+                (int) ($data['min_score'] ?? 88),
+                (int) ($data['limit'] ?? 100)
+            );
+        }
+
+        if ($data['action'] === 'apply-name-mismatches') {
+            return $this->applyPelionNameMismatches($data, $baseUrl, $apiKey);
         }
 
         $query = [];
@@ -1123,6 +1143,962 @@ class ApiController extends Controller
                 'error' => 'Greška kod Pelion sinkronizacije polica: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function scanPelionNameMismatches(string $baseUrl, string $apiKey, int $minScore = 88, int $limit = 100)
+    {
+        if (! $this->hasPelionCorrectionColumns()) {
+            return response()->json([
+                'error' => 'Nedostaje tablica products ili stupci name / sku / isbn / ean / itemid / quantity / delivery_24h.'
+            ], 422);
+        }
+
+        try {
+            $itemList = $this->fetchPelionJsonArray($baseUrl . '/itemList', $apiKey, 'Pelion itemList');
+            $itemRows = $this->normalizePelionItemRows($itemList['body']);
+            $pelionItems = $this->normalizePelionCatalogItems($itemRows);
+
+            if (! $pelionItems) {
+                return response()->json([
+                    'error' => 'Pelion itemList nije vratio nijedan artikl s valjanim ITEMID i ITEMNAME.'
+                ], 422);
+            }
+
+            $index = $this->buildPelionNameIndex($pelionItems);
+            $pelionByItemId = [];
+
+            foreach ($pelionItems as $item) {
+                $pelionByItemId[$item['item_id']] = $item;
+            }
+
+            $candidates = [];
+            $scannedProducts = 0;
+            $skippedEmptyNames = 0;
+            $skippedBelowScore = 0;
+            $skippedAlreadyMatching = 0;
+
+            DB::table('products')
+              ->select('id', 'name', 'sku', 'isbn', 'ean', 'itemid', 'quantity', 'delivery_24h', 'status')
+              ->orderBy('id')
+              ->chunkById(500, function ($products) use (
+                  $pelionItems,
+                  $pelionByItemId,
+                  $index,
+                  $minScore,
+                  $limit,
+                  &$candidates,
+                  &$scannedProducts,
+                  &$skippedEmptyNames,
+                  &$skippedBelowScore,
+                  &$skippedAlreadyMatching
+              ) {
+                foreach ($products as $product) {
+                    $scannedProducts++;
+                    $normalizedName = $this->normalizeNameForMatching($product->name);
+
+                    if ($normalizedName === '') {
+                        $skippedEmptyNames++;
+                        continue;
+                    }
+
+                    $match = $this->bestPelionNameMatch($normalizedName, $pelionItems, $index, $minScore);
+
+                    if (! $match) {
+                        $skippedBelowScore++;
+                        continue;
+                    }
+
+                    $candidate = $match['item'];
+                    $currentItemId = $this->normalizePelionItemId($product->itemid);
+                    $currentBarcode = $this->normalizeBarcode($product->isbn ?? $product->ean ?? null);
+                    $currentSku = $this->normalizePelionSku($product->sku);
+                    $itemIdChanged = $currentItemId !== $candidate['item_id'];
+                    $barcodeChanged = $candidate['item_barcode'] && $candidate['item_barcode'] !== $currentBarcode;
+                    $skuChanged = $candidate['item_code'] && $candidate['item_code'] !== $currentSku;
+
+                    if (! $itemIdChanged && ! $barcodeChanged && ! $skuChanged) {
+                        $skippedAlreadyMatching++;
+                        continue;
+                    }
+
+                    $reasons = [];
+
+                    if ($itemIdChanged) {
+                        $reasons[] = 'ITEMID: ' . ($currentItemId ?: '-') . ' -> ' . $candidate['item_id'];
+                    }
+
+                    if ($barcodeChanged) {
+                        $reasons[] = 'ITEMBARCODE: ' . ($currentBarcode ?: '-') . ' -> ' . $candidate['item_barcode'];
+                    }
+
+                    if ($skuChanged) {
+                        $reasons[] = 'ITEMCODE: ' . ($currentSku ?: '-') . ' -> ' . $candidate['item_code'];
+                    }
+
+                    $candidates[] = [
+                        'product' => [
+                            'id' => (int) $product->id,
+                            'name' => $product->name,
+                            'sku' => $product->sku,
+                            'isbn' => $product->isbn,
+                            'ean' => $product->ean,
+                            'itemid' => $currentItemId,
+                            'quantity' => (int) $product->quantity,
+                            'delivery_24h' => (int) $product->delivery_24h,
+                            'status' => (int) $product->status,
+                        ],
+                        'current_pelion_item' => $currentItemId && isset($pelionByItemId[$currentItemId])
+                            ? $this->formatPelionCatalogItem($pelionByItemId[$currentItemId])
+                            : null,
+                        'candidate' => $this->formatPelionCatalogItem($candidate),
+                        'score' => $match['score'],
+                        'reasons' => $reasons,
+                        'conflict' => null,
+                    ];
+
+                    if (count($candidates) >= $limit) {
+                        return false;
+                    }
+                }
+
+                return count($candidates) < $limit;
+              });
+
+            $this->annotatePelionCandidateConflicts($candidates);
+
+            return response()->json([
+                'success' => true,
+                'status' => $itemList['status'],
+                'url' => $itemList['url'],
+                'body' => [
+                    'message' => 'Sumnjivi Pelion parovi su pronađeni po nazivu artikla.',
+                    'min_score' => $minScore,
+                    'limit' => $limit,
+                    'items_received' => count($itemRows),
+                    'valid_pelion_items' => count($pelionItems),
+                    'products_scanned' => $scannedProducts,
+                    'candidates_found' => count($candidates),
+                    'skipped_empty_names' => $skippedEmptyNames,
+                    'skipped_below_score' => $skippedBelowScore,
+                    'skipped_already_matching' => $skippedAlreadyMatching,
+                    'candidates' => $candidates,
+                ],
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Pelion name mismatch scan failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Greška kod Pelion pretrage sumnjivih artikala: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function applyPelionNameMismatches(array $data, string $baseUrl, string $apiKey)
+    {
+        if (! $this->hasPelionCorrectionColumns()) {
+            return response()->json([
+                'error' => 'Nedostaje tablica products ili stupci name / sku / isbn / ean / itemid / quantity / delivery_24h.'
+            ], 422);
+        }
+
+        $matches = $this->normalizeApprovedPelionMatches($data['matches'] ?? []);
+
+        if (! $matches['items']) {
+            return response()->json([
+                'error' => 'Odaberite barem jedan Pelion prijedlog za odobravanje.'
+            ], 422);
+        }
+
+        try {
+            $itemList = $this->fetchPelionJsonArray($baseUrl . '/itemList', $apiKey, 'Pelion itemList');
+            $stockList = $this->fetchPelionJsonArray($baseUrl . '/stockList', $apiKey, 'Pelion stockList');
+            $pelionItems = collect($this->normalizePelionCatalogItems($this->normalizePelionItemRows($itemList['body'])))->keyBy('item_id');
+            $stockRows = $this->normalizeStockRows($stockList['body']);
+            $stockByItemId = $this->stockQuantitiesByItemId($stockRows);
+            $productIds = array_keys($matches['items']);
+            $products = DB::table('products')
+                          ->select('id', 'name', 'sku', 'isbn', 'ean', 'itemid', 'quantity', 'delivery_24h')
+                          ->whereIn('id', $productIds)
+                          ->get()
+                          ->keyBy('id');
+            $targetCounts = array_count_values(array_values($matches['items']));
+            $initialRows = [];
+            $skipped = $matches['duplicates'];
+
+            foreach ($matches['items'] as $productId => $itemId) {
+                $product = $products->get($productId);
+                $pelionItem = $pelionItems->get($itemId);
+
+                if (! $product) {
+                    $skipped[] = [
+                        'product_id' => $productId,
+                        'item_id' => $itemId,
+                        'reason' => 'missing_product',
+                    ];
+                    continue;
+                }
+
+                if (! $pelionItem) {
+                    $skipped[] = [
+                        'product_id' => $productId,
+                        'product_name' => $product->name,
+                        'item_id' => $itemId,
+                        'reason' => 'missing_pelion_item',
+                    ];
+                    continue;
+                }
+
+                if (($targetCounts[$itemId] ?? 0) > 1) {
+                    $skipped[] = [
+                        'product_id' => $productId,
+                        'product_name' => $product->name,
+                        'item_id' => $itemId,
+                        'reason' => 'duplicate_target_itemid',
+                    ];
+                    continue;
+                }
+
+                $initialRows[] = [
+                    'product' => $product,
+                    'item' => $pelionItem,
+                ];
+            }
+
+            $rows = $this->rejectRowsWithTakenItemIds($initialRows, $skipped);
+
+            if (! $rows) {
+                return response()->json([
+                    'success' => false,
+                    'status' => $stockList['status'],
+                    'url' => $stockList['url'],
+                    'body' => [
+                        'message' => 'Nijedan odabrani Pelion prijedlog nije moguće primijeniti.',
+                        'applied' => 0,
+                        'skipped' => count($skipped),
+                        'examples' => [
+                            'skipped' => array_slice($skipped, 0, 20),
+                        ],
+                    ],
+                ], 422);
+            }
+
+            $updateSku = filter_var($data['update_sku'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $skuGuards = $this->buildPelionSkuGuards($rows);
+            $now = now();
+            $applied = [];
+            $skuSkipped = [];
+            $quantitySkippedDelivery24h = 0;
+            $quantityUpdated = 0;
+            $skuUpdated = 0;
+
+            DB::transaction(function () use (
+                $rows,
+                $stockByItemId,
+                $updateSku,
+                $skuGuards,
+                $now,
+                &$applied,
+                &$skuSkipped,
+                &$quantitySkippedDelivery24h,
+                &$quantityUpdated,
+                &$skuUpdated
+            ) {
+                $rowProductIds = array_map(function (array $row) {
+                    return (int) $row['product']->id;
+                }, $rows);
+
+                DB::table('products')
+                  ->whereIn('id', $rowProductIds)
+                  ->update([
+                      'itemid' => null,
+                      'updated_at' => $now,
+                  ]);
+
+                foreach ($rows as $row) {
+                    $product = $row['product'];
+                    $item = $row['item'];
+                    $itemId = $item['item_id'];
+                    $barcode = $item['item_barcode'];
+                    $newQuantity = (int) $product->quantity;
+                    $update = [
+                        'itemid' => $itemId,
+                        'updated_at' => $now,
+                    ];
+
+                    if ($barcode) {
+                        $update['isbn'] = $barcode;
+
+                        if (strlen($barcode) <= 14) {
+                            $update['ean'] = $barcode;
+                        }
+                    }
+
+                    if ((int) $product->delivery_24h === 1) {
+                        $quantitySkippedDelivery24h++;
+                    } else {
+                        $newQuantity = $this->normalizeProductStockQuantity($stockByItemId[$itemId] ?? 0);
+                        $update['quantity'] = $newQuantity;
+                        $quantityUpdated++;
+                    }
+
+                    if ($updateSku) {
+                        $skuResult = $this->resolvePelionSkuUpdate($product, $item, $skuGuards);
+
+                        if ($skuResult['value'] !== null) {
+                            $update['sku'] = $skuResult['value'];
+                            $skuUpdated++;
+                        } elseif ($skuResult['reason']) {
+                            $skuSkipped[] = [
+                                'product_id' => (int) $product->id,
+                                'item_id' => $itemId,
+                                'item_code' => $item['item_code'],
+                                'reason' => $skuResult['reason'],
+                            ];
+                        }
+                    }
+
+                    DB::table('products')
+                      ->where('id', $product->id)
+                      ->update($update);
+
+                    if (count($applied) < 20) {
+                        $applied[] = [
+                            'id' => (int) $product->id,
+                            'name' => $product->name,
+                            'old_sku' => $product->sku,
+                            'new_sku' => $update['sku'] ?? $product->sku,
+                            'old_isbn' => $product->isbn,
+                            'new_isbn' => $update['isbn'] ?? $product->isbn,
+                            'old_itemid' => $this->normalizePelionItemId($product->itemid),
+                            'new_itemid' => $itemId,
+                            'old_quantity' => (int) $product->quantity,
+                            'new_quantity' => $newQuantity,
+                            'pelion_item_name' => $item['item_name'],
+                        ];
+                    }
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'status' => $stockList['status'],
+                'url' => $stockList['url'],
+                'body' => [
+                    'message' => 'Odobrene Pelion korekcije su upisane i količine su osvježene prema stockList.',
+                    'requested' => count($data['matches'] ?? []),
+                    'applied' => count($rows),
+                    'skipped' => count($skipped),
+                    'sku_updated' => $skuUpdated,
+                    'sku_skipped' => count($skuSkipped),
+                    'quantity_updated' => $quantityUpdated,
+                    'quantity_skipped_delivery_24h' => $quantitySkippedDelivery24h,
+                    'stock_rows_received' => count($stockRows),
+                    'stock_itemids_received' => count($stockByItemId),
+                    'examples' => [
+                        'applied' => $applied,
+                        'skipped' => array_slice($skipped, 0, 20),
+                        'sku_skipped' => array_slice($skuSkipped, 0, 20),
+                    ],
+                ],
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Pelion name mismatch apply failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Greška kod primjene Pelion korekcija: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function hasPelionCorrectionColumns(): bool
+    {
+        if (! Schema::hasTable('products')) {
+            return false;
+        }
+
+        foreach (['name', 'sku', 'ean', 'isbn', 'itemid', 'quantity', 'delivery_24h'] as $column) {
+            if (! Schema::hasColumn('products', $column)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function fetchPelionJsonArray(string $url, string $apiKey, string $label): array
+    {
+        $response = Http::timeout(120)
+                        ->withHeaders($this->pelionHeaders($apiKey))
+                        ->get($url);
+
+        if (! $response->successful()) {
+            throw new \RuntimeException($label . ' nije uspio. Status: ' . $response->status());
+        }
+
+        $body = $response->json();
+
+        if (! is_array($body)) {
+            throw new \RuntimeException($label . ' nije vratio očekivani JSON niz.');
+        }
+
+        return [
+            'status' => $response->status(),
+            'url' => $response->effectiveUri() ? (string) $response->effectiveUri() : $url,
+            'body' => $body,
+        ];
+    }
+
+    private function normalizePelionItemRows($items): array
+    {
+        if (! is_array($items)) {
+            return [];
+        }
+
+        if (isset($items['ITEMID']) || isset($items['ItemId']) || isset($items['itemid']) || isset($items['item_id'])) {
+            return [$items];
+        }
+
+        foreach (['body', 'Body', 'data', 'Data', 'items', 'Items'] as $key) {
+            if (isset($items[$key]) && is_array($items[$key])) {
+                return $this->normalizePelionItemRows($items[$key]);
+            }
+        }
+
+        return array_values(array_filter($items, 'is_array'));
+    }
+
+    private function normalizePelionCatalogItems(array $items): array
+    {
+        $rows = $this->normalizePelionItemRows($items);
+        $normalized = [];
+
+        foreach ($rows as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $itemId = $this->normalizePelionItemId($item['ITEMID'] ?? $item['ItemId'] ?? $item['itemid'] ?? $item['item_id'] ?? null);
+            $itemName = $this->normalizePelionText($item['ITEMNAME'] ?? $item['ItemName'] ?? $item['itemname'] ?? $item['item_name'] ?? null);
+
+            if (! $itemId || ! $itemName) {
+                continue;
+            }
+
+            $normalizedName = $this->normalizeNameForMatching($itemName);
+
+            if ($normalizedName === '') {
+                continue;
+            }
+
+            $price = $item['ITEMPRICE'] ?? $item['ItemPrice'] ?? $item['itemprice'] ?? $item['item_price'] ?? null;
+
+            $normalized[] = [
+                'item_id' => $itemId,
+                'item_barcode' => $this->normalizeBarcode($item['ITEMBARCODE'] ?? $item['ItemBarcode'] ?? $item['itembarcode'] ?? $item['item_barcode'] ?? null),
+                'item_code' => $this->normalizePelionSku($item['ITEMCODE'] ?? $item['ItemCode'] ?? $item['itemcode'] ?? $item['item_code'] ?? null),
+                'item_name' => $itemName,
+                'normalized_name' => $normalizedName,
+                'item_group_id' => $this->normalizePelionGroupId($item['ITEMGROUPID'] ?? $item['ItemGroupId'] ?? $item['itemgroupid'] ?? $item['item_group_id'] ?? null),
+                'item_active' => $this->normalizePelionText($item['ITEMACTIVE'] ?? $item['ItemActive'] ?? $item['itemactive'] ?? $item['item_active'] ?? null),
+                'item_type' => $this->normalizePelionText($item['ITEMTYPE'] ?? $item['ItemType'] ?? $item['itemtype'] ?? $item['item_type'] ?? null),
+                'item_price' => is_numeric($price) ? (float) $price : null,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    private function buildPelionNameIndex(array $pelionItems): array
+    {
+        $index = [];
+
+        foreach ($pelionItems as $offset => $item) {
+            foreach ($this->nameSearchKeys($item['normalized_name']) as $key) {
+                $index[$key][] = $offset;
+            }
+        }
+
+        return $index;
+    }
+
+    private function bestPelionNameMatch(string $normalizedProductName, array $pelionItems, array $index, int $minScore): ?array
+    {
+        $candidateOffsets = [];
+
+        foreach ($this->nameSearchKeys($normalizedProductName) as $key) {
+            foreach ($index[$key] ?? [] as $offset) {
+                $candidateOffsets[$offset] = true;
+            }
+        }
+
+        if (! $candidateOffsets) {
+            return null;
+        }
+
+        $best = null;
+        $bestScore = 0;
+        $secondScore = 0;
+
+        foreach (array_keys($candidateOffsets) as $offset) {
+            if (! isset($pelionItems[$offset])) {
+                continue;
+            }
+
+            $item = $pelionItems[$offset];
+            $score = $this->pelionNameMatchScore($normalizedProductName, $item['normalized_name']);
+
+            if ($score > $bestScore) {
+                $secondScore = $bestScore;
+                $bestScore = $score;
+                $best = $item;
+            } elseif ($score > $secondScore) {
+                $secondScore = $score;
+            }
+        }
+
+        if (! $best || $bestScore < $minScore) {
+            return null;
+        }
+
+        return [
+            'item' => $best,
+            'score' => $bestScore,
+            'second_score' => $secondScore,
+            'score_gap' => $bestScore - $secondScore,
+        ];
+    }
+
+    private function pelionNameMatchScore(string $productName, string $pelionName): int
+    {
+        if ($productName === '' || $pelionName === '') {
+            return 0;
+        }
+
+        if ($productName === $pelionName) {
+            return 100;
+        }
+
+        $scores = [];
+        $productLength = strlen($productName);
+        $pelionLength = strlen($pelionName);
+        $shorterLength = min($productLength, $pelionLength);
+        $longerLength = max($productLength, $pelionLength);
+
+        if ($shorterLength >= 5) {
+            $isPrefix = strpos($productName, $pelionName) === 0 || strpos($pelionName, $productName) === 0;
+            $isContained = strpos($productName, $pelionName) !== false || strpos($pelionName, $productName) !== false;
+
+            if ($isPrefix) {
+                $scores[] = $shorterLength >= 10 ? 98 : 94;
+                $scores[] = (int) round(86 + min(12, ($shorterLength / max(1, $longerLength)) * 14));
+            }
+
+            if ($isContained) {
+                $scores[] = $shorterLength >= 8 ? 95 : 88;
+            }
+        }
+
+        $productTokens = $this->nameTokens($productName);
+        $pelionTokens = $this->nameTokens($pelionName);
+        $overlap = $this->tokenOverlap($productTokens, $pelionTokens);
+
+        if ($overlap['count'] > 0 && ($overlap['count'] >= 2 || $overlap['longest'] >= 6)) {
+            $coverage = max($overlap['product_coverage'], $overlap['pelion_coverage']);
+            $balancedCoverage = ($overlap['product_coverage'] + $overlap['pelion_coverage']) / 2;
+            $scores[] = (int) round(72 + ($coverage * 22) + ($balancedCoverage * 6));
+
+            if ($overlap['product_coverage'] >= 1 && count($productTokens) <= 3 && $productLength >= 5) {
+                $scores[] = 96;
+            }
+        }
+
+        similar_text($productName, $pelionName, $similarPercent);
+        $scores[] = (int) round($similarPercent);
+
+        if ($longerLength <= 255) {
+            $distance = levenshtein($productName, $pelionName);
+            $scores[] = (int) round((1 - min($distance, $longerLength) / max(1, $longerLength)) * 100);
+        }
+
+        return max($scores ?: [0]);
+    }
+
+    private function tokenOverlap(array $productTokens, array $pelionTokens): array
+    {
+        $matchedPelion = [];
+        $longest = 0;
+        $count = 0;
+
+        foreach ($productTokens as $productToken) {
+            foreach ($pelionTokens as $pelionIndex => $pelionToken) {
+                if (isset($matchedPelion[$pelionIndex])) {
+                    continue;
+                }
+
+                if (! $this->nameTokensCompatible($productToken, $pelionToken)) {
+                    continue;
+                }
+
+                $matchedPelion[$pelionIndex] = true;
+                $longest = max($longest, min(strlen($productToken), strlen($pelionToken)));
+                $count++;
+                break;
+            }
+        }
+
+        return [
+            'count' => $count,
+            'longest' => $longest,
+            'product_coverage' => $productTokens ? $count / count($productTokens) : 0,
+            'pelion_coverage' => $pelionTokens ? $count / count($pelionTokens) : 0,
+        ];
+    }
+
+    private function nameTokensCompatible(string $left, string $right): bool
+    {
+        if ($left === $right) {
+            return true;
+        }
+
+        $shorterLength = min(strlen($left), strlen($right));
+
+        return $shorterLength >= 4 && (strpos($left, $right) === 0 || strpos($right, $left) === 0);
+    }
+
+    private function nameSearchKeys(string $normalizedName): array
+    {
+        $keys = [];
+
+        foreach ($this->nameTokens($normalizedName) as $token) {
+            foreach ($this->nameIndexKeysFromToken($token) as $key) {
+                $keys[$key] = true;
+            }
+        }
+
+        return array_keys($keys);
+    }
+
+    private function nameIndexKeysFromToken(string $token): array
+    {
+        $keys = [$token => true];
+        $length = strlen($token);
+        $maxPrefixLength = min(8, $length - 1);
+
+        for ($prefixLength = 4; $prefixLength <= $maxPrefixLength; $prefixLength++) {
+            $keys[substr($token, 0, $prefixLength)] = true;
+        }
+
+        return array_keys($keys);
+    }
+
+    private function nameTokens(string $normalizedName): array
+    {
+        $tokens = preg_split('/\s+/', $normalizedName, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $stopWords = [
+            'and' => true,
+            'the' => true,
+            'for' => true,
+            'with' => true,
+        ];
+        $result = [];
+
+        foreach ($tokens as $token) {
+            if (strlen($token) < 3 || isset($stopWords[$token])) {
+                continue;
+            }
+
+            $result[$token] = true;
+        }
+
+        return array_keys($result);
+    }
+
+    private function normalizeNameForMatching($value): string
+    {
+        $value = Str::ascii((string) $value);
+        $value = strtolower($value);
+        $value = preg_replace('/[^a-z0-9]+/', ' ', $value);
+        $value = preg_replace('/\s+/', ' ', trim((string) $value));
+
+        return $value ?: '';
+    }
+
+    private function normalizePelionText($value): ?string
+    {
+        $value = preg_replace('/\s+/', ' ', trim((string) $value));
+
+        return $value === '' ? null : $value;
+    }
+
+    private function formatPelionCatalogItem(array $item): array
+    {
+        return [
+            'ITEMID' => $item['item_id'],
+            'ITEMCODE' => $item['item_code'],
+            'ITEMBARCODE' => $item['item_barcode'],
+            'ITEMNAME' => $item['item_name'],
+            'ITEMGROUPID' => $item['item_group_id'],
+            'ITEMACTIVE' => $item['item_active'],
+            'ITEMTYPE' => $item['item_type'],
+            'ITEMPRICE' => $item['item_price'],
+        ];
+    }
+
+    private function annotatePelionCandidateConflicts(array &$candidates): void
+    {
+        if (! $candidates) {
+            return;
+        }
+
+        $candidateTargetItemIds = array_map(function (array $candidate) {
+            return (int) $candidate['candidate']['ITEMID'];
+        }, $candidates);
+        $targetItemIds = array_values(array_unique($candidateTargetItemIds));
+        $candidateTargetCounts = array_count_values($candidateTargetItemIds);
+        $owners = DB::table('products')
+                    ->select('id', 'name', 'sku', 'itemid')
+                    ->whereIn('itemid', $targetItemIds)
+                    ->get()
+                    ->keyBy(function ($product) {
+                        return (int) $product->itemid;
+                    });
+
+        foreach ($candidates as &$candidate) {
+            $targetItemId = (int) $candidate['candidate']['ITEMID'];
+            $reasons = [];
+            $existingProduct = null;
+            $owner = $owners->get($targetItemId);
+
+            if ($owner && (int) $owner->id !== (int) $candidate['product']['id']) {
+                $reasons[] = 'ITEMID je trenutno upisan na drugom artiklu.';
+                $existingProduct = [
+                    'id' => (int) $owner->id,
+                    'name' => $owner->name,
+                    'sku' => $owner->sku,
+                    'itemid' => (int) $owner->itemid,
+                ];
+            }
+
+            if (($candidateTargetCounts[$targetItemId] ?? 0) > 1) {
+                $reasons[] = 'Isti Pelion ITEMID je predložen na više lokalnih artikala.';
+            }
+
+            if ($reasons) {
+                $candidate['conflict'] = [
+                    'reasons' => $reasons,
+                    'existing_product' => $existingProduct,
+                ];
+            }
+        }
+        unset($candidate);
+    }
+
+    private function normalizeApprovedPelionMatches(array $matches): array
+    {
+        $items = [];
+        $duplicates = [];
+
+        foreach ($matches as $match) {
+            if (! is_array($match)) {
+                $duplicates[] = [
+                    'reason' => 'invalid_payload',
+                ];
+                continue;
+            }
+
+            $productId = $this->positiveInteger($match['product_id'] ?? null);
+            $itemId = $this->normalizePelionItemId($match['item_id'] ?? null);
+
+            if (! $productId || ! $itemId) {
+                $duplicates[] = [
+                    'product_id' => $match['product_id'] ?? null,
+                    'item_id' => $match['item_id'] ?? null,
+                    'reason' => 'invalid_ids',
+                ];
+                continue;
+            }
+
+            if (isset($items[$productId])) {
+                $duplicates[] = [
+                    'product_id' => $productId,
+                    'item_id' => $itemId,
+                    'reason' => 'duplicate_product_submission',
+                ];
+                continue;
+            }
+
+            $items[$productId] = $itemId;
+        }
+
+        return [
+            'items' => $items,
+            'duplicates' => $duplicates,
+        ];
+    }
+
+    private function positiveInteger($value): ?int
+    {
+        $value = trim((string) $value);
+
+        if ($value === '' || ! ctype_digit($value)) {
+            return null;
+        }
+
+        $integer = (int) $value;
+
+        return $integer > 0 ? $integer : null;
+    }
+
+    private function rejectRowsWithTakenItemIds(array $rows, array &$skipped): array
+    {
+        if (! $rows) {
+            return [];
+        }
+
+        $rowProductIds = [];
+        $targetItemIds = [];
+
+        foreach ($rows as $row) {
+            $rowProductIds[(int) $row['product']->id] = true;
+            $targetItemIds[] = (int) $row['item']['item_id'];
+        }
+
+        $owners = DB::table('products')
+                    ->select('id', 'name', 'sku', 'itemid')
+                    ->whereIn('itemid', array_values(array_unique($targetItemIds)))
+                    ->get()
+                    ->keyBy(function ($product) {
+                        return (int) $product->itemid;
+                    });
+
+        return array_values(array_filter($rows, function (array $row) use ($owners, $rowProductIds, &$skipped) {
+            $product = $row['product'];
+            $itemId = (int) $row['item']['item_id'];
+            $owner = $owners->get($itemId);
+
+            if (! $owner || (int) $owner->id === (int) $product->id || isset($rowProductIds[(int) $owner->id])) {
+                return true;
+            }
+
+            $skipped[] = [
+                'product_id' => (int) $product->id,
+                'product_name' => $product->name,
+                'item_id' => $itemId,
+                'reason' => 'itemid_taken_by_other_product',
+                'existing_product' => [
+                    'id' => (int) $owner->id,
+                    'name' => $owner->name,
+                    'sku' => $owner->sku,
+                    'itemid' => (int) $owner->itemid,
+                ],
+            ];
+
+            return false;
+        }));
+    }
+
+    private function stockQuantitiesByItemId(array $stockRows): array
+    {
+        $stockByItemId = [];
+
+        foreach ($stockRows as $stockRow) {
+            if (! is_array($stockRow)) {
+                continue;
+            }
+
+            $itemId = $this->stockRowItemId($stockRow);
+
+            if (! $itemId) {
+                continue;
+            }
+
+            $stockByItemId[$itemId] = ($stockByItemId[$itemId] ?? 0) + $this->stockQuantityFromRow($stockRow);
+        }
+
+        return $stockByItemId;
+    }
+
+    private function buildPelionSkuGuards(array $rows): array
+    {
+        $rowProductIds = [];
+        $targetSkus = [];
+
+        foreach ($rows as $row) {
+            $rowProductIds[] = (int) $row['product']->id;
+            $itemCode = $this->normalizePelionSku($row['item']['item_code'] ?? null);
+
+            if ($itemCode) {
+                $targetSkus[] = $itemCode;
+            }
+        }
+
+        $targetSkuCounts = array_count_values($targetSkus);
+        $existingOwners = collect();
+
+        if ($targetSkus) {
+            $existingOwners = DB::table('products')
+                                ->select('id', 'name', 'sku')
+                                ->whereIn('sku', array_values(array_unique($targetSkus)))
+                                ->whereNotIn('id', array_values(array_unique($rowProductIds)))
+                                ->get()
+                                ->keyBy('sku');
+        }
+
+        return [
+            'target_sku_counts' => $targetSkuCounts,
+            'existing_owners' => $existingOwners,
+        ];
+    }
+
+    private function resolvePelionSkuUpdate($product, array $item, array $guards): array
+    {
+        $itemCode = $this->normalizePelionSku($item['item_code'] ?? null);
+        $currentSku = $this->normalizePelionSku($product->sku ?? null);
+
+        if (! $itemCode || $itemCode === $currentSku) {
+            return [
+                'value' => null,
+                'reason' => null,
+            ];
+        }
+
+        if (strlen($itemCode) > 14) {
+            return [
+                'value' => null,
+                'reason' => 'sku_too_long',
+            ];
+        }
+
+        if (($guards['target_sku_counts'][$itemCode] ?? 0) > 1) {
+            return [
+                'value' => null,
+                'reason' => 'duplicate_target_sku',
+            ];
+        }
+
+        if ($guards['existing_owners']->has($itemCode)) {
+            return [
+                'value' => null,
+                'reason' => 'sku_already_used',
+            ];
+        }
+
+        return [
+            'value' => $itemCode,
+            'reason' => null,
+        ];
     }
 
     private function pelionHeaders(string $apiKey): array
