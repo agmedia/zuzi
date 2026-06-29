@@ -1154,8 +1154,11 @@ class ApiController extends Controller
 
         try {
             $itemList = $this->fetchPelionJsonArray($baseUrl . '/itemList', $apiKey, 'Pelion itemList');
+            $stockList = $this->fetchPelionJsonArray($baseUrl . '/stockList', $apiKey, 'Pelion stockList');
             $itemRows = $this->normalizePelionItemRows($itemList['body']);
             $pelionItems = $this->normalizePelionCatalogItems($itemRows);
+            $stockRows = $this->normalizeStockRows($stockList['body']);
+            $stockByItemId = $this->stockQuantitiesByItemId($stockRows);
 
             if (! $pelionItems) {
                 return response()->json([
@@ -1182,6 +1185,7 @@ class ApiController extends Controller
               ->chunkById(500, function ($products) use (
                   $pelionItems,
                   $pelionByItemId,
+                  $stockByItemId,
                   $index,
                   $minScore,
                   $limit,
@@ -1228,6 +1232,16 @@ class ApiController extends Controller
                         $reasons[] = 'ISBN: ' . ($currentBarcode ?: '-') . ' -> ' . $candidate['item_barcode'];
                     }
 
+                    $currentPelionItem = null;
+
+                    if ($currentItemId && isset($pelionByItemId[$currentItemId])) {
+                        $currentPelionItem = $this->formatPelionCatalogItem($pelionByItemId[$currentItemId]);
+                        $currentPelionItem['STOCKQUANTITY'] = $this->normalizeProductStockQuantity($stockByItemId[$currentItemId] ?? 0);
+                    }
+
+                    $candidatePelionItem = $this->formatPelionCatalogItem($candidate);
+                    $candidatePelionItem['STOCKQUANTITY'] = $this->normalizeProductStockQuantity($stockByItemId[$candidate['item_id']] ?? 0);
+
                     $candidates[] = [
                         'product' => [
                             'id' => (int) $product->id,
@@ -1240,10 +1254,8 @@ class ApiController extends Controller
                             'delivery_24h' => (int) $product->delivery_24h,
                             'status' => (int) $product->status,
                         ],
-                        'current_pelion_item' => $currentItemId && isset($pelionByItemId[$currentItemId])
-                            ? $this->formatPelionCatalogItem($pelionByItemId[$currentItemId])
-                            : null,
-                        'candidate' => $this->formatPelionCatalogItem($candidate),
+                        'current_pelion_item' => $currentPelionItem,
+                        'candidate' => $candidatePelionItem,
                         'score' => $match['score'],
                         'reasons' => $reasons,
                         'conflict' => null,
@@ -1269,6 +1281,8 @@ class ApiController extends Controller
                     'limit' => $limit,
                     'items_received' => count($itemRows),
                     'valid_pelion_items' => count($pelionItems),
+                    'stock_rows_received' => count($stockRows),
+                    'stock_itemids_received' => count($stockByItemId),
                     'products_scanned' => $scannedProducts,
                     'candidates_found' => count($candidates),
                     'skipped_empty_names' => $skippedEmptyNames,
