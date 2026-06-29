@@ -60,14 +60,30 @@ class FilterController extends Controller
         }
 
         // Ako su posebni ID artikala.
-        if ($params['ids'] && $params['ids'] != '[]') {
-            $_ids = collect(explode(',', substr($params['ids'], 1, -1)))->unique();
+        if (! empty($params['ids']) && $params['ids'] != '[]') {
+            $ids = $this->parseProductIds($params['ids']);
 
-            $categories = Category::active()->whereHas('products', function ($query) use ($_ids) {
-                $query->active()->hasStock()->whereIn('id', $_ids);
-            })->sortByName()->withCount('products')->get()->toArray();
+            if ($ids->isNotEmpty()) {
+                $response = Helper::resolveCache('categories')->remember(
+                    'relative-url-v3.ids.' . md5($ids->implode(',')),
+                    now()->addMinutes(30),
+                    function () use ($ids, $is_actions_page) {
+                        $categories = Category::query()
+                            ->active()
+                            ->whereHas('products', function ($query) use ($ids) {
+                                $query->whereIn('products.id', $ids);
+                            })
+                            ->sortByName()
+                            ->withCount(['products' => function ($query) use ($ids) {
+                                $query->whereIn('products.id', $ids);
+                            }])
+                            ->get()
+                            ->toArray();
 
-            $response = $this->resolveCategoryArray($categories, $is_actions_page ? 'actions' : 'categories');
+                        return $this->resolveCategoryArray($categories, $is_actions_page ? 'actions' : 'categories');
+                    }
+                );
+            }
         }
 
         return response()->json($response);
@@ -170,53 +186,23 @@ class FilterController extends Controller
         }
 
         $params = $request->input('params');
-        $cache_string = '';
         $request_data = $this->buildProductRequestData($params);
-
-        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'language', 'akcija', 'sort', 'price_min', 'price_max', 'preserve_order'] as $key) {
-            if (isset($params[$key]) && $params[$key] !== '') {
-                $cache_string .= $key . '=' . $params[$key];
-            }
-        }
-
-        if (isset($request_data['autor'])) {
-            $cache_string .= 'autor=' . collect($request_data['autor'])->pluck('slug')->implode(',');
-        }
-
-        if (isset($request_data['nakladnik'])) {
-            $cache_string .= 'nakladnik=' . collect($request_data['nakladnik'])->pluck('slug')->implode(',');
-        }
-
         $request_data['page'] = $request->input('page');
-
-        $cache_string .= 'page=' . $request_data['page'];
-        $cache_string = 'products-review-summary-v2-' . md5($cache_string);
-
         $request = new Request($request_data);
+        $hasProductIds = $this->parseProductIds($params['ids'] ?? '')->isNotEmpty();
+        $cache_string = $hasProductIds
+            ? 'products-review-summary-v3-' . md5(json_encode(
+                $this->normalizeProductCacheParams($params, $request_data['page'])
+            ))
+            : $this->legacyProductCacheKey($params, $request_data);
+        $cache_ttl = $hasProductIds ? now()->addMinutes(30) : config('cache.life');
 
-        if (isset($params['ids']) && $params['ids'] != '') {
-            $products = (new Product())->filter($request)
-                                       ->with(['author', 'action'])
-                                       ->withReviewSummary()
-                                       ->paginate(config('settings.pagination.front'));
-        } else {
-
-            $products = Helper::resolveCache('products')->remember($cache_string, config('cache.life'), function () use ($request) {
-                $products = (new Product())->filter($request)
-                                           ->with(['author', 'action'])
-                                           ->withReviewSummary()
-                                           ->paginate(config('settings.pagination.front'));
-                return $products;
-
-                /*return (new Product())->filter($request)
-                                      ->with('author')
-                                      ->paginate(config('settings.pagination.front'), ['*'], 'page', $request->input('page'));*/
-            });
-
-            /*$products = (new Product())->filter($request)
-                                       ->with('author')
-                                       ->paginate(config('settings.pagination.front'));*/
-        }
+        $products = Helper::resolveCache('products')->remember($cache_string, $cache_ttl, function () use ($request) {
+            return (new Product())->filter($request)
+                                  ->with(['author', 'action'])
+                                  ->withReviewSummary()
+                                  ->paginate(config('settings.pagination.front'));
+        });
 
         $products->setCollection(Product::attachListingBadges($products->getCollection()));
 
@@ -378,6 +364,79 @@ class FilterController extends Controller
 
 
     /**
+     * @param mixed $value
+     *
+     * @return Collection<int, int>
+     */
+    private function parseProductIds($value): Collection
+    {
+        $ids = is_array($value)
+            ? $value
+            : explode(',', trim((string) $value, '[]'));
+
+        return collect($ids)
+            ->map(function ($id) {
+                return (int) trim((string) $id);
+            })
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
+
+    /**
+     * @param mixed $value
+     */
+    private function normalizeProductIdsForCache($value): string
+    {
+        return $this->parseProductIds($value)->implode(',');
+    }
+
+
+    /**
+     * @param mixed $page
+     *
+     * @return array<string, mixed>
+     */
+    private function normalizeProductCacheParams(array $params, $page): array
+    {
+        return array_merge($this->normalizeToolbarCacheParams($params), [
+            'sort' => (string) ($params['sort'] ?? ''),
+            'page' => (string) ($page ?: 1),
+        ]);
+    }
+
+
+    /**
+     * Preserve the existing cache key format for non-ID catalog requests.
+     *
+     * @return string
+     */
+    private function legacyProductCacheKey(array $params, array $requestData): string
+    {
+        $cacheString = '';
+
+        foreach (['ids', 'group', 'cat', 'subcat', 'start', 'end', 'condition', 'binding', 'letter', 'language', 'akcija', 'sort', 'price_min', 'price_max', 'preserve_order'] as $key) {
+            if (isset($params[$key]) && $params[$key] !== '') {
+                $cacheString .= $key . '=' . $params[$key];
+            }
+        }
+
+        if (isset($requestData['autor'])) {
+            $cacheString .= 'autor=' . collect($requestData['autor'])->pluck('slug')->implode(',');
+        }
+
+        if (isset($requestData['nakladnik'])) {
+            $cacheString .= 'nakladnik=' . collect($requestData['nakladnik'])->pluck('slug')->implode(',');
+        }
+
+        $cacheString .= 'page=' . ($requestData['page'] ?? null);
+
+        return 'products-review-summary-v2-' . md5($cacheString);
+    }
+
+
+    /**
      * @param string|null $value
      * @param string $modelClass
      *
@@ -512,7 +571,7 @@ class FilterController extends Controller
     private function normalizeToolbarCacheParams(array $params): array
     {
         return [
-            'ids' => (string) ($params['ids'] ?? ''),
+            'ids' => $this->normalizeProductIdsForCache($params['ids'] ?? ''),
             'group' => (string) ($params['group'] ?? ''),
             'cat' => (string) ($params['cat'] ?? ''),
             'subcat' => (string) ($params['subcat'] ?? ''),
