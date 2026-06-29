@@ -50,7 +50,15 @@
                                         <img src="{{ ($product->product && $product->product->image) ? asset($product->product->image) : asset('media/avatars/avatar0.jpg') }}" height="80px"/>
                                     </a>
                                 </td>
-                                <td><strong>{{ $product->name }} -  {{ $product->product ? $product->product->sku : '' }}</strong></td>
+                                <td>
+                                    <strong>
+                                        {{ $product->name }}
+                                        @if($product->product && ($product->product->stock_restored_from_backup ?? false))
+                                            <span class="text-warning font-w700" title="Količina vraćena iz oldzuzi backup razlike">*</span>
+                                        @endif
+                                        -  {{ $product->product ? $product->product->sku : '' }}
+                                    </strong>
+                                </td>
                                 <td>{{ $product->product ? $product->product->polica : '' }}</td>
                                 <td class="text-center"><strong>{{ $product->quantity }}</strong></td>
                                 <td class="text-right">{{ number_format($product->org_price, 2, ',', '.') }}</td>

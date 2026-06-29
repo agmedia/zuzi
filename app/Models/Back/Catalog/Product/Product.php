@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Bouncer;
 use Illuminate\Validation\ValidationException;
@@ -47,6 +48,10 @@ class Product extends Model
      * @var array
      */
     protected $guarded = ['id', 'created_at', 'updated_at'];
+
+    protected $casts = [
+        'stock_restored_from_backup' => 'boolean',
+    ];
 
     /**
      * @var Request
@@ -575,7 +580,7 @@ class Product extends Model
      */
     public function scopeForAdminList(Builder $query): Builder
     {
-        return $query->select([
+        $columns = [
             'id',
             'name',
             'isbn',
@@ -593,7 +598,13 @@ class Product extends Model
             'status',
             'created_at',
             'updated_at'
-        ])->with([
+        ];
+
+        if (Schema::hasColumn('products', 'stock_restored_from_backup')) {
+            $columns[] = 'stock_restored_from_backup';
+        }
+
+        return $query->select($columns)->with([
             'categories' => function ($query) {
                 $query->orderBy('title');
             },

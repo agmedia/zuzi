@@ -186,7 +186,12 @@
                                         <span class="badge badge-secondary">Ne</span>
                                     @endif
                                 </td>
-                                <td class="font-size-sm text-center text-nowrap">{{ $product->quantity }}</td>
+                                <td class="font-size-sm text-center text-nowrap">
+                                    {{ $product->quantity }}
+                                    @if($product->stock_restored_from_backup ?? false)
+                                        <span class="text-warning font-w700" title="Količina vraćena iz oldzuzi backup razlike">*</span>
+                                    @endif
+                                </td>
                                 <td class="font-size-sm text-nowrap">{{ \Illuminate\Support\Carbon::make($product->created_at)->format('d.m.y') }}</td>
                                 <td class="font-size-sm text-nowrap">{{ \Illuminate\Support\Carbon::make($product->updated_at)->format('d.m.y') }}</td>
                                 <td class="text-center font-size-sm text-nowrap">

@@ -7,7 +7,7 @@
                 <div class="panel-footer" v-if="results.length">
                     <ul class="list-group agm">
                         <li class="list-group-item" v-for="result in results" @click="select(result)">
-                            {{ result.name }} -  {{ result.sku }}
+                            {{ result.name }}<span v-if="isBackupRestored(result)" class="text-warning font-weight-bold" title="Količina vraćena iz oldzuzi backup razlike">*</span> -  {{ result.sku }}
                         </li>
                     </ul>
                 </div>
@@ -38,7 +38,9 @@
                             <i class="si si-trash text-danger float-right" style="margin-top: 2px; cursor: pointer;" @click="removeRow(index)"></i>
                         </td>
                         <td class="text-center">{{ index + 1 }}</td>
-                        <td>{{ product.name }}</td>
+                        <td>
+                            {{ product.name }}<span v-if="isBackupRestored(product)" class="text-warning font-weight-bold" title="Količina vraćena iz oldzuzi backup razlike">*</span>
+                        </td>
                         <td class="text-center">
                             <div class="form-material" style="padding-top: 0;">
                                 <input type="text" class="form-control py-0" style="height: 26px;" :value="product.quantity" @keyup="ChangeQty(product.id, $event)" @blur="Recalculate()">
@@ -137,6 +139,7 @@ export default {
                     org_price: item.org_price,
                     rabat: item.org_price - item.price,
                     total: item.total,
+                    stock_restored_from_backup: item.product ? item.product.stock_restored_from_backup : item.stock_restored_from_backup,
                     edit: false
                 })
             })
@@ -170,6 +173,7 @@ export default {
                 org_price: selected.price,
                 rabat: selected.price - price,
                 total: price,
+                stock_restored_from_backup: selected.stock_restored_from_backup,
                 edit: false
             })
 
@@ -299,6 +303,18 @@ export default {
                     this.results = response.data;
                 })
             }
+        },
+
+        isBackupRestored(product) {
+            if (!product) {
+                return false;
+            }
+
+            if (product.stock_restored_from_backup) {
+                return true;
+            }
+
+            return !!(product.product && product.product.stock_restored_from_backup);
         }
     }
 };
