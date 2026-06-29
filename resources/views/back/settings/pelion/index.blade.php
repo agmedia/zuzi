@@ -103,6 +103,7 @@
                     <div class="block-header block-header-default">
                         <h3 class="block-title">Sumnjivi artikli po nazivu</h3>
                         <div class="block-options">
+                            <button type="button" class="btn btn-sm btn-alt-warning" id="pelion-toggle-conflicts-button" onclick="togglePelionConflictRows()">Sakrij konflikte</button>
                             <button type="button" class="btn btn-sm btn-alt-secondary" onclick="togglePelionNameCandidates(true)">Označi sve</button>
                             <button type="button" class="btn btn-sm btn-alt-secondary" onclick="togglePelionNameCandidates(false)">Poništi</button>
                             <button type="button" class="btn btn-sm btn-alt-primary" onclick="scanPelionNameMismatches()">Pronađi sumnjive</button>
@@ -163,6 +164,7 @@
 @push('js_after')
     <script>
         let pelionNameCandidates = [];
+        let pelionHideConflicts = false;
 
         function runPelionTest(action) {
             if (action === 'sync-product-isbns' && !confirm('Upisati Pelion ITEMBARCODE u products.isbn i ITEMID u products.itemid prema products.sku?')) {
@@ -348,8 +350,8 @@
                     : '';
 
                 rows.push(
-                    '<tr class="' + (conflict ? 'table-warning' : '') + '">' +
-                    '<td><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input pelion-name-candidate-checkbox" id="pelion-name-candidate-' + index + '" data-index="' + index + '"><label class="custom-control-label" for="pelion-name-candidate-' + index + '"></label></div></td>' +
+                    '<tr class="pelion-name-candidate-row ' + (conflict ? 'table-warning' : '') + '" data-conflict="' + (conflict ? '1' : '0') + '">' +
+                    '<td><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input pelion-name-candidate-checkbox" id="pelion-name-candidate-' + index + '" data-index="' + index + '" data-conflict="' + (conflict ? '1' : '0') + '"><label class="custom-control-label" for="pelion-name-candidate-' + index + '"></label></div></td>' +
                     '<td><span class="badge badge-' + (candidate.score >= 94 ? 'success' : 'warning') + '">' + escapeHtml(candidate.score) + '</span></td>' +
                     '<td><div class="font-w600">#' + escapeHtml(product.id) + ' ' + escapeHtml(product.name) + '</div><div class="text-muted">SKU: ' + emptyDash(product.sku) + ' | ISBN: ' + emptyDash(product.isbn || product.ean) + ' | ITEMID: ' + emptyDash(product.itemid) + ' | Qty: ' + emptyDash(product.quantity) + '</div></td>' +
                     '<td>' + (currentItem.ITEMID ? '<div class="font-w600">' + escapeHtml(currentItem.ITEMNAME || '-') + '</div><div class="text-muted">ITEMID: ' + emptyDash(currentItem.ITEMID) + '<br>BARCODE: ' + emptyDash(currentItem.ITEMBARCODE) + '<br>CODE: ' + emptyDash(currentItem.ITEMCODE) + '</div>' : '<span class="text-muted">Nema lokalnog Pelion para</span>') + '</td>' +
@@ -361,10 +363,37 @@
             });
 
             $('#pelion-name-candidates').html(rows.join(''));
+            applyPelionConflictVisibility();
         }
 
         function togglePelionNameCandidates(checked) {
-            $('.pelion-name-candidate-checkbox').prop('checked', checked);
+            if (checked) {
+                $('.pelion-name-candidate-checkbox:visible').filter(function () {
+                    return $(this).data('conflict') !== 1;
+                }).prop('checked', true);
+
+                return;
+            }
+
+            $('.pelion-name-candidate-checkbox').prop('checked', false);
+        }
+
+        function togglePelionConflictRows() {
+            pelionHideConflicts = !pelionHideConflicts;
+            applyPelionConflictVisibility();
+        }
+
+        function applyPelionConflictVisibility() {
+            const conflictRows = $('.pelion-name-candidate-row[data-conflict="1"]');
+
+            if (pelionHideConflicts) {
+                conflictRows.hide();
+                conflictRows.find('.pelion-name-candidate-checkbox').prop('checked', false);
+                $('#pelion-toggle-conflicts-button').text('Prikaži konflikte');
+            } else {
+                conflictRows.show();
+                $('#pelion-toggle-conflicts-button').text('Sakrij konflikte');
+            }
         }
 
         function pelionBasePayload(action) {
