@@ -158,7 +158,6 @@ class ApiController extends Controller
             'api_key' => 'nullable|string',
             'min_score' => 'nullable|integer|min:50|max:100',
             'limit' => 'nullable|integer|min:1|max:500',
-            'update_sku' => 'nullable|boolean',
             'matches' => 'nullable|array|max:500',
             'matches.*.product_id' => 'required_with:matches|integer|min:1',
             'matches.*.item_id' => 'required_with:matches|integer|min:1',
@@ -1210,13 +1209,11 @@ class ApiController extends Controller
 
                     $candidate = $match['item'];
                     $currentItemId = $this->normalizePelionItemId($product->itemid);
-                    $currentBarcode = $this->normalizeBarcode($product->isbn ?? $product->ean ?? null);
-                    $currentSku = $this->normalizePelionSku($product->sku);
+                    $currentBarcode = $this->normalizeBarcode($product->isbn ?? null);
                     $itemIdChanged = $currentItemId !== $candidate['item_id'];
                     $barcodeChanged = $candidate['item_barcode'] && $candidate['item_barcode'] !== $currentBarcode;
-                    $skuChanged = $candidate['item_code'] && $candidate['item_code'] !== $currentSku;
 
-                    if (! $itemIdChanged && ! $barcodeChanged && ! $skuChanged) {
+                    if (! $itemIdChanged && ! $barcodeChanged) {
                         $skippedAlreadyMatching++;
                         continue;
                     }
@@ -1228,11 +1225,7 @@ class ApiController extends Controller
                     }
 
                     if ($barcodeChanged) {
-                        $reasons[] = 'ITEMBARCODE: ' . ($currentBarcode ?: '-') . ' -> ' . $candidate['item_barcode'];
-                    }
-
-                    if ($skuChanged) {
-                        $reasons[] = 'ITEMCODE: ' . ($currentSku ?: '-') . ' -> ' . $candidate['item_code'];
+                        $reasons[] = 'ISBN: ' . ($currentBarcode ?: '-') . ' -> ' . $candidate['item_barcode'];
                     }
 
                     $candidates[] = [
@@ -1388,26 +1381,18 @@ class ApiController extends Controller
                 ], 422);
             }
 
-            $updateSku = filter_var($data['update_sku'] ?? false, FILTER_VALIDATE_BOOLEAN);
-            $skuGuards = $this->buildPelionSkuGuards($rows);
             $now = now();
             $applied = [];
-            $skuSkipped = [];
             $quantitySkippedDelivery24h = 0;
             $quantityUpdated = 0;
-            $skuUpdated = 0;
 
             DB::transaction(function () use (
                 $rows,
                 $stockByItemId,
-                $updateSku,
-                $skuGuards,
                 $now,
                 &$applied,
-                &$skuSkipped,
                 &$quantitySkippedDelivery24h,
-                &$quantityUpdated,
-                &$skuUpdated
+                &$quantityUpdated
             ) {
                 $rowProductIds = array_map(function (array $row) {
                     return (int) $row['product']->id;
@@ -1433,10 +1418,6 @@ class ApiController extends Controller
 
                     if ($barcode) {
                         $update['isbn'] = $barcode;
-
-                        if (strlen($barcode) <= 14) {
-                            $update['ean'] = $barcode;
-                        }
                     }
 
                     if ((int) $product->delivery_24h === 1) {
@@ -1447,22 +1428,6 @@ class ApiController extends Controller
                         $quantityUpdated++;
                     }
 
-                    if ($updateSku) {
-                        $skuResult = $this->resolvePelionSkuUpdate($product, $item, $skuGuards);
-
-                        if ($skuResult['value'] !== null) {
-                            $update['sku'] = $skuResult['value'];
-                            $skuUpdated++;
-                        } elseif ($skuResult['reason']) {
-                            $skuSkipped[] = [
-                                'product_id' => (int) $product->id,
-                                'item_id' => $itemId,
-                                'item_code' => $item['item_code'],
-                                'reason' => $skuResult['reason'],
-                            ];
-                        }
-                    }
-
                     DB::table('products')
                       ->where('id', $product->id)
                       ->update($update);
@@ -1471,8 +1436,6 @@ class ApiController extends Controller
                         $applied[] = [
                             'id' => (int) $product->id,
                             'name' => $product->name,
-                            'old_sku' => $product->sku,
-                            'new_sku' => $update['sku'] ?? $product->sku,
                             'old_isbn' => $product->isbn,
                             'new_isbn' => $update['isbn'] ?? $product->isbn,
                             'old_itemid' => $this->normalizePelionItemId($product->itemid),
@@ -1494,8 +1457,6 @@ class ApiController extends Controller
                     'requested' => count($data['matches'] ?? []),
                     'applied' => count($rows),
                     'skipped' => count($skipped),
-                    'sku_updated' => $skuUpdated,
-                    'sku_skipped' => count($skuSkipped),
                     'quantity_updated' => $quantityUpdated,
                     'quantity_skipped_delivery_24h' => $quantitySkippedDelivery24h,
                     'stock_rows_received' => count($stockRows),
@@ -1503,7 +1464,6 @@ class ApiController extends Controller
                     'examples' => [
                         'applied' => $applied,
                         'skipped' => array_slice($skipped, 0, 20),
-                        'sku_skipped' => array_slice($skuSkipped, 0, 20),
                     ],
                 ],
             ]);
@@ -2028,77 +1988,6 @@ class ApiController extends Controller
         }
 
         return $stockByItemId;
-    }
-
-    private function buildPelionSkuGuards(array $rows): array
-    {
-        $rowProductIds = [];
-        $targetSkus = [];
-
-        foreach ($rows as $row) {
-            $rowProductIds[] = (int) $row['product']->id;
-            $itemCode = $this->normalizePelionSku($row['item']['item_code'] ?? null);
-
-            if ($itemCode) {
-                $targetSkus[] = $itemCode;
-            }
-        }
-
-        $targetSkuCounts = array_count_values($targetSkus);
-        $existingOwners = collect();
-
-        if ($targetSkus) {
-            $existingOwners = DB::table('products')
-                                ->select('id', 'name', 'sku')
-                                ->whereIn('sku', array_values(array_unique($targetSkus)))
-                                ->whereNotIn('id', array_values(array_unique($rowProductIds)))
-                                ->get()
-                                ->keyBy('sku');
-        }
-
-        return [
-            'target_sku_counts' => $targetSkuCounts,
-            'existing_owners' => $existingOwners,
-        ];
-    }
-
-    private function resolvePelionSkuUpdate($product, array $item, array $guards): array
-    {
-        $itemCode = $this->normalizePelionSku($item['item_code'] ?? null);
-        $currentSku = $this->normalizePelionSku($product->sku ?? null);
-
-        if (! $itemCode || $itemCode === $currentSku) {
-            return [
-                'value' => null,
-                'reason' => null,
-            ];
-        }
-
-        if (strlen($itemCode) > 14) {
-            return [
-                'value' => null,
-                'reason' => 'sku_too_long',
-            ];
-        }
-
-        if (($guards['target_sku_counts'][$itemCode] ?? 0) > 1) {
-            return [
-                'value' => null,
-                'reason' => 'duplicate_target_sku',
-            ];
-        }
-
-        if ($guards['existing_owners']->has($itemCode)) {
-            return [
-                'value' => null,
-                'reason' => 'sku_already_used',
-            ];
-        }
-
-        return [
-            'value' => $itemCode,
-            'reason' => null,
-        ];
     }
 
     private function pelionHeaders(string $apiKey): array

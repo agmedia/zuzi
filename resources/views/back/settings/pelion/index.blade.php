@@ -120,13 +120,7 @@
                                 <label for="pelion-match-limit">Limit prijedloga</label>
                                 <input type="number" min="1" max="500" class="form-control" id="pelion-match-limit" value="100">
                             </div>
-                            <div class="col-md-4">
-                                <div class="custom-control custom-checkbox mt-4">
-                                    <input type="checkbox" class="custom-control-input" id="pelion-update-sku">
-                                    <label class="custom-control-label" for="pelion-update-sku">Upiši i Pelion ITEMCODE u SKU gdje nema konflikta</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4 text-md-right mt-3 mt-md-0">
+                            <div class="col-md-8 text-md-right mt-3 mt-md-0">
                                 <button type="button" class="btn btn-alt-primary" onclick="scanPelionNameMismatches()">Pronađi sumnjive artikle</button>
                                 <button type="button" class="btn btn-alt-success" onclick="applyPelionNameMismatches()">Odobri odabrane</button>
                             </div>
@@ -268,14 +262,13 @@
                 return;
             }
 
-            if (!confirm('Upisati odabrane Pelion ITEMID / ITEMBARCODE parove i odmah osvježiti stanje prema stockList?')) {
+            if (!confirm('Upisati odabrane Pelion ITEMID / ISBN vrijednosti i odmah osvježiti stanje prema stockList?')) {
                 return;
             }
 
             const block = $('#pelion-name-review-block');
             const payload = {
                 ...pelionBasePayload('apply-name-mismatches'),
-                update_sku: $('#pelion-update-sku').is(':checked'),
                 matches: matches
             };
 
@@ -293,8 +286,7 @@
                             '<strong>' + escapeHtml(body.message || 'Pelion korekcije su primijenjene.') + '</strong><br>' +
                             'Primijenjeno: <strong>' + (body.applied || 0) + '</strong> | ' +
                             'Preskočeno: <strong>' + (body.skipped || 0) + '</strong> | ' +
-                            'Količine osvježene: <strong>' + (body.quantity_updated || 0) + '</strong> | ' +
-                            'SKU upisano: <strong>' + (body.sku_updated || 0) + '</strong>'
+                            'Količine osvježene: <strong>' + (body.quantity_updated || 0) + '</strong>'
                         );
 
                     $('#pelion-status').text(data.status || response.status);
