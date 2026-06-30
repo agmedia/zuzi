@@ -78,8 +78,11 @@
 
 
 
-                        <p class=" text-dark  fs-md pb-1 d-block">  <strong>Radno vrijeme</strong><br>
-                            Pon-Pet: 9-20, Sub: 9-14
+                        <p class=" text-dark  fs-md pb-1 d-block">  <strong>Ljetno radno vrijeme</strong><br>
+                            01.07.2026- 31.08.2026<br>
+                            Ponedjeljak, srijeda, petak: 09-17h<br>
+                            Utorak, četvrtak: 12-20h<br>
+                            Subota: 09-14h
 
 
                         </p>
