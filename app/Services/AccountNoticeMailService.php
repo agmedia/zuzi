@@ -54,7 +54,7 @@ class AccountNoticeMailService
         if (! $user) {
             return [
                 'sent' => false,
-                'error' => 'Korisnik nije pronađen ili nije aktivni customer.',
+                'error' => 'Korisnik nije pronađen ili nije customer.',
             ];
         }
 
@@ -138,7 +138,6 @@ class AccountNoticeMailService
             ->select('users.*')
             ->join('user_details', 'user_details.user_id', '=', 'users.id')
             ->where('user_details.role', 'customer')
-            ->where('user_details.status', 1)
             ->whereNotNull('users.email')
             ->where('users.email', '!=', '')
             ->orderBy('users.id');

@@ -34,9 +34,9 @@ class AccountNoticeMailTest extends TestCase
             ->assertJsonPath('count', 1)
             ->assertJsonPath('batch_limit', 1)
             ->assertJsonPath('delay_seconds', 8)
-            ->assertJsonPath('stats.total', 2)
+            ->assertJsonPath('stats.total', 3)
             ->assertJsonPath('stats.sent', 0)
-            ->assertJsonPath('stats.remaining', 2)
+            ->assertJsonPath('stats.remaining', 3)
             ->assertJsonPath('user_ids.0', $firstCustomer->id);
     }
 
