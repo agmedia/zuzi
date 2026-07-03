@@ -63,6 +63,10 @@
             margin-top: 1.25rem;
             padding: .85rem 2.5rem;
         }
+
+        .account-notice-mail-stat {
+            min-height: 104px;
+        }
     </style>
 @endpush
 
@@ -192,5 +196,310 @@
                 </div>
             </div>
         </form>
+
+        @php($estimatedSeconds = max((int) $mailDefaultLimit - 1, 0) * (int) $mailDefaultDelay)
+
+        <div class="block block-rounded">
+            <div class="block-header block-header-default">
+                <h3 class="block-title">Slanje maila korisnicima</h3>
+                <div class="block-options">
+                    <button type="button" class="btn btn-sm btn-alt-secondary mr-2" id="account-notice-test-mail-button" onclick="sendAccountNoticeTestMail()">
+                        <i class="fa fa-envelope-open-text mr-1"></i>
+                        Test na {{ $mailTestEmail }}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-alt-primary"
+                        id="account-notice-send-mail-button"
+                        onclick="sendAccountNoticeMailBatch()"
+                        {{ (int) $mailStats['remaining'] > 0 ? '' : 'disabled' }}
+                    >
+                        <i class="fa fa-paper-plane mr-1"></i>
+                        Pošalji batch
+                    </button>
+                </div>
+            </div>
+            <div class="block-content bg-body-dark">
+                <div class="row align-items-end">
+                    <div class="form-group col-md-3">
+                        <label for="account-notice-mail-limit">Broj korisnika</label>
+                        <input type="number" class="form-control" id="account-notice-mail-limit" min="1" max="{{ \App\Services\AccountNoticeMailService::MAX_BATCH_LIMIT }}" value="{{ $mailDefaultLimit }}">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="account-notice-mail-delay">Razmak slanja</label>
+                        <select class="form-control" id="account-notice-mail-delay">
+                            @foreach ($mailDelayOptions as $delayOption)
+                                <option value="{{ $delayOption }}" {{ (int) $mailDefaultDelay === (int) $delayOption ? 'selected' : '' }}>{{ $delayOption }} sekundi</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Procjena za uneseni batch</label>
+                        <div class="form-control-plaintext font-w600" id="account-notice-mail-duration-label">
+                            {{ $estimatedSeconds >= 3600 ? floor($estimatedSeconds / 3600) . 'h ' . floor(($estimatedSeconds % 3600) / 60) . 'm' : floor($estimatedSeconds / 60) . 'm ' . ($estimatedSeconds % 60) . 's' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="block-content">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="account-notice-mail-stat p-3 bg-body-light rounded">
+                            <div class="font-size-sm text-muted text-uppercase">Customer korisnici</div>
+                            <div class="font-size-h2 font-w600 mb-0">{{ number_format((int) $mailStats['total'], 0, ',', '.') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="account-notice-mail-stat p-3 bg-body-light rounded">
+                            <div class="font-size-sm text-muted text-uppercase">Poslano za ovaj sadržaj</div>
+                            <div class="font-size-h2 font-w600 mb-0">{{ number_format((int) $mailStats['sent'], 0, ',', '.') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="account-notice-mail-stat p-3 bg-body-light rounded">
+                            <div class="font-size-sm text-muted text-uppercase">Preostalo</div>
+                            <div class="font-size-h2 font-w600 mb-0">{{ number_format((int) $mailStats['remaining'], 0, ',', '.') }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="accountNoticeMailProgress" class="alert alert-info d-none" role="alert">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span id="accountNoticeMailProgressText" class="font-w600">Slanje mailova...</span>
+                        <span id="accountNoticeMailProgressCount" class="font-size-sm"></span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div id="accountNoticeMailProgressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
+
+@push('js_after')
+    <script>
+        let accountNoticeMailSending = false;
+        const accountNoticeMailStats = @json($mailStats);
+
+        function accountNoticeMailPayload() {
+            return {
+                limit: document.getElementById('account-notice-mail-limit').value,
+                delay: document.getElementById('account-notice-mail-delay').value
+            };
+        }
+
+        async function sendAccountNoticeTestMail() {
+            const button = document.getElementById('account-notice-test-mail-button');
+
+            if (button) {
+                button.disabled = true;
+            }
+
+            try {
+                const response = await axios.post("{{ route('account.notice.mail.test') }}");
+
+                successToast.fire({
+                    text: response.data.message || 'Testni mail je poslan.'
+                });
+            } catch (error) {
+                errorToast.fire(error?.response?.data?.error || 'Testni mail nije poslan.');
+            }
+
+            if (button) {
+                button.disabled = false;
+            }
+        }
+
+        async function sendAccountNoticeMailBatch() {
+            if (accountNoticeMailSending) {
+                return;
+            }
+
+            setAccountNoticeMailControls(false);
+            setAccountNoticeMailProgress('Provjera primatelja...', 0, 0);
+
+            const payload = accountNoticeMailPayload();
+            let response;
+
+            try {
+                response = await axios.post("{{ route('account.notice.recipients') }}", payload);
+            } catch (error) {
+                setAccountNoticeMailControls(true);
+                errorToast.fire(error?.response?.data?.error || 'Nije moguće dohvatiti korisnike za slanje.');
+                return;
+            }
+
+            const userIds = Array.isArray(response.data.user_ids) ? response.data.user_ids : [];
+            const delaySeconds = Number(response.data.delay_seconds || payload.delay || 8);
+
+            if (!userIds.length) {
+                setAccountNoticeMailControls(true);
+                setAccountNoticeMailProgress('', 0, 0, true);
+                errorToast.fire('Nema preostalih korisnika za ovaj sadržaj.');
+                return;
+            }
+
+            const estimatedSeconds = Math.max(userIds.length - 1, 0) * delaySeconds;
+            const confirmation = await Swal.fire({
+                title: 'Poslati obavijest?',
+                html: [
+                    `Naslov: <strong>${escapeAccountNoticeMailHtml(response.data.notice_title || '')}</strong>`,
+                    `Ovaj batch: <strong>${userIds.length}</strong> korisnika`,
+                    `Preostalo ukupno: <strong>${response.data.stats?.remaining || userIds.length}</strong>`,
+                    `Razmak: <strong>${delaySeconds} sekundi</strong>`,
+                    `Procjena trajanja: <strong>${formatAccountNoticeMailDuration(estimatedSeconds)}</strong>`
+                ].join('<br>'),
+                type: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Pošalji',
+                cancelButtonText: 'Odustani',
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'btn btn-primary mr-2',
+                    cancelButton: 'btn btn-alt-secondary'
+                }
+            });
+
+            if (!confirmation.value) {
+                setAccountNoticeMailControls(true);
+                setAccountNoticeMailProgress('', 0, 0, true);
+                return;
+            }
+
+            accountNoticeMailSending = true;
+            setAccountNoticeMailProgress('Priprema slanja...', 0, userIds.length);
+
+            let sentCount = 0;
+            const failures = [];
+
+            for (let index = 0; index < userIds.length; index++) {
+                const userId = Number(userIds[index]);
+
+                setAccountNoticeMailProgress(`Slanje korisniku #${userId}`, index, userIds.length);
+
+                try {
+                    const sendResponse = await axios.post("{{ route('account.notice.mail.send') }}", {
+                        user_id: userId
+                    });
+
+                    if (sendResponse.data.message) {
+                        sentCount++;
+                    } else {
+                        failures.push(`#${userId}: ${sendResponse.data.error || 'Greška prilikom slanja maila.'}`);
+                    }
+                } catch (error) {
+                    failures.push(`#${userId}: ${error?.response?.data?.error || 'Greška prilikom slanja maila.'}`);
+                }
+
+                setAccountNoticeMailProgress(`Poslano ${sentCount} od ${userIds.length}`, index + 1, userIds.length);
+
+                if (index < userIds.length - 1) {
+                    await waitAccountNoticeMail(delaySeconds * 1000);
+                }
+            }
+
+            accountNoticeMailSending = false;
+            setAccountNoticeMailControls(true);
+
+            const failuresText = failures.length
+                ? `<br><br><strong>Greške:</strong><br>${failures.slice(0, 10).map(escapeAccountNoticeMailHtml).join('<br>')}`
+                : '';
+
+            Swal.fire({
+                type: failures.length ? 'warning' : 'success',
+                title: 'Slanje završeno',
+                html: `Poslano: ${sentCount}${failuresText}`,
+                confirmButtonText: 'U redu',
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            }).then(() => location.reload());
+        }
+
+        function setAccountNoticeMailControls(isEnabled) {
+            [
+                document.getElementById('account-notice-send-mail-button'),
+                document.getElementById('account-notice-test-mail-button'),
+                document.getElementById('account-notice-mail-limit'),
+                document.getElementById('account-notice-mail-delay')
+            ].filter(Boolean).forEach((control) => {
+                control.disabled = !isEnabled;
+            });
+
+            if (isEnabled && accountNoticeMailStats.remaining <= 0) {
+                const sendButton = document.getElementById('account-notice-send-mail-button');
+
+                if (sendButton) {
+                    sendButton.disabled = true;
+                }
+            }
+        }
+
+        function setAccountNoticeMailProgress(text, completed, total, hide = false) {
+            const progress = document.getElementById('accountNoticeMailProgress');
+            const progressText = document.getElementById('accountNoticeMailProgressText');
+            const progressCount = document.getElementById('accountNoticeMailProgressCount');
+            const progressBar = document.getElementById('accountNoticeMailProgressBar');
+
+            if (!progress || !progressText || !progressCount || !progressBar) {
+                return;
+            }
+
+            if (hide) {
+                progress.classList.add('d-none');
+                return;
+            }
+
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            progress.classList.remove('d-none');
+            progressText.textContent = text;
+            progressCount.textContent = total > 0 ? `${completed}/${total}` : '';
+            progressBar.style.width = `${percentage}%`;
+            progressBar.setAttribute('aria-valuenow', percentage);
+        }
+
+        function updateAccountNoticeMailEstimate() {
+            const limit = Math.max(Number(document.getElementById('account-notice-mail-limit')?.value) || 0, 1);
+            const delay = Math.max(Number(document.getElementById('account-notice-mail-delay')?.value) || 0, 1);
+            const batchSize = Math.min(limit, Number(accountNoticeMailStats.remaining) || limit);
+            const estimatedSeconds = Math.max(batchSize - 1, 0) * delay;
+            const label = document.getElementById('account-notice-mail-duration-label');
+
+            if (label) {
+                label.textContent = formatAccountNoticeMailDuration(estimatedSeconds);
+            }
+        }
+
+        function formatAccountNoticeMailDuration(seconds) {
+            seconds = Math.max(Number(seconds) || 0, 0);
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const rest = seconds % 60;
+
+            if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            }
+
+            return `${minutes}m ${rest}s`;
+        }
+
+        function waitAccountNoticeMail(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        function escapeAccountNoticeMailHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        document.getElementById('account-notice-mail-limit')?.addEventListener('input', updateAccountNoticeMailEstimate);
+        document.getElementById('account-notice-mail-delay')?.addEventListener('change', updateAccountNoticeMailEstimate);
+    </script>
+@endpush
