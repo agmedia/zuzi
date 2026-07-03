@@ -174,6 +174,9 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
 
         // OBAVIJESTI U KORISNIČKOM RAČUNU
         Route::get('account-notice', [AccountNoticeController::class, 'edit'])->name('account.notice');
+        Route::post('account-notice/recipients', [AccountNoticeController::class, 'recipients'])->name('account.notice.recipients');
+        Route::post('account-notice/send-mail', [AccountNoticeController::class, 'sendMail'])->name('account.notice.mail.send');
+        Route::post('account-notice/send-test-mail', [AccountNoticeController::class, 'sendTestMail'])->name('account.notice.mail.test');
         Route::patch('account-notice', [AccountNoticeController::class, 'update'])->name('account.notice.update');
     });
 

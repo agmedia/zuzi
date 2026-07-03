@@ -423,7 +423,7 @@ class Product extends Model
 
         if ($action && $action->status) {
             if ((isset($action->coupon) && $action->coupon) && session()->has($coupon_session_key) && Helper::couponEquals(session($coupon_session_key), $action->coupon)) {
-                $coupon_ok = true;
+                $coupon_ok = Helper::normalizeCoupon($action->coupon);
             }
         }
 

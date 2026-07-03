@@ -6,6 +6,9 @@ use App\Helpers\Helper;
 use App\Models\Back\Marketing\Action;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class CartApiTest extends TestCase
@@ -129,6 +132,52 @@ class CartApiTest extends TestCase
         $this->assertSame('Kupon HVALA', $condition->getName());
     }
 
+    public function test_product_action_coupon_is_accepted_when_it_discounts_cart_item(): void
+    {
+        $actionId = (int) Action::query()->insertGetId([
+            'title' => 'Hvala od srca',
+            'type' => 'P',
+            'discount' => 20,
+            'group' => 'product',
+            'links' => json_encode([]),
+            'date_start' => now()->subDay(),
+            'date_end' => now()->addDay(),
+            'coupon' => 'HVALAODSRCA',
+            'quantity' => 1,
+            'lock' => 0,
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $productId = $this->createProduct('Artikl s kupon akcijom', 'HVALA-1', [
+            'action_id' => $actionId,
+            'price' => 100,
+            'special' => 80,
+            'special_from' => now()->subDay(),
+            'special_to' => now()->addDay(),
+        ]);
+
+        $this->postJson('/api/v2/cart/add', [
+            'item' => [
+                'id' => $productId,
+                'quantity' => 1,
+            ],
+        ])->assertOk();
+
+        $response = $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'hvalaodsrca',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'coupon' => 'HVALAODSRCA',
+            ]);
+
+        $response->assertSessionHas(config('session.cart') . '_coupon', 'HVALAODSRCA');
+    }
+
     public function test_bogo_condition_applies_best_quantity_tier_without_coupon(): void
     {
         Action::query()->create([
@@ -204,5 +253,44 @@ class CartApiTest extends TestCase
         ]);
 
         $this->assertFalse(Helper::hasBogoCartCondition($cart, 'HVALA'));
+    }
+
+    private function createProduct(string $name, string $sku, array $overrides = []): int
+    {
+        return (int) DB::table('products')->insertGetId(array_merge([
+            'author_id' => 0,
+            'publisher_id' => 0,
+            'action_id' => 0,
+            'name' => $name,
+            'sku' => $sku,
+            'ean' => null,
+            'description' => null,
+            'slug' => Str::slug($name . '-' . $sku),
+            'url' => '/proizvod/' . Str::slug($name . '-' . $sku),
+            'image' => null,
+            'price' => 100,
+            'quantity' => 5,
+            'tax_id' => 1,
+            'special' => null,
+            'special_from' => null,
+            'special_to' => null,
+            'special_lock' => 0,
+            'meta_title' => $name,
+            'meta_description' => $name,
+            'related_products' => null,
+            'pages' => null,
+            'dimensions' => null,
+            'origin' => null,
+            'letter' => null,
+            'condition' => null,
+            'binding' => null,
+            'year' => null,
+            'viewed' => 0,
+            'sort_order' => 0,
+            'push' => 0,
+            'status' => 1,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ], $overrides));
     }
 }
