@@ -255,6 +255,67 @@ class CartApiTest extends TestCase
         $this->assertFalse(Helper::hasBogoCartCondition($cart, 'HVALA'));
     }
 
+    public function test_total_coupon_does_not_stack_with_equal_product_discount(): void
+    {
+        $this->createTotalCouponAction('HVALAODSRCA', 20);
+
+        $productId = $this->createProduct('Artikl na akciji', 'AKCIJA-20', [
+            'price' => 70,
+            'special' => 56,
+            'special_from' => now()->subDay(),
+            'special_to' => now()->addDay(),
+        ]);
+
+        $this->postJson('/api/v2/cart/add', [
+            'item' => [
+                'id' => $productId,
+                'quantity' => 1,
+            ],
+        ])->assertOk();
+
+        $response = $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'HVALAODSRCA',
+        ]);
+
+        $response->assertOk();
+
+        $this->assertEqualsWithDelta(56.0, (float) $response->json('cart.total'), 0.01);
+        $this->assertFalse($this->cartHasDetailCondition($response->json('cart'), 'Kupon HVALAODSRCA'));
+    }
+
+    public function test_total_coupon_replaces_smaller_product_discount(): void
+    {
+        $this->createTotalCouponAction('HVALAODSRCA', 20);
+
+        $productId = $this->createProduct('Artikl s manjom akcijom', 'AKCIJA-10', [
+            'price' => 70,
+            'special' => 63,
+            'special_from' => now()->subDay(),
+            'special_to' => now()->addDay(),
+        ]);
+
+        $this->postJson('/api/v2/cart/add', [
+            'item' => [
+                'id' => $productId,
+                'quantity' => 1,
+            ],
+        ])->assertOk();
+
+        $response = $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'HVALAODSRCA',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'coupon' => 'HVALAODSRCA',
+            ]);
+
+        $this->assertEqualsWithDelta(70.0, (float) $response->json('cart.subtotal'), 0.01);
+        $this->assertEqualsWithDelta(56.0, (float) $response->json('cart.total'), 0.01);
+        $this->assertTrue($this->cartHasDetailCondition($response->json('cart'), 'Kupon HVALAODSRCA', -14.0));
+    }
+
     private function createProduct(string $name, string $sku, array $overrides = []): int
     {
         return (int) DB::table('products')->insertGetId(array_merge([
@@ -292,5 +353,36 @@ class CartApiTest extends TestCase
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ], $overrides));
+    }
+
+    private function createTotalCouponAction(string $coupon, int $discount): Action
+    {
+        return Action::query()->create([
+            'title' => 'Test coupon ' . $coupon,
+            'type' => 'P',
+            'discount' => $discount,
+            'group' => 'total',
+            'links' => json_encode(['total']),
+            'date_start' => now()->subDay(),
+            'date_end' => now()->addDay(),
+            'coupon' => $coupon,
+            'quantity' => 1,
+            'status' => 1,
+        ]);
+    }
+
+    private function cartHasDetailCondition(?array $cart, string $name, ?float $value = null): bool
+    {
+        return collect($cart['detail_con'] ?? [])->contains(function (array $condition) use ($name, $value) {
+            if (($condition['name'] ?? '') !== $name) {
+                return false;
+            }
+
+            if ($value === null) {
+                return true;
+            }
+
+            return abs((float) ($condition['value'] ?? 0) - $value) < 0.01;
+        });
     }
 }

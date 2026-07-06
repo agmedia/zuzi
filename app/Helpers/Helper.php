@@ -1371,47 +1371,67 @@ class Helper
     public static function hasCouponCartConditions($cart, string $coupon = '')
     {
         $condition = false;
-        $discountableTotal = self::discountableCartTotal($cart);
         $coupon = self::normalizeCoupon($coupon);
 
         if (! Schema::hasTable('product_actions')) {
             return false;
         }
 
-        if ($discountableTotal <= 0) {
-            return false;
-        }
-
-        $actions = Action::query()
-            ->where('group', 'total')
-            ->when($coupon !== '', function ($query) use ($coupon) {
-                $query->where('coupon', $coupon);
-            }, function ($query) {
-                $query->where(function ($query) {
-                    $query->whereNull('coupon')
-                        ->orWhere('coupon', '');
-                });
-            })
-            ->get();
+        $bestDiscount = 0.0;
+        $actions = self::validTotalCouponActions($coupon);
 
         if ($actions->count()) {
             foreach ($actions as $action) {
-                if ($action->isValid($coupon)) {
-                    $value    = self::calculateDiscountPrice($discountableTotal, $action->discount, $action->type);
-                    $discount = $discountableTotal - $value;
+                $discountableTotal = $coupon !== ''
+                    ? self::discountableCouponCartTotal($cart, $action)
+                    : self::discountableCartTotal($cart);
+                $discount = self::discountAmountForAction($discountableTotal, $action);
 
-                    $condition = new CartCondition(array(
-                        'name'       => $coupon !== '' ? 'Kupon ' . self::normalizeCoupon($coupon) : $action->title,
-                        'type'       => 'special',
-                        'target'     => 'total', // this condition will be applied to cart's subtotal when getSubTotal() is called.
-                        'value'      => '-' . $discount,
-                        'attributes' => $action->setConditionAttributes($coupon)
-                    ));
+                if ($discount <= 0 || $discount < $bestDiscount) {
+                    continue;
                 }
+
+                $bestDiscount = $discount;
+
+                $condition = new CartCondition(array(
+                    'name'       => $coupon !== '' ? 'Kupon ' . self::normalizeCoupon($coupon) : $action->title,
+                    'type'       => 'special',
+                    'target'     => 'total', // this condition will be applied to cart's subtotal when getSubTotal() is called.
+                    'value'      => '-' . $discount,
+                    'attributes' => $action->setConditionAttributes($coupon)
+                ));
             }
         }
 
         return $condition;
+    }
+
+    public static function totalCouponBeatsProductSpecial(Product $product, string $coupon = '', int $quantity = 1): bool
+    {
+        $coupon = self::normalizeCoupon($coupon);
+
+        if ($coupon === '' || ! Schema::hasTable('product_actions')) {
+            return false;
+        }
+
+        $price = (float) $product->price;
+        $special = (float) $product->special();
+        $quantity = max(1, $quantity);
+
+        if ($price <= 0 || $special <= 0 || $special >= $price) {
+            return false;
+        }
+
+        $productDiscount = round(($price - $special) * $quantity, 2);
+        $couponBase = round($price * $quantity, 2);
+
+        foreach (self::validTotalCouponActions($coupon) as $action) {
+            if (self::discountAmountForAction($couponBase, $action) > $productDiscount) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1548,6 +1568,119 @@ class Helper
         }
 
         return max(0.0, round($total, 2));
+    }
+
+    private static function discountableCouponCartTotal($cart, Action $action): float
+    {
+        if (! $cart) {
+            return 0.0;
+        }
+
+        $total = 0.0;
+
+        foreach ($cart->getContent() as $item) {
+            if (GiftWrapService::isGiftWrapItem($item) || GiftVoucherService::isGiftVoucherItem($item)) {
+                continue;
+            }
+
+            $itemTotal = round((float) $item->price * (int) $item->quantity, 2);
+
+            if ($itemTotal <= 0) {
+                continue;
+            }
+
+            $itemDiscount = self::cartItemPromotionDiscount($item);
+            $couponDiscount = self::discountAmountForAction($itemTotal, $action);
+
+            if ($itemDiscount > 0 && $itemDiscount >= $couponDiscount) {
+                continue;
+            }
+
+            $total += $itemTotal;
+        }
+
+        return max(0.0, round($total, 2));
+    }
+
+    private static function cartItemPromotionDiscount($item): float
+    {
+        $conditions = $item->getConditions();
+
+        if (! self::hasPromotionDiscountCondition($conditions)) {
+            return 0.0;
+        }
+
+        $itemTotal = round((float) $item->price * (int) $item->quantity, 2);
+        $conditionTotal = round((float) $item->getPriceSumWithConditions(false), 2);
+
+        return max(0.0, round($itemTotal - $conditionTotal, 2));
+    }
+
+    private static function hasPromotionDiscountCondition($conditions): bool
+    {
+        if (! $conditions) {
+            return false;
+        }
+
+        if (is_iterable($conditions)) {
+            foreach ($conditions as $condition) {
+                if (self::conditionDiscountAmount($condition) > 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return self::conditionDiscountAmount($conditions) > 0;
+    }
+
+    private static function conditionDiscountAmount($condition): float
+    {
+        if (! $condition || ! method_exists($condition, 'getType') || ! method_exists($condition, 'getValue')) {
+            return 0.0;
+        }
+
+        if (! in_array($condition->getType(), ['coupon', 'promo'], true)) {
+            return 0.0;
+        }
+
+        $value = (float) $condition->getValue();
+
+        return $value < 0 ? abs($value) : 0.0;
+    }
+
+    private static function discountAmountForAction(float $base, Action $action): float
+    {
+        if ($base <= 0) {
+            return 0.0;
+        }
+
+        $discounted = self::calculateDiscountPrice($base, (float) $action->discount, (string) $action->type);
+        $discount = round($base - $discounted, 2);
+
+        return max(0.0, min($base, $discount));
+    }
+
+    private static function validTotalCouponActions(string $coupon = ''): Collection
+    {
+        if (! Schema::hasTable('product_actions')) {
+            return collect();
+        }
+
+        return Action::query()
+            ->where('group', 'total')
+            ->when($coupon !== '', function ($query) use ($coupon) {
+                $query->where('coupon', $coupon);
+            }, function ($query) {
+                $query->where(function ($query) {
+                    $query->whereNull('coupon')
+                        ->orWhere('coupon', '');
+                });
+            })
+            ->get()
+            ->filter(fn (Action $action) => $action->isValid($coupon))
+            ->values();
     }
 
     private static function discountableCartQuantity($cart): int

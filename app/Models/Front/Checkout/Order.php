@@ -253,10 +253,14 @@ class Order extends Model
             }
 
             if (! GiftVoucherService::isGiftVoucherItem($item)
-                && ! GiftWrapService::isGiftWrapItem($item)
-                && $this->checkSpecial($item->associatedModel)) {
-                $price    = floatval($item->associatedModel->special);
-                $discount = Helper::calculateDiscount($item->price, $price);
+                && ! GiftWrapService::isGiftWrapItem($item)) {
+                $lineTotal = (float) $item->getPriceSumWithConditions(false);
+                $conditionPrice = $item->quantity > 0 ? $lineTotal / $item->quantity : (float) $item->price;
+
+                if ($conditionPrice > 0 && $conditionPrice < (float) $item->price) {
+                    $price = $conditionPrice;
+                    $discount = Helper::calculateDiscount($item->price, $price);
+                }
             }
 
             OrderProduct::insert([

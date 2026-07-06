@@ -559,8 +559,13 @@ class AgCart extends Model
         $items = $this->cart->getContent();
 
         foreach ($items as $item) {
-            $this->remove($item->id);
-            $this->addToCart($this->resolveItemRequest($item));
+            $this->cart->remove($item->id);
+
+            $cartItem = $this->structureCartItem($this->resolveItemRequest($item));
+
+            if (! isset($cartItem['error'])) {
+                $this->cart->add($cartItem);
+            }
         }
     }
 
@@ -643,7 +648,7 @@ class AgCart extends Model
             'attributes'      => $this->structureCartItemAttributes($product)
         ];
 
-        $conditions = $this->structureCartItemConditions($product);
+        $conditions = $this->structureCartItemConditions($product, (int) $response['quantity']);
 
         if ($conditions) {
             $response['conditions'] = $conditions;
@@ -673,10 +678,16 @@ class AgCart extends Model
      * @return CartCondition|bool
      * @throws \Darryldecode\Cart\Exceptions\InvalidConditionException
      */
-    private function structureCartItemConditions($product)
+    private function structureCartItemConditions($product, int $quantity = 1)
     {
         // Ako artikl ima akciju.
-        if ($product->special()) {
+        $special = (float) $product->special();
+
+        if ($special && $special < (float) $product->price) {
+            if (Helper::totalCouponBeatsProductSpecial($product, $this->coupon, $quantity)) {
+                return false;
+            }
+
             $coupon = $product->coupon();
 
             if ($coupon != '') {
@@ -684,7 +695,7 @@ class AgCart extends Model
                     'name'   => 'Kupon akcija',
                     'type'   => 'coupon',
                     'target' => $coupon,
-                    'value'  => -($product->price - $product->special())
+                    'value'  => -((float) $product->price - $special)
                 ]);
             }
 
@@ -692,7 +703,7 @@ class AgCart extends Model
                 'name'   => 'Akcija',
                 'type'   => 'promo',
                 'target' => '',
-                'value'  => -($product->price - $product->special())
+                'value'  => -((float) $product->price - $special)
             ]);
         }
 
