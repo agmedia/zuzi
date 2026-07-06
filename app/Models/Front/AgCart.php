@@ -282,7 +282,6 @@ class AgCart extends Model
             ];
         }
 
-        $previousCoupon = Helper::normalizeCoupon($this->coupon);
         $coupon = Helper::normalizeCoupon($coupon);
 
         if ($coupon === '') {
@@ -312,20 +311,6 @@ class AgCart extends Model
                     'coupon' => $this->coupon,
                     'cart' => $cart,
                     'message' => 'Kod je spremljen i automatski će se primijeniti čim dodate artikle u košaricu.',
-                ];
-            }
-
-            if ($previousCoupon !== '' && ! Helper::couponEquals($previousCoupon, $coupon)) {
-                session([$this->session_key . '_coupon' => $previousCoupon]);
-                $this->coupon = $previousCoupon;
-                $this->refreshCouponAwareItems();
-                $cart = $this->get();
-
-                return [
-                    'success' => false,
-                    'coupon' => $this->coupon,
-                    'cart' => $cart,
-                    'message' => 'Uneseni kod nije valjan. Prethodno primijenjeni kod ostaje aktivan.',
                 ];
             }
 

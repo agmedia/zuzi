@@ -6346,7 +6346,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n@font-face {\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    font-display: block;\n    src: url(\"/fonts/fontawesome/fa-solid-900.woff2\") format(\"woff2\"),\n         url(\"/fonts/fontawesome/fa-solid-900.woff\") format(\"woff\");\n}\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.coupon-toggle {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    gap: 1rem;\n}\n.coupon-toggle__content {\n    flex: 1 1 auto;\n    min-width: 0;\n}\n.coupon-toggle__action {\n    flex: 0 0 auto;\n    white-space: nowrap;\n    padding-top: 0.15rem;\n}\n.cart-bookmarker-promo {\n    background:\n        radial-gradient(circle at top right, rgba(229, 0, 119, 0.08), transparent 38%),\n        linear-gradient(180deg, #fff 0%, #fff8fc 100%);\n}\n.cart-bookmarker-promo__eyebrow {\n    display: inline-flex;\n    align-items: center;\n    margin-bottom: 0.75rem;\n    color: #e50077;\n    font-size: 0.8rem;\n    font-weight: 700;\n    letter-spacing: 0.04em;\n    text-transform: uppercase;\n}\n.cart-bookmarker-promo__title {\n    margin-bottom: 0.65rem;\n    color: #2b3445;\n    font-size: 1.15rem;\n    line-height: 1.3;\n}\n.cart-bookmarker-promo__text {\n    color: #5f6c82;\n    font-size: 0.95rem;\n    line-height: 1.5;\n}\n.cart-bogo-promo {\n    border: 1px solid rgba(229, 0, 119, 0.18);\n    background:\n        linear-gradient(180deg, #fff 0%, #fff7fb 100%) !important;\n    box-shadow: 0 12px 28px rgba(43, 52, 69, 0.06);\n}\n.cart-bogo-promo__header {\n    display: flex;\n    align-items: flex-start;\n    gap: 0.8rem;\n    margin-bottom: 0.75rem;\n}\n.cart-bogo-promo__icon {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex: 0 0 auto;\n    width: 2.35rem;\n    height: 2.35rem;\n    border-radius: 50%;\n    background: #e50077;\n    color: #fff;\n    font-size: 1rem;\n    font-weight: 800;\n    box-shadow: 0 10px 20px rgba(229, 0, 119, 0.2);\n}\n.cart-bogo-promo__eyebrow {\n    margin-bottom: 0.15rem;\n    color: #e50077;\n    font-size: 0.72rem;\n    font-weight: 800;\n    letter-spacing: 0.04em;\n    line-height: 1.2;\n    text-transform: uppercase;\n}\n.cart-bogo-promo__title {\n    margin: 0;\n    color: #2b3445;\n    font-size: 1.15rem;\n    line-height: 1.25;\n}\n.cart-bogo-promo__text {\n    margin-bottom: 0.85rem;\n    color: #5f6c82;\n    font-size: 0.92rem;\n    line-height: 1.45;\n}\n.cart-bogo-promo__tiers {\n    display: grid;\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n    gap: 0.5rem;\n    margin-bottom: 0.85rem;\n}\n.cart-bogo-promo__tier {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 0.45rem;\n    min-height: 2.45rem;\n    padding: 0.48rem 0.55rem;\n    border: 1px solid rgba(203, 213, 225, 0.9);\n    border-radius: 0.5rem;\n    background: rgba(255, 255, 255, 0.86);\n    color: #4b5563;\n    font-size: 0.78rem;\n    line-height: 1.2;\n}\n.cart-bogo-promo__tier strong {\n    color: #2b3445;\n    font-size: 0.9rem;\n    line-height: 1;\n    white-space: nowrap;\n}\n.cart-bogo-promo__tier--active {\n    border-color: rgba(229, 0, 119, 0.32);\n    background: rgba(229, 0, 119, 0.08);\n    color: #9f1c63;\n}\n.cart-bogo-promo__tier--active strong {\n    color: #e50077;\n}\n.cart-bogo-promo__tier--next {\n    border-color: rgba(229, 0, 119, 0.45);\n    border-style: dashed;\n}\n.cart-bogo-promo__status {\n    margin: 0;\n    padding: 0.65rem 0.75rem;\n    border-radius: 0.5rem;\n    background: rgba(255, 255, 255, 0.78);\n    color: #5f6c82;\n    font-size: 0.85rem;\n    line-height: 1.35;\n}\n.cart-bogo-promo__status--active {\n    background: rgba(229, 0, 119, 0.09);\n    color: #9f1c63;\n    font-weight: 700;\n}\n.cart-bogo-promo__note {\n    margin: 0.65rem 0 0;\n    color: #6b7280;\n    font-size: 0.78rem;\n    line-height: 1.35;\n}\n@media (max-width: 420px) {\n.cart-bogo-promo__tiers {\n        grid-template-columns: 1fr;\n}\n}\n.gift-wrap-thumb {\n    align-items: center;\n    justify-content: center;\n    border-radius: 0.9rem;\n    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);\n    border: 1px solid rgba(229, 0, 119, 0.14);\n    text-decoration: none;\n    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);\n}\n.gift-wrap-thumb--sm {\n    width: 64px;\n    height: 64px;\n}\n.gift-wrap-thumb__icon::before {\n    content: \"\\f06b\";\n    font-family: \"Font Awesome 5 Free\";\n    font-weight: 900;\n    color: #e50077;\n    font-size: 1.2rem;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n@font-face {\n    font-family: \"Font Awesome 5 Free\";\n    font-style: normal;\n    font-weight: 900;\n    font-display: block;\n    src: url(\"/fonts/fontawesome/fa-solid-900.woff2\") format(\"woff2\"),\n         url(\"/fonts/fontawesome/fa-solid-900.woff\") format(\"woff\");\n}\n.table th, .table td {\n    padding: 0.75rem 0.45rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.empty th, .empty td {\n    padding: 1rem !important;\n    vertical-align: top;\n    border-top: 1px solid #dee2e6;\n}\n.coupon-toggle {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    gap: 1rem;\n    text-align: left;\n    white-space: normal;\n}\n.coupon-toggle__content {\n    flex: 1 1 auto;\n    min-width: 0;\n}\n.coupon-toggle__hint {\n    display: block;\n    line-height: 1.35;\n    overflow-wrap: anywhere;\n    white-space: normal;\n}\n.coupon-toggle__action {\n    flex: 0 0 auto;\n    white-space: nowrap;\n    padding-top: 0.15rem;\n}\n.coupon-code-input-group .form-control {\n    min-width: 0;\n}\n.coupon-code-input-group .btn {\n    white-space: nowrap;\n}\n@media (max-width: 420px) {\n.coupon-code-input-group {\n        display: block;\n}\n.coupon-code-input-group .form-control,\n    .coupon-code-input-group .input-group-append,\n    .coupon-code-input-group .btn {\n        width: 100%;\n}\n.coupon-code-input-group .input-group-append {\n        margin-top: 0.5rem;\n        margin-left: 0;\n}\n.coupon-code-input-group .form-control,\n    .coupon-code-input-group .btn {\n        border-radius: 0.3125rem;\n}\n}\n.cart-bookmarker-promo {\n    background:\n        radial-gradient(circle at top right, rgba(229, 0, 119, 0.08), transparent 38%),\n        linear-gradient(180deg, #fff 0%, #fff8fc 100%);\n}\n.cart-bookmarker-promo__eyebrow {\n    display: inline-flex;\n    align-items: center;\n    margin-bottom: 0.75rem;\n    color: #e50077;\n    font-size: 0.8rem;\n    font-weight: 700;\n    letter-spacing: 0.04em;\n    text-transform: uppercase;\n}\n.cart-bookmarker-promo__title {\n    margin-bottom: 0.65rem;\n    color: #2b3445;\n    font-size: 1.15rem;\n    line-height: 1.3;\n}\n.cart-bookmarker-promo__text {\n    color: #5f6c82;\n    font-size: 0.95rem;\n    line-height: 1.5;\n}\n.cart-bogo-promo {\n    border: 1px solid rgba(229, 0, 119, 0.18);\n    background:\n        linear-gradient(180deg, #fff 0%, #fff7fb 100%) !important;\n    box-shadow: 0 12px 28px rgba(43, 52, 69, 0.06);\n}\n.cart-bogo-promo__header {\n    display: flex;\n    align-items: flex-start;\n    gap: 0.8rem;\n    margin-bottom: 0.75rem;\n}\n.cart-bogo-promo__icon {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex: 0 0 auto;\n    width: 2.35rem;\n    height: 2.35rem;\n    border-radius: 50%;\n    background: #e50077;\n    color: #fff;\n    font-size: 1rem;\n    font-weight: 800;\n    box-shadow: 0 10px 20px rgba(229, 0, 119, 0.2);\n}\n.cart-bogo-promo__eyebrow {\n    margin-bottom: 0.15rem;\n    color: #e50077;\n    font-size: 0.72rem;\n    font-weight: 800;\n    letter-spacing: 0.04em;\n    line-height: 1.2;\n    text-transform: uppercase;\n}\n.cart-bogo-promo__title {\n    margin: 0;\n    color: #2b3445;\n    font-size: 1.15rem;\n    line-height: 1.25;\n}\n.cart-bogo-promo__text {\n    margin-bottom: 0.85rem;\n    color: #5f6c82;\n    font-size: 0.92rem;\n    line-height: 1.45;\n}\n.cart-bogo-promo__tiers {\n    display: grid;\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n    gap: 0.5rem;\n    margin-bottom: 0.85rem;\n}\n.cart-bogo-promo__tier {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 0.45rem;\n    min-height: 2.45rem;\n    padding: 0.48rem 0.55rem;\n    border: 1px solid rgba(203, 213, 225, 0.9);\n    border-radius: 0.5rem;\n    background: rgba(255, 255, 255, 0.86);\n    color: #4b5563;\n    font-size: 0.78rem;\n    line-height: 1.2;\n}\n.cart-bogo-promo__tier strong {\n    color: #2b3445;\n    font-size: 0.9rem;\n    line-height: 1;\n    white-space: nowrap;\n}\n.cart-bogo-promo__tier--active {\n    border-color: rgba(229, 0, 119, 0.32);\n    background: rgba(229, 0, 119, 0.08);\n    color: #9f1c63;\n}\n.cart-bogo-promo__tier--active strong {\n    color: #e50077;\n}\n.cart-bogo-promo__tier--next {\n    border-color: rgba(229, 0, 119, 0.45);\n    border-style: dashed;\n}\n.cart-bogo-promo__status {\n    margin: 0;\n    padding: 0.65rem 0.75rem;\n    border-radius: 0.5rem;\n    background: rgba(255, 255, 255, 0.78);\n    color: #5f6c82;\n    font-size: 0.85rem;\n    line-height: 1.35;\n}\n.cart-bogo-promo__status--active {\n    background: rgba(229, 0, 119, 0.09);\n    color: #9f1c63;\n    font-weight: 700;\n}\n.cart-bogo-promo__note {\n    margin: 0.65rem 0 0;\n    color: #6b7280;\n    font-size: 0.78rem;\n    line-height: 1.35;\n}\n@media (max-width: 420px) {\n.cart-bogo-promo__tiers {\n        grid-template-columns: 1fr;\n}\n}\n.gift-wrap-thumb {\n    align-items: center;\n    justify-content: center;\n    border-radius: 0.9rem;\n    background: linear-gradient(180deg, #fff0f7 0%, #ffe0ef 100%);\n    border: 1px solid rgba(229, 0, 119, 0.14);\n    text-decoration: none;\n    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);\n}\n.gift-wrap-thumb--sm {\n    width: 64px;\n    height: 64px;\n}\n.gift-wrap-thumb__icon::before {\n    content: \"\\f06b\";\n    font-family: \"Font Awesome 5 Free\";\n    font-weight: 900;\n    color: #e50077;\n    font-size: 1.2rem;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -9535,15 +9535,19 @@ var render = function() {
                         _vm._v("Imate kod?")
                       ]),
                       _vm._v(" "),
-                      _c("small", { staticClass: "text-muted" }, [
-                        _vm._v(
-                          _vm._s(
-                            _vm.hasActiveCoupon
-                              ? "Kod je spremljen u košarici. Novi unos zamijenit će postojeći."
-                              : "Kupon ili poklon-bon."
+                      _c(
+                        "small",
+                        { staticClass: "coupon-toggle__hint text-muted" },
+                        [
+                          _vm._v(
+                            _vm._s(
+                              _vm.hasActiveCoupon
+                                ? "Kod je spremljen. Novi unos zamjenjuje postojeći."
+                                : "Kupon ili poklon-bon."
+                            )
                           )
-                        )
-                      ])
+                        ]
+                      )
                     ]
                   ),
                   _vm._v(" "),
@@ -9580,63 +9584,67 @@ var render = function() {
                       _vm._v("Kod za popust ili poklon-bon")
                     ]),
                     _vm._v(" "),
-                    _c("div", { staticClass: "input-group" }, [
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.codeInput,
-                            expression: "codeInput"
-                          }
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "text",
-                          placeholder: "Upišite kupon ili poklon-bon kod...",
-                          autocomplete: "off"
-                        },
-                        domProps: { value: _vm.codeInput },
-                        on: {
-                          keyup: function($event) {
-                            if (
-                              !$event.type.indexOf("key") &&
-                              _vm._k(
-                                $event.keyCode,
-                                "enter",
-                                13,
-                                $event.key,
-                                "Enter"
-                              )
-                            ) {
-                              return null
+                    _c(
+                      "div",
+                      { staticClass: "input-group coupon-code-input-group" },
+                      [
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.codeInput,
+                              expression: "codeInput"
                             }
-                            return _vm.setCoupon.apply(null, arguments)
+                          ],
+                          staticClass: "form-control",
+                          attrs: {
+                            type: "text",
+                            placeholder: "Upišite kupon ili poklon-bon kod...",
+                            autocomplete: "off"
                           },
-                          input: function($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.codeInput = $event.target.value
-                          }
-                        }
-                      }),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "input-group-append" }, [
-                        _c(
-                          "button",
-                          {
-                            staticClass: "btn btn-outline-primary btn-shadow",
-                            attrs: {
-                              type: "button",
-                              disabled: _vm.couponSubmitting
+                          domProps: { value: _vm.codeInput },
+                          on: {
+                            keyup: function($event) {
+                              if (
+                                !$event.type.indexOf("key") &&
+                                _vm._k(
+                                  $event.keyCode,
+                                  "enter",
+                                  13,
+                                  $event.key,
+                                  "Enter"
+                                )
+                              ) {
+                                return null
+                              }
+                              return _vm.setCoupon.apply(null, arguments)
                             },
-                            on: { click: _vm.setCoupon }
-                          },
-                          [_vm._v("Primijeni")]
-                        )
-                      ])
-                    ])
+                            input: function($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.codeInput = $event.target.value
+                            }
+                          }
+                        }),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "input-group-append" }, [
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-outline-primary btn-shadow",
+                              attrs: {
+                                type: "button",
+                                disabled: _vm.couponSubmitting
+                              },
+                              on: { click: _vm.setCoupon }
+                            },
+                            [_vm._v("Primijeni")]
+                          )
+                        ])
+                      ]
+                    )
                   ]),
                   _vm._v(" "),
                   _c("p", { staticClass: "small text-muted mb-0 mt-2" }, [

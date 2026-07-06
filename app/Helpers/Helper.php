@@ -1734,12 +1734,29 @@ class Helper
         $items = $cart->getContent();
 
         foreach ($items as $item) {
-            if ($item->getConditions()->getType() == 'coupon') {
-                $coupon = $item->getConditions()->getTarget();
+            $conditions = $item->getConditions();
+
+            if (! is_iterable($conditions)) {
+                $conditions = [$conditions];
+            }
+
+            foreach ($conditions as $condition) {
+                if (
+                    is_object($condition)
+                    && method_exists($condition, 'getType')
+                    && method_exists($condition, 'getTarget')
+                    && $condition->getType() == 'coupon'
+                ) {
+                    $coupon = $condition->getTarget();
+                }
             }
         }
 
         foreach ($cart->getConditions() as $condition) {
+            if (! is_object($condition) || ! method_exists($condition, 'getAttributes') || ! method_exists($condition, 'getValue')) {
+                continue;
+            }
+
             if (isset($condition->getAttributes()['type']) && $condition->getAttributes()['type'] == 'coupon' && floatval($condition->getValue()) < 0) {
                 $coupon = $condition->getAttributes()['description'];
             }

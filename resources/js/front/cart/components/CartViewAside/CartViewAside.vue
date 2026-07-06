@@ -126,7 +126,7 @@
                 >
                     <span class="coupon-toggle__content text-start">
                         <strong class="d-block text-dark">Imate kod?</strong>
-                        <small class="text-muted">{{ hasActiveCoupon ? 'Kod je spremljen u košarici. Novi unos zamijenit će postojeći.' : 'Kupon ili poklon-bon.' }}</small>
+                        <small class="coupon-toggle__hint text-muted">{{ hasActiveCoupon ? 'Kod je spremljen. Novi unos zamjenjuje postojeći.' : 'Kupon ili poklon-bon.' }}</small>
                     </span>
                     <span class="coupon-toggle__action text-primary">
                         {{ showCouponPanel ? 'Sakrij' : 'Otvori' }}
@@ -136,7 +136,7 @@
                 <div v-show="showCouponPanel" class="mt-3">
                     <div class="form-group mb-3">
                         <label class="form-label">Kod za popust ili poklon-bon</label>
-                        <div class="input-group">
+                        <div class="input-group coupon-code-input-group">
                             <input
                                 type="text"
                                 class="form-control"
@@ -546,15 +546,47 @@ export default {
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
+    text-align: left;
+    white-space: normal;
 }
 .coupon-toggle__content {
     flex: 1 1 auto;
     min-width: 0;
 }
+.coupon-toggle__hint {
+    display: block;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
 .coupon-toggle__action {
     flex: 0 0 auto;
     white-space: nowrap;
     padding-top: 0.15rem;
+}
+.coupon-code-input-group .form-control {
+    min-width: 0;
+}
+.coupon-code-input-group .btn {
+    white-space: nowrap;
+}
+@media (max-width: 420px) {
+    .coupon-code-input-group {
+        display: block;
+    }
+    .coupon-code-input-group .form-control,
+    .coupon-code-input-group .input-group-append,
+    .coupon-code-input-group .btn {
+        width: 100%;
+    }
+    .coupon-code-input-group .input-group-append {
+        margin-top: 0.5rem;
+        margin-left: 0;
+    }
+    .coupon-code-input-group .form-control,
+    .coupon-code-input-group .btn {
+        border-radius: 0.3125rem;
+    }
 }
 .cart-bookmarker-promo {
     background:

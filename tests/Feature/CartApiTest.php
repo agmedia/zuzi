@@ -100,6 +100,32 @@ class CartApiTest extends TestCase
         $response->assertSessionMissing(config('session.cart') . '_coupon');
     }
 
+    public function test_invalid_new_coupon_clears_previously_saved_coupon(): void
+    {
+        $this->createTotalCouponAction('HVALA', 10);
+
+        $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'HVALA',
+        ])->assertOk()
+            ->assertJson([
+                'success' => true,
+                'coupon' => 'HVALA',
+            ]);
+
+        $response = $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'NEPOSTOJI',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => false,
+                'coupon' => '',
+            ])
+            ->assertJsonPath('cart.coupon', '');
+
+        $response->assertSessionMissing(config('session.cart') . '_coupon');
+    }
+
     public function test_coupon_total_condition_uses_customer_facing_coupon_name(): void
     {
         Action::query()->create([
