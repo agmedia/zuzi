@@ -16,6 +16,14 @@ class CuratedCollectionService
     private const EXCLUDED_ORDER_STATUSES = [5, 7, 8];
     private const MONTHLY_RANKING_LIMIT = 480;
     private const HOMEPAGE_FEATURED_PRODUCTS_LIMIT = 10;
+    private const NON_BOOK_CATEGORY_SLUGS = [
+        'bookmarkeri',
+        'casopisi',
+        'gift-program',
+        'karte',
+        'rokovnici',
+        'svezalice-pidzame-za-knjige',
+    ];
     private const CANONICAL_MIN_SCORE = 140;
     private const CANONICAL_SEED_MIN_COVERAGE = 0.5;
     private const EXCLUDED_TITLE_PATTERNS = [
@@ -365,7 +373,7 @@ class CuratedCollectionService
                     ->values();
 
                 if ($rankedProducts->isEmpty()) {
-                    return Product::query()
+                    $fallbackQuery = Product::query()
                         ->active()
                         ->hasStock()
                         ->hasImage()
@@ -376,7 +384,11 @@ class CuratedCollectionService
                         })
                         ->with(['action'])
                         ->withReviewSummary()
-                        ->popular(self::HOMEPAGE_FEATURED_PRODUCTS_LIMIT)
+                        ->popular(self::HOMEPAGE_FEATURED_PRODUCTS_LIMIT);
+
+                    $this->onlyBooks($fallbackQuery);
+
+                    return $fallbackQuery
                         ->get()
                         ->map(function (Product $product, int $index) {
                             return [
@@ -387,15 +399,17 @@ class CuratedCollectionService
                         ->values();
                 }
 
-                $products = Product::query()
+                $productsQuery = Product::query()
                     ->active()
                     ->hasStock()
                     ->hasImage()
                     ->with(['action'])
                     ->withReviewSummary()
-                    ->whereIn('id', $rankedProducts->pluck('product_id'))
-                    ->get()
-                    ->keyBy('id');
+                    ->whereIn('id', $rankedProducts->pluck('product_id'));
+
+                $this->onlyBooks($productsQuery);
+
+                $products = $productsQuery->get()->keyBy('id');
 
                 return $rankedProducts
                     ->map(function (array $rankedProduct, int $index) use ($products) {
@@ -448,6 +462,8 @@ class CuratedCollectionService
                     ->selectRaw('COUNT(DISTINCT order_product.order_id) as order_count')
                     ->selectRaw('SUM(order_product.total) as revenue')
                     ->groupBy('order_product.product_id');
+
+                $this->onlyBooksFromRanking($query);
 
                 if ($metric === 'orders') {
                     $query->orderByDesc('order_count')->orderByDesc('revenue')->orderByDesc('sold_quantity');
@@ -748,6 +764,30 @@ class CuratedCollectionService
     }
 
 
+    private function onlyBooks($query): void
+    {
+        $query
+            ->where('products.name', 'not like', 'Bookmarker%')
+            ->whereDoesntHave('categories', function ($query) {
+                $query->whereIn('slug', self::NON_BOOK_CATEGORY_SLUGS);
+            });
+    }
+
+
+    private function onlyBooksFromRanking($query): void
+    {
+        $query
+            ->where('products.name', 'not like', 'Bookmarker%')
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('product_category as non_book_product_category')
+                    ->join('categories as non_book_categories', 'non_book_categories.id', '=', 'non_book_product_category.category_id')
+                    ->whereColumn('non_book_product_category.product_id', 'products.id')
+                    ->whereIn('non_book_categories.slug', self::NON_BOOK_CATEGORY_SLUGS);
+            });
+    }
+
+
     /**
      * @return array<string, mixed>
      */
@@ -847,6 +887,6 @@ class CuratedCollectionService
 
     private function cacheKey(string $suffix): string
     {
-        return 'curated-collections.v7.' . now()->format('Y-m') . '.' . $suffix;
+        return 'curated-collections.v9.' . now()->format('Y-m') . '.' . $suffix;
     }
 }

@@ -12,15 +12,17 @@ class CuratedCollectionServiceTest extends TestCase
     public function test_clear_homepage_widget_state_forgets_cached_keys_and_snapshot(): void
     {
         $service = app(CuratedCollectionService::class);
-        $prefix = 'curated-collections.v6.' . now()->format('Y-m') . '.';
+        $cacheKey = \Closure::bind(function (string $suffix): string {
+            return $this->cacheKey($suffix);
+        }, $service, CuratedCollectionService::class);
         $featuredLimit = (new \ReflectionClass(CuratedCollectionService::class))
             ->getReflectionConstant('HOMEPAGE_FEATURED_PRODUCTS_LIMIT')
             ?->getValue();
 
-        Cache::put($prefix . 'homepage-widget.featured-' . $featuredLimit, ['stale' => true], now()->addHour());
-        Cache::put($prefix . 'featured-products.limit-' . $featuredLimit, ['stale' => true], now()->addHour());
-        Cache::put($prefix . 'monthly-ranking.quantity', ['stale' => true], now()->addHour());
-        Cache::put($prefix . 'collection.najpopularnije-ovaj-mjesec', ['stale' => true], now()->addHour());
+        Cache::put($cacheKey('homepage-widget.featured-' . $featuredLimit), ['stale' => true], now()->addHour());
+        Cache::put($cacheKey('featured-products.limit-' . $featuredLimit), ['stale' => true], now()->addHour());
+        Cache::put($cacheKey('monthly-ranking.quantity'), ['stale' => true], now()->addHour());
+        Cache::put($cacheKey('collection.najpopularnije-ovaj-mjesec'), ['stale' => true], now()->addHour());
 
         $snapshotPath = storage_path('app/curated-homepage-widget.json');
         File::ensureDirectoryExists(dirname($snapshotPath));
@@ -34,10 +36,10 @@ class CuratedCollectionServiceTest extends TestCase
 
         $service->clearHomepageWidgetState();
 
-        $this->assertFalse(Cache::has($prefix . 'homepage-widget.featured-' . $featuredLimit));
-        $this->assertFalse(Cache::has($prefix . 'featured-products.limit-' . $featuredLimit));
-        $this->assertFalse(Cache::has($prefix . 'monthly-ranking.quantity'));
-        $this->assertFalse(Cache::has($prefix . 'collection.najpopularnije-ovaj-mjesec'));
+        $this->assertFalse(Cache::has($cacheKey('homepage-widget.featured-' . $featuredLimit)));
+        $this->assertFalse(Cache::has($cacheKey('featured-products.limit-' . $featuredLimit)));
+        $this->assertFalse(Cache::has($cacheKey('monthly-ranking.quantity')));
+        $this->assertFalse(Cache::has($cacheKey('collection.najpopularnije-ovaj-mjesec')));
         $this->assertFileDoesNotExist($snapshotPath);
     }
 }
