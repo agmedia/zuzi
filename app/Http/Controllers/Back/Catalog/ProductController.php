@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Back\Catalog;
 
+use App\Exports\Back\Catalog\AdminProductsExport;
 use App\Http\Controllers\Controller;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Product\Product;
@@ -10,6 +11,8 @@ use App\Models\Back\Catalog\Product\ProductCategory;
 use App\Models\Back\Catalog\Product\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class ProductController extends Controller
 {
@@ -31,6 +34,50 @@ class ProductController extends Controller
         $counts = [];//Product::setCounts($query);
 
         return view('back.catalog.product.index', compact('products', 'categories'/*, 'authors', 'publishers'*/, 'counts'));
+    }
+
+
+    /**
+     * Export filtered products from the admin product list.
+     *
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function export(Request $request, Product $product)
+    {
+        if ( ! $request->filled('publisher')) {
+            return redirect()->route('products', $request->except('page'))
+                             ->with(['error' => 'Odaberite nakladnika prije exporta artikala.']);
+        }
+
+        $query = $product->filter($request)->select([
+            'name',
+            'sku',
+            'polica',
+            'price',
+            'quantity',
+            'itemid',
+            'isbn',
+            'status',
+        ]);
+
+        $response = Excel::download(new AdminProductsExport($query), 'artikli-nakladnik-' . now()->format('Y-m-d-His') . '.xlsx');
+        $cookie_name = $this->exportCookieName($request->input('export_token'));
+
+        if ($cookie_name) {
+            $response->headers->setCookie(Cookie::create(
+                $cookie_name,
+                '1',
+                time() + 300,
+                '/',
+                null,
+                $request->isSecure(),
+                false,
+                false,
+                Cookie::SAMESITE_LAX
+            ));
+        }
+
+        return $response;
     }
 
 
@@ -199,5 +246,13 @@ class ProductController extends Controller
         }
 
         return $id;
+    }
+
+
+    private function exportCookieName($token): ?string
+    {
+        $token = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $token);
+
+        return $token ? 'zuzi_product_export_' . $token : null;
     }
 }

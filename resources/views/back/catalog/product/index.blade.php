@@ -14,6 +14,10 @@
         $missingIdentifiersQuery = $missingIdentifiersActive
             ? request()->except(['page', 'missing_identifiers'])
             : array_merge(request()->except(['page']), ['missing_identifiers' => 1]);
+        $publisherExportToken = request()->filled('publisher') ? (string) \Illuminate\Support\Str::uuid() : null;
+        $publisherExportQuery = $publisherExportToken
+            ? array_merge(request()->except('page'), ['export_token' => $publisherExportToken])
+            : request()->except('page');
     @endphp
 
     <div class="bg-body-light">
@@ -42,6 +46,11 @@
                         <a class="btn {{ $missingIdentifiersActive ? 'btn-warning' : 'btn-outline-warning' }} btn-inline-block mr-3" href="{{ route('products', $missingIdentifiersQuery) }}">
                             <i class="fa fa-barcode"></i> Bez ItemID/ISBN
                         </a>
+                        @if (request()->filled('publisher'))
+                            <a class="btn btn-outline-success btn-inline-block mr-3" href="{{ route('products.export', $publisherExportQuery) }}" data-products-export data-export-token="{{ $publisherExportToken }}">
+                                <i class="fa fa-file-excel" data-export-icon></i><span data-export-label> Export to Excel</span>
+                            </a>
+                        @endif
                         <a class="btn btn-primary btn-inline-block" href="{{route('products')}}"><i class=" ci-trash"></i> Očisti filtere</a>
                     </div>
                 </div>
@@ -283,6 +292,76 @@
             });
             Livewire.on('publisherSelect', (e) => {
                 setPageURL('publisher', e.publisher.id, true);
+            });
+
+            $('[data-products-export]').on('click', function (event) {
+                const button = this;
+
+                if (button.dataset.exporting === '1') {
+                    event.preventDefault();
+                    return;
+                }
+
+                button.dataset.exporting = '1';
+
+                const token = button.dataset.exportToken;
+                const cookieName = `zuzi_product_export_${token}`;
+                const icon = button.querySelector('[data-export-icon]');
+                const label = button.querySelector('[data-export-label]');
+                const originalIconClass = icon ? icon.className : '';
+                const originalLabel = label ? label.textContent : ' Export to Excel';
+                const startedAt = Date.now();
+
+                const clearExportCookie = () => {
+                    document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax`;
+                };
+                const hasExportCookie = () => document.cookie.split('; ').some((cookie) => cookie.startsWith(`${cookieName}=`));
+                const elapsedSeconds = () => Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
+                const restoreButton = () => {
+                    button.dataset.exporting = '0';
+                    button.classList.remove('disabled');
+                    button.removeAttribute('aria-disabled');
+
+                    if (icon) {
+                        icon.className = originalIconClass;
+                    }
+                    if (label) {
+                        label.textContent = originalLabel;
+                    }
+                };
+
+                clearExportCookie();
+                button.classList.add('disabled');
+                button.setAttribute('aria-disabled', 'true');
+
+                if (icon) {
+                    icon.className = 'fa fa-spinner fa-spin';
+                }
+                if (label) {
+                    label.textContent = ' Export u tijeku... 0s';
+                }
+
+                const timer = window.setInterval(() => {
+                    const seconds = elapsedSeconds();
+
+                    if (label) {
+                        label.textContent = ` Export u tijeku... ${seconds}s`;
+                    }
+
+                    if (hasExportCookie()) {
+                        window.clearInterval(timer);
+                        clearExportCookie();
+
+                        if (icon) {
+                            icon.className = 'fa fa-check';
+                        }
+                        if (label) {
+                            label.textContent = ` Excel spreman (${seconds}s)`;
+                        }
+
+                        window.setTimeout(restoreButton, 5000);
+                    }
+                }, 500);
             });
 
             /*$('#btn-inactive').on('click', () => {

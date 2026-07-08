@@ -114,6 +114,7 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
 
         // ARTIKLI
         Route::get('products', [ProductController::class, 'index'])->name('products');
+        Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
         Route::get('product/create', [ProductController::class, 'create'])->name('products.create');
         Route::post('product', [ProductController::class, 'store'])->name('products.store');
         Route::get('product/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
