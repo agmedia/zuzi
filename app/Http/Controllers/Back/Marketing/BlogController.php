@@ -168,7 +168,12 @@ class BlogController extends Controller
     public function uploadBlogImage(Request $request)
     {
         if ( ! $request->hasFile('upload')) {
-            return response()->json(['uploaded' => false]);
+            return response()->json([
+                'uploaded' => 0,
+                'error' => [
+                    'message' => 'Slika nije poslana.',
+                ],
+            ]);
         }
 
         $blog_id = $request->input('blog_id');
@@ -183,7 +188,11 @@ class BlogController extends Controller
 
         Storage::disk('blog')->putFileAs($path, $img, $name);
 
-        return response()->json(['fileName' => $name, 'uploaded' => true, 'url' => url(config('filesystems.disks.blog.url') . $path . $name)]);
+        return response()->json([
+            'fileName' => $name,
+            'uploaded' => 1,
+            'url' => url(config('filesystems.disks.blog.url') . $path . $name),
+        ]);
     }
 
 

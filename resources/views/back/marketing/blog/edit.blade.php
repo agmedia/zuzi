@@ -5,6 +5,52 @@
     <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">
 @endpush
 
+@push('css_after')
+    <style>
+        .blog-editor-note {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            padding: .85rem 1rem;
+            border: 1px solid #e3e9ef;
+            border-radius: .5rem;
+            background: #f6f9fc;
+            color: #4b566b;
+            font-size: .875rem;
+            line-height: 1.45;
+        }
+
+        .blog-editor-note i {
+            color: #e50077;
+            font-size: 1rem;
+            line-height: 1.35;
+        }
+
+        .blog-html-editor-shell .cke_chrome {
+            border-color: #d8dfe8;
+            border-radius: .5rem;
+            box-shadow: 0 .35rem 1rem rgba(31, 45, 61, .06);
+            overflow: hidden;
+        }
+
+        .blog-html-editor-shell .cke_top {
+            background: #f6f9fc;
+            border-bottom-color: #e3e9ef;
+        }
+
+        .blog-html-editor-shell .cke_bottom {
+            background: #fff;
+            border-top-color: #e3e9ef;
+        }
+
+        .blog-html-editor-shell .cke_source {
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: .9rem;
+            line-height: 1.5;
+        }
+    </style>
+@endpush
+
 @php
     $publishDateValue = old('publish_date', isset($blog) ? $blog->publish_date : null);
 
@@ -209,9 +255,15 @@
                                 </div>
                             </div>
 
-                            <div class="form-group row mb-4">
+                            <div class="form-group row mb-4 blog-html-editor-shell">
                                 <div class="col-md-12">
                                     <label for="description-editor">Opis</label>
+                                    <div class="blog-editor-note mb-3">
+                                        <i class="fa fa-code"></i>
+                                        <div>
+                                            Koristi <strong>Source</strong> za direktno uređivanje HTML-a. Možeš lijepiti tekst iz Worda/Google Docsa ili HTML blokove, a editor će zadržati klase, stilove, tablice i embed kodove.
+                                        </div>
+                                    </div>
                                     <textarea id="description-editor" name="description">{!! isset($blog) ? $blog->description : old('description') !!}</textarea>
                                 </div>
                             </div>
@@ -366,7 +418,7 @@
 @endsection
 
 @push('js_after')
-    <script src="{{ asset('js/plugins/ckeditor5-classic/build/ckeditor.js') }}"></script>
+    <script src="{{ asset('js/plugins/ckeditor/ckeditor.js') }}"></script>
     <script src="{{ asset('js/plugins/flatpickr/flatpickr.min.js') }}"></script>
     <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>
 
@@ -384,6 +436,7 @@
             const styleOptions = ctaBlocksBuilder.data('style-options') || {};
             const blogBaseUrl = ctaBlocksBuilder.data('blog-base-url') || '';
             const reusableCtaBlocks = Array.isArray(ctaBlocksBuilder.data('reusable-blocks')) ? ctaBlocksBuilder.data('reusable-blocks') : [];
+            const blogEditorUploadUrl = '{{ route('blogs.upload.image') }}?_token=' + document.querySelector('meta[name="csrf-token"]').getAttribute('content') + '&blog_id={{ (isset($blog->id) && $blog->id) ?: 0 }}';
             let ctaBlocksState = Array.isArray(ctaBlocksBuilder.data('initial-blocks')) ? ctaBlocksBuilder.data('initial-blocks') : [];
 
             const escapeHtml = (value) => String(value ?? '')
@@ -853,20 +906,51 @@
                     const button = $(this);
                     button.find('[data-field="button-icon"]').val(button.find('[data-field="button-icon-display"]').val());
                 });
+
+                if (window.CKEDITOR && CKEDITOR.instances['description-editor']) {
+                    CKEDITOR.instances['description-editor'].updateElement();
+                }
             });
 
-            ClassicEditor
-                .create(document.querySelector('#description-editor'), {
-                    ckfinder: {
-                        uploadUrl: '{{ route('blogs.upload.image') }}?_token=' + document.querySelector('meta[name="csrf-token"]').getAttribute('content') + '&blog_id={{ (isset($blog->id) && $blog->id) ?: 0 }}',
-                    }
-                })
-                .then(editor => {
-                    console.log(editor);
-                })
-                .catch(error => {
-                    console.error(error);
+            if (window.CKEDITOR) {
+                CKEDITOR.replace('description-editor', {
+                    height: 560,
+                    language: 'hr',
+                    allowedContent: true,
+                    extraPlugins: 'autogrow,colorbutton,colordialog,div,font,find,iframe,justify,preview,print,selectall,tableresize',
+                    removePlugins: 'easyimage,cloudservices,exportpdf',
+                    uploadUrl: blogEditorUploadUrl,
+                    filebrowserUploadUrl: blogEditorUploadUrl,
+                    filebrowserImageUploadUrl: blogEditorUploadUrl,
+                    filebrowserUploadMethod: 'xhr',
+                    forcePasteAsPlainText: false,
+                    pasteFilter: null,
+                    pasteFromWordPromptCleanup: false,
+                    pasteFromWordRemoveFontStyles: false,
+                    pasteFromWordRemoveStyles: false,
+                    entities: false,
+                    basicEntities: false,
+                    autoGrow_minHeight: 560,
+                    autoGrow_maxHeight: 1000,
+                    autoGrow_bottomSpace: 40,
+                    resize_dir: 'vertical',
+                    toolbar: [
+                        { name: 'document', items: ['Source', '-', 'Preview', 'Print', '-', 'Maximize', 'ShowBlocks'] },
+                        { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
+                        { name: 'editing', items: ['Find', 'Replace', '-', 'SelectAll'] },
+                        '/',
+                        { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
+                        { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat'] },
+                        { name: 'colors', items: ['TextColor', 'BGColor'] },
+                        '/',
+                        { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', 'CreateDiv', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
+                        { name: 'links', items: ['Link', 'Unlink', 'Anchor'] },
+                        { name: 'insert', items: ['Image', 'Table', 'HorizontalRule', 'SpecialChar', 'Iframe'] }
+                    ],
+                    format_tags: 'p;h2;h3;h4;h5;pre',
+                    removeDialogTabs: 'image:advanced;link:advanced'
                 });
+            }
 
             setExistingBlockButtonState();
             renderCtaBlocks();
