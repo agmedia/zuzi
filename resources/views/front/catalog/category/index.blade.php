@@ -48,7 +48,7 @@
         && ($group ?? null) === 'kategorija-proizvoda'
         && ! (isset($cat) && $cat)
         && ! (isset($subcat) && $subcat);
-    $defaultListingSort = $isActionListing ? 'popular' : ($isFullOfferListing ? 'novi' : (Route::currentRouteName() === 'catalog.route' ? 'popular' : ''));
+    $defaultListingSort = $isActionListing ? 'popular' : ($isFullOfferListing ? 'novi' : (Route::currentRouteName() === 'catalog.route' ? 'novi' : ''));
     $groupHeading = 'Knjige';
 
     if ($isFullOfferListing) {
