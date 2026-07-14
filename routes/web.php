@@ -477,6 +477,7 @@ Route::permanentRedirect('/image-sitemap', '/sitemap/images.xml');
 Route::permanentRedirect('/image-sitemap.xml', '/sitemap/images.xml');
 //
 Route::get('njuskalo/xml', [HomeController::class, 'njuskaloXML'])->name('njuskalo');
+Route::get('feeds/openai-products.jsonl', [HomeController::class, 'openAiProductFeed'])->name('feeds.openai-products');
 
 Route::get('xmlexport', [HomeController::class, 'xmlexport'])->name('xmlexport');
 /**

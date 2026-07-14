@@ -185,6 +185,12 @@ return [
         ]
     ],
     //
+    'openai_product_feed' => [
+        'cache_ttl' => (int) env('OPENAI_PRODUCT_FEED_CACHE_TTL', 3600),
+        'http_cache_ttl' => (int) env('OPENAI_PRODUCT_FEED_HTTP_CACHE_TTL', 3600),
+        'max_items' => (int) env('OPENAI_PRODUCT_FEED_MAX_ITEMS', 500000),
+    ],
+    //
     'njuskalo' => [
         'user_id' => '968815',
         'cache_ttl' => (int) env('NJUSKALO_XML_CACHE_TTL', 21600),

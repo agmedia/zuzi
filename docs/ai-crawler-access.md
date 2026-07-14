@@ -8,6 +8,11 @@ Current observed behavior:
 - Earlier off-host checks returned HTTP 403 for some AI user agents before Laravel handled the request, so hosting-level rules should remain the first place to check if this regresses.
 - No matching user-agent block was found in `public/.htaccess`.
 
+AI catalog discovery endpoints:
+
+- `https://www.zuzi.hr/llms.txt` points AI tools to core catalog discovery URLs.
+- `https://www.zuzi.hr/feeds/openai-products.jsonl` exposes the book catalog as an OpenAI-compatible JSONL product feed with title, description, canonical URL, publisher brand, ISBN/GTIN when available, image, price, availability, condition, and category path.
+
 Future 403 responses should be checked in hosting-level rules, most likely Engintron, nginx, Apache, ModSecurity, or a server security plugin.
 
 Recommended allowlist policy:

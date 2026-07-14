@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Helpers\Helper;
 use App\Helpers\Njuskalo;
+use App\Helpers\OpenAiProductFeed;
 use App\Helpers\Xmlexport;
 use App\Helpers\Recaptcha;
 use App\Http\Controllers\Controller;
@@ -430,6 +431,34 @@ class HomeController extends Controller
 
         $response = response()->file($path, [
             'Content-Type' => 'text/xml; charset=UTF-8',
+        ]);
+
+        $response->setPublic();
+        $response->setMaxAge($ttl);
+        $response->setSharedMaxAge($ttl);
+        $response->setAutoLastModified();
+        $response->setAutoEtag();
+
+        if ($response->isNotModified($request)) {
+            return $response;
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function openAiProductFeed(Request $request)
+    {
+        $feed = new OpenAiProductFeed();
+        $path = $feed->ensureExport();
+        $ttl = (int) config('settings.openai_product_feed.http_cache_ttl', 3600);
+
+        $response = response()->file($path, [
+            'Content-Type' => 'application/x-ndjson; charset=UTF-8',
         ]);
 
         $response->setPublic();

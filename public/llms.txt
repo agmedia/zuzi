@@ -10,6 +10,7 @@ ZUZI Shop sells new and used books, including fiction, children's books, non-fic
 - Robots: https://www.zuzi.hr/robots.txt
 - Sitemap index: https://www.zuzi.hr/sitemap.xml
 - Product sitemap: https://www.zuzi.hr/sitemap/products.xml
+- OpenAI product feed: https://www.zuzi.hr/feeds/openai-products.jsonl
 - Category sitemap: https://www.zuzi.hr/sitemap/categories.xml
 - Author sitemap: https://www.zuzi.hr/sitemap/authors.xml
 - Publisher sitemap: https://www.zuzi.hr/sitemap/publishers.xml
