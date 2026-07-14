@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Models\Front\Catalog\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class OpenAiProductFeed
@@ -122,7 +123,7 @@ class OpenAiProductFeed
             ->where('url', '!=', '')
             ->whereNotNull('image')
             ->where('image', '!=', '')
-            ->select([
+            ->select($this->productColumns([
                 'id',
                 'name',
                 'description',
@@ -134,7 +135,6 @@ class OpenAiProductFeed
                 'special_to',
                 'action_id',
                 'image',
-                'image_alt',
                 'pages',
                 'dimensions',
                 'origin',
@@ -150,7 +150,7 @@ class OpenAiProductFeed
                 'delivery_24h',
                 'author_id',
                 'publisher_id',
-            ])
+            ]))
             ->with([
                 'action:id,coupon,status',
                 'author:id,title',
@@ -158,6 +158,34 @@ class OpenAiProductFeed
                 'images:id,product_id,image',
                 'categories',
             ]);
+    }
+
+    /**
+     * @param array<int, string> $columns
+     * @return array<int, string>
+     */
+    private function productColumns(array $columns): array
+    {
+        $available = $this->productColumnListing();
+
+        return array_values(array_filter(
+            $columns,
+            static fn (string $column): bool => in_array($column, $available, true)
+        ));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function productColumnListing(): array
+    {
+        static $columns = null;
+
+        if ($columns === null) {
+            $columns = Schema::getColumnListing((new Product())->getTable());
+        }
+
+        return $columns;
     }
 
     private function writeExport(string $path): void
