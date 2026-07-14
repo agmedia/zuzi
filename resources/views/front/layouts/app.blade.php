@@ -1051,6 +1051,10 @@
     })();
 </script>
 
+<script type="application/ld+json">
+    {!! collect(\App\Helpers\Metatags::globalSchema())->toJson() !!}
+</script>
+
 @stack('js_after')
 
 </body>

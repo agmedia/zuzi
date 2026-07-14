@@ -107,10 +107,7 @@
 
 @push('js_after')
     <script type="application/ld+json">
-        {!! collect([
-            \App\Helpers\Metatags::organizationSchema(),
-            \App\Helpers\Metatags::contactPageSchema(),
-        ])->toJson() !!}
+        {!! collect(\App\Helpers\Metatags::contactPageSchema())->toJson() !!}
     </script>
     @include('front.layouts.partials.recaptcha-js')
 @endpush

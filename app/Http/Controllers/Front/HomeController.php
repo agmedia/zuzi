@@ -370,11 +370,11 @@ class HomeController extends Controller
     public function sitemapXML(Request $request, $sitemap = null)
     {
         if ( ! $sitemap) {
-            $items = config('settings.sitemap');
+            $items = Sitemap::indexItems(config('settings.sitemap'));
 
-            return response()->view('front.layouts.partials.sitemap-index', [
+            return $this->sitemapResponse('front.layouts.partials.sitemap-index', [
                 'items' => $items
-            ])->header('Content-Type', 'text/xml');
+            ]);
         }
 
         if (in_array($sitemap, ['images', 'images.xml', 'img'], true)) {
@@ -387,9 +387,9 @@ class HomeController extends Controller
             abort(404);
         }
 
-        return response()->view('front.layouts.partials.sitemap', [
+        return $this->sitemapResponse('front.layouts.partials.sitemap', [
             'items' => $sm->getSitemap()
-        ])->header('Content-Type', 'text/xml');
+        ]);
     }
 
 
@@ -400,9 +400,20 @@ class HomeController extends Controller
     {
         $sm = new Sitemap('images');
 
-        return response()->view('front.layouts.partials.sitemap-image', [
+        return $this->sitemapResponse('front.layouts.partials.sitemap-image', [
             'items' => $sm->getResponse()
-        ])->header('Content-Type', 'text/xml');
+        ]);
+    }
+
+
+    private function sitemapResponse(string $view, array $data)
+    {
+        $ttl = 3600;
+
+        return response()
+            ->view($view, $data)
+            ->header('Content-Type', 'text/xml; charset=UTF-8')
+            ->header('Cache-Control', 'public, max-age=' . $ttl . ', s-maxage=' . $ttl);
     }
 
 

@@ -673,12 +673,6 @@
           <iframe width="100%" height="563" style="border: none" frameborder="0" allowfullscreen src="https://virtualtours.virtualno360.hr/F1tEg2Htxw/p&amp;0h&amp;85.17t/"></iframe>
       </section>
       @push('js_after')
-          <script type="application/ld+json">
-              {!! collect(\App\Helpers\Metatags::organizationSchema())->toJson() !!}
-          </script>
-          <script type="application/ld+json">
-              {!! collect(\App\Helpers\Metatags::websiteSchema())->toJson() !!}
-          </script>
           <style>
               @media only screen and (max-width: 1040px) {
                   .scrolling-wrapper {

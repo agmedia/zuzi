@@ -33,7 +33,7 @@ class Sitemap
      *
      * @param string|null $sitemap
      */
-    public function __construct(string $sitemap = null)
+    public function __construct(?string $sitemap = null)
     {
         $this->sitemap = $this->setSitemap($sitemap);
     }
@@ -58,11 +58,85 @@ class Sitemap
 
 
     /**
-     * @param string $sitemap
+     * @param iterable<int, string> $sitemaps
      *
-     * @return array
+     * @return array<int, array{loc: string, lastmod: string}>
      */
-    private function setSitemap(string $sitemap)
+    public static function indexItems(iterable $sitemaps): array
+    {
+        $response = [];
+
+        foreach ($sitemaps as $sitemap) {
+            $sitemap = (string) $sitemap;
+
+            $response[] = [
+                'loc' => route('sitemap', ['sitemap' => $sitemap]),
+                'lastmod' => static::lastModifiedFor($sitemap)->tz('UTC')->toAtomString(),
+            ];
+        }
+
+        return $response;
+    }
+
+
+    private static function lastModifiedFor(string $sitemap): Carbon
+    {
+        $sitemap = Str::replaceLast('.xml', '', $sitemap);
+
+        if ($sitemap === 'pages') {
+            return static::dateFromMaxUpdatedAt(
+                Page::query()
+                    ->whereIn('group', ['page', 'blog'])
+                    ->where('status', 1)
+                    ->max('updated_at'),
+                Carbon::now()->startOfMonth()
+            );
+        }
+
+        if ($sitemap === 'categories') {
+            return static::dateFromMaxUpdatedAt(
+                Category::query()->active()->max('updated_at'),
+                Carbon::now()->startOfMonth()
+            );
+        }
+
+        if ($sitemap === 'products' || $sitemap === 'images') {
+            return static::dateFromMaxUpdatedAt(
+                Product::query()->active()->hasStock()->max('updated_at'),
+                Carbon::now()->startOfDay()
+            );
+        }
+
+        if ($sitemap === 'authors') {
+            return static::dateFromMaxUpdatedAt(
+                Author::query()->active()->max('updated_at'),
+                Carbon::now()->startOfMonth()
+            );
+        }
+
+        if ($sitemap === 'publishers') {
+            return static::dateFromMaxUpdatedAt(
+                Publisher::query()->active()->max('updated_at'),
+                Carbon::now()->startOfMonth()
+            );
+        }
+
+        return Carbon::now()->startOfDay();
+    }
+
+
+    private static function dateFromMaxUpdatedAt($value, Carbon $fallback): Carbon
+    {
+        return Carbon::make($value) ?: $fallback;
+    }
+
+
+    /**
+     * @param string|null $sitemap
+     *
+     * @return array|null
+     */
+    private function setSitemap(?string $sitemap)
     {
         if ( ! $sitemap) {
             return $sitemap;

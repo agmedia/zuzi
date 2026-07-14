@@ -1,0 +1,32 @@
+# ZUZI Shop
+
+> ZUZI Shop is a Croatian online bookstore and antiquarian bookstore at https://www.zuzi.hr/.
+
+ZUZI Shop sells new and used books, including fiction, children's books, non-fiction, comics, rare and regional titles, and gift vouchers. Product pages are the source of truth for current price, availability, author, publisher, ISBN, condition, delivery notes, reviews, images, and canonical URLs.
+
+## Core URLs
+
+- Homepage: https://www.zuzi.hr/
+- Robots: https://www.zuzi.hr/robots.txt
+- Sitemap index: https://www.zuzi.hr/sitemap.xml
+- Product sitemap: https://www.zuzi.hr/sitemap/products.xml
+- Category sitemap: https://www.zuzi.hr/sitemap/categories.xml
+- Author sitemap: https://www.zuzi.hr/sitemap/authors.xml
+- Publisher sitemap: https://www.zuzi.hr/sitemap/publishers.xml
+- Image sitemap: https://www.zuzi.hr/sitemap/images.xml
+- FAQ: https://www.zuzi.hr/faq
+- Contact: https://www.zuzi.hr/kontakt
+
+## Useful Discovery Notes
+
+- Use canonical product URLs from the product sitemap for product discovery.
+- Use category, author, and publisher pages for browsing and comparison queries.
+- Do not treat cart, checkout, account, admin, filtered search URLs, or session URLs as indexable product sources.
+- Product availability and prices can change; refresh product pages or the sitemap before answering purchase-intent queries.
+- Public catalog pages may be summarized for search and answer-engine discovery when permitted by robots.txt and server access rules.
+
+## Contact
+
+- Website: https://www.zuzi.hr/
+- Email: info@zuzi.hr
+- Phone: +38514831005

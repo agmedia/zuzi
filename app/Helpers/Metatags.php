@@ -7,6 +7,7 @@ use App\Models\Front\Catalog\Product;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use App\Models\Seo;
+use Illuminate\Support\Str;
 
 class Metatags
 {
@@ -25,6 +26,15 @@ class Metatags
     public static function indexSchema(): array
     {
         return static::organizationSchema();
+    }
+
+
+    public static function globalSchema(): array
+    {
+        return [
+            static::organizationSchema(),
+            static::websiteSchema(),
+        ];
     }
 
 
@@ -376,42 +386,63 @@ class Metatags
         $response = [];
 
         if ($prod) {
-            $price = ($prod->special()) ? $prod->special() : number_format($prod->price, 2, '.', '');
+            $price = number_format((float) $prod->special(), 2, '.', '');
             $url = url($prod->url);
             $description = Seo::descriptionFromContent(
                 [$prod->description],
                 'Kupite knjigu ' . $prod->name . ' uz brzu dostavu i sigurnu kupovinu u ' . Seo::brand() . '.'
             );
+            $itemCondition = static::schemaItemCondition($prod->condition ?? null);
 
             $response = [
                 '@context'    => 'https://schema.org',
                 '@type'       => 'Product',
+                '@id'         => $url . '#product',
                 'name'        => $prod->name,
                 'description' => $description,
                 'sku'         => $prod->sku,
-                'image'       => [$prod->image],
+                'image'       => static::productImages($prod),
                 'url'         => $url,
+                'mainEntityOfPage' => [
+                    '@type' => 'WebPage',
+                    '@id'   => $url,
+                ],
+                'isPartOf' => [
+                    '@id' => config('app.url') . '#website',
+                ],
                 'brand'       => [
                     '@type' => 'Brand',
                     'name'  => $prod->publisher ? $prod->publisher->title : Seo::brand(),
                 ],
                 'offers'      => [
                     '@type'           => 'Offer',
+                    '@id'             => $url . '#offer',
                     'priceCurrency'   => 'EUR',
                     'price'           => (string) $price,
                     'priceValidUntil' => now()->endOfYear()->format('Y-m-d'),
                     'sku'             => $prod->sku,
                     'url'             => $url,
-                    'availability'    => $prod->quantity ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                    'availability'    => ((int) $prod->quantity > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                     'seller'          => [
                         '@type' => 'Organization',
+                        '@id'   => config('app.url') . '#organization',
                         'name'  => Seo::brand(),
                     ],
                 ],
             ];
 
+            if ($itemCondition) {
+                $response['offers']['itemCondition'] = $itemCondition;
+            }
+
             if ($prod->isbn) {
                 $response['isbn'] = $prod->isbn;
+
+                $gtin13 = static::gtin13FromIsbn($prod->isbn);
+
+                if ($gtin13) {
+                    $response['gtin13'] = $gtin13;
+                }
             }
 
             if ($prod->author) {
@@ -450,6 +481,82 @@ class Metatags
         }
 
         return $response;
+    }
+
+
+    private static function productImages(Product $prod): array
+    {
+        $images = collect([$prod->image])->filter();
+
+        if ($prod->relationLoaded('images')) {
+            $imageDomain = rtrim((string) config('settings.images_domain'), '/');
+
+            if (! $imageDomain && $images->isNotEmpty()) {
+                $imageDomain = static::originFromUrl((string) $images->first());
+            }
+
+            if (! $imageDomain) {
+                $imageDomain = rtrim((string) config('app.url'), '/');
+            }
+
+            foreach ($prod->images as $image) {
+                $path = trim((string) $image->image);
+
+                if (! $path) {
+                    continue;
+                }
+
+                $images->push(Str::startsWith($path, ['http://', 'https://'])
+                    ? $path
+                    : $imageDomain . '/' . ltrim($path, '/'));
+            }
+        }
+
+        return $images->unique()->values()->all();
+    }
+
+
+    private static function originFromUrl(string $url): string
+    {
+        $parts = parse_url($url);
+
+        if (! is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
+            return '';
+        }
+
+        return $parts['scheme'] . '://' . $parts['host'];
+    }
+
+
+    private static function gtin13FromIsbn(?string $isbn): ?string
+    {
+        $clean = preg_replace('/[^0-9]/', '', (string) $isbn);
+
+        if (strlen($clean) === 13) {
+            return $clean;
+        }
+
+        return null;
+    }
+
+
+    private static function schemaItemCondition(?string $condition): ?string
+    {
+        $condition = Str::lower(trim(strip_tags((string) $condition)));
+
+        if (! $condition) {
+            return null;
+        }
+
+        if (Str::contains($condition, ['novo', 'nova'])) {
+            return 'https://schema.org/NewCondition';
+        }
+
+        if (Str::contains($condition, ['rablj', 'koristen', 'korišten', 'polovno'])) {
+            return 'https://schema.org/UsedCondition';
+        }
+
+        return null;
     }
 
 
