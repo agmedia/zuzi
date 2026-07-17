@@ -17,6 +17,7 @@ use App\Models\Back\Orders\Order as AdminOrderModel;
 use App\Models\TagManager;
 use App\Models\Front\Loyalty;
 use App\Models\Front\Page;
+use App\Services\CouponUsageService;
 use App\Services\GoogleAnalyticsService;
 use App\Services\GiftVoucherService;
 use App\Services\ProductRecommendationService;
@@ -117,7 +118,18 @@ class CheckoutController extends Controller
             return redirect()->route('naplata', ['step' => 'podaci']);
         }
 
-        $cart = $this->shoppingCart()->get();
+        $shoppingCart = $this->shoppingCart();
+        $couponUsageError = $this->rejectAlreadyUsedCoupon(
+            $shoppingCart,
+            data_get($data, 'address.email'),
+            (int) data_get(CheckoutSession::getOrder(), 'id', 0) ?: null
+        );
+
+        if ($couponUsageError) {
+            return redirect()->route('kosarica')->with('error', $couponUsageError);
+        }
+
+        $cart = $shoppingCart->get();
 
         if (GiftVoucherService::cartContainsGiftVoucher($cart)) {
             if (! GiftVoucherService::isGiftVoucherShipping($this->shippingCode($data['shipping']))) {
@@ -254,6 +266,18 @@ class CheckoutController extends Controller
             $order->setData($request->input('order_number'));
         }
 
+        $currentOrder = $order->getData();
+        $shoppingCart = $this->shoppingCart();
+        $couponUsageError = $this->rejectAlreadyUsedCoupon(
+            $shoppingCart,
+            data_get(CheckoutSession::getAddress(), 'email') ?: data_get($currentOrder, 'payment_email'),
+            (int) data_get($currentOrder, 'id', 0) ?: null
+        );
+
+        if ($couponUsageError) {
+            return redirect()->route('kosarica')->with('error', $couponUsageError);
+        }
+
         $stockCheck = $this->pelionCheckoutStockCheck(app(PelionStockService::class));
 
         if (! $stockCheck['ok']) {
@@ -352,6 +376,20 @@ class CheckoutController extends Controller
         }
 
         return new AgCart(config('session.cart'));
+    }
+
+    private function rejectAlreadyUsedCoupon(AgCart $cart, ?string $email, ?int $excludeOrderId = null): ?string
+    {
+        $coupon = (string) data_get($cart->get(), 'coupon', '');
+
+        if (! app(CouponUsageService::class)->hasBeenUsed($coupon, $email, $excludeOrderId)) {
+            return null;
+        }
+
+        $response = $cart->coupon('');
+        $cart->resolveDB($response['cart'] ?? null);
+
+        return CouponUsageService::ALREADY_USED_MESSAGE;
     }
 
     private function pelionCheckoutStockCheck(PelionStockService $stockService): array

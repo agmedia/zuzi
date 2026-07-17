@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Action extends Model
 {
@@ -193,6 +194,10 @@ class Action extends Model
 
     public function isValid(string $coupon = ''): bool
     {
+        if (! (bool) $this->status) {
+            return false;
+        }
+
         $is_valid = false;
 
         $from = now()->subDay();
@@ -314,7 +319,7 @@ class Action extends Model
             'date_start' => $data['start'],
             'date_end'   => $data['end'],
             'data'       => $data['data'],
-            'coupon'     => $this->request->coupon,
+            'coupon'     => Helper::normalizeCoupon($this->request->coupon),
             'quantity'   => $data['coupon_quantity'],
             'lock'       => $data['lock'],
             'status'     => $data['status'],
@@ -323,6 +328,10 @@ class Action extends Model
 
         if ($insert) {
             $resp['created_at'] = Carbon::now();
+        }
+
+        if (Schema::hasColumn($this->getTable(), 'once_per_email')) {
+            $resp['once_per_email'] = $data['coupon_once_per_email'];
         }
 
         return $resp;
@@ -340,12 +349,17 @@ class Action extends Model
             $links = collect($this->request->action_list);
         }
 
+        $once_per_email = isset($this->request->coupon_once_per_email)
+            && $this->request->coupon_once_per_email === 'on'
+            && Helper::normalizeCoupon($this->request->coupon) !== '';
+
         return [
             'links'           => $this->normalizeLinks($links),
             'status'          => (isset($this->request->status) && $this->request->status === 'on') ? 1 : 0,
             'start'           => $this->request->date_start ? Carbon::make($this->request->date_start) : null,
             'end'             => $this->request->date_end ? Carbon::make($this->request->date_end) : null,
-            'coupon_quantity' => (isset($this->request->coupon_quantity) && $this->request->coupon_quantity === 'on') ? 1 : 0,
+            'coupon_quantity' => ! $once_per_email && isset($this->request->coupon_quantity) && $this->request->coupon_quantity === 'on' ? 1 : 0,
+            'coupon_once_per_email' => $once_per_email ? 1 : 0,
             'lock'            => (isset($this->request->lock) && $this->request->lock === 'on') ? 1 : 0,
             'data'            => !empty($data) ? collect($data)->toJson() : null,
         ];

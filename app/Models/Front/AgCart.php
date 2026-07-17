@@ -10,6 +10,7 @@ use App\Models\Front\Catalog\ProductAction;
 use App\Models\Front\Checkout\PaymentMethod;
 use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\TagManager;
+use App\Services\CouponUsageService;
 use App\Services\GiftWrapService;
 use App\Services\GiftVoucherService;
 use Darryldecode\Cart\CartCondition;
@@ -293,6 +294,19 @@ class AgCart extends Model
                 'success' => false,
                 'coupon' => '',
                 'cart' => $this->get(),
+            ];
+        }
+
+        if (app(CouponUsageService::class)->hasBeenUsedByCurrentCustomer($coupon)) {
+            session()->forget($this->session_key . '_coupon');
+            $this->coupon = '';
+            $this->refreshCouponAwareItems();
+
+            return [
+                'success' => false,
+                'coupon' => '',
+                'cart' => $this->get(),
+                'message' => CouponUsageService::ALREADY_USED_MESSAGE,
             ];
         }
 

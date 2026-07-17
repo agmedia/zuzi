@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class Order extends Model
 {
@@ -124,7 +125,7 @@ class Order extends Model
         if ( ! empty($this->order) && isset($this->order['cart'])) {
             $user_id = auth()->user() ? auth()->user()->id : 0;
 
-            $order_id = \App\Models\Back\Orders\Order::insertGetId([
+            $attributes = [
                 'user_id'          => $user_id,
                 'affiliate_id'     => 0,
                 'order_status_id'  => $this->order['order_status_id'],
@@ -157,7 +158,14 @@ class Order extends Model
                 'comment'          => $this->order['comment'],
                 'created_at'       => Carbon::now(),
                 'updated_at'       => Carbon::now()
-            ]);
+            ];
+
+            if (Schema::hasColumn('orders', 'coupon_code')) {
+                $coupon = Helper::normalizeCoupon($this->order['cart']['coupon'] ?? '');
+                $attributes['coupon_code'] = $coupon !== '' ? $coupon : null;
+            }
+
+            $order_id = \App\Models\Back\Orders\Order::insertGetId($attributes);
 
             if ($order_id) {
                 // HISTORY
@@ -192,7 +200,7 @@ class Order extends Model
             $this->order = $data;
         }
 
-        $updated = \App\Models\Back\Orders\Order::where('id', $data['id'])->update([
+        $attributes = [
             'payment_fname'    => $this->order['address']['fname'],
             'payment_lname'    => $this->order['address']['lname'],
             'payment_address'  => $this->order['address']['address'],
@@ -219,7 +227,14 @@ class Order extends Model
             'oib'              => $this->order['address']['oib'],
             'comment'          => $this->order['comment'],
             'updated_at'       => Carbon::now()
-        ]);
+        ];
+
+        if (Schema::hasColumn('orders', 'coupon_code')) {
+            $coupon = Helper::normalizeCoupon($this->order['cart']['coupon'] ?? '');
+            $attributes['coupon_code'] = $coupon !== '' ? $coupon : null;
+        }
+
+        $updated = \App\Models\Back\Orders\Order::where('id', $data['id'])->update($attributes);
 
         if ($updated) {
             $this->updateProducts($data['id']);

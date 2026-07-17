@@ -128,8 +128,24 @@
                                         <div class="col-md-4 pt-2"></div>
                                         <div class="col-md-8">
                                             <div class="custom-control custom-switch custom-control-success">
-                                                <input type="checkbox" class="custom-control-input" id="coupon-quantity" name="coupon_quantity" @if (isset($action) and $action->quantity) checked @endif>
-                                                <label class="custom-control-label" for="coupon-quantity">Koristi kupon samo jednom</label>
+                                                <input type="checkbox" class="custom-control-input" id="coupon-quantity" name="coupon_quantity" @if (old('coupon_quantity', isset($action) && $action->quantity ? 'on' : null)) checked @endif>
+                                                <label class="custom-control-label" for="coupon-quantity">
+                                                    Koristi kupon samo jednom (ukupno)
+                                                    @include('back.layouts.partials.popover', [
+                                                        'title' => 'Jedno korištenje ukupno',
+                                                        'content' => 'Nakon prve uspješne narudžbe deaktivira se cijela akcija i kupon više ne može koristiti nitko.'
+                                                    ])
+                                                </label>
+                                            </div>
+                                            <div class="custom-control custom-switch custom-control-success mt-2">
+                                                <input type="checkbox" class="custom-control-input" id="coupon-once-per-email" name="coupon_once_per_email" @if (old('coupon_once_per_email', isset($action) && $action->once_per_email ? 'on' : null)) checked @endif>
+                                                <label class="custom-control-label" for="coupon-once-per-email">
+                                                    Koristi jednom po kupcu (email)
+                                                    @include('back.layouts.partials.popover', [
+                                                        'title' => 'Jedno korištenje po emailu',
+                                                        'content' => 'Svaka email adresa može iskoristiti ovaj kupon u samo jednoj aktivnoj ili uspješnoj narudžbi. Odbijene, nedovršene i otkazane narudžbe ne troše kupon.'
+                                                    ])
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -246,6 +262,18 @@
             });
 
             toggleCombinedCategoryUi($('#group-select').val());
+
+            $('#coupon-quantity, #coupon-once-per-email').on('change', function () {
+                if (! this.checked) {
+                    return;
+                }
+
+                let otherSwitch = this.id === 'coupon-quantity'
+                    ? '#coupon-once-per-email'
+                    : '#coupon-quantity';
+
+                $(otherSwitch).prop('checked', false);
+            });
 
             if (isCombinedCategoryGroup($('#group-select').val()) && ! $('#combined-category-rows .combined-category-row').length) {
                 appendCombinedCategoryRow();

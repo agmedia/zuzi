@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Helpers\Helper;
+use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Marketing\Action;
+use App\Services\CouponUsageService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -124,6 +127,115 @@ class CartApiTest extends TestCase
             ->assertJsonPath('cart.coupon', '');
 
         $response->assertSessionMissing(config('session.cart') . '_coupon');
+    }
+
+    public function test_coupon_limited_per_email_is_rejected_after_that_email_used_it(): void
+    {
+        $this->createTotalCouponAction('JEDNOM', 10, [
+            'quantity' => 0,
+            'once_per_email' => 1,
+        ]);
+        $this->createCouponOrder('kupac@example.test', 'JEDNOM', 1);
+
+        CheckoutSession::setAddress(['email' => ' KUPAC@example.test ']);
+
+        $response = $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'jednom',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => false,
+                'coupon' => '',
+                'message' => CouponUsageService::ALREADY_USED_MESSAGE,
+            ]);
+
+        $response->assertSessionMissing(config('session.cart') . '_coupon');
+    }
+
+    public function test_coupon_limited_per_email_remains_available_to_another_email(): void
+    {
+        $this->createTotalCouponAction('JEDNOM', 10, [
+            'quantity' => 0,
+            'once_per_email' => 1,
+        ]);
+        $this->createCouponOrder('prvi@example.test', 'JEDNOM', 1);
+
+        CheckoutSession::setAddress(['email' => 'drugi@example.test']);
+
+        $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'jednom',
+        ])->assertOk()
+            ->assertJson([
+                'success' => true,
+                'coupon' => 'JEDNOM',
+            ]);
+    }
+
+    public function test_canceled_order_does_not_consume_coupon_limited_per_email(): void
+    {
+        $this->createTotalCouponAction('JEDNOM', 10, [
+            'quantity' => 0,
+            'once_per_email' => 1,
+        ]);
+        $this->createCouponOrder('kupac@example.test', 'JEDNOM', 5);
+
+        CheckoutSession::setAddress(['email' => 'kupac@example.test']);
+
+        $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'jednom',
+        ])->assertOk()
+            ->assertJson([
+                'success' => true,
+                'coupon' => 'JEDNOM',
+            ]);
+    }
+
+    public function test_current_order_can_be_excluded_from_per_email_usage_check(): void
+    {
+        $this->createTotalCouponAction('JEDNOM', 10, [
+            'quantity' => 0,
+            'once_per_email' => 1,
+        ]);
+        $orderId = $this->createCouponOrder('kupac@example.test', 'JEDNOM', 3);
+
+        $service = app(CouponUsageService::class);
+
+        $this->assertTrue($service->hasBeenUsed('JEDNOM', 'kupac@example.test'));
+        $this->assertFalse($service->hasBeenUsed('JEDNOM', 'kupac@example.test', $orderId));
+    }
+
+    public function test_action_save_prefers_per_email_limit_over_global_single_use(): void
+    {
+        $request = Request::create('/admin/marketing/action', 'POST', [
+            'title' => 'Jednom po kupcu',
+            'type' => 'P',
+            'discount' => 10,
+            'group' => 'total',
+            'coupon' => 'jednom',
+            'coupon_quantity' => 'on',
+            'coupon_once_per_email' => 'on',
+            'status' => 'on',
+        ]);
+
+        $action = (new Action())->validateRequest($request)->create();
+
+        $this->assertSame('JEDNOM', $action->coupon);
+        $this->assertSame(0, (int) $action->quantity);
+        $this->assertSame(1, (int) $action->once_per_email);
+    }
+
+    public function test_inactive_total_coupon_is_not_accepted(): void
+    {
+        $this->createTotalCouponAction('NEAKTIVAN', 10, ['status' => 0]);
+
+        $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'neaktivan',
+        ])->assertOk()
+            ->assertJson([
+                'success' => false,
+                'coupon' => '',
+            ]);
     }
 
     public function test_coupon_total_condition_uses_customer_facing_coupon_name(): void
@@ -381,9 +493,9 @@ class CartApiTest extends TestCase
         ], $overrides));
     }
 
-    private function createTotalCouponAction(string $coupon, int $discount): Action
+    private function createTotalCouponAction(string $coupon, int $discount, array $overrides = []): Action
     {
-        return Action::query()->create([
+        return Action::query()->create(array_merge([
             'title' => 'Test coupon ' . $coupon,
             'type' => 'P',
             'discount' => $discount,
@@ -394,6 +506,46 @@ class CartApiTest extends TestCase
             'coupon' => $coupon,
             'quantity' => 1,
             'status' => 1,
+        ], $overrides));
+    }
+
+    private function createCouponOrder(string $email, string $coupon, int $status): int
+    {
+        return (int) DB::table('orders')->insertGetId([
+            'user_id' => 0,
+            'affiliate_id' => 0,
+            'order_status_id' => $status,
+            'invoice' => '',
+            'total' => 90,
+            'coupon_code' => $coupon,
+            'payment_fname' => 'Test',
+            'payment_lname' => 'Kupac',
+            'payment_address' => 'Testna 1',
+            'payment_zip' => '10000',
+            'payment_city' => 'Zagreb',
+            'payment_phone' => '0991234567',
+            'payment_email' => $email,
+            'payment_method' => 'Pouzeće',
+            'payment_code' => 'cod',
+            'payment_card' => '',
+            'payment_installment' => 0,
+            'shipping_fname' => 'Test',
+            'shipping_lname' => 'Kupac',
+            'shipping_address' => 'Testna 1',
+            'shipping_zip' => '10000',
+            'shipping_city' => 'Zagreb',
+            'shipping_phone' => '0991234567',
+            'shipping_email' => $email,
+            'shipping_method' => 'Dostava',
+            'shipping_code' => 'gls',
+            'company' => '',
+            'oib' => '',
+            'comment' => '',
+            'tracking_code' => '',
+            'shipped' => 0,
+            'printed' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
