@@ -5,7 +5,10 @@ namespace Tests\Feature;
 use App\Helpers\Helper;
 use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Marketing\Action;
+use App\Models\Front\Loyalty;
+use App\Models\User;
 use App\Services\CouponUsageService;
+use App\Services\GiftVoucherService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -127,6 +130,80 @@ class CartApiTest extends TestCase
             ->assertJsonPath('cart.coupon', '');
 
         $response->assertSessionMissing(config('session.cart') . '_coupon');
+    }
+
+    public function test_coupon_clears_loyalty_and_prevents_it_from_being_applied_again(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Loyalty::addPoints(100, 0, 'admin', 'Test balance', $user->id);
+
+        $productId = $this->createProduct('Artikl za loyalty test', 'LOYALTY-COUPON');
+        $this->createTotalCouponAction('HVALA10', 10);
+
+        $this->postJson('/api/v2/cart/add', [
+            'item' => [
+                'id' => $productId,
+                'quantity' => 1,
+            ],
+        ])->assertOk();
+
+        $loyaltyResponse = $this->getJson('/api/v2/cart/loyalty/100');
+
+        $loyaltyResponse->assertOk();
+        $this->assertSame(100, $loyaltyResponse->json());
+        $loyaltyResponse->assertSessionHas(config('session.cart') . '_loyalty', 100);
+
+        $couponResponse = $this->postJson('/api/v2/cart/coupon', [
+            'coupon' => 'HVALA10',
+        ]);
+
+        $couponResponse->assertOk()
+            ->assertJson([
+                'success' => true,
+                'coupon' => 'HVALA10',
+            ])
+            ->assertJsonPath('cart.loyalty', '')
+            ->assertJsonPath('cart.has_loyalty', 0);
+
+        $couponResponse->assertSessionMissing(config('session.cart') . '_loyalty');
+        $this->assertFalse($this->cartHasDetailCondition($couponResponse->json('cart'), 'Loyalty'));
+
+        $blockedResponse = $this->getJson('/api/v2/cart/loyalty/100');
+
+        $blockedResponse->assertOk();
+        $this->assertSame(0, $blockedResponse->json());
+        $blockedResponse->assertSessionMissing(config('session.cart') . '_loyalty');
+    }
+
+    public function test_gift_voucher_purchase_clears_selected_loyalty(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Loyalty::addPoints(100, 0, 'admin', 'Test balance', $user->id);
+
+        $this->getJson('/api/v2/cart/loyalty/100')
+            ->assertOk()
+            ->assertSessionHas(config('session.cart') . '_loyalty', 100);
+
+        $response = $this->postJson(
+            '/api/v2/cart/add',
+            GiftVoucherService::buildCartItemRequest([
+                'amount' => 50,
+                'recipient_name' => 'Ana',
+                'recipient_email' => 'ana@example.test',
+                'sender_name' => 'Iva',
+                'message' => 'Sretan rođendan!',
+            ])
+        );
+
+        $response->assertOk()
+            ->assertJsonPath('has_gift_voucher', true)
+            ->assertJsonPath('loyalty', '')
+            ->assertJsonPath('has_loyalty', 0);
+
+        $response->assertSessionMissing(config('session.cart') . '_loyalty');
+        $this->assertFalse($this->cartHasDetailCondition($response->json(), 'Loyalty'));
     }
 
     public function test_coupon_limited_per_email_is_rejected_after_that_email_used_it(): void

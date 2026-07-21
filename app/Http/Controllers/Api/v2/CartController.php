@@ -163,9 +163,11 @@ class CartController extends Controller
      */
     public function loyalty($loyalty)
     {
-        session([$this->key . '_loyalty' => $loyalty]);
+        $response = $this->cart->loyalty($loyalty);
 
-        return response()->json($this->cart->hasLoyalty());
+        $this->cart->resolveDB();
+
+        return response()->json($response);
     }
 
 

@@ -3278,6 +3278,8 @@ __webpack_require__.r(__webpack_exports__);
       return this.checkCoupon(normalizedCoupon).then(function (response) {
         _this4.coupon = String(_this4.$store.state.cart.coupon || '').trim();
         if (response && response.success) {
+          _this4.selected_loyalty = null;
+          _this4.showLoyaltyPanel = false;
           if (_this4.coupon === normalizedCoupon) {
             _this4.codeInput = '';
           }
@@ -9649,7 +9651,7 @@ var render = function() {
                   _vm._v(" "),
                   _c("p", { staticClass: "small text-muted mb-0 mt-2" }, [
                     _vm._v(
-                      "\n                    Moguće je primijeniti jedan kod po narudžbi. Novi unos zamjenjuje postojeći.\n                "
+                      "\n                    Moguće je primijeniti jedan kod po narudžbi. Kod se ne može kombinirati s Loyalty popustom.\n                "
                     )
                   ]),
                   _vm._v(" "),
@@ -9670,6 +9672,7 @@ var render = function() {
       : _vm._e(),
     _vm._v(" "),
     !_vm.hasGiftVoucher &&
+    !_vm.hasActiveCoupon &&
     ((_vm.has_loyalty && _vm.route == "kosarica") ||
       (_vm.has_loyalty && _vm.route == "naplata"))
       ? _c(

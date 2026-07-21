@@ -69,8 +69,12 @@ class AgCart extends Model
     /**
      * @return array
      */
-    public function get()
+    public function get(bool $reconcileDiscounts = true)
     {
+        if ($reconcileDiscounts) {
+            $this->reconcileExclusiveDiscounts();
+        }
+
         $eur = $this->getEur();
         $detailConditions = $this->setCartConditions();
 
@@ -315,15 +319,17 @@ class AgCart extends Model
 
         $this->refreshCouponAwareItems();
 
-        $cart = $this->get();
+        $cart = $this->get(false);
         $success = Helper::couponEquals(Helper::isCouponUsed($this->cart), $coupon);
 
         if ( ! $success) {
             if ($this->cart->getTotalQuantity() <= 0 && $this->isValidCouponCode($coupon)) {
+                $this->clearLoyalty();
+
                 return [
                     'success' => true,
                     'coupon' => $this->coupon,
-                    'cart' => $cart,
+                    'cart' => $this->get(),
                     'message' => 'Kod je spremljen i automatski će se primijeniti čim dodate artikle u košaricu.',
                 ];
             }
@@ -331,6 +337,9 @@ class AgCart extends Model
             session()->forget($this->session_key . '_coupon');
             $this->coupon = '';
             $this->refreshCouponAwareItems();
+            $cart = $this->get();
+        } else {
+            $this->clearLoyalty();
             $cart = $this->get();
         }
 
@@ -363,7 +372,7 @@ class AgCart extends Model
      */
     public function hasLoyalty(): int
     {
-        if ($this->hasGiftVoucherItems()) {
+        if ($this->hasExclusiveDiscount()) {
             return 0;
         }
 
@@ -374,6 +383,30 @@ class AgCart extends Model
         }
 
         return 0;
+    }
+
+
+    /**
+     * @param mixed $loyalty
+     */
+    public function loyalty($loyalty): int
+    {
+        if (! $loyalty || $loyalty === 'null') {
+            $this->clearLoyalty();
+
+            return $this->hasLoyalty();
+        }
+
+        if ($this->hasExclusiveDiscount()) {
+            $this->clearLoyalty();
+
+            return 0;
+        }
+
+        $this->loyalty = intval($loyalty);
+        session([$this->session_key . '_loyalty' => $this->loyalty]);
+
+        return $this->hasLoyalty();
     }
 
 
@@ -484,9 +517,10 @@ class AgCart extends Model
         $payment_method    = PaymentMethod::condition($this->cart);
         $special_condition = Helper::hasSpecialCartCondition($this->cart);
         $bogo_condition = Helper::hasBogoCartCondition($this->cart, $this->coupon);
-        $loyalty_conditions = Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
         $coupon_conditions = Helper::hasCouponCartConditions($this->cart, $this->coupon);
-        $loyalty_conditions = Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
+        $loyalty_conditions = $this->hasExclusiveDiscount()
+            ? false
+            : Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
 
         if ($payment_method) {
             $str = str_replace('+', '', $payment_method->getValue());
@@ -720,6 +754,37 @@ class AgCart extends Model
         }
 
         return false;
+    }
+
+    private function hasActiveCoupon(): bool
+    {
+        return Helper::normalizeCoupon($this->coupon) !== '';
+    }
+
+    private function hasExclusiveDiscount(): bool
+    {
+        return $this->hasGiftVoucherItems() || $this->hasActiveCoupon();
+    }
+
+    private function reconcileExclusiveDiscounts(): void
+    {
+        $hasGiftVoucher = $this->hasGiftVoucherItems();
+
+        if ($hasGiftVoucher && $this->hasActiveCoupon()) {
+            session()->forget($this->session_key . '_coupon');
+            $this->coupon = '';
+            $this->refreshCouponAwareItems();
+        }
+
+        if ($hasGiftVoucher || $this->hasActiveCoupon()) {
+            $this->clearLoyalty();
+        }
+    }
+
+    private function clearLoyalty(): void
+    {
+        session()->forget($this->session_key . '_loyalty');
+        $this->loyalty = '';
     }
 
     private function hasOnlyGiftVoucherItems(): bool

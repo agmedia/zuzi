@@ -152,7 +152,7 @@
                     </div>
 
                     <p class="small text-muted mb-0 mt-2">
-                        Moguće je primijeniti jedan kod po narudžbi. Novi unos zamjenjuje postojeći.
+                        Moguće je primijeniti jedan kod po narudžbi. Kod se ne može kombinirati s Loyalty popustom.
                     </p>
 
                     <p v-if="hasActiveCoupon" class="small text-success mb-0 mt-2">
@@ -162,7 +162,7 @@
             </div>
         </div>
 
-        <div class="rounded-3 p-4 mt-3" v-if="!hasGiftVoucher && (has_loyalty && route == 'kosarica' || has_loyalty && route == 'naplata')" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
+        <div class="rounded-3 p-4 mt-3" v-if="!hasGiftVoucher && !hasActiveCoupon && (has_loyalty && route == 'kosarica' || has_loyalty && route == 'naplata')" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2" v-cloak>
                 <button
                     type="button"
@@ -430,6 +430,9 @@ export default {
                     this.coupon = String(this.$store.state.cart.coupon || '').trim();
 
                     if (response && response.success) {
+                        this.selected_loyalty = null;
+                        this.showLoyaltyPanel = false;
+
                         if (this.coupon === normalizedCoupon) {
                             this.codeInput = '';
                         }
