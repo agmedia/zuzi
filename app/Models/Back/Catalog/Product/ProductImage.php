@@ -3,6 +3,7 @@
 namespace App\Models\Back\Catalog\Product;
 
 use App\Helpers\ProductHelper;
+use App\Support\ProductImageFileSet;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -115,9 +116,8 @@ class ProductImage extends Model
     {
         // Nađi staru sliku i izdvoji path
         $old  = $id ? $this->where('id', $id)->first() : $this->resource;
-        $path = str_replace('media/images/gallery/products/', '', $old['image']);
-        // Obriši staru sliku
-        Storage::disk('products')->delete($path);
+        // Delete the JPG, WebP and thumbnail variants of the replaced image.
+        ProductImageFileSet::deleteForStoredPath($old['image']);
 
         $path = $this->saveImage($new->image, $title);
 

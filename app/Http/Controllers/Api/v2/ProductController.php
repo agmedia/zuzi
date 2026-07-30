@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Api\v2;
 
 use App\Helpers\Helper;
+use App\Http\Controllers\Controller;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductImage;
 use App\Models\Back\Marketing\Action;
+use App\Support\ProductImageFileSet;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -46,9 +45,7 @@ class ProductController extends Controller
         $image = ProductImage::where('id', $request->input('data'))->first();
 
         if (isset($image->image)) {
-            $path = str_replace(config('filesystems.disks.products.url'), '', $image->image);
-            // Obriši staru sliku
-            Storage::disk('products')->delete($path);
+            ProductImageFileSet::deleteForStoredPath($image->image);
 
             if (ProductImage::where('id', $request->input('data'))->delete()) {
                 ProductImage::where('image', $image->image)->delete();

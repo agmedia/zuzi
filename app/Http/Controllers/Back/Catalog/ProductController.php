@@ -189,7 +189,7 @@ class ProductController extends Controller
         ProductImage::where('product_id', $product->id)->delete();
         ProductCategory::where('product_id', $product->id)->delete();
 
-        Storage::deleteDirectory(config('filesystems.disks.products.root') . $product->id);
+        Storage::disk('products')->deleteDirectory((string) $product->id);
 
         $destroyed = Product::destroy($product->id);
 
@@ -216,7 +216,7 @@ class ProductController extends Controller
             ProductImage::where('product_id', $id)->delete();
             ProductCategory::where('product_id', $id)->delete();
 
-            Storage::deleteDirectory(config('filesystems.disks.products.root') . $id);
+            Storage::disk('products')->deleteDirectory((string) $id);
 
             $destroyed = Product::destroy($id);
 
