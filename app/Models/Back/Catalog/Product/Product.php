@@ -357,6 +357,10 @@ class Product extends Model
             $response['created_at'] = Carbon::now();
         }
 
+        if (! $insert && Schema::hasColumn($this->getTable(), 'stock_restored_from_backup')) {
+            $response['stock_restored_from_backup'] = $this->request->boolean('stock_restored_from_backup');
+        }
+
         return $response;
     }
 

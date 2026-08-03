@@ -42,9 +42,6 @@ class Import
 
                     $str = $id . '/' . Str::limit(Str::slug($name)) . '-' . $time . '.';
 
-                    $path = $str . 'jpg';
-                    Storage::disk('products')->put($path, $img->encode('jpg'));
-
                     $path_webp = $str . 'webp';
                     Storage::disk('products')->put($path_webp, $img->encode('webp'));
 
@@ -58,7 +55,7 @@ class Import
                     $path_webp_thumb = $str_thumb . 'webp';
                     Storage::disk('products')->put($path_webp_thumb, $img->encode('webp'));
 
-                    $response[] = config('filesystems.disks.products.url') . $path;
+                    $response[] = config('filesystems.disks.products.url') . $path_webp;
 
                     Storage::disk('local')->delete('temp/' . $key . '.jpg');
                 }

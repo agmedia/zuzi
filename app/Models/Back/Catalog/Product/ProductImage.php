@@ -202,12 +202,11 @@ class ProductImage extends Model
             $existing_full = ProductHelper::getFullImageTitle($this->resource->image);
             $new_full      = ProductHelper::setFullImageTitle($title);
 
-            Storage::disk('products')->move($path . $existing_full . '.jpg', $path . $new_full . '.jpg');
             Storage::disk('products')->move($path . $existing_full . '.webp', $path . $new_full . '.webp');
             Storage::disk('products')->move($path . $existing_full . '-thumb.webp', $path . $new_full . '-thumb.webp');
 
             Product::where('id', $this->resource->id)->update([
-                'image' => config('filesystems.disks.products.url') . $path . $new_full . '.jpg'
+                'image' => config('filesystems.disks.products.url') . $path . $new_full . '.webp'
             ]);
         }
 
@@ -233,12 +232,11 @@ class ProductImage extends Model
                 $existing_full = ProductHelper::getFullImageTitle($resource->image);
                 $new_full      = ProductHelper::setFullImageTitle($title);
 
-                Storage::disk('products')->move($path . $existing_full . '.jpg', $path . $new_full . '.jpg');
                 Storage::disk('products')->move($path . $existing_full . '.webp', $path . $new_full . '.webp');
                 Storage::disk('products')->move($path . $existing_full . '-thumb.webp', $path . $new_full . '-thumb.webp');
 
                 $this->where('id', $id)->update([
-                    'image' => config('filesystems.disks.products.url') . $path . $new_full . '.jpg'
+                    'image' => config('filesystems.disks.products.url') . $path . $new_full . '.webp'
                 ]);
             }
         }
@@ -260,9 +258,6 @@ class ProductImage extends Model
         $img  = Image::make($this->makeImageFromBase($image));
         $path = $this->resource->id . '/' . Str::slug($this->resource->name) . '-' . $time . '.';
 
-        $path_jpg = $path . 'jpg';
-        Storage::disk('products')->put($path_jpg, $img->encode('jpg'));
-
         $path_webp = $path . 'webp';
         Storage::disk('products')->put($path_webp, $img->encode('webp'));
 
@@ -276,7 +271,7 @@ class ProductImage extends Model
         $path_webp_thumb = $path_thumb . 'webp';
         Storage::disk('products')->put($path_webp_thumb, $img->encode('webp', 80));
 
-        return $path_jpg;
+        return $path_webp;
     }
 
 

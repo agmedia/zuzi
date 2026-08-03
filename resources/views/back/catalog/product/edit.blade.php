@@ -56,6 +56,14 @@
                                 <input type="checkbox" class="custom-control-input" id="product-delivery-24h-switch" name="delivery_24h" {{ old('delivery_24h', isset($product) ? $product->delivery_24h : 0) ? 'checked' : '' }}>
                                 <label class="custom-control-label pt-1" for="product-delivery-24h-switch">Dobavljivo 24 sata</label>
                             </div>
+
+                            @if (isset($product))
+                                <input type="hidden" name="stock_restored_from_backup" value="0">
+                                <div class="custom-control custom-switch custom-control-warning block-options-item ml-4">
+                                    <input type="checkbox" class="custom-control-input" id="product-stock-restored-switch" name="stock_restored_from_backup" value="1" {{ old('stock_restored_from_backup', $product->stock_restored_from_backup) ? 'checked' : '' }}>
+                                    <label class="custom-control-label pt-1" for="product-stock-restored-switch">Zvjezdica uz količinu</label>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
