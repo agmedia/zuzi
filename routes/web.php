@@ -31,6 +31,7 @@ use App\Http\Controllers\Back\Settings\PageController;
 use App\Http\Controllers\Back\Settings\QuickMenuController;
 use App\Http\Controllers\Back\Settings\SettingsController;
 use App\Http\Controllers\Back\Settings\ContractWithdrawalSettingsController;
+use App\Http\Controllers\Back\Settings\GoogleLoginSettingsController;
 use App\Http\Controllers\Back\Settings\ApiController;
 use App\Http\Controllers\Back\UserController;
 use App\Http\Controllers\Back\Widget\WidgetController;
@@ -40,6 +41,7 @@ use App\Http\Controllers\Front\CheckoutController;
 use App\Http\Controllers\Front\CustomerController;
 use App\Http\Controllers\Front\ContractWithdrawalController;
 use App\Http\Controllers\Front\GiftVoucherController;
+use App\Http\Controllers\Front\GoogleLoginController;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\NewsletterController;
 use App\Http\Controllers\MatchPredictionController;
@@ -48,6 +50,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Back\Marketing\WishlistController;
+
+Route::get('/prijava/google', [GoogleLoginController::class, 'redirect'])
+    ->middleware('throttle:10,1')
+    ->name('google.login.redirect');
+Route::get('/prijava/google/povratak', [GoogleLoginController::class, 'callback'])
+    ->middleware('throttle:10,1')
+    ->name('google.login.callback');
 
 
 /*Route::domain('https://images.antikvarijatbibl.lin73.host25.com/')->group(function () {
@@ -236,6 +245,8 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         // API
         Route::get('api', [ApiController::class, 'index'])->name('api.index');
         Route::get('pelion', [ApiController::class, 'pelion'])->name('pelion.index');
+        Route::get('google-login', [GoogleLoginSettingsController::class, 'edit'])->name('google-login.edit');
+        Route::patch('google-login', [GoogleLoginSettingsController::class, 'update'])->name('google-login.update');
 
 
         // INFO PAGES

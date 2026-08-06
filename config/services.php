@@ -52,6 +52,12 @@ return [
         'measurement_api_secret' => env('GOOGLE_ANALYTICS_MEASUREMENT_API_SECRET'),
     ],
 
+    'google_login' => [
+        'enabled' => env('GOOGLE_LOGIN_ENABLED', false),
+        'client_id' => env('GOOGLE_LOGIN_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_LOGIN_CLIENT_SECRET'),
+    ],
+
     'wolt' => [
         'url'         => env('WOLT_API_URL', 'https://daas-public-api.wolt.com'),
         'api_key'     => env('WOLT_API_KEY'),

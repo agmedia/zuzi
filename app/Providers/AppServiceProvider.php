@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use App\Services\GoogleLoginSettingsService;
 use Throwable;
 
 class AppServiceProvider extends ServiceProvider
@@ -77,6 +78,9 @@ class AppServiceProvider extends ServiceProvider
                 'pendingWishlistCount' => $this->resolvePendingWishlistCount(),
                 'pendingReviewCount' => $this->resolvePendingReviewCount(),
             ]);
+        });
+        View::composer('front.layouts.modals.login', function ($view) {
+            $view->with('googleLoginEnabled', app(GoogleLoginSettingsService::class)->enabled());
         });
 
         Paginator::useBootstrap();

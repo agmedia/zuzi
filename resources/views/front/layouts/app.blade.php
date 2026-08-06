@@ -51,6 +51,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="stylesheet" media="screen" href="{{ asset('vendor/simplebar/dist/simplebar.min.css') }}"/>
     <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.0035') }}">
+    <link rel="stylesheet" media="screen" href="{{ asset('css/google-login.css?v=1') }}">
     <script src="{{ asset('js/jquery/jquery-2.1.1.min.js') }}"></script>
 
 
@@ -899,7 +900,7 @@
 <script>
     const signinModal = document.getElementById('signin-modal');
     const recaptchaSiteKey = @json(config('services.recaptcha.sitekey'));
-    const shouldOpenSigninModal = @json((bool) session('auth_status'));
+    const shouldOpenSigninModal = @json((bool) (session('auth_status') || session('auth_error')));
     let recaptchaLoader = null;
 
     function loadRecaptchaScript() {
