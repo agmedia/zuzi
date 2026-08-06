@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class ReviewRequestPromoService
 {
-    public const DISCOUNT_PERCENT = 20;
+    public const DISCOUNT_PERCENT = 10;
     public const VALID_FOR_DAYS = 7;
 
     private const COUPON_SUFFIX_LENGTH = 7;

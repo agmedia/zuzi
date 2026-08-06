@@ -17,6 +17,7 @@ class AccountNoticeController extends Controller
         $mailDefaultDelay = AccountNoticeMailService::DEFAULT_DELAY_SECONDS;
         $mailDefaultLimit = AccountNoticeMailService::DEFAULT_BATCH_LIMIT;
         $mailTestEmail = AccountNoticeMailService::TEST_EMAIL;
+        $mailBlockReason = $account_notice_mail->sendingBlockReason($notice);
 
         return view('back.marketing.account-notice.edit', compact(
             'notice',
@@ -24,7 +25,8 @@ class AccountNoticeController extends Controller
             'mailDelayOptions',
             'mailDefaultDelay',
             'mailDefaultLimit',
-            'mailTestEmail'
+            'mailTestEmail',
+            'mailBlockReason'
         ));
     }
 
@@ -63,6 +65,11 @@ class AccountNoticeController extends Controller
         ]);
 
         $notice = $account_notice->get();
+
+        if ($reason = $account_notice_mail->sendingBlockReason($notice)) {
+            return response()->json(['error' => $reason], 422);
+        }
+
         $limit = $this->resolveBatchLimit($request);
         $userIds = $account_notice_mail->recipientIds($notice, $limit);
         $stats = $account_notice_mail->stats($notice);

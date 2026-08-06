@@ -117,6 +117,7 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
                 && (int) $mail->order->id === $orderId
                 && (int) $mail->promoAction->id === (int) $action->id
                 && str_contains($rendered, 'TVOJA NAGRADA: -5% na sve artikle')
+                && str_contains($rendered, 'Iskoristi -5% sada')
                 && str_contains($rendered, (string) $action->coupon);
         });
 
@@ -180,7 +181,7 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         Carbon::setTestNow('2026-04-29 15:30:00');
         $response = $this->actingAs($user)->postJson(route('api.order.send.unfinished-promo'), [
             'order_id' => $orderId,
-            'discount' => 20,
+            'discount' => 15,
         ]);
 
         $response->assertStatus(422)->assertJson([
@@ -196,6 +197,26 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
         Mail::assertSent(UnfinishedOrderPromo::class, 1);
 
         Carbon::setTestNow();
+    }
+
+    public function test_twenty_percent_hvala_promo_is_temporarily_disabled(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+        $orderId = $this->createOrder(config('settings.order.status.unfinished'), 'promo@example.com');
+
+        $response = $this->actingAs($user)->postJson(route('api.order.send.unfinished-promo'), [
+            'order_id' => $orderId,
+            'discount' => 20,
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['discount']);
+        $this->assertFalse(app(UnfinishedOrderPromoService::class)->isAllowedDiscount(20));
+        $this->assertNull(Action::query()
+            ->where('title', 'Promo za nedovrsenu narudzbu #' . $orderId)
+            ->first());
+        Mail::assertNotSent(UnfinishedOrderPromo::class);
     }
 
     public function test_unfinished_order_promo_email_cannot_be_sent_when_order_already_uses_coupon(): void

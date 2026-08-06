@@ -286,13 +286,27 @@
 
                 @foreach ($shippingMethods as $s_method)
                     @php($shipping_price = \App\Models\Front\Checkout\ShippingMethod::priceForTotal($s_method, (float) $cartSubtotal))
-                    <tr wire:click="selectShipping('{{ $s_method->code }}')" style="cursor: pointer;">
+                    @php($wolt_unavailable = $s_method->code === 'wolt_drive' && $woltAvailable === false)
+                    <tr
+                        @unless($wolt_unavailable) wire:click="selectShipping('{{ $s_method->code }}')" @endunless
+                        class="{{ $wolt_unavailable ? 'table-light text-muted' : '' }}"
+                        style="cursor: {{ $wolt_unavailable ? 'not-allowed' : 'pointer' }}; {{ $wolt_unavailable ? 'opacity: .7;' : '' }}"
+                        @if($wolt_unavailable) aria-disabled="true" @endif
+                    >
                         <td class="align-middle text-center">
                             <div class="form-check d-inline-flex align-items-center justify-content-center m-0 p-0">
-                                <input class="form-check-input float-none m-0" type="radio" value="{{ $s_method->code }}" wire:model="shipping" aria-label="{{ $s_method->title }}" {{ $shipping === $s_method->code ? 'checked' : '' }}>
+                                <input class="form-check-input float-none m-0" type="radio" value="{{ $s_method->code }}" wire:model="shipping" aria-label="{{ $s_method->title }}" {{ $shipping === $s_method->code ? 'checked' : '' }} {{ $wolt_unavailable ? 'disabled' : '' }}>
                             </div>
                         </td>
-                        <td class="align-middle"><span class="text-dark fw-medium">{{ $s_method->title }}</span><br><span class="text-muted">{!! $s_method->data->short_description !!}</span>
+                        <td class="align-middle">
+                            <span class="{{ $wolt_unavailable ? 'text-muted' : 'text-dark' }} fw-medium">{{ $s_method->title }}</span>
+                            @if ($wolt_unavailable)
+                                <span class="badge bg-secondary ms-1">Nije dostupno</span>
+                            @endif
+                            <br><span class="text-muted">{!! $s_method->data->short_description !!}</span>
+                            @if ($wolt_unavailable && $woltUnavailableReason)
+                                <br><span class="text-danger">{{ $woltUnavailableReason }}</span>
+                            @endif
 
 
                         </td>
@@ -379,7 +393,7 @@
         </div>
         </div>
 
-        @error('shipping') <small class="text-danger">Način dostave je obvezan</small> @enderror
+        @error('shipping') <small class="text-danger">{{ $message }}</small> @enderror
         <div class=" d-flex pt-4 mt-3">
             <div class="w-50 pe-3"><a class="btn btn-secondary d-block w-100 checkout-step-link" href="{{ route('naplata', ['step' => 'podaci']) }}"><i class="ci-arrow-left mt-sm-0 me-1"></i><span class="d-none d-sm-inline">Povratak na unos podataka</span><span class="d-inline d-sm-none">Povratak</span></a></div>
             <div class="w-50 ps-2"><a class="btn btn-primary d-block w-100 checkout-step-link" wire:click.prevent="changeStep('placanje')" href="{{ route('naplata', ['step' => 'placanje']) }}"><span class="d-none d-sm-inline">Na odabir plaćanja</span><span class="d-inline d-sm-none">Nastavi</span><i class="ci-arrow-right mt-sm-0 ms-1"></i></a></div>

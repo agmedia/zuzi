@@ -203,7 +203,7 @@
             <div class="block-header block-header-default">
                 <h3 class="block-title">Slanje maila korisnicima</h3>
                 <div class="block-options">
-                    <button type="button" class="btn btn-sm btn-alt-secondary mr-2" id="account-notice-test-mail-button" onclick="sendAccountNoticeTestMail()">
+                    <button type="button" class="btn btn-sm btn-alt-secondary mr-2" id="account-notice-test-mail-button" onclick="sendAccountNoticeTestMail()" {{ $mailBlockReason ? 'disabled' : '' }}>
                         <i class="fa fa-envelope-open-text mr-1"></i>
                         Test na {{ $mailTestEmail }}
                     </button>
@@ -212,7 +212,7 @@
                         class="btn btn-sm btn-alt-primary"
                         id="account-notice-send-mail-button"
                         onclick="sendAccountNoticeMailBatch()"
-                        {{ (int) $mailStats['remaining'] > 0 ? '' : 'disabled' }}
+                        {{ (int) $mailStats['remaining'] > 0 && ! $mailBlockReason ? '' : 'disabled' }}
                     >
                         <i class="fa fa-paper-plane mr-1"></i>
                         Pošalji batch
@@ -220,6 +220,11 @@
                 </div>
             </div>
             <div class="block-content bg-body-dark">
+                @if ($mailBlockReason)
+                    <div class="alert alert-warning mb-3" role="alert">
+                        {{ $mailBlockReason }}
+                    </div>
+                @endif
                 <div class="row align-items-end">
                     <div class="form-group col-md-3">
                         <label for="account-notice-mail-limit">Broj korisnika</label>

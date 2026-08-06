@@ -53,7 +53,7 @@ class SendReviewRequestEmailsTest extends TestCase
                 && (int) $mail->order->id === $orderId
                 && $mail->promoAction === null
                 && ! str_contains($rendered, 'Vaš kod za sljedeću kupnju')
-                && ! str_contains($rendered, 'ostvaruje 20% popusta')
+                && ! str_contains($rendered, 'ostvaruje 10% popusta')
                 && str_contains($rendered, 'Podijeli dojam');
         });
 
@@ -78,7 +78,8 @@ class SendReviewRequestEmailsTest extends TestCase
             ->first();
 
         $this->assertNotNull($action);
-        $this->assertTrue(str_starts_with((string) $action->coupon, 'DOJAM20-'));
+        $this->assertSame(10.0, (float) $action->discount);
+        $this->assertTrue(str_starts_with((string) $action->coupon, 'DOJAM10-'));
 
         Mail::assertSent(OrderReviewRequest::class, function (OrderReviewRequest $mail) use ($orderId, $action) {
             $rendered = $this->renderReviewRequestMail($mail);
@@ -87,6 +88,7 @@ class SendReviewRequestEmailsTest extends TestCase
                 && (int) $mail->order->id === $orderId
                 && (int) optional($mail->promoAction)->id === (int) $action->id
                 && str_contains($rendered, 'Vaš kod za sljedeću kupnju')
+                && str_contains($rendered, 'ostvaruje 10% popusta')
                 && str_contains($rendered, (string) $action->coupon);
         });
     }
@@ -110,7 +112,8 @@ class SendReviewRequestEmailsTest extends TestCase
             ->first();
 
         $this->assertNotNull($action);
-        $this->assertTrue(str_starts_with((string) $action->coupon, 'DOJAM20-'));
+        $this->assertSame(10.0, (float) $action->discount);
+        $this->assertTrue(str_starts_with((string) $action->coupon, 'DOJAM10-'));
 
         Mail::assertSent(OrderReviewRequest::class, function (OrderReviewRequest $mail) use ($orderId, $action) {
             $rendered = $this->renderReviewRequestMail($mail);

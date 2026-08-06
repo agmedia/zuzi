@@ -13,7 +13,10 @@ use Illuminate\Support\Str;
 
 class UnfinishedOrderPromoService
 {
-    public const ALLOWED_DISCOUNTS = [5, 10, 15, 20];
+    /** Discounts currently available for new promo mails (20% is temporarily paused). */
+    public const ALLOWED_DISCOUNTS = [5, 10, 15];
+    public const REPORTABLE_DISCOUNTS = [5, 10, 15, 20];
+    public const DEFAULT_DISCOUNT = 10;
     public const VALID_FOR_DAYS = 7;
     public const TITLE_PREFIX = 'Promo za nedovrsenu narudzbu #';
     public const REMINDER_HISTORY_COMMENT = 'Poslan podsjetnik za nedovrsenu narudzbu bez promo koda.';

@@ -46,6 +46,13 @@ class AccountNoticeMailService
 
     public function sendToUserId(int $userId, array $notice, ?string $validUntil = null): array
     {
+        if ($reason = $this->sendingBlockReason($notice)) {
+            return [
+                'sent' => false,
+                'error' => $reason,
+            ];
+        }
+
         $user = $this->baseRecipientsQuery()
             ->with('details')
             ->where('users.id', $userId)
@@ -83,7 +90,25 @@ class AccountNoticeMailService
 
     public function sendTest(array $notice, ?string $validUntil = null): array
     {
+        if ($reason = $this->sendingBlockReason($notice)) {
+            return [
+                'sent' => false,
+                'error' => $reason,
+            ];
+        }
+
         return $this->send(self::TEST_EMAIL, $notice, $validUntil);
+    }
+
+    public function sendingBlockReason(array $notice): ?string
+    {
+        $couponCode = strtoupper(trim((string) ($notice['coupon_code'] ?? '')));
+
+        if (preg_match('/^HVALA20(?:-|$)/', $couponCode) === 1) {
+            return 'Slanje HVALA20 promo mailova je privremeno onemogućeno.';
+        }
+
+        return null;
     }
 
     private function send(string $email, array $notice, ?string $validUntil = null, ?User $user = null): array

@@ -2,6 +2,7 @@
 
 namespace App\Models\Front\Checkout;
 
+use App\Helpers\Helper;
 use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Settings\Settings;
 use App\Services\GiftVoucherService;
@@ -153,6 +154,11 @@ class ShippingMethod
      */
     public static function hasFreeShipping($shipping, float $cart_total): bool
     {
+        // Promo/gift codes and free-shipping thresholds are mutually exclusive.
+        if (self::checkoutHasCoupon()) {
+            return false;
+        }
+
         $threshold = self::freeShippingThreshold($shipping);
 
         if ($threshold === null) {
@@ -255,5 +261,16 @@ class ShippingMethod
         }
 
         return data_get(CheckoutSession::getAddress(), 'state');
+    }
+
+    private static function checkoutHasCoupon(): bool
+    {
+        $cartSessionKey = trim((string) config('session.cart'));
+
+        if ($cartSessionKey === '') {
+            return false;
+        }
+
+        return Helper::normalizeCoupon(session($cartSessionKey . '_coupon')) !== '';
     }
 }

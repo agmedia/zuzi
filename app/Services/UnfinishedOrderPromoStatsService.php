@@ -296,7 +296,8 @@ class UnfinishedOrderPromoStatsService
         $usedByDiscount = $usedPromos
             ->groupBy(fn ($promo) => $this->discountKey((string) ($promo->type ?? 'P'), (int) $promo->discount));
 
-        $discountRows = collect(UnfinishedOrderPromoService::ALLOWED_DISCOUNTS)
+        // Keep paused discounts in historical reporting even when they cannot be sent anew.
+        $discountRows = collect(UnfinishedOrderPromoService::REPORTABLE_DISCOUNTS)
             ->map(fn (int $discount) => ['type' => 'P', 'discount' => $discount])
             ->merge($actions->map(fn ($action) => [
                 'type' => (string) ($action->type ?? 'P'),

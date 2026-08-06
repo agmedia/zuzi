@@ -63,6 +63,7 @@ return [
         'api_key'     => env('WOLT_API_KEY'),
         'merchant_id' => env('WOLT_MERCHANT_ID'), // nije potreban u venueful flowu, ali može ostati
         'venue_id'    => env('WOLT_VENUE_ID'),
+        'availability_cache_seconds' => env('WOLT_AVAILABILITY_CACHE_SECONDS', 300),
     ],
 
     'gls' => [

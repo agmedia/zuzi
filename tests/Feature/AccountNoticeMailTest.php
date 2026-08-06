@@ -124,6 +124,35 @@ class AccountNoticeMailTest extends TestCase
         $this->assertDatabaseCount('account_notice_mail_logs', 0);
     }
 
+    public function test_hvala_twenty_account_notice_mail_is_temporarily_blocked(): void
+    {
+        Mail::fake();
+
+        $admin = $this->createUserWithRole('admin@example.com', 'admin');
+        $customer = $this->createUserWithRole('customer@example.com', 'customer');
+        $notice = $this->saveNotice();
+        $notice['coupon_code'] = 'HVALA20';
+        $notice['discount_text'] = '20% POPUSTA';
+        app(AccountNoticeService::class)->save($notice);
+
+        $this->actingAs($admin)
+            ->postJson(route('account.notice.recipients'), ['limit' => 1])
+            ->assertStatus(422)
+            ->assertJson(['error' => 'Slanje HVALA20 promo mailova je privremeno onemogućeno.']);
+
+        $this->actingAs($admin)
+            ->postJson(route('account.notice.mail.send'), ['user_id' => $customer->id])
+            ->assertStatus(422)
+            ->assertJson(['error' => 'Slanje HVALA20 promo mailova je privremeno onemogućeno.']);
+
+        $this->actingAs($admin)
+            ->postJson(route('account.notice.mail.test'))
+            ->assertStatus(422)
+            ->assertJson(['error' => 'Slanje HVALA20 promo mailova je privremeno onemogućeno.']);
+
+        Mail::assertNothingSent();
+    }
+
     private function saveNotice(): array
     {
         $notice = [

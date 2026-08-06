@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Back\Marketing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Back\Orders\Order;
+use App\Services\UnfinishedOrderPromoService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CompletedPromoController extends Controller
 {
     private const DEFAULT_FROM = '2026-03-01';
-    private const DEFAULT_DISCOUNT = 20;
     private const DEFAULT_DELAY_SECONDS = 8;
 
     public function index(Request $request)
@@ -46,7 +46,7 @@ class CompletedPromoController extends Controller
                 'delay' => $delaySeconds,
                 'search' => (string) $request->input('search', ''),
             ],
-            'discount' => self::DEFAULT_DISCOUNT,
+            'discount' => UnfinishedOrderPromoService::DEFAULT_DISCOUNT,
         ]);
     }
 
@@ -77,7 +77,7 @@ class CompletedPromoController extends Controller
         return response()->json([
             'order_ids' => $orderIds,
             'count' => $orderIds->count(),
-            'discount' => self::DEFAULT_DISCOUNT,
+            'discount' => UnfinishedOrderPromoService::DEFAULT_DISCOUNT,
             'delay_seconds' => $this->resolveDelaySeconds($request),
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),

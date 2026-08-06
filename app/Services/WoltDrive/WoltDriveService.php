@@ -5,6 +5,7 @@ namespace App\Services\WoltDrive;
 use App\Models\Back\Orders\Order;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -108,6 +109,81 @@ class WoltDriveService
             'raw'       => $delivery,
             'promise'   => $promise,
         ];
+    }
+
+    /**
+     * Provjeri može li Wolt preuzeti dostavu na checkout adresu.
+     *
+     * Shipment promise koristi isti Wolt endpoint koji se poziva prije stvarnog
+     * kreiranja dostave, pa obuhvaća i ograničenje udaljenosti od venue lokacije.
+     */
+    public function checkAddressAvailability(array $address): array
+    {
+        $dropoff = $this->buildDropoffFromAddress($address);
+
+        if (!$this->venueId || !$this->apiKey) {
+            Log::warning('WoltDrive availability check skipped: incomplete configuration.');
+
+            return $this->unavailableResult(
+                'WOLT_NOT_CONFIGURED',
+                'Wolt Drive dostava trenutačno nije dostupna. Odaberite drugi način dostave.'
+            );
+        }
+
+        if (!$dropoff['street'] || !$dropoff['city'] || !$dropoff['post_code']) {
+            return $this->unavailableResult(
+                'INVALID_DROPOFF_ADDRESS',
+                'Za provjeru Wolt Drive dostave potrebna je potpuna adresa.'
+            );
+        }
+
+        $cacheKey = 'wolt_drive_availability:'.hash('sha256', json_encode([
+            'venue_id' => $this->venueId,
+            'dropoff' => $dropoff,
+        ]));
+        $cacheSeconds = max(0, (int) config('services.wolt.availability_cache_seconds', 300));
+
+        $check = function () use ($dropoff): array {
+            try {
+                $promise = $this->createShipmentPromise(
+                    $this->apiKey,
+                    $this->venueId,
+                    $dropoff,
+                    [],
+                    30,
+                    null
+                );
+
+                if (Arr::get($promise, 'is_binding') !== true) {
+                    return $this->unavailableResult(
+                        'NON_BINDING_SHIPMENT_PROMISE',
+                        'Wolt Drive nije mogao dovoljno precizno potvrditi ovu adresu. Provjerite adresu ili odaberite drugi način dostave.'
+                    );
+                }
+
+                return [
+                    'available' => true,
+                    'error_code' => null,
+                    'message' => null,
+                ];
+            } catch (\Throwable $e) {
+                return $this->availabilityFailureResult($e, $dropoff);
+            }
+        };
+
+        if ($cacheSeconds === 0) {
+            return $check();
+        }
+
+        try {
+            return Cache::remember($cacheKey, $cacheSeconds, $check);
+        } catch (\Throwable $e) {
+            Log::warning('WoltDrive availability cache failed; checking without cache.', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return $check();
+        }
     }
 
     /**
@@ -261,6 +337,25 @@ class WoltDriveService
         return $drop;
     }
 
+    protected function buildDropoffFromAddress(array $address): array
+    {
+        $dropoff = [
+            'street' => trim((string) ($address['address'] ?? $address['street'] ?? '')),
+            'city' => trim((string) ($address['city'] ?? '')),
+            'post_code' => trim((string) ($address['zip'] ?? $address['post_code'] ?? '')),
+        ];
+
+        $lat = $address['lat'] ?? null;
+        $lon = $address['lng'] ?? $address['lon'] ?? null;
+
+        if (is_numeric($lat) && is_numeric($lon)) {
+            $dropoff['lat'] = (float) $lat;
+            $dropoff['lon'] = (float) $lon;
+        }
+
+        return $dropoff;
+    }
+
     /**
      * Primatelj – minimalno ime, telefon (+385...), email.
      */
@@ -367,6 +462,56 @@ class WoltDriveService
         $status = $resp?->status();
         $body   = $resp?->json() ?? $resp?->body();
         return 'Wolt API greška (HTTP '.$status.'): '.(is_string($body) ? $body : json_encode($body));
+    }
+
+    protected function availabilityFailureResult(\Throwable $exception, array $dropoff): array
+    {
+        $requestException = $this->findRequestException($exception);
+        $response = $requestException ? $requestException->response : null;
+        $body = $response ? ($response->json() ?? []) : [];
+        $errorCode = (string) Arr::get($body, 'error_code', 'WOLT_AVAILABILITY_CHECK_FAILED');
+
+        Log::warning('WoltDrive availability check failed', [
+            'status' => $response ? $response->status() : null,
+            'error_code' => $errorCode,
+            'reason' => Arr::get($body, 'reason'),
+            'details' => Arr::get($body, 'details'),
+            'dropoff' => $dropoff,
+        ]);
+
+        if ($errorCode === 'DROPOFF_OUTSIDE_OF_DELIVERY_AREA') {
+            return $this->unavailableResult(
+                $errorCode,
+                'Wolt Drive nije dostupan za ovu adresu jer je izvan područja dostave. Odaberite drugi način dostave.'
+            );
+        }
+
+        return $this->unavailableResult(
+            $errorCode,
+            'Wolt Drive dostavu trenutačno nije moguće potvrditi za ovu adresu. Odaberite drugi način dostave.'
+        );
+    }
+
+    protected function findRequestException(\Throwable $exception): ?RequestException
+    {
+        do {
+            if ($exception instanceof RequestException) {
+                return $exception;
+            }
+
+            $exception = $exception->getPrevious();
+        } while ($exception);
+
+        return null;
+    }
+
+    protected function unavailableResult(string $errorCode, string $message): array
+    {
+        return [
+            'available' => false,
+            'error_code' => $errorCode,
+            'message' => $message,
+        ];
     }
 
     /**

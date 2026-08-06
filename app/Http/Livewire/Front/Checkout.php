@@ -15,6 +15,7 @@ use App\Models\Front\Checkout\ShippingMethod;
 use App\Models\TagManager;
 use App\Services\AddressDirectoryService;
 use App\Services\GiftVoucherService;
+use App\Services\WoltDrive\WoltDriveService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -103,6 +104,10 @@ class Checkout extends Component
     public $giftVoucherInCart = false;
 
     public $newsletter = false;
+
+    public $woltAvailable = null;
+
+    public $woltUnavailableReason = '';
 
 
     public $comment = '';
@@ -303,6 +308,10 @@ class Checkout extends Component
             $this->setAddress($this->address);
             $this->validate($this->address_rules);
 
+            if ($step === 'dostava' || $this->shipping === 'wolt_drive') {
+                $this->refreshWoltAvailability();
+            }
+
             if (! $redirect && ($step === 'dostava' || $this->shipping === '')) {
                 $this->selectSingleShippingMethod($this->checkoutShippingMethods());
             }
@@ -393,6 +402,18 @@ class Checkout extends Component
     {
         if ($this->giftVoucherOnly) {
             $shipping = GiftVoucherService::SHIPPING_CODE;
+        }
+
+        if ($shipping === 'wolt_drive') {
+            if ($this->woltAvailable !== true) {
+                $this->refreshWoltAvailability();
+            }
+
+            if ($this->woltAvailable !== true) {
+                $this->addError('shipping', $this->woltUnavailableReason ?: 'Wolt Drive dostava nije dostupna za ovu adresu.');
+
+                return;
+            }
         }
 
         $this->shipping = $shipping;
@@ -692,11 +713,15 @@ class Checkout extends Component
      */
     private function selectSingleShippingMethod($shippingMethods): void
     {
-        if ($shippingMethods->count() !== 1) {
+        $selectableMethods = $shippingMethods->reject(function ($method) {
+            return $method->code === 'wolt_drive' && $this->woltAvailable === false;
+        });
+
+        if ($selectableMethods->count() !== 1) {
             return;
         }
 
-        $method = $shippingMethods->first();
+        $method = $selectableMethods->first();
 
         if (! $method || $this->shipping === $method->code) {
             return;
@@ -820,5 +845,33 @@ class Checkout extends Component
         $this->geoZone = null;
         $this->shippingMethods = null;
         $this->paymentMethods = null;
+    }
+
+    private function refreshWoltAvailability(): void
+    {
+        $hasWoltMethod = $this->checkoutShippingMethods()->contains(function ($method) {
+            return $method->code === 'wolt_drive';
+        });
+
+        if (! $hasWoltMethod) {
+            $this->woltAvailable = null;
+            $this->woltUnavailableReason = '';
+
+            return;
+        }
+
+        $availability = app(WoltDriveService::class)->checkAddressAvailability($this->address);
+        $this->woltAvailable = (bool) ($availability['available'] ?? false);
+        $this->woltUnavailableReason = (string) ($availability['message'] ?? '');
+
+        if ($this->woltAvailable || $this->shipping !== 'wolt_drive') {
+            return;
+        }
+
+        $this->shipping = '';
+        $this->payment = '';
+        CheckoutSession::forgetShipping();
+        CheckoutSession::forgetPayment();
+        $this->addError('shipping', $this->woltUnavailableReason);
     }
 }
