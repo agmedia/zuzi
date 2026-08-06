@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Back\Layout\Search;
 use App\Helpers\Helper;
 use App\Models\Back\Catalog\Publisher;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -106,39 +107,86 @@ class PublisherSearch extends Component
      */
     public function makeNewPublisher()
     {
-        if ($this->new['title'] == '') {
+        $title = trim((string) ($this->new['title'] ?? ''));
+
+        if ($title === '') {
             return $this->emit('error_alert', ['message' => 'Molimo vas da popunite sve podatke!']);
         }
 
-        $slug = Str::slug($this->new['title']);
+        $publisher = $this->findPublisherByTitle($title);
 
-        $id = Publisher::insertGetId([
-            'letter'           => Helper::resolveFirstLetter($this->new['title']),
-            'title'            => $this->new['title'],
-            'description'      => '',
-            'meta_title'       => $this->new['title'],
-            'meta_description' => '',
-            'lang'             => 'hr',
-            'sort_order'       => 0,
-            'status'           => 1,
-            'slug'             => $slug,
-            'url'              => config('settings.publisher_path') . '/' . $slug,
-            'created_at'       => Carbon::now(),
-            'updated_at'       => Carbon::now()
-        ]);
+        if ($publisher) {
+            $this->selectPublisher($publisher);
+
+            return $this->emit('success_alert', ['message' => 'Postojeći izdavač je odabran.']);
+        }
+
+        $slug = Str::slug($title);
+
+        try {
+            $id = Publisher::insertGetId([
+                'letter'           => Helper::resolveFirstLetter($title),
+                'title'            => $title,
+                'description'      => '',
+                'meta_title'       => $title,
+                'meta_description' => '',
+                'lang'             => 'hr',
+                'sort_order'       => 0,
+                'status'           => 1,
+                'slug'             => $slug,
+                'url'              => config('settings.publisher_path') . '/' . $slug,
+                'created_at'       => Carbon::now(),
+                'updated_at'       => Carbon::now()
+            ]);
+        } catch (QueryException $exception) {
+            $publisher = $this->findPublisherByTitle($title);
+
+            if (! $publisher) {
+                throw $exception;
+            }
+
+            $this->selectPublisher($publisher);
+
+            return $this->emit('success_alert', ['message' => 'Postojeći izdavač je odabran.']);
+        }
 
         if ($id) {
             $publisher = Publisher::find($id);
+            $this->selectPublisher($publisher);
 
-            $this->show_add_window = false;
-
-            $this->publisher_id = $publisher->id;
-            $this->search     = $publisher->title;
-
-            return $this->emit('success_alert', ['message' => 'Autor je uspješno dodan..!']);
+            return $this->emit('success_alert', ['message' => 'Izdavač je uspješno dodan..!']);
         }
 
         return $this->emit('error_alert');
+    }
+
+
+    /**
+     * @param string $title
+     *
+     * @return Publisher|null
+     */
+    private function findPublisherByTitle(string $title): ?Publisher
+    {
+        return Publisher::query()
+            ->whereRaw('LOWER(TRIM(title)) = ?', [Str::lower($title)])
+            ->orderBy('id')
+            ->first();
+    }
+
+
+    /**
+     * @param Publisher $publisher
+     *
+     * @return void
+     */
+    private function selectPublisher(Publisher $publisher): void
+    {
+        $this->show_add_window  = false;
+        $this->search_results  = [];
+        $this->publisher_id    = $publisher->id;
+        $this->search          = $publisher->title;
+        $this->new['title']     = '';
     }
 
 
