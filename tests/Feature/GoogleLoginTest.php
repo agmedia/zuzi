@@ -10,6 +10,7 @@ use App\Services\GoogleLoginSettingsService;
 use App\Services\GoogleOidcService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Crypt;
 use Mockery;
 use Tests\TestCase;
 
@@ -159,7 +160,7 @@ class GoogleLoginTest extends TestCase
         $response->assertSessionMissing('google_login_transaction');
     }
 
-    public function test_google_callback_does_not_register_unknown_customer(): void
+    public function test_google_callback_does_not_register_unknown_account(): void
     {
         $this->enableGoogleLogin();
 
@@ -191,10 +192,10 @@ class GoogleLoginTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'novi-kupac@gmail.com']);
         $response
             ->assertRedirect(route('index'))
-            ->assertSessionHas('auth_error', 'Za ovu Google e-mail adresu ne postoji korisnički račun kupca. Prijavite se zaporkom ili izradite račun.');
+            ->assertSessionHas('auth_error', 'Za ovu Google e-mail adresu ne postoji korisnički račun. Prijavite se zaporkom ili izradite račun.');
     }
 
-    public function test_google_callback_does_not_log_in_an_admin_account(): void
+    public function test_google_callback_logs_in_an_existing_active_admin_account(): void
     {
         $this->enableGoogleLogin();
 
@@ -223,6 +224,50 @@ class GoogleLoginTest extends TestCase
                 'state' => 'expected-state',
                 'nonce' => 'nonce',
                 'code_verifier' => 'code-verifier',
+                'redirect' => route('index'),
+                'created_at' => time(),
+            ]])
+            ->get(route('google.login.callback', [
+                'state' => 'expected-state',
+                'code' => 'authorization-code',
+            ]));
+
+        $this->assertAuthenticatedAs($admin);
+        $response->assertRedirect(route('index'));
+    }
+
+    public function test_google_callback_sends_an_admin_with_two_factor_enabled_to_the_challenge(): void
+    {
+        $this->enableGoogleLogin();
+
+        $admin = User::factory()->create([
+            'email' => 'admin-2fa@gmail.com',
+            'two_factor_secret' => Crypt::encryptString('two-factor-secret'),
+        ]);
+        UserDetail::query()->create([
+            'user_id' => $admin->id,
+            'fname' => 'Admin',
+            'lname' => 'Zaštićen',
+            'role' => 'admin',
+            'status' => 1,
+        ]);
+
+        $oidc = Mockery::mock(GoogleOidcService::class);
+        $oidc->shouldReceive('exchangeAuthorizationCode')->once()->andReturn([
+            'id_token' => 'signed-id-token',
+        ]);
+        $oidc->shouldReceive('verifyIdToken')->once()->andReturn([
+            'sub' => 'google-admin-2fa-id',
+            'email' => 'admin-2fa@gmail.com',
+            'email_verified' => true,
+        ]);
+        $this->app->instance(GoogleOidcService::class, $oidc);
+
+        $response = $this
+            ->withSession(['google_login_transaction' => [
+                'state' => 'expected-state',
+                'nonce' => 'nonce',
+                'code_verifier' => 'code-verifier',
                 'redirect' => null,
                 'created_at' => time(),
             ]])
@@ -232,7 +277,11 @@ class GoogleLoginTest extends TestCase
             ]));
 
         $this->assertGuest();
-        $response->assertSessionHas('auth_error');
+        $response
+            ->assertRedirect(route('two-factor.login'))
+            ->assertSessionHas('login.id', $admin->id)
+            ->assertSessionHas('login.remember', true)
+            ->assertSessionHas('url.intended', route('dashboard'));
     }
 
     public function test_google_login_rejects_external_redirects(): void

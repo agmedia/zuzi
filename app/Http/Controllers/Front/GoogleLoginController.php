@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Throwable;
 
 class GoogleLoginController extends Controller
@@ -157,10 +158,10 @@ class GoogleLoginController extends Controller
 
         $user = User::query()->with('details')->where('email', $email)->first();
 
-        if (! $user || ! $user->details || $user->details->role !== 'customer') {
+        if (! $user || ! $user->details) {
             return $this->fail(
                 $request,
-                'Za ovu Google e-mail adresu ne postoji korisnički račun kupca. Prijavite se zaporkom ili izradite račun.',
+                'Za ovu Google e-mail adresu ne postoji korisnički račun. Prijavite se zaporkom ili izradite račun.',
                 '',
                 $transaction['redirect'] ?? null
             );
@@ -175,6 +176,22 @@ class GoogleLoginController extends Controller
             );
         }
 
+        if ($user->hasEnabledTwoFactorAuthentication()) {
+            $request->session()->put([
+                'login.id' => $user->getKey(),
+                'login.remember' => true,
+                'url.intended' => $this->authenticatedRedirectUrl(
+                    $request,
+                    $user,
+                    $transaction['redirect'] ?? null
+                ),
+            ]);
+
+            TwoFactorAuthenticationChallenged::dispatch($user);
+
+            return redirect()->route('two-factor.login');
+        }
+
         Auth::login($user, true);
         $request->session()->regenerate();
 
@@ -183,17 +200,15 @@ class GoogleLoginController extends Controller
 
     private function redirectAuthenticated(Request $request, User $user, ?string $redirect = null): RedirectResponse
     {
-        $redirect = $this->safeRedirect($request, $redirect);
+        return redirect()->to($this->authenticatedRedirectUrl($request, $user, $redirect));
+    }
 
-        if ($redirect) {
-            return redirect()->to($redirect);
-        }
-
-        if (($user->details->role ?? null) === 'customer') {
-            return redirect()->route('moj-racun');
-        }
-
-        return redirect()->route('dashboard');
+    private function authenticatedRedirectUrl(Request $request, User $user, ?string $redirect = null): string
+    {
+        return $this->safeRedirect($request, $redirect)
+            ?: (($user->details->role ?? null) === 'customer'
+                ? route('moj-racun')
+                : route('dashboard'));
     }
 
     private function authoritativeGoogleEmail(string $email, array $claims): bool
