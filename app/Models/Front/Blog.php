@@ -49,7 +49,13 @@ class Blog extends Model
      */
     public function getImageAttribute($value)
     {
-        return config('settings.images_domain') . str_replace('.jpg', '.webp', $value);
+        $webpPath = ltrim(str_replace('.jpg', '.webp', $value), '/');
+
+        if (app()->environment('local') && is_file(public_path($webpPath))) {
+            return asset($webpPath);
+        }
+
+        return rtrim(config('settings.images_domain'), '/') . '/' . $webpPath;
     }
 
 

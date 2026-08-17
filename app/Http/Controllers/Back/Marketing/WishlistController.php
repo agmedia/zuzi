@@ -20,6 +20,15 @@ class WishlistController extends Controller
     {
         $activeTab = $request->input('tab', 'wishlists');
         $query = Wishlist::query()
+            ->select('wishlist.*')
+            ->selectSub(function ($activeRegistrationsQuery) {
+                $activeRegistrationsQuery
+                    ->from('wishlist as active_registrations')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('active_registrations.product_id', 'wishlist.product_id')
+                    ->where('active_registrations.status', 1)
+                    ->where('active_registrations.sent', 0);
+            }, 'active_registrations_count')
             ->with(['product' => function ($q) {
                 $q->select('id', 'name', 'sku', 'image', 'url', 'quantity', 'status', 'price', 'special', 'special_from', 'special_to');
             }]);

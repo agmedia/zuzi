@@ -1,5 +1,9 @@
 @extends('back.layouts.backend')
 
+@push('css_before')
+    <link rel="stylesheet" href="{{ asset('js/plugins/magnific-popup/magnific-popup.css') }}">
+@endpush
+
 @section('content')
     @php
         // Koji tab je aktivan? (default: wishlists)
@@ -105,7 +109,9 @@
                                             <th style="width: 80px;">Slika</th>
                                             <th>Naziv</th>
                                             <th>Šifra</th>
+                                            <th>Cijena</th>
                                             <th>Stanje</th>
+                                            <th class="text-right">Broj aktivnih prijava</th>
                                             <th>E-mail (korisnik)</th>
                                             <th>Status</th>
                                             <th>Dodano</th>
@@ -113,16 +119,36 @@
                                             <th class="text-right">Akcija</th>
                                         </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody class="js-gallery">
                                         @forelse($wishlists as $w)
                                             <tr>
-                                                <td>
-                                                    @if($w->product && $w->product->image)
-                                                        <img src="{{ asset($w->product->image) }}" height="60" alt="">
+                                                <td class="text-center text-nowrap">
+                                                    @if($w->product)
+                                                        @php($imageUrl = $w->product->image ? asset($w->product->image) : asset('media/avatars/avatar0.jpg'))
+                                                        <a class="img-link img-link-zoom-in img-lightbox" href="{{ $imageUrl }}">
+                                                            <img src="{{ $imageUrl }}"
+                                                                 height="60"
+                                                                 loading="lazy"
+                                                                 alt="{{ $w->product->name }}">
+                                                        </a>
                                                     @endif
                                                 </td>
                                                 <td>{{ $w->product->name ?? '---' }}</td>
                                                 <td>{{ $w->product->sku ?? '---' }}</td>
+                                                <td class="text-nowrap">
+                                                    @if($w->product)
+                                                        @php($hasSpecialPrice = $w->product->special() && (float) $w->product->special() < (float) $w->product->price)
+
+                                                        @if($hasSpecialPrice)
+                                                            <div class="font-w600">{{ $w->product->main_special_text }}</div>
+                                                            <div class="small text-muted"><s>{{ $w->product->main_price_text }}</s></div>
+                                                        @else
+                                                            <div class="font-w600">{{ $w->product->main_price_text }}</div>
+                                                        @endif
+                                                    @else
+                                                        ---
+                                                    @endif
+                                                </td>
                                                 <td>
                                                     @if($w->product)
                                                         @if((int) $w->product->quantity !== 0)
@@ -130,6 +156,15 @@
                                                         @else
                                                             <span class="badge badge-secondary">Nema zalihe</span>
                                                         @endif
+                                                    @else
+                                                        ---
+                                                    @endif
+                                                </td>
+                                                <td class="text-right">
+                                                    @if($w->product)
+                                                        <a class="font-w600" href="{{ route('wishlists.products.show', ['product' => $w->product_id]) }}">
+                                                            {{ $w->active_registrations_count }}
+                                                        </a>
                                                     @else
                                                         ---
                                                     @endif
@@ -163,7 +198,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="9">Nema zapisa u listi želja.</td>
+                                                <td colspan="11">Nema zapisa u listi želja.</td>
                                             </tr>
                                         @endforelse
                                         </tbody>
@@ -208,6 +243,7 @@
                                     <table class="table table-borderless table-striped">
                                         <thead>
                                         <tr>
+                                            <th style="width: 80px;">Slika</th>
                                             <th>Naziv artikla</th>
                                             <th>Šifra</th>
                                             <th>Cijena</th>
@@ -216,9 +252,20 @@
                                             <th class="text-right">Akcija</th>
                                         </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody class="js-gallery">
                                         @forelse ($topProducts as $item)
                                             <tr>
+                                                <td class="text-center text-nowrap">
+                                                    @if($item->product)
+                                                        @php($imageUrl = $item->product->image ? asset($item->product->image) : asset('media/avatars/avatar0.jpg'))
+                                                        <a class="img-link img-link-zoom-in img-lightbox" href="{{ $imageUrl }}">
+                                                            <img src="{{ $imageUrl }}"
+                                                                 height="60"
+                                                                 loading="lazy"
+                                                                 alt="{{ $item->product->name }}">
+                                                        </a>
+                                                    @endif
+                                                </td>
                                                 <td>
                                                     @if($item->product)
                                                         <a class="font-w600" href="{{ route('wishlists.products.show', ['product' => $item->product_id]) }}">
@@ -280,7 +327,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="6">Nema zapisa za najtraženije artikle.</td>
+                                                <td colspan="7">Nema zapisa za najtraženije artikle.</td>
                                             </tr>
                                         @endforelse
                                         </tbody>
@@ -424,3 +471,8 @@
         </div>
     </div>
 @endsection
+
+@push('js_after')
+    <script src="{{ asset('js/plugins/magnific-popup/jquery.magnific-popup.min.js') }}"></script>
+    <script>jQuery(function(){Dashmix.helpers('magnific-popup');});</script>
+@endpush
