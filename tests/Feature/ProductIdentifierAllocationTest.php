@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\ProductIdentifierAllocator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -43,7 +44,7 @@ class ProductIdentifierAllocationTest extends TestCase
         ]);
     }
 
-    public function test_another_open_create_form_skips_active_reservations(): void
+    public function test_returning_to_create_form_reuses_the_unfinished_reservation(): void
     {
         $firstReservation = $this->get(route('products.create'))
             ->viewData('identifier_reservation');
@@ -53,9 +54,7 @@ class ProductIdentifierAllocationTest extends TestCase
 
         $this->assertSame(1, $firstReservation['sku']);
         $this->assertSame(1, $firstReservation['itemid']);
-        $this->assertSame(2, $secondReservation['sku']);
-        $this->assertSame(2, $secondReservation['itemid']);
-        $this->assertNotSame($firstReservation['token'], $secondReservation['token']);
+        $this->assertSame($firstReservation, $secondReservation);
     }
 
     public function test_store_confirms_reserved_identifiers_and_ignores_manually_submitted_values(): void
@@ -68,7 +67,7 @@ class ProductIdentifierAllocationTest extends TestCase
             ->viewData('identifier_reservation');
 
         $response = $this->post(route('products.store'), [
-            'identifier_reservation_token' => $reservation['token'],
+            ProductIdentifierAllocator::SESSION_KEY => $reservation['token'],
             'name' => 'Automatski numeriran artikl',
             'sku' => 999,
             'itemid' => 999,
@@ -79,6 +78,7 @@ class ProductIdentifierAllocationTest extends TestCase
         ]);
 
         $response->assertRedirect(route('products'));
+        $response->assertSessionMissing(ProductIdentifierAllocator::SESSION_KEY);
         $this->assertDatabaseHas('products', [
             'name' => 'Automatski numeriran artikl',
             'sku' => '2',

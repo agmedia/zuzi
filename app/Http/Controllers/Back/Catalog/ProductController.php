@@ -93,8 +93,16 @@ class ProductController extends Controller
 
         $data           = $product->getRelationsData();
         $active_actions = ProductAction::active()->get();
+        $existing_reservation_token = $request->session()->getOldInput(
+            ProductIdentifierAllocator::SESSION_KEY,
+            $request->session()->get(ProductIdentifierAllocator::SESSION_KEY)
+        );
         $identifier_reservation = $identifierAllocator->reserve(
-            $request->session()->getOldInput('identifier_reservation_token')
+            $existing_reservation_token
+        );
+        $request->session()->put(
+            ProductIdentifierAllocator::SESSION_KEY,
+            $identifier_reservation['token']
         );
 
         return view('back.catalog.product.edit', compact('data', 'active_actions', 'identifier_reservation'));
@@ -112,7 +120,7 @@ class ProductController extends Controller
     {
         $product = null;
         $stored = $identifierAllocator->confirm(
-            $request->input('identifier_reservation_token'),
+            $request->input(ProductIdentifierAllocator::SESSION_KEY),
             function (array $identifiers) use ($request, &$product) {
                 $request->merge($identifiers);
                 $product = new Product();
@@ -122,6 +130,8 @@ class ProductController extends Controller
         );
 
         if ($stored) {
+            $request->session()->forget(ProductIdentifierAllocator::SESSION_KEY);
+
             $product->checkSettings()
                     ->storeImages($stored);
             $stored->update([

@@ -10,6 +10,8 @@ use RuntimeException;
 
 class ProductIdentifierAllocator
 {
+    public const SESSION_KEY = 'product_identifier_reservation_token';
+
     private const LOCK_TABLE = 'product_identifier_allocation_locks';
     private const RESERVATION_TABLE = 'product_identifier_reservations';
     private const RESERVATION_MINUTES = 120;

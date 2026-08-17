@@ -33,7 +33,7 @@
             @if (isset($product))
                 {{ method_field('PATCH') }}
             @else
-                <input type="hidden" name="identifier_reservation_token" value="{{ $identifier_reservation['token'] }}">
+                <input type="hidden" name="{{ \App\Services\ProductIdentifierAllocator::SESSION_KEY }}" value="{{ $identifier_reservation['token'] }}">
             @endif
 
             <div class="block">
