@@ -208,12 +208,13 @@ class Product extends Model
     public function validateRequest(Request $request)
     {
         $itemidRule = 'required|integer|min:1|unique:products,itemid' . ($this->id ? ',' . $this->id : '');
+        $skuRule = $this->exists ? 'required' : 'required|integer|min:1';
 
         // Validate the request.
         $request->validate([
             'name'     => 'required',
             'itemid'   => $itemidRule,
-            'sku'      => 'required',
+            'sku'      => $skuRule,
             'price'    => 'required',
             'category' => 'required'
         ], [
@@ -221,6 +222,8 @@ class Product extends Model
             'itemid.integer' => 'Pelion ItemID mora biti broj...',
             'itemid.min' => 'Pelion ItemID mora biti veći od 0...',
             'itemid.unique' => 'Pelion ItemID već postoji na drugom artiklu...',
+            'sku.integer' => 'Šifra mora biti broj...',
+            'sku.min' => 'Šifra mora biti veća od 0...',
         ]);
 
         // Set Product Model request variable
@@ -813,13 +816,13 @@ class Product extends Model
      */
     private function isDuplicateSku(): bool
     {
-        $exist = $this->where('sku', $this->request->sku)->first();
+        $query = $this->newQuery()->where('sku', $this->request->sku);
 
-        if (isset($this->id) && $exist && $exist->id != $this->id) {
-            return true;
+        if ($this->exists) {
+            $query->where('id', '!=', $this->id);
         }
 
-        return false;
+        return $query->exists();
     }
 
 }

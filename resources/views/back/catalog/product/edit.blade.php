@@ -32,6 +32,8 @@
             @csrf
             @if (isset($product))
                 {{ method_field('PATCH') }}
+            @else
+                <input type="hidden" name="identifier_reservation_token" value="{{ $identifier_reservation['token'] }}">
             @endif
 
             <div class="block">
@@ -84,7 +86,10 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label for="itemid-input">Pelion ItemID <span class="text-danger">*</span></label>
-                                    <input type="number" min="1" class="form-control" id="itemid-input" name="itemid" placeholder="Upišite ItemID" value="{{ old('itemid', isset($product) && $product->itemid ? $product->itemid : '') }}" required>
+                                    <input type="number" min="1" class="form-control" id="itemid-input" name="itemid" placeholder="Upišite ItemID" value="{{ isset($product) ? old('itemid', $product->itemid) : $identifier_reservation['itemid'] }}" @if (! isset($product)) readonly aria-readonly="true" @endif required>
+                                    @if (! isset($product))
+                                        <small class="form-text text-muted">Automatski rezervirano do spremanja.</small>
+                                    @endif
                                     @error('itemid')
                                     <span class="text-danger font-italic">{{ $message }}</span>
                                     @enderror
@@ -101,7 +106,10 @@
 
                                 <div class="col-md-3">
                                     <label for="sku-input">Šifra <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="sku-input" name="sku" placeholder="Upišite šifru artikla" value="{{ isset($product) ? $product->sku : old('sku') }}">
+                                    <input type="{{ isset($product) ? 'text' : 'number' }}" class="form-control" id="sku-input" name="sku" placeholder="Upišite šifru artikla" value="{{ isset($product) ? old('sku', $product->sku) : $identifier_reservation['sku'] }}" @if (! isset($product)) min="1" readonly aria-readonly="true" @endif required>
+                                    @if (! isset($product))
+                                        <small class="form-text text-muted">Automatski rezervirano do spremanja.</small>
+                                    @endif
                                     @error('sku')
                                     <span class="text-danger font-italic">Šifra je potrebna...</span>
                                     @enderror

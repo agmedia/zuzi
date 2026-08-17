@@ -9,6 +9,7 @@ use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductAction;
 use App\Models\Back\Catalog\Product\ProductCategory;
 use App\Models\Back\Catalog\Product\ProductImage;
+use App\Services\ProductIdentifierAllocator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -86,14 +87,17 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request, ProductIdentifierAllocator $identifierAllocator)
     {
         $product = new Product();
 
         $data           = $product->getRelationsData();
         $active_actions = ProductAction::active()->get();
+        $identifier_reservation = $identifierAllocator->reserve(
+            $request->session()->getOldInput('identifier_reservation_token')
+        );
 
-        return view('back.catalog.product.edit', compact('data', 'active_actions'));
+        return view('back.catalog.product.edit', compact('data', 'active_actions', 'identifier_reservation'));
     }
 
 
@@ -104,11 +108,18 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, ProductIdentifierAllocator $identifierAllocator)
     {
-        $product = new Product();
+        $product = null;
+        $stored = $identifierAllocator->confirm(
+            $request->input('identifier_reservation_token'),
+            function (array $identifiers) use ($request, &$product) {
+                $request->merge($identifiers);
+                $product = new Product();
 
-        $stored = $product->validateRequest($request)->create();
+                return $product->validateRequest($request)->create();
+            }
+        );
 
         if ($stored) {
             $product->checkSettings()
