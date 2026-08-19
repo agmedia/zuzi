@@ -17,6 +17,29 @@ class BlogRelatedArticlesTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_blog_image_license_is_persisted_and_rendered_as_html_below_the_main_image(): void
+    {
+        $imageLicense = '<p>Foto: <a href="https://commons.wikimedia.org/wiki/File:VedranaRudan.jpg">United Union / Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.</p>';
+        $request = Request::create('/admin/marketing/blog', 'POST', [
+            'title' => 'Članak s licencom slike',
+            'image_license' => $imageLicense,
+            'status' => 'on',
+        ]);
+
+        $stored = (new AdminBlog())->validateRequest($request)->create();
+
+        $this->assertInstanceOf(AdminBlog::class, $stored);
+        $this->assertSame($imageLicense, $stored->fresh()->image_license);
+
+        $response = $this->get(route('catalog.route.blog', [
+            'blog' => FrontBlog::query()->findOrFail($stored->id),
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('class="blog-post-image-license"', false);
+        $response->assertSee($imageLicense, false);
+    }
+
     public function test_blog_model_persists_selected_related_product_ids(): void
     {
         $firstRelatedId = $this->createProduct('Prvi povezani artikl', 'BLOG-REL-1');
@@ -438,6 +461,7 @@ class BlogRelatedArticlesTest extends TestCase
             'slug' => $slug,
             'keywords' => null,
             'image' => null,
+            'image_license' => null,
             'publish_date' => Carbon::now(),
             'viewed' => 0,
             'featured' => 0,

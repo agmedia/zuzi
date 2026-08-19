@@ -257,6 +257,22 @@
 
                             <div class="form-group row mb-4 blog-html-editor-shell">
                                 <div class="col-md-12">
+                                    <label for="image-license-editor">Licenca / izvor glavne slike</label>
+                                    <div class="blog-editor-note mb-3">
+                                        <i class="fa fa-copyright"></i>
+                                        <div>
+                                            Opcionalno HTML polje koje se prikazuje neposredno ispod glavne slike. Ovdje možeš upisati autora fotografije, poveznicu na izvor i vrstu licence.
+                                        </div>
+                                    </div>
+                                    <textarea id="image-license-editor" name="image_license">{!! old('image_license', isset($blog) ? $blog->image_license : '') !!}</textarea>
+                                    @error('image_license')
+                                        <div class="text-danger font-italic mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="form-group row mb-4 blog-html-editor-shell">
+                                <div class="col-md-12">
                                     <label for="description-editor">Opis</label>
                                     <div class="blog-editor-note mb-3">
                                         <i class="fa fa-code"></i>
@@ -910,9 +926,35 @@
                 if (window.CKEDITOR && CKEDITOR.instances['description-editor']) {
                     CKEDITOR.instances['description-editor'].updateElement();
                 }
+
+                if (window.CKEDITOR && CKEDITOR.instances['image-license-editor']) {
+                    CKEDITOR.instances['image-license-editor'].updateElement();
+                }
             });
 
             if (window.CKEDITOR) {
+                CKEDITOR.replace('image-license-editor', {
+                    height: 150,
+                    language: 'hr',
+                    allowedContent: true,
+                    extraPlugins: 'autogrow',
+                    removePlugins: 'easyimage,cloudservices,exportpdf',
+                    entities: false,
+                    basicEntities: false,
+                    autoGrow_minHeight: 150,
+                    autoGrow_maxHeight: 320,
+                    autoGrow_bottomSpace: 20,
+                    resize_dir: 'vertical',
+                    toolbar: [
+                        { name: 'document', items: ['Source'] },
+                        { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', '-', 'Undo', 'Redo'] },
+                        { name: 'basicstyles', items: ['Bold', 'Italic', '-', 'RemoveFormat'] },
+                        { name: 'links', items: ['Link', 'Unlink'] }
+                    ],
+                    format_tags: 'p',
+                    removeDialogTabs: 'link:advanced'
+                });
+
                 CKEDITOR.replace('description-editor', {
                     height: 560,
                     language: 'hr',

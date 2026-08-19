@@ -81,6 +81,7 @@ class Blog extends Model
 
         $request->validate([
             'title' => 'required',
+            'image_license' => 'nullable|string',
             'publish_date' => 'nullable|date',
             'related_products' => 'nullable|array',
             'related_products.*' => [
@@ -126,6 +127,7 @@ class Blog extends Model
                 'title'             => $this->request->title,
                 'short_description' => $this->request->short_description,
                 'description'       => $this->request->description,
+                'image_license'     => $this->request->image_license,
                 'meta_title'        => $this->request->meta_title,
                 'meta_description'  => $this->request->meta_description,
                 'slug'              => isset($this->request->slug) ? Str::slug($this->request->slug) : Str::slug($this->request->title),
@@ -167,6 +169,7 @@ class Blog extends Model
                 'title'             => $this->request->title,
                 'short_description' => $this->request->short_description,
                 'description'       => $this->request->description,
+                'image_license'     => $this->request->image_license,
                 'meta_title'        => $this->request->meta_title,
                 'meta_description'  => $this->request->meta_description,
                 'slug'              => isset($this->request->slug) ? Str::slug($this->request->slug) : Str::slug($this->request->title),

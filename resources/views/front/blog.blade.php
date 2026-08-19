@@ -141,6 +141,30 @@
                 height: auto;
             }
 
+            .blog-post-image-license {
+                padding: .7rem 1rem;
+                border-top: 1px solid #e3e9ef;
+                background: #f6f9fc;
+                color: #7d879c;
+                font-size: .78rem;
+                line-height: 1.5;
+            }
+
+            .blog-post-image-license > :last-child {
+                margin-bottom: 0;
+            }
+
+            .blog-post-image-license a {
+                color: #59647a;
+                font-weight: 600;
+                text-decoration: underline;
+                text-underline-offset: .12em;
+            }
+
+            .blog-post-image-license a:hover {
+                color: #e50077;
+            }
+
             .blog-post-body {
                 max-width: 820px;
                 margin: 0 auto;
@@ -356,9 +380,14 @@
                     </div>
                 </header>
 
-                <div class="blog-post-hero">
+                <figure class="blog-post-hero mb-0">
                     <img src="{{ $blog->image }}" alt="{{ $blog->title }}" loading="eager" fetchpriority="high" decoding="async">
-                </div>
+                    @if(filled($blog->image_license))
+                        <figcaption class="blog-post-image-license" aria-label="Licenca glavne slike">
+                            {!! $blog->image_license !!}
+                        </figcaption>
+                    @endif
+                </figure>
 
                 <div class="blog-post-body">
                     {!! $blog->description !!}
