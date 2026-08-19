@@ -222,7 +222,6 @@ class Metatags
                 'priceCurrency' => (string) data_get($item, 'price_currency', 'EUR'),
                 'price' => (string) $price,
                 'url' => $itemUrl,
-                'availability' => (string) data_get($item, 'availability', 'https://schema.org/InStock'),
             ];
         }
 
@@ -269,7 +268,6 @@ class Metatags
                 'name' => $itemDiscount ? $itemName . ' (-' . $itemDiscount . ')' : $itemName,
                 'url' => $itemUrl,
                 'description' => $itemDescription,
-                'availability' => 'https://schema.org/InStock',
                 'seller' => [
                     '@type' => 'Organization',
                     '@id' => config('app.url') . '#organization',
@@ -422,7 +420,6 @@ class Metatags
                     'priceValidUntil' => now()->endOfYear()->format('Y-m-d'),
                     'sku'             => $prod->sku,
                     'url'             => $url,
-                    'availability'    => ((int) $prod->quantity > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                     'seller'          => [
                         '@type' => 'Organization',
                         '@id'   => config('app.url') . '#organization',

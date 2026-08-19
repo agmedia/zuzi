@@ -128,7 +128,6 @@
 @push('meta_tags')
     <meta property="product:price:amount" content="{{ number_format($prod->special(), 2, '.', '') }}" />
     <meta property="product:price:currency" content="EUR" />
-    <meta property="product:availability" content="{{ $prod->quantity ? 'instock' : 'out of stock' }}" />
     <meta property="product:retailer_item_id" content="{{ $prod->sku }}" />
 @endpush
 

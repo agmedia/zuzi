@@ -4994,8 +4994,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         '@type': 'Offer',
         priceCurrency: 'EUR',
         price: Number(product.special ? product.special : product.price).toFixed(2),
-        url: this.origin + product.url,
-        availability: Number(product.quantity) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+        url: this.origin + product.url
       };
       if (this.getReviewsCount(product) > 0) {
         item.aggregateRating = {

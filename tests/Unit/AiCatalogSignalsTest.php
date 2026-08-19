@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Helpers\Breadcrumb;
 use App\Helpers\Metatags;
 use App\Helpers\OpenAiProductFeed;
 use App\Models\Front\Catalog\Author;
@@ -66,13 +67,69 @@ class AiCatalogSignalsTest extends TestCase
 
         $this->assertSame('https://www.zuzi.hr/kategorija-proizvoda/test/test-knjiga#product', $schema['@id']);
         $this->assertSame('10.00', $schema['offers']['price']);
-        $this->assertSame('https://schema.org/InStock', $schema['offers']['availability']);
+        $this->assertArrayNotHasKey('availability', $schema['offers']);
         $this->assertSame('https://schema.org/UsedCondition', $schema['offers']['itemCondition']);
         $this->assertSame('9789531234567', $schema['gtin13']);
+        $this->assertStringNotContainsString(
+            'product:availability',
+            (string) file_get_contents(resource_path('views/front/catalog/product/index.blade.php'))
+        );
         $imageDebug = json_encode($schema['image']);
 
         $this->assertContains('https://images.zuzi.hr/media/img/products/main.webp', $schema['image'], $imageDebug);
         $this->assertContains('https://images.zuzi.hr/media/img/products/extra.webp', $schema['image'], $imageDebug);
+    }
+
+    public function test_other_json_ld_offers_keep_price_and_ratings_without_availability(): void
+    {
+        config(['app.url' => 'https://www.zuzi.hr']);
+        URL::forceRootUrl('https://www.zuzi.hr');
+        URL::forceScheme('https');
+
+        $listSchema = Metatags::itemListSchema([
+            [
+                'name' => 'Test knjiga',
+                'url' => 'https://www.zuzi.hr/test-knjiga',
+                'price' => '15.00',
+                'availability' => 'https://schema.org/OutOfStock',
+                'reviews_count' => 4,
+                'reviews_avg_stars' => 4.8,
+            ],
+        ], 'https://www.zuzi.hr/knjige');
+        $listItem = $listSchema['itemListElement'][0]['item'];
+
+        $this->assertSame('15.00', $listItem['offers']['price']);
+        $this->assertArrayNotHasKey('availability', $listItem['offers']);
+        $this->assertSame(4.8, $listItem['aggregateRating']['ratingValue']);
+        $this->assertSame(4, $listItem['aggregateRating']['reviewCount']);
+
+        $product = new Product([
+            'name' => 'Test knjiga',
+            'description' => 'Opis knjige.',
+            'sku' => 'SKU-BOOK',
+            'price' => '15.00',
+            'special' => '15.00',
+            'quantity' => 0,
+            'image' => 'https://images.zuzi.hr/test-knjiga.webp',
+            'url' => '/test-knjiga',
+        ]);
+        $product->setRelation('action', null);
+        $product->setRelation('author', null);
+        $product->setRelation('publisher', null);
+
+        $bookSchema = (new Breadcrumb())->productBookSchema($product);
+
+        $this->assertSame('15.00', $bookSchema['offers']['price']);
+        $this->assertArrayNotHasKey('availability', $bookSchema['offers']);
+
+        $offerCatalog = Metatags::offerCatalogSchema(
+            'Akcijska ponuda',
+            'Test ponuda.',
+            'https://www.zuzi.hr/akcija',
+            [['name' => 'Knjige', 'url' => 'https://www.zuzi.hr/knjige']]
+        );
+
+        $this->assertArrayNotHasKey('availability', $offerCatalog['itemListElement'][0]);
     }
 
     public function test_openai_product_feed_maps_book_metadata(): void

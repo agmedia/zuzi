@@ -189,7 +189,6 @@
                         'image' => $featuredProduct->image,
                         'sku' => $featuredProduct->sku,
                         'price' => number_format((float) $featuredProduct->special(), 2, '.', ''),
-                        'availability' => $featuredProduct->quantity ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                         'reviews_count' => (int) ($featuredProduct->reviews_count ?? 0),
                         'reviews_avg_stars' => round((float) ($featuredProduct->reviews_avg_stars ?? 0), 1),
                         'brand' => \App\Models\Seo::brand(),
