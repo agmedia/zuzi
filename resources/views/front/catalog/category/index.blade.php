@@ -383,7 +383,9 @@
     @if (isset($author) && $author && ! empty($author->description))
 
         <div class=" pb-4 mb-2 mt-4 mb-md-4" >
-            <p class="fs-md mb-2">{{ strip_tags($author->description) }}</p>
+            <div class="fs-md mb-2">
+                {!! $author->description !!}
+            </div>
         </div>
     @endif
 
