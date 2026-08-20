@@ -180,9 +180,9 @@ class Blog extends Model
 
 
     /**
-     * Resolve the newest visible blog review that references the given product.
+     * Resolve all visible blog reviews that reference the given product.
      */
-    public static function latestActiveRelatedReviewForProduct(int $productId): ?self
+    public static function activeRelatedReviewsForProduct(int $productId): Collection
     {
         return static::query()
             ->where('status', 1)
@@ -194,7 +194,17 @@ class Blog extends Model
             ->orderByDesc('publish_date')
             ->orderByDesc('created_at')
             ->get()
-            ->first(fn (self $blog) => $blog->relatedProductIds()->contains($productId));
+            ->filter(fn (self $blog) => $blog->relatedProductIds()->contains($productId))
+            ->values();
+    }
+
+
+    /**
+     * Resolve the newest visible blog review that references the given product.
+     */
+    public static function latestActiveRelatedReviewForProduct(int $productId): ?self
+    {
+        return static::activeRelatedReviewsForProduct($productId)->first();
     }
 
 

@@ -67,12 +67,7 @@
         return 'dojmova čitatelja';
     };
     $giftWrapAllowed = \App\Services\GiftWrapService::isEligibleProduct($prod);
-    $relatedBlogReview = $relatedBlogReview ?? null;
-    $relatedBlogReviewUrl = $relatedBlogReview ? route('catalog.route.blog', ['blog' => $relatedBlogReview]) : null;
-    $relatedBlogReviewImage = $relatedBlogReview && filled($relatedBlogReview->getRawOriginal('image'))
-        ? $relatedBlogReview->image
-        : asset('media/img/lightslider.webp');
-    $relatedBlogReviewTeaser = $relatedBlogReview ? $relatedBlogReview->reviewTeaser(200) : '';
+    $relatedBlogReviews = collect($relatedBlogReviews ?? []);
     $isTrackedQuantity = (bool) $prod->decrease;
     $bogoListingBadge = \App\Models\Back\Marketing\Action::activeBogoListingBadge();
     $isInStock = (int) $prod->quantity > 0;
@@ -1287,9 +1282,9 @@
 
 	                <h1 class="h3 product-purchase-title">{{ $prod->name }}</h1>
 
-                    @if ($relatedBlogReview && $relatedBlogReviewUrl)
+	                @if ($relatedBlogReviews->isNotEmpty())
                         <a id="openRelatedReview" href="#related-review" class="product-related-review-link">
-                            Recenzija uz ovaj naslov
+                            {{ $relatedBlogReviews->count() === 1 ? 'Recenzija uz ovaj naslov' : 'Recenzije uz ovaj naslov (' . $relatedBlogReviews->count() . ')' }}
                         </a>
                     @endif
 
@@ -1618,8 +1613,14 @@
                </div>
            </div>
 
-           @if ($relatedBlogReview && $relatedBlogReviewUrl)
-               <div id="related-review" class="blog-review-spotlight mb-4">
+           @foreach ($relatedBlogReviews as $relatedBlogReview)
+               @php
+                   $relatedBlogReviewUrl = route('catalog.route.blog', ['blog' => $relatedBlogReview]);
+                   $relatedBlogReviewImage = filled($relatedBlogReview->getRawOriginal('image'))
+                       ? $relatedBlogReview->image
+                       : asset('media/img/lightslider.webp');
+               @endphp
+               <div @if ($loop->first) id="related-review" @endif class="blog-review-spotlight mb-4">
                    <div class="blog-review-spotlight__layout">
                        <a class="blog-review-spotlight__media" href="{{ $relatedBlogReviewUrl }}">
                            <img
@@ -1636,14 +1637,14 @@
                            <h3 class="h4 mb-2 blog-review-spotlight__title">
                                <a href="{{ $relatedBlogReviewUrl }}">{{ $relatedBlogReview->title }}</a>
                            </h3>
-                           <p class="blog-review-spotlight__text mb-3">{{ $relatedBlogReviewTeaser }}</p>
+                           <p class="blog-review-spotlight__text mb-3">{{ $relatedBlogReview->reviewTeaser(200) }}</p>
                            <a class="blog-review-spotlight__cta btn btn-primary btn-shadow" href="{{ $relatedBlogReviewUrl }}">
                                Pročitajte recenziju
                            </a>
                        </div>
                    </div>
                </div>
-           @endif
+           @endforeach
 
            <hr class="mt-3 mb-3">
 

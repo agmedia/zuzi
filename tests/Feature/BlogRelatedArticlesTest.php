@@ -242,7 +242,7 @@ class BlogRelatedArticlesTest extends TestCase
         $this->assertSame([$firstRelatedId, $secondRelatedId], $relatedProducts->pluck('id')->all());
     }
 
-    public function test_front_blog_model_resolves_latest_visible_review_for_related_product(): void
+    public function test_front_blog_model_resolves_all_visible_reviews_for_related_product(): void
     {
         $productId = $this->createProduct('Artikl s recenzijom', 'BLOG-REV-1');
         $otherProductId = $this->createProduct('Drugi artikl', 'BLOG-REV-2');
@@ -265,11 +265,12 @@ class BlogRelatedArticlesTest extends TestCase
             'publish_date' => Carbon::parse('2026-04-21 12:00:00'),
         ]);
 
+        $reviews = FrontBlog::activeRelatedReviewsForProduct($productId);
         $latestReview = FrontBlog::latestActiveRelatedReviewForProduct($productId);
 
+        $this->assertSame([$newerBlogId, $olderBlogId], $reviews->pluck('id')->all());
         $this->assertInstanceOf(FrontBlog::class, $latestReview);
         $this->assertSame($newerBlogId, $latestReview->id);
-        $this->assertNotSame($olderBlogId, $latestReview->id);
     }
 
     public function test_front_blog_review_teaser_limits_output_to_200_characters(): void
