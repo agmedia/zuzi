@@ -44,7 +44,7 @@
                             </div>
 
                             <div class="form-group mb-4">
-                                <label for="gls_world-free-shipping-from">Besplatna dostava od <span class="small text-gray">(U EUR. Zadano 100.)</span></label>
+                                <label for="gls_world-free-shipping-from">Besplatna dostava od <span class="small text-gray">(U EUR. Ostavite prazno za isključivanje.)</span></label>
                                 <input type="text" class="form-control" id="gls_world-free-shipping-from" name="data['free_shipping_from']" value="100">
                             </div>
 
@@ -207,10 +207,12 @@
          * @param item
          */
         function edit_gls_world(item) {
+            const has_free_shipping_from = Object.prototype.hasOwnProperty.call(item.data || {}, 'free_shipping_from');
+
             $('#gls_world-title').val(item.title);
             $('#gls_world-price').val(item.data.price);
             $('#gls_world-time').val(item.data.time);
-            $('#gls_world-free-shipping-from').val(item.data.free_shipping_from ?? 100);
+            $('#gls_world-free-shipping-from').val(has_free_shipping_from ? (item.data.free_shipping_from ?? '') : 100);
             set_gls_world_country_prices(item.data.country_prices ?? {});
             $('#gls_world-short-description').val(item.data.short_description);
             $('#gls_world-description').val(item.data.description);

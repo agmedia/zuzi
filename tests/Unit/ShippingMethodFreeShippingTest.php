@@ -42,6 +42,28 @@ class ShippingMethodFreeShippingTest extends TestCase
         }
     }
 
+    public function test_empty_gls_world_threshold_explicitly_disables_free_shipping(): void
+    {
+        foreach ([null, ''] as $disabledThreshold) {
+            $shipping = $this->shippingMethod('gls_world', [
+                'free_shipping_from' => $disabledThreshold,
+            ]);
+
+            $this->assertNull(ShippingMethod::freeShippingThreshold($shipping));
+            $this->assertFalse(ShippingMethod::hasFreeShipping($shipping, 250));
+            $this->assertSame(5.0, ShippingMethod::priceForTotal($shipping, 250));
+        }
+    }
+
+    public function test_legacy_gls_world_method_without_threshold_keeps_default(): void
+    {
+        $shipping = $this->shippingMethod('gls_world');
+
+        $this->assertSame(100.0, ShippingMethod::freeShippingThreshold($shipping));
+        $this->assertTrue(ShippingMethod::hasFreeShipping($shipping, 100));
+        $this->assertSame(0.0, ShippingMethod::priceForTotal($shipping, 100));
+    }
+
     private function shippingMethod(string $code = 'gls', array $data = []): object
     {
         return (object) [

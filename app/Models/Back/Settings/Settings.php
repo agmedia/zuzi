@@ -195,16 +195,22 @@ class Settings extends Model
      */
     public static function setListItem(string $code, string $key, $value)
     {
-        $updated = false;
         $setting = Settings::where('code', $code)->where('key', $key)->first();
 
-        if ($setting) {
-            $updated = $setting->update([
-                'value' => json_encode([$value])
-            ]);
+        if (! $setting) {
+            return false;
         }
 
-        return $updated ?: false;
+        $updated = $setting->update([
+            'value' => json_encode([$value])
+        ]);
+
+        if ($updated) {
+            Helper::flushCache('settings', $code);
+            Helper::flushCache('settings', $code.$key);
+        }
+
+        return $updated;
     }
 
 

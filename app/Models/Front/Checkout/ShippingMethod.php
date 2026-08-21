@@ -180,8 +180,10 @@ class ShippingMethod
     {
         $custom_threshold = data_get($shipping, 'data.free_shipping_from');
 
-        if ($custom_threshold !== null && $custom_threshold !== '') {
-            return (float) $custom_threshold;
+        if (self::hasFreeShippingThresholdSetting($shipping)) {
+            return $custom_threshold === null || $custom_threshold === ''
+                ? null
+                : (float) $custom_threshold;
         }
 
         if (data_get($shipping, 'code') === 'gls_world') {
@@ -203,7 +205,25 @@ class ShippingMethod
     {
         $custom_threshold = data_get($shipping, 'data.free_shipping_from');
 
-        return $custom_threshold !== null && $custom_threshold !== '';
+        return self::hasFreeShippingThresholdSetting($shipping)
+            && $custom_threshold !== null
+            && $custom_threshold !== '';
+    }
+
+
+    /**
+     * Determine whether the threshold was explicitly saved, including a null
+     * value used to disable free shipping.
+     */
+    private static function hasFreeShippingThresholdSetting($shipping): bool
+    {
+        $data = data_get($shipping, 'data');
+
+        if (is_array($data)) {
+            return array_key_exists('free_shipping_from', $data);
+        }
+
+        return is_object($data) && property_exists($data, 'free_shipping_from');
     }
 
 
