@@ -211,7 +211,11 @@
                                     </div>
                                 </td>
                                 <td class="text-right font-size-sm text-nowrap">
-                                    <a class="btn btn-sm btn-alt-secondary" target="_blank" href=" {{ url($product->url) }}">
+                                    <a class="btn btn-sm {{ $product->status ? 'btn-alt-secondary' : 'btn-alt-warning' }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       title="{{ $product->status ? 'Otvori artikl' : 'Pregledaj neaktivni artikl' }}"
+                                       href="{{ url($product->url) }}{{ $product->status ? '' : '?preview=1' }}">
                                         <i class="fa fa-fw fa-eye"></i>
                                     </a>
                                     <a class="btn btn-sm btn-alt-secondary" href="{{ route('products.edit', ['product' => $product]) }}">

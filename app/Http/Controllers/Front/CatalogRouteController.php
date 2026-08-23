@@ -19,6 +19,7 @@ use App\Models\Front\Catalog\Publisher;
 use App\Models\Seo;
 use App\Models\TagManager;
 use App\Services\Front\CuratedCollectionService;
+use Bouncer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -56,19 +57,26 @@ class CatalogRouteController extends Controller
 
         // Check if there is Product set.
         if ($prod) {
-            if ( ! $prod->status) {
+            $previewUser = $request->user();
+            $isAdminPreview = $request->boolean('preview')
+                && $previewUser
+                && ($previewUser->can('*') || Bouncer::is($previewUser)->an('superadmin', 'admin', 'editor'));
+
+            if ( ! $prod->status && ! $isAdminPreview) {
                 abort(404);
             }
 
             $prod->loadMissing(['images', 'author', 'publisher', 'action']);
             $prod = Product::attachListingBadges(collect([$prod]))->first() ?: $prod;
 
-            DB::table('products')
-                ->where('id', $prod->id)
-                ->increment('viewed');
+            if ( ! $isAdminPreview) {
+                DB::table('products')
+                    ->where('id', $prod->id)
+                    ->increment('viewed');
+            }
 
             $seo = Seo::getProductData($prod);
-            $gdl = TagManager::getGoogleProductDataLayer($prod);
+            $gdl = $isAdminPreview ? null : TagManager::getGoogleProductDataLayer($prod);
             $reviews = $prod->reviews()->get();
 
             $prod->kat = CategoryProducts::where('product_id', $prod->id)->where('category_id', 109)->first();
@@ -141,7 +149,16 @@ class CatalogRouteController extends Controller
                 $relatedProducts = Product::attachListingBadges($relatedProducts);
             }
 
-            return view('front.catalog.product.index', compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme', 'shipping_methods', 'payment_methods', 'gdl', 'reviews', 'authorProducts', 'publisherProducts', 'relatedProducts', 'relatedBlogReviews'));
+            $viewData = compact('prod', 'group', 'cat', 'subcat', 'seo', 'crumbs', 'bookscheme', 'shipping_methods', 'payment_methods', 'gdl', 'reviews', 'authorProducts', 'publisherProducts', 'relatedProducts', 'relatedBlogReviews', 'isAdminPreview');
+
+            if ($isAdminPreview) {
+                return response()
+                    ->view('front.catalog.product.index', $viewData)
+                    ->header('Cache-Control', 'private, no-store, max-age=0')
+                    ->header('X-Robots-Tag', 'noindex, nofollow, noarchive');
+            }
+
+            return view('front.catalog.product.index', $viewData);
         }
 
         // If only group...

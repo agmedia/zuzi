@@ -7,6 +7,7 @@ use App\Http\Controllers\Back\Catalog\AuthorController;
 use App\Http\Controllers\Back\Catalog\CategoryController;
 use App\Http\Controllers\Back\Catalog\ProductController;
 use App\Http\Controllers\Back\Catalog\PublisherController;
+use App\Http\Controllers\Back\Catalog\LagunaImportController;
 use App\Http\Controllers\Back\DashboardController;
 use App\Http\Controllers\Back\ContractWithdrawalController as AdminContractWithdrawalController;
 use App\Http\Controllers\Back\OrderController;
@@ -132,6 +133,14 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('product/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
         Route::patch('product/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('product/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+        // LAGUNA IMPORT
+        Route::get('laguna-import', [LagunaImportController::class, 'index'])->name('laguna-import.index');
+        Route::post('laguna-import/refresh', [LagunaImportController::class, 'refresh'])->name('laguna-import.refresh');
+        Route::post('laguna-import/settings', [LagunaImportController::class, 'updateSettings'])->name('laguna-import.settings');
+        Route::get('laguna-import/inspection-queue', [LagunaImportController::class, 'inspectionQueue'])->name('laguna-import.inspection-queue');
+        Route::post('laguna-import/{lagunaImportProduct}/inspect', [LagunaImportController::class, 'inspect'])->name('laguna-import.inspect');
+        Route::post('laguna-import/{lagunaImportProduct}/import', [LagunaImportController::class, 'import'])->name('laguna-import.import');
     });
 
     // NARUDŽBE

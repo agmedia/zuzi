@@ -1,6 +1,7 @@
 @extends('front.layouts.app')
 @section ('title', $seo['title'])
 @section ('description', $seo['description'])
+@section('robots', !empty($isAdminPreview) ? 'noindex,nofollow,noarchive' : '')
 @section('seo_image', $prod->image)
 @section('seo_image_alt', $prod->image_alt ?: 'Naslovnica knjige ' . $prod->name)
 @section('og_type', 'product')
@@ -1142,7 +1143,21 @@
 
 @section('content')
 
-
+    @if(!empty($isAdminPreview))
+        <div class="alert alert-warning d-flex flex-column flex-sm-row align-items-sm-center justify-content-sm-between mb-4" role="status">
+            <div class="mr-sm-3">
+                <strong><i class="ci-eye mr-1"></i> Administratorski pregled.</strong>
+                @if(!$prod->status)
+                    Ovaj artikl je neaktivan i kupci ga ne mogu otvoriti.
+                @else
+                    Ovaj se pregled ne bilježi kao posjet artiklu.
+                @endif
+            </div>
+            <a class="btn btn-sm btn-dark mt-2 mt-sm-0 text-nowrap" href="{{ route('products.edit', ['product' => $prod->id]) }}">
+                Uredi artikl
+            </a>
+        </div>
+    @endif
 
     <!-- Page title + breadcrumb-->
     <nav class="mb-4" aria-label="breadcrumb">
