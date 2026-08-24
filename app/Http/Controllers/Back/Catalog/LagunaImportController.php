@@ -222,10 +222,15 @@ class LagunaImportController extends Controller
 
         if ($request->filled('search')) {
             $search = trim((string) $request->input('search'));
-            $query->where(function (Builder $query) use ($search) {
+            $isbnSearch = preg_replace('/\D+/', '', $search);
+
+            $query->where(function (Builder $query) use ($search, $isbnSearch) {
                 $query->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('external_id', 'like', '%' . $search . '%')
-                    ->orWhere('isbn', 'like', '%' . preg_replace('/\D+/', '', $search) . '%');
+                    ->orWhere('external_id', 'like', '%' . $search . '%');
+
+                if ($isbnSearch !== '') {
+                    $query->orWhere('isbn', 'like', '%' . $isbnSearch . '%');
+                }
             });
         }
 

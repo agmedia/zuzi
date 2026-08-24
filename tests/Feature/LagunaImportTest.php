@@ -187,6 +187,48 @@ class LagunaImportTest extends TestCase
             ->assertDontSee('data-single-action="inspect" data-source-id="' . $checkedSource->id . '"', false);
     }
 
+    public function test_text_search_does_not_match_unrelated_products_with_isbns(): void
+    {
+        $matchingSource = $this->createSource([
+            'external_id' => 'SEARCH-MATCH',
+            'name' => 'Carstvo prokletih',
+            'isbn' => '9788652162123',
+        ]);
+        $unrelatedSource = $this->createSource([
+            'external_id' => 'SEARCH-UNRELATED',
+            'name' => 'Neveštice',
+            'isbn' => '9788652164349',
+            'source_hash' => hash('sha256', 'SEARCH-UNRELATED-v1'),
+        ]);
+
+        $admin = User::factory()->create();
+        UserDetail::query()->create([
+            'user_id' => $admin->id,
+            'fname' => 'Admin',
+            'lname' => 'Test',
+            'role' => 'admin',
+        ]);
+        Bouncer::allow($admin)->everything();
+
+        $response = $this->actingAs($admin)->get(route('laguna-import.index', [
+            'status' => 'all',
+            'search' => 'Carstvo prokletih',
+        ]));
+
+        $response->assertOk()
+            ->assertSee('data-source-row="' . $matchingSource->id . '"', false)
+            ->assertDontSee('data-source-row="' . $unrelatedSource->id . '"', false);
+
+        $isbnResponse = $this->get(route('laguna-import.index', [
+            'status' => 'all',
+            'search' => '978-86-521-6212-3',
+        ]));
+
+        $isbnResponse->assertOk()
+            ->assertSee('data-source-row="' . $matchingSource->id . '"', false)
+            ->assertDontSee('data-source-row="' . $unrelatedSource->id . '"', false);
+    }
+
     public function test_existing_product_is_matched_by_exact_title_and_author_when_isbn_differs(): void
     {
         $mapping = $this->configureLagunaImport();
