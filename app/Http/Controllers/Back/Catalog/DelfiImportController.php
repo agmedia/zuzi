@@ -64,7 +64,7 @@ class DelfiImportController extends Controller
             'route_parameter' => 'delfiImportProduct',
             'config_key' => 'delfi_import',
             'source_site' => 'Delfi.rs',
-            'subtitle' => 'Inkrementalni uvoz knjiga s provjerom ISBN-a, autora i naslova te prijevodom opisa na hrvatski',
+            'subtitle' => 'Inkrementalni uvoz knjiga s provjerom ISBN-a, autora i naslova te opcionalnim prijevodom opisa na hrvatski',
             'source_id_label' => 'Delfi šifra',
             'allowed_categories_label' => 'Samo Knjiga i Strana knjiga',
             'required_mapping_label' => 'Nakladnici › zadani ili prepoznati nakladnik',
@@ -528,6 +528,7 @@ class DelfiImportController extends Controller
         $validated['genre_category_map'] = $genreCategoryMap;
         $validated['map_source_publishers'] = $request->boolean('map_source_publishers') ? 1 : 0;
         $validated['activate_new_products'] = $request->boolean('activate_new_products') ? 1 : 0;
+        $validated['translate_descriptions'] = $request->boolean('translate_descriptions') ? 1 : 0;
         $settingsService->save($validated);
 
         return redirect()->route('delfi-import.index', ['tab' => 'settings'])

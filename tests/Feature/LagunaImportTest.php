@@ -22,7 +22,10 @@ class LagunaImportTest extends TestCase
 
     public function test_import_settings_default_to_skipping_existing_products(): void
     {
-        $this->assertSame('skip', app(LagunaImportSettings::class)->all()['existing_action']);
+        $settings = app(LagunaImportSettings::class)->all();
+
+        $this->assertSame('skip', $settings['existing_action']);
+        $this->assertFalse($settings['translate_descriptions']);
     }
 
     public function test_feed_sync_is_incremental_and_preserves_product_links(): void
@@ -306,6 +309,48 @@ class LagunaImportTest extends TestCase
         });
     }
 
+    public function test_translation_can_be_disabled_and_does_not_call_external_service(): void
+    {
+        $mapping = $this->configureLagunaImport();
+        app(LagunaImportSettings::class)->save(['translate_descriptions' => 0]);
+        $source = $this->createSource(['description' => 'Izvorni opis bez prijevoda.']);
+
+        Http::fake([
+            $source->source_url => Http::response($this->productPage(), 200),
+            'translate.googleapis.com/*' => Http::response([], 429),
+        ]);
+
+        $result = app(LagunaImportService::class)->import($source, $mapping['additional_category_id']);
+        $product = Product::query()->findOrFail($result['product_id']);
+
+        $this->assertStringContainsString('Izvorni opis bez prijevoda.', $product->description);
+        Http::assertNotSent(fn ($request) => Str::startsWith(
+            $request->url(),
+            'https://translate.googleapis.com/'
+        ));
+    }
+
+    public function test_free_translation_failure_falls_back_to_source_description(): void
+    {
+        $mapping = $this->configureLagunaImport();
+        $source = $this->createSource(['description' => 'Izvorni opis nakon rate limita.']);
+
+        Http::fake([
+            $source->source_url => Http::response($this->productPage(), 200),
+            'translate.googleapis.com/*' => Http::response([], 429),
+        ]);
+
+        $result = app(LagunaImportService::class)->import($source, $mapping['additional_category_id']);
+        $product = Product::query()->findOrFail($result['product_id']);
+
+        $this->assertStringContainsString('Izvorni opis nakon rate limita.', $product->description);
+        $this->assertStringContainsString('Prijevod opisa nije uspio', $result['message']);
+        Http::assertSent(fn ($request) => Str::startsWith(
+            $request->url(),
+            'https://translate.googleapis.com/translate_a/single'
+        ));
+    }
+
     private function createSource(array $overrides = []): LagunaImportProduct
     {
         return LagunaImportProduct::query()->create(array_merge([
@@ -381,6 +426,7 @@ class LagunaImportTest extends TestCase
             'publisher_id' => $publisherId,
             'default_quantity' => 3,
             'activate_new_products' => 0,
+            'translate_descriptions' => 1,
             'existing_action' => 'skip',
         ]);
 

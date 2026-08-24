@@ -13,4 +13,5 @@ return [
     'exchange_rate' => (float) env('LAGUNA_RSD_PER_EUR', 117.2),
     'markup_percent' => (float) env('LAGUNA_MARKUP_PERCENT', 0),
     'default_quantity' => (int) env('LAGUNA_DEFAULT_QUANTITY', 1),
+    'translate_descriptions' => (bool) env('LAGUNA_TRANSLATE_DESCRIPTIONS', false),
 ];

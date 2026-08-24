@@ -36,7 +36,7 @@ class DelfiImportSettings
             'activate_new_products' => (bool) ((int) $stored->get('activate_new_products', 0)),
             'translate_descriptions' => (bool) ((int) $stored->get(
                 'translate_descriptions',
-                config('delfi_import.translate_descriptions', true) ? 1 : 0
+                config('delfi_import.translate_descriptions', false) ? 1 : 0
             )),
             'existing_action' => in_array($existingAction, ['skip', 'price_stock'], true)
                 ? $existingAction

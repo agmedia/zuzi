@@ -61,7 +61,7 @@
             'route_parameter' => 'lagunaImportProduct',
             'config_key' => 'laguna_import',
             'source_site' => 'Laguna.rs',
-            'subtitle' => 'Inkrementalni uvoz knjiga s provjerom ISBN-a i prijevodom opisa na hrvatski',
+            'subtitle' => 'Inkrementalni uvoz knjiga s provjerom ISBN-a i opcionalnim prijevodom opisa na hrvatski',
             'source_id_label' => 'Laguna šifra',
             'allowed_categories_label' => 'Samo kategorija Knjige',
             'required_mapping_label' => 'Nakladnici › Laguna',
@@ -568,6 +568,13 @@
                             @endif
 
                             <div class="bg-body-light rounded p-3 mb-3">
+                                <input type="hidden" name="translate_descriptions" value="0">
+                                <div class="custom-control custom-switch mb-3">
+                                    <input type="checkbox" class="custom-control-input" id="{{ $importUi['slug'] }}-translate-descriptions" name="translate_descriptions" value="1" {{ old('translate_descriptions', $settings['translate_descriptions'] ?? false) ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-w600" for="{{ $importUi['slug'] }}-translate-descriptions">Prevedi opis na hrvatski</label>
+                                    <div class="small text-muted mt-1">Zadano je isključeno. Koristi se besplatni servis bez API ključa; ako nije dostupan, uvoz nastavlja s izvornim opisom i prikazuje upozorenje.</div>
+                                </div>
+                                <hr class="my-3">
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox" class="custom-control-input" id="activate-new" name="activate_new_products" value="1" {{ old('activate_new_products', $settings['activate_new_products']) ? 'checked' : '' }}>
                                     <label class="custom-control-label font-w600" for="activate-new">Odmah aktiviraj nove artikle</label>

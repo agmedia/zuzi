@@ -208,6 +208,7 @@ class LagunaImportController extends Controller
         }
 
         $validated['activate_new_products'] = $request->boolean('activate_new_products') ? 1 : 0;
+        $validated['translate_descriptions'] = $request->boolean('translate_descriptions') ? 1 : 0;
         $settingsService->save($validated);
 
         return redirect()->route('laguna-import.index', ['tab' => 'settings'])

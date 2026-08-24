@@ -11,6 +11,7 @@ use App\Models\Back\Catalog\Product\ProductImage;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Action;
 use App\Services\ProductIdentifierAllocator;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -295,7 +296,9 @@ class DelfiImportService
             throw new RuntimeException('Artikl nije sigurno potvrđen kao nov.');
         }
 
-        $description = $this->importDescription($source, $settings);
+        $descriptionResult = $this->importDescription($source, $settings);
+        $description = $descriptionResult['description'];
+        $translationWarning = $descriptionResult['warning'];
         $price = $this->priceCalculator->convert(
             $source->price_rsd,
             $settings['exchange_rate'],
@@ -439,17 +442,18 @@ class DelfiImportService
         }
 
         $imageWarning = $this->storeImages($product, $source);
+        $warnings = trim(implode(' ', array_filter([$translationWarning, $imageWarning])));
         $source->update([
             'product_id' => $product->id,
             'check_status' => 'matched',
-            'check_message' => 'Novi Zuzi artikl uspješno je uvezen.' . ($imageWarning ? ' ' . $imageWarning : ''),
+            'check_message' => 'Novi Zuzi artikl uspješno je uvezen.' . ($warnings ? ' ' . $warnings : ''),
             'imported_hash' => $source->source_hash,
             'imported_at' => now(),
         ]);
 
         return [
             'action' => 'created',
-            'message' => 'Artikl je uvezen u Zuzi.' . ($imageWarning ? ' ' . $imageWarning : ''),
+            'message' => 'Artikl je uvezen u Zuzi.' . ($warnings ? ' ' . $warnings : ''),
             'product_id' => (int) $product->id,
         ];
     }
@@ -525,26 +529,39 @@ class DelfiImportService
         ];
     }
 
-    private function importDescription(DelfiImportProduct $source, array $settings): string
+    private function importDescription(DelfiImportProduct $source, array $settings): array
     {
         $description = trim((string) $source->description);
-        if (! ($settings['translate_descriptions'] ?? true) || $description === '') {
-            return $description;
+        if (! ($settings['translate_descriptions'] ?? false) || $description === '') {
+            return ['description' => $description, 'warning' => ''];
         }
 
         $hash = hash('sha256', $description);
         if ($source->translated_description
             && hash_equals($hash, (string) $source->translation_source_hash)) {
-            return $source->translated_description;
+            return ['description' => $source->translated_description, 'warning' => ''];
         }
 
-        $translated = $this->translator->translateDescription($description);
+        try {
+            $translated = $this->translator->translateDescription($description);
+        } catch (RuntimeException | ConnectionException $exception) {
+            logger()->warning('Delfi opis nije preveden; koristi se izvorni opis.', [
+                'source_id' => $source->id,
+                'reason' => $exception->getMessage(),
+            ]);
+
+            return [
+                'description' => $description,
+                'warning' => 'Prijevod opisa nije uspio; spremljen je izvorni opis.',
+            ];
+        }
+
         $source->update([
             'translated_description' => $translated,
             'translation_source_hash' => $hash,
         ]);
 
-        return $translated;
+        return ['description' => $translated, 'warning' => ''];
     }
 
     private function findExistingProducts(

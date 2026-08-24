@@ -25,6 +25,11 @@ class DelfiImportTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_description_translation_is_disabled_by_default(): void
+    {
+        $this->assertFalse(app(DelfiImportSettings::class)->all()['translate_descriptions']);
+    }
+
     public function test_new_book_uses_source_publisher_genre_mapping_translation_and_eur_price(): void
     {
         $mapping = $this->configureImport();
@@ -75,6 +80,52 @@ class DelfiImportTest extends TestCase
         $this->assertSame('A335680', $source->nav_id);
         $this->assertSame($source->source_hash, $source->imported_hash);
         $this->assertNotNull($source->imported_at);
+    }
+
+    public function test_translation_can_be_disabled_without_calling_external_service(): void
+    {
+        $mapping = $this->configureImport();
+        app(DelfiImportSettings::class)->save(['translate_descriptions' => 0]);
+        $source = $this->source(['description' => 'Izvorni Delfi opis.']);
+        $payload = $this->detailPayload();
+        $payload['data']['product']['description'] = '<p>Izvorni Delfi opis.</p>';
+
+        Http::fake([
+            'https://delfi.rs/api/pc-frontend-api/overview/251908' => Http::response($payload, 200),
+            'translate.googleapis.com/*' => Http::response([], 429),
+        ]);
+
+        $result = app(DelfiImportService::class)->import($source, $mapping['additional_category_id']);
+        $product = Product::query()->findOrFail($result['product_id']);
+
+        $this->assertStringContainsString('Izvorni Delfi opis.', $product->description);
+        Http::assertNotSent(fn ($request) => Str::startsWith(
+            $request->url(),
+            'https://translate.googleapis.com/'
+        ));
+    }
+
+    public function test_free_translation_failure_falls_back_to_source_description(): void
+    {
+        $mapping = $this->configureImport();
+        $source = $this->source(['description' => 'Izvorni Delfi opis nakon rate limita.']);
+        $payload = $this->detailPayload();
+        $payload['data']['product']['description'] = '<p>Izvorni Delfi opis nakon rate limita.</p>';
+
+        Http::fake([
+            'https://delfi.rs/api/pc-frontend-api/overview/251908' => Http::response($payload, 200),
+            'translate.googleapis.com/*' => Http::response([], 429),
+        ]);
+
+        $result = app(DelfiImportService::class)->import($source, $mapping['additional_category_id']);
+        $product = Product::query()->findOrFail($result['product_id']);
+
+        $this->assertStringContainsString('Izvorni Delfi opis nakon rate limita.', $product->description);
+        $this->assertStringContainsString('Prijevod opisa nije uspio', $result['message']);
+        Http::assertSent(fn ($request) => Str::startsWith(
+            $request->url(),
+            'https://translate.googleapis.com/translate_a/single'
+        ));
     }
 
     public function test_inspection_matches_exact_title_and_author_when_isbn_is_different(): void
@@ -184,6 +235,7 @@ class DelfiImportTest extends TestCase
             ->assertSee('Samo Knjiga i Strana knjiga')
             ->assertSee('value="new" selected', false)
             ->assertSee('data-source-row="' . $source->id . '"', false)
+            ->assertSee('Prevedi opis na hrvatski')
             ->assertSee('Mapiranje Delfi žanrova')
             ->assertSee('Fantastika');
     }

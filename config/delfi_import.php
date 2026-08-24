@@ -32,5 +32,5 @@ return [
     'exchange_rate' => (float) env('DELFI_RSD_PER_EUR', 117.2),
     'markup_percent' => (float) env('DELFI_MARKUP_PERCENT', 0),
     'default_quantity' => (int) env('DELFI_DEFAULT_QUANTITY', 1),
-    'translate_descriptions' => (bool) env('DELFI_TRANSLATE_DESCRIPTIONS', true),
+    'translate_descriptions' => (bool) env('DELFI_TRANSLATE_DESCRIPTIONS', false),
 ];
