@@ -1,23 +1,6 @@
--- Delfi import staging tablica za live bazu (phpMyAdmin / MySQL 5.7+).
--- Skripta je idempotentna i ne dira postojeće proizvode ni postavke.
-
--- Ubrzava provjeru postoji li Delfi EAN već u Zuzi katalogu. MySQL 5.7
--- nema CREATE INDEX IF NOT EXISTS, zato se indeks dodaje uvjetno.
-SET @zuzi_delfi_has_ean_index = (
-    SELECT COUNT(*)
-    FROM INFORMATION_SCHEMA.STATISTICS
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = 'products'
-      AND INDEX_NAME = 'products_ean_index'
-);
-SET @zuzi_delfi_ean_index_sql = IF(
-    @zuzi_delfi_has_ean_index = 0,
-    'ALTER TABLE `products` ADD INDEX `products_ean_index` (`ean`)',
-    'SELECT 1'
-);
-PREPARE zuzi_delfi_ean_index_stmt FROM @zuzi_delfi_ean_index_sql;
-EXECUTE zuzi_delfi_ean_index_stmt;
-DEALLOCATE PREPARE zuzi_delfi_ean_index_stmt;
+-- Delfi import tablice za live bazu (phpMyAdmin / MySQL 5.7+).
+-- Skripta je idempotentna, ne dira postojeće proizvode ni postavke i ne
+-- zahtijeva pristup INFORMATION_SCHEMA bazi.
 
 CREATE TABLE IF NOT EXISTS `delfi_import_feed_rows` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -106,10 +89,9 @@ CREATE TABLE IF NOT EXISTS `delfi_import_products` (
     KEY `delfi_import_products_check_status_index` (`check_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-SELECT
-    TABLE_NAME,
-    TABLE_ROWS
-FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_SCHEMA = DATABASE()
-  AND TABLE_NAME IN ('delfi_import_feed_rows', 'delfi_import_products')
-ORDER BY TABLE_NAME;
+SHOW TABLES LIKE 'delfi_import_feed_rows';
+SHOW TABLES LIKE 'delfi_import_products';
+
+-- Ako sljedeći upit ne vrati redak, jednom izvršite zasebnu skriptu
+-- 069_add_products_ean_index.sql. Indeks znatno ubrzava početnu provjeru.
+SHOW INDEX FROM `products` WHERE Key_name = 'products_ean_index';
