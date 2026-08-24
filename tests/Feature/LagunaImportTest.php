@@ -174,7 +174,9 @@ class LagunaImportTest extends TestCase
             ->assertOk()
             ->assertSee('Provjeri sve neprovjerene')
             ->assertSee('data-count="45"', false)
-            ->assertSee('value="new" selected', false);
+            ->assertSee('value="new" selected', false)
+            ->assertDontSee('Delfi kategorija')
+            ->assertDontSee('Delfi podkategorija');
 
         $allResponse = $this->get(route('laguna-import.index', ['status' => 'all']));
         $allResponse->assertOk()

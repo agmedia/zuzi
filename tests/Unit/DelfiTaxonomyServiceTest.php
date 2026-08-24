@@ -11,7 +11,7 @@ class DelfiTaxonomyServiceTest extends TestCase
 {
     public function test_it_returns_unique_genres_only_for_both_book_categories(): void
     {
-        Cache::forget('delfi-import-book-genres');
+        Cache::forget('delfi-import-book-genres-by-category');
         Http::fake([
             'https://delfi.rs/api/pc-frontend-api/get-filters-data' => Http::response([
                 'data' => ['genresByCategories' => [
@@ -28,9 +28,16 @@ class DelfiTaxonomyServiceTest extends TestCase
             ], 200),
         ]);
 
+        $service = app(DelfiTaxonomyService::class);
+
+        $this->assertSame([
+            'Knjiga' => ['Drama', 'Fantastika'],
+            'Strana knjiga' => ['Drama', 'Fantasy'],
+        ], $service->bookGenresByCategory());
         $this->assertSame(
             ['Drama', 'Fantastika', 'Fantasy'],
-            app(DelfiTaxonomyService::class)->bookGenres()
+            $service->bookGenres()
         );
+        Http::assertSentCount(1);
     }
 }

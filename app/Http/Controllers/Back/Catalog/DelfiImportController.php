@@ -29,6 +29,30 @@ class DelfiImportController extends Controller
         DelfiTaxonomyService $taxonomyService
     ) {
         $settings = $settingsService->all();
+        $sourceGenreCountsByCategory = $this->sourceGenreCountsByCategory();
+        $sourceTaxonomy = $taxonomyService->bookGenresByCategory();
+        $sourceGenres = [];
+        foreach (DelfiProductListApiClient::CATEGORIES as $sourceCategory) {
+            $discoveredCounts = $sourceGenreCountsByCategory[$sourceCategory] ?? [];
+            $categoryGenres = array_values(array_unique(array_merge(
+                (array) ($sourceTaxonomy[$sourceCategory] ?? []),
+                array_keys($discoveredCounts)
+            )));
+            natcasesort($categoryGenres);
+            $sourceTaxonomy[$sourceCategory] = array_values($categoryGenres);
+
+            foreach ($categoryGenres as $genre) {
+                $sourceGenres[$genre] = ($sourceGenres[$genre] ?? 0) + (int) ($discoveredCounts[$genre] ?? 0);
+            }
+        }
+        foreach (array_keys((array) ($settings['genre_category_map'] ?? [])) as $genre) {
+            if (! array_key_exists($genre, $sourceGenres)) {
+                $sourceGenres[$genre] = 0;
+            }
+        }
+        uksort($sourceGenres, 'strnatcasecmp');
+        $this->normalizeSourceFilters($request, $sourceTaxonomy);
+
         $query = DelfiImportProduct::query()->with('product:id,name,sku,itemid,isbn,price,quantity');
         $this->applyFilters($query, $request);
 
@@ -45,18 +69,6 @@ class DelfiImportController extends Controller
         $publishers = Publisher::query()->orderBy('title')->get(['id', 'title']);
         $feedMetadata = $feedService->metadata();
         $feedMetadata['count'] = $statusCounts['all'];
-        $sourceGenres = $this->sourceGenreCounts();
-        foreach ($taxonomyService->bookGenres() as $genre) {
-            if (! array_key_exists($genre, $sourceGenres)) {
-                $sourceGenres[$genre] = 0;
-            }
-        }
-        foreach (array_keys((array) ($settings['genre_category_map'] ?? [])) as $genre) {
-            if (! array_key_exists($genre, $sourceGenres)) {
-                $sourceGenres[$genre] = 0;
-            }
-        }
-        uksort($sourceGenres, 'strnatcasecmp');
         $importUi = [
             'name' => 'Delfi',
             'slug' => 'delfi',
@@ -71,6 +83,7 @@ class DelfiImportController extends Controller
             'publisher_category_label' => 'Rezervna podkategorija nakladnika',
             'default_publisher_label' => 'Delfi (koristi se kad izvorni nakladnik nije mapiran)',
             'supports_source_mapping' => true,
+            'supports_source_category_filter' => true,
             'inspection_workers' => 1,
             'inspection_delay_ms' => 500,
             'bulk_inspection_route' => 'delfi-import.inspect-bulk',
@@ -88,6 +101,7 @@ class DelfiImportController extends Controller
             'feedMetadata',
             'priceCalculator',
             'sourceGenres',
+            'sourceTaxonomy',
             'importUi'
         ));
     }
@@ -144,7 +158,6 @@ class DelfiImportController extends Controller
 
         try {
             $source = $importService->inspect($delfiImportProduct, ! $request->boolean('only_if_pending'));
-            Cache::forget('delfi-import-source-genre-counts');
 
             return response()->json([
                 'success' => true,
@@ -559,6 +572,17 @@ class DelfiImportController extends Controller
             });
         }
 
+        $sourceCategory = trim((string) $request->input('source_category'));
+        if (in_array($sourceCategory, DelfiProductListApiClient::CATEGORIES, true)) {
+            $query->where('source_category', $sourceCategory);
+        }
+
+        $sourceGenre = trim((string) $request->input('source_genre'));
+        if ($sourceGenre !== '' && mb_strlen($sourceGenre) <= 255) {
+            $query->whereColumn('checked_source_hash', 'source_hash')
+                ->whereJsonContains('source_genres', $sourceGenre);
+        }
+
         if (! in_array($status, ['all', 'missing'], true)) {
             $this->applyStatusFilter($query, $status);
         }
@@ -810,27 +834,58 @@ class DelfiImportController extends Controller
         );
     }
 
-    private function sourceGenreCounts(): array
+    private function sourceGenreCountsByCategory(): array
     {
-        return Cache::remember('delfi-import-source-genre-counts', now()->addMinutes(10), function () {
-            $counts = [];
+        return Cache::remember('delfi-import-source-genre-counts-by-category', now()->addMinutes(10), function () {
+            $counts = array_fill_keys(DelfiProductListApiClient::CATEGORIES, []);
             DelfiImportProduct::query()
+                ->whereIn('source_category', DelfiProductListApiClient::CATEGORIES)
                 ->whereNotNull('source_genres')
-                ->select(['id', 'source_genres'])
+                ->whereColumn('checked_source_hash', 'source_hash')
+                ->select(['id', 'source_category', 'source_genres'])
                 ->orderBy('id')
                 ->chunkById(500, function ($products) use (&$counts) {
                     foreach ($products as $product) {
+                        $sourceCategory = (string) $product->source_category;
+                        if (! array_key_exists($sourceCategory, $counts)) {
+                            continue;
+                        }
                         foreach ((array) $product->source_genres as $genre) {
                             $genre = trim((string) $genre);
                             if ($genre !== '') {
-                                $counts[$genre] = ($counts[$genre] ?? 0) + 1;
+                                $counts[$sourceCategory][$genre] = ($counts[$sourceCategory][$genre] ?? 0) + 1;
                             }
                         }
                     }
                 });
-            uksort($counts, 'strnatcasecmp');
+            foreach ($counts as &$categoryCounts) {
+                uksort($categoryCounts, 'strnatcasecmp');
+            }
+            unset($categoryCounts);
 
             return $counts;
         });
+    }
+
+    private function normalizeSourceFilters(Request $request, array $sourceTaxonomy): void
+    {
+        $sourceCategory = trim((string) $request->query('source_category'));
+        if ($sourceCategory !== '' && ! in_array($sourceCategory, DelfiProductListApiClient::CATEGORIES, true)) {
+            $request->query->remove('source_category');
+            $sourceCategory = '';
+        }
+
+        $sourceGenre = trim((string) $request->query('source_genre'));
+        if ($sourceGenre === '') {
+            return;
+        }
+
+        $knownGenres = $sourceCategory !== ''
+            ? (array) ($sourceTaxonomy[$sourceCategory] ?? [])
+            : array_merge(...array_values($sourceTaxonomy ?: [[]]));
+
+        if (! in_array($sourceGenre, $knownGenres, true)) {
+            $request->query->remove('source_genre');
+        }
     }
 }

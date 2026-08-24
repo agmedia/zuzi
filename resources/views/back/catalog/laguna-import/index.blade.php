@@ -68,6 +68,7 @@
             'publisher_category_label' => 'Laguna podkategorija',
             'default_publisher_label' => 'Laguna',
             'supports_source_mapping' => false,
+            'supports_source_category_filter' => false,
             'inspection_workers' => 2,
             'inspection_delay_ms' => 250,
             'bulk_inspection_route' => null,
@@ -78,6 +79,7 @@
         $settingsTabId = $importUi['slug'] . '-settings';
         $routePrefix = $importUi['route_prefix'];
         $sourceGenres = collect($sourceGenres ?? []);
+        $sourceTaxonomy = (array) ($sourceTaxonomy ?? []);
         $genreCategoryMap = (array) ($settings['genre_category_map'] ?? []);
         $statusLabels = [
             'pending' => ['Nije provjeren', 'secondary'],
@@ -91,6 +93,9 @@
         ];
         $settingsTabActive = request('tab') === 'settings' || $errors->any();
         $selectedStatus = trim((string) request('status', 'new')) ?: 'new';
+        $selectedSourceCategory = trim((string) request('source_category'));
+        $selectedSourceGenre = trim((string) request('source_genre'));
+        $hasListFilters = request('search') || request('status') || request('source_category') || request('source_genre');
         $statusFilterQuery = request()->except(['page', 'status', 'tab', 'product_type']);
     @endphp
 
@@ -229,11 +234,35 @@
             <div class="block-content bg-body-light">
                 <form action="{{ route($routePrefix . '.index') }}" method="get">
                     <div class="form-row align-items-end">
-                        <div class="form-group col-lg-6">
+                        <div class="form-group {{ $importUi['supports_source_category_filter'] ? 'col-md-6 col-xl-3' : 'col-lg-6' }}">
                             <label for="search">Naziv, {{ $importUi['source_id_label'] }} ili ISBN</label>
                             <input id="search" class="form-control" type="text" name="search" value="{{ request('search') }}">
                         </div>
-                        <div class="form-group col-lg-4">
+                        @if($importUi['supports_source_category_filter'])
+                            <div class="form-group col-md-6 col-xl-2">
+                                <label for="source-category">Delfi kategorija</label>
+                                <select id="source-category" class="form-control" name="source_category">
+                                    <option value="">Sve kategorije</option>
+                                    @foreach($sourceTaxonomy as $sourceCategory => $sourceCategoryGenres)
+                                        <option value="{{ $sourceCategory }}" {{ $selectedSourceCategory === $sourceCategory ? 'selected' : '' }}>{{ $sourceCategory }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6 col-xl-3">
+                                <label for="source-genre">Delfi podkategorija</label>
+                                <select id="source-genre" class="form-control" name="source_genre">
+                                    <option value="">Sve podkategorije</option>
+                                    @foreach($sourceTaxonomy as $sourceCategory => $sourceCategoryGenres)
+                                        @foreach($sourceCategoryGenres as $sourceGenre)
+                                            <option value="{{ $sourceGenre }}"
+                                                    data-source-category="{{ $sourceCategory }}"
+                                                    {{ $selectedSourceGenre === $sourceGenre && ($selectedSourceCategory === '' || $selectedSourceCategory === $sourceCategory) ? 'selected' : '' }}>{{ $sourceCategory }} › {{ $sourceGenre }}</option>
+                                        @endforeach
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+                        <div class="form-group {{ $importUi['supports_source_category_filter'] ? 'col-md-6 col-xl-2' : 'col-lg-4' }}">
                             <label for="status">Status</label>
                             <select id="status" class="form-control" name="status">
                                 <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>Svi statusi</option>
@@ -242,13 +271,22 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="form-group col-lg-2">
+                        <div class="form-group {{ $importUi['supports_source_category_filter'] ? 'col-md-6 col-xl-2' : 'col-lg-2' }}">
                             <button class="btn btn-primary btn-block" type="submit"><i class="fa fa-filter mr-1"></i> Filtriraj</button>
-                            @if(request('search') || request('status'))
-                                <a class="btn btn-sm btn-link btn-block" href="{{ route($routePrefix . '.index') }}">Očisti filtre</a>
-                            @endif
                         </div>
                     </div>
+                    @if($importUi['supports_source_category_filter'] || $hasListFilters)
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mt-n2 mb-3">
+                            @if($importUi['supports_source_category_filter'])
+                                <small class="text-muted mr-md-3">Podkategorija/žanr filtrira provjerene i obogaćene knjige. Neprovjerene knjige još nemaju taj podatak.</small>
+                            @else
+                                <span></span>
+                            @endif
+                            @if($hasListFilters)
+                                <a class="btn btn-sm btn-link px-0 flex-shrink-0" href="{{ route($routePrefix . '.index') }}">Očisti filtre</a>
+                            @endif
+                        </div>
+                    @endif
                 </form>
             </div>
 
@@ -756,6 +794,41 @@
                 refreshGenreMappingsVisibility();
             });
             $('#publisher-parent-category').on('change', filterPublisherCategories);
+
+            const sourceCategoryFilter = $('#source-category');
+            const sourceGenreFilter = $('#source-genre');
+            const sourceGenreOptions = sourceGenreFilter.find('option').clone();
+
+            function filterSourceGenres() {
+                if (!sourceCategoryFilter.length || !sourceGenreFilter.length) {
+                    return;
+                }
+
+                const category = String(sourceCategoryFilter.val() || '');
+                const currentGenre = String(sourceGenreFilter.val() || '');
+                sourceGenreFilter.empty();
+                sourceGenreOptions.each(function () {
+                    const optionCategory = String($(this).data('source-category') || '');
+                    if (!this.value || !category || optionCategory === category) {
+                        sourceGenreFilter.append($(this).clone());
+                    }
+                });
+                sourceGenreFilter.val(
+                    sourceGenreFilter.find('option').filter(function () { return this.value === currentGenre; }).length
+                        ? currentGenre
+                        : ''
+                );
+            }
+
+            sourceCategoryFilter.on('change', filterSourceGenres);
+            sourceGenreFilter.on('change', function () {
+                const optionCategory = String($(this).find('option:selected').data('source-category') || '');
+                if (!sourceCategoryFilter.val() && optionCategory) {
+                    sourceCategoryFilter.val(optionCategory);
+                    filterSourceGenres();
+                }
+            });
+            filterSourceGenres();
 
             const settingsTabSelector = @json('#' . $settingsTabId);
             if (window.location.hash === settingsTabSelector) {

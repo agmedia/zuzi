@@ -227,6 +227,15 @@ class DelfiImportTest extends TestCase
             'role' => 'admin',
         ]);
         Bouncer::allow($admin)->everything();
+        Cache::forget('delfi-import-book-genres-by-category');
+        Http::fake([
+            'https://delfi.rs/api/pc-frontend-api/get-filters-data' => Http::response([
+                'data' => ['genresByCategories' => [
+                    ['category' => 'Knjiga', 'genres' => [['genreName' => 'Fantastika']]],
+                    ['category' => 'Strana knjiga', 'genres' => [['genreName' => 'Fantasy']]],
+                ]],
+            ], 200),
+        ]);
 
         $response = $this->actingAs($admin)->get(route('delfi-import.index'));
 
@@ -235,9 +244,94 @@ class DelfiImportTest extends TestCase
             ->assertSee('Samo Knjiga i Strana knjiga')
             ->assertSee('value="new" selected', false)
             ->assertSee('data-source-row="' . $source->id . '"', false)
+            ->assertSee('Delfi kategorija')
+            ->assertSee('Delfi podkategorija')
             ->assertSee('Prevedi opis na hrvatski')
             ->assertSee('Mapiranje Delfi žanrova')
             ->assertSee('Fantastika');
+    }
+
+    public function test_admin_feed_filters_by_delfi_category_and_subcategory(): void
+    {
+        $this->configureImport();
+        $domestic = $this->source([
+            'external_id' => 'DOMESTIC-FILTER',
+            'remote_product_id' => 260001,
+            'name' => 'Domaća fantastika',
+            'source_category' => 'Knjiga',
+            'source_genres' => ['Fantastika', 'Drama'],
+            'source_hash' => hash('sha256', 'domestic-filter'),
+            'checked_source_hash' => hash('sha256', 'domestic-filter'),
+            'check_status' => 'new',
+        ]);
+        $foreign = $this->source([
+            'external_id' => 'FOREIGN-FILTER',
+            'remote_product_id' => 260002,
+            'feed_position' => 2,
+            'name' => 'Foreign fantasy',
+            'source_category' => 'Strana knjiga',
+            'source_genres' => ['Fantasy', 'Romance'],
+            'source_hash' => hash('sha256', 'foreign-filter'),
+            'checked_source_hash' => hash('sha256', 'foreign-filter'),
+            'check_status' => 'new',
+        ]);
+        for ($position = 3; $position <= 42; $position++) {
+            $hash = hash('sha256', 'foreign-filter-' . $position);
+            $this->source([
+                'external_id' => 'FOREIGN-FILTER-' . $position,
+                'remote_product_id' => 260000 + $position,
+                'feed_position' => $position,
+                'name' => 'Foreign fantasy ' . $position,
+                'source_category' => 'Strana knjiga',
+                'source_genres' => ['Fantasy'],
+                'source_hash' => $hash,
+                'checked_source_hash' => $hash,
+                'check_status' => 'new',
+            ]);
+        }
+        Cache::forget('delfi-import-book-genres-by-category');
+        Cache::forget('delfi-import-source-genre-counts-by-category');
+        Http::fake([
+            'https://delfi.rs/api/pc-frontend-api/get-filters-data' => Http::response([
+                'data' => ['genresByCategories' => [
+                    ['category' => 'Knjiga', 'genres' => [['genreName' => 'Fantastika']]],
+                    ['category' => 'Strana knjiga', 'genres' => [['genreName' => 'Fantasy'], ['genreName' => 'Romance']]],
+                ]],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($this->admin())->get(route('delfi-import.index', [
+            'status' => 'all',
+            'source_category' => 'Strana knjiga',
+            'source_genre' => 'Fantasy',
+        ]));
+
+        $response->assertOk()
+            ->assertSee('data-source-row="' . $foreign->id . '"', false)
+            ->assertDontSee('data-source-row="' . $domestic->id . '"', false)
+            ->assertSee('value="Strana knjiga" selected', false)
+            ->assertSee('value="Fantasy"', false)
+            ->assertSee(route('delfi-import.index', [
+                'source_category' => 'Strana knjiga',
+                'source_genre' => 'Fantasy',
+                'status' => 'new',
+            ]))
+            ->assertSee(route('delfi-import.index', [
+                'status' => 'all',
+                'source_category' => 'Strana knjiga',
+                'source_genre' => 'Fantasy',
+                'page' => 2,
+            ]));
+
+        $invalidCombination = $this->get(route('delfi-import.index', [
+            'status' => 'all',
+            'source_category' => 'Knjiga',
+            'source_genre' => 'Fantasy',
+        ]));
+        $invalidCombination->assertOk()
+            ->assertSee('value="Knjiga" selected', false)
+            ->assertSee('data-source-row="' . $domestic->id . '"', false)
+            ->assertDontSee('value="Fantasy" selected', false);
     }
 
     public function test_retryable_inspection_errors_return_429_or_503_and_leave_rows_pending(): void

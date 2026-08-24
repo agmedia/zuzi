@@ -147,7 +147,7 @@ class DelfiImportService
             return [$succeeded, $failed, $failures];
         }, 3);
 
-        Cache::forget('delfi-import-source-genre-counts');
+        Cache::forget('delfi-import-source-genre-counts-by-category');
 
         return $page + [
             'processed' => $succeeded + $failed,
@@ -241,6 +241,7 @@ class DelfiImportService
                 'check_message' => $message,
                 'checked_at' => now(),
             ]);
+            Cache::forget('delfi-import-source-genre-counts-by-category');
 
             return $source->fresh(['product']);
         } catch (DelfiRetryableException $exception) {
