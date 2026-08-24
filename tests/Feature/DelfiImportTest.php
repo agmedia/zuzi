@@ -9,11 +9,14 @@ use App\Models\UserDetail;
 use App\Services\Delfi\DelfiImportService;
 use App\Services\Delfi\DelfiImportSettings;
 use App\Services\Delfi\DelfiProductApiClient;
+use App\Services\Delfi\DelfiProductListApiClient;
+use App\Services\Delfi\DelfiProductListParser;
 use App\Services\Delfi\DelfiRetryableException;
 use App\Services\Delfi\DelfiTerminalException;
 use Bouncer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -295,6 +298,499 @@ class DelfiImportTest extends TestCase
         $this->assertSame([(int) $sources[4]->id], collect($last->json('items'))->pluck('id')->all());
     }
 
+    public function test_bulk_inspection_checks_one_hundred_books_with_batched_queries_and_stops_early(): void
+    {
+        $feedToken = (string) Str::uuid();
+        $sources = collect();
+        $items = [];
+        foreach (range(1, 100) as $offset) {
+            $remoteId = 300000 + $offset;
+            $ean = '9780306406157';
+            $source = $this->source([
+                'external_id' => 'BULK-' . $offset,
+                'remote_product_id' => $remoteId,
+                'feed_position' => $offset,
+                'name' => 'Feed naslov ' . $offset,
+                'description' => 'Feed opis ' . $offset,
+                'source_url' => 'https://delfi.rs/knjige/' . $remoteId . '-bulk.html',
+                'price_rsd' => 1000 + $offset,
+                'availability' => 'in stock',
+                'author' => 'Autor ' . $offset,
+                'source_hash' => hash('sha256', 'bulk-source-' . $offset),
+                'feed_token' => $feedToken,
+            ]);
+            $sources->push($source);
+            $items[] = $this->bulkItem($source, [
+                'name' => 'API naziv koji ne smije prepisati feed',
+                'description' => 'API opis koji ne smije prepisati feed',
+                'price_rsd' => 99999,
+                'availability' => 'in_stock',
+                'isbn' => $ean,
+                'ean' => $ean,
+                'source_genres' => ['Žanr ' . $offset],
+                'format' => '13x20 cm',
+            ]);
+        }
+        $existingId = DB::table('products')->insertGetId([
+            'name' => 'Drugi naslov',
+            'sku' => 'BULK-EXISTING',
+            'itemid' => 900001,
+            'isbn' => '9780306406157',
+            'ean' => '9780306406157',
+            'slug' => 'bulk-existing',
+            'url' => '/',
+            'price' => 10,
+            'quantity' => 1,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $rawFirst = ['page' => 1];
+        $client = $this->mock(DelfiProductListApiClient::class);
+        $client->shouldReceive('fetchPage')->once()->with(0, 100)->andReturn($rawFirst);
+        $parser = $this->mock(DelfiProductListParser::class);
+        $parser->shouldReceive('parsePage')->once()->with($rawFirst, 0, 100)->andReturn([
+            'items' => $items,
+            'total' => 101,
+            'skip' => 0,
+            'limit' => 100,
+            'next_skip' => 100,
+            'has_more' => true,
+        ]);
+        $queries = [];
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = $query->sql;
+        });
+        $admin = $this->admin();
+
+        $first = $this->actingAs($admin)->postJson(route('delfi-import.inspect-bulk'));
+        $first->assertOk()->assertJson([
+            'success' => true,
+            'processed' => 100,
+            'succeeded' => 100,
+            'failed' => 0,
+            'remaining' => 0,
+            'done' => true,
+        ]);
+        $this->assertNull($first->json('next_cursor'));
+
+        $firstSource = $sources->first()->fresh();
+        $this->assertSame($existingId, (int) $firstSource->product_id);
+        $this->assertSame('matched', $firstSource->check_status);
+        $this->assertSame('Feed naslov 1', $firstSource->name);
+        $this->assertSame('Feed opis 1', $firstSource->description);
+        $this->assertSame(1001.0, (float) $firstSource->price_rsd);
+        $this->assertSame('in stock', $firstSource->availability);
+        $this->assertSame(['Žanr 1'], $firstSource->source_genres);
+        $this->assertNull($firstSource->detail_payload);
+
+        $productCandidateSelects = collect($queries)->filter(function (string $sql) {
+            return str_starts_with(strtolower(ltrim($sql)), 'select')
+                && (str_contains($sql, 'from "products"') || str_contains($sql, 'from `products`'));
+        });
+        $this->assertLessThanOrEqual(3, $productCandidateSelects->count());
+        $this->assertFalse($productCandidateSelects->contains(function (string $sql) {
+            return stripos($sql, 'replace(') !== false || stripos($sql, 'lower(') !== false;
+        }));
+    }
+
+    public function test_retryable_bulk_failure_does_not_advance_server_cursor(): void
+    {
+        $feedToken = (string) Str::uuid();
+        $source = $this->source(['feed_token' => $feedToken]);
+        $raw = ['page' => 'retry'];
+        $client = $this->mock(DelfiProductListApiClient::class);
+        $client->shouldReceive('fetchPage')->once()->with(0, 100)
+            ->andThrow(new DelfiRetryableException('Delfi bulk rate limit.', 503, 2));
+        $client->shouldReceive('fetchPage')->once()->with(0, 100)->andReturn($raw);
+        $parser = $this->mock(DelfiProductListParser::class);
+        $parser->shouldReceive('parsePage')->once()->with($raw, 0, 100)->andReturn([
+            'items' => [$this->bulkItem($source)],
+            'total' => 1,
+            'skip' => 0,
+            'limit' => 100,
+            'next_skip' => null,
+            'has_more' => false,
+        ]);
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->postJson(route('delfi-import.inspect-bulk'))
+            ->assertStatus(503)
+            ->assertHeader('Retry-After', '2')
+            ->assertJson(['success' => false, 'retryable' => true]);
+        $this->assertNull($source->fresh()->checked_source_hash);
+
+        $this->actingAs($admin)->postJson(route('delfi-import.inspect-bulk'))
+            ->assertOk()
+            ->assertJson(['processed' => 1, 'done' => true]);
+    }
+
+    public function test_bulk_inspection_resumes_the_ascending_cursor_from_server_state(): void
+    {
+        $feedToken = (string) Str::uuid();
+        $firstSource = $this->source(['feed_token' => $feedToken]);
+        $secondSource = $this->source([
+            'external_id' => 'BULK-RESUME-2',
+            'remote_product_id' => 251909,
+            'feed_position' => 2,
+            'source_url' => 'https://delfi.rs/knjige/251909-resume.html',
+            'source_hash' => hash('sha256', 'bulk-resume-2'),
+            'feed_token' => $feedToken,
+        ]);
+        $rawFirst = ['resume' => 1];
+        $rawSecond = ['resume' => 2];
+        $client = $this->mock(DelfiProductListApiClient::class);
+        $client->shouldReceive('fetchPage')->once()->with(0, 1)->andReturn($rawFirst);
+        $client->shouldReceive('fetchPage')->once()->with(1, 1)->andReturn($rawSecond);
+        $parser = $this->mock(DelfiProductListParser::class);
+        $parser->shouldReceive('parsePage')->once()->with($rawFirst, 0, 1)->andReturn([
+            'items' => [$this->bulkItem($firstSource)],
+            'total' => 2,
+            'skip' => 0,
+            'limit' => 1,
+            'next_skip' => 1,
+            'has_more' => true,
+        ]);
+        $parser->shouldReceive('parsePage')->once()->with($rawSecond, 1, 1)->andReturn([
+            'items' => [$this->bulkItem($secondSource)],
+            'total' => 2,
+            'skip' => 1,
+            'limit' => 1,
+            'next_skip' => null,
+            'has_more' => false,
+        ]);
+        $admin = $this->admin();
+        $queries = [];
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = $query->sql;
+        });
+
+        $this->actingAs($admin)->postJson(route('delfi-import.inspect-bulk'), ['limit' => 1])
+            ->assertOk()
+            ->assertJson(['processed' => 1, 'remaining' => 1, 'done' => false]);
+        $this->actingAs($admin)->postJson(route('delfi-import.inspect-bulk'), ['limit' => 1])
+            ->assertOk()
+            ->assertJson(['processed' => 1, 'remaining' => 0, 'done' => true]);
+
+        $integrityScans = collect($queries)->filter(function (string $sql) {
+            return stripos($sql, 'select distinct') !== false
+                && stripos($sql, 'feed_token') !== false
+                && stripos($sql, 'delfi_import_products') !== false;
+        });
+        $this->assertCount(1, $integrityScans, 'Resume pages must not repeat the 130k-row DISTINCT token scan.');
+    }
+
+    public function test_bulk_update_leaves_a_feed_row_pending_if_its_snapshot_changes_mid_page(): void
+    {
+        $source = $this->source();
+        $raw = ['stale' => true];
+        $this->mock(DelfiProductListApiClient::class)
+            ->shouldReceive('fetchPage')->once()->with(0, 100)->andReturn($raw);
+        $this->mock(DelfiProductListParser::class)
+            ->shouldReceive('parsePage')->once()->with($raw, 0, 100)->andReturn([
+                'items' => [$this->bulkItem($source)],
+                'total' => 1,
+                'skip' => 0,
+                'limit' => 100,
+                'next_skip' => null,
+                'has_more' => false,
+            ]);
+        $newHash = hash('sha256', 'feed-refreshed-during-bulk');
+        $mutated = false;
+        DB::listen(function ($query) use (&$mutated, $source, $newHash) {
+            $sql = strtolower($query->sql);
+            if (! $mutated
+                && str_starts_with(ltrim($sql), 'select')
+                && (str_contains($sql, 'from "products"') || str_contains($sql, 'from `products`'))) {
+                $mutated = true;
+                DB::table('delfi_import_products')->where('id', $source->id)->update([
+                    'name' => 'Naziv iz novog feed snapshot-a',
+                    'source_hash' => $newHash,
+                ]);
+            }
+        });
+
+        $response = $this->actingAs($this->admin())
+            ->postJson(route('delfi-import.inspect-bulk'));
+
+        $response->assertOk()->assertJson([
+            'processed' => 0,
+            'remaining' => 1,
+            'done' => false,
+            'pass' => 2,
+        ]);
+        $source->refresh();
+        $this->assertTrue($mutated);
+        $this->assertSame($newHash, $source->source_hash);
+        $this->assertSame('Naziv iz novog feed snapshot-a', $source->name);
+        $this->assertNull($source->checked_source_hash);
+        $this->assertSame('pending', $source->check_status);
+    }
+
+    public function test_bulk_aborts_old_cursor_when_feed_token_changes_mid_page(): void
+    {
+        $source = $this->source();
+        $oldFeedToken = $source->feed_token;
+        $newFeedToken = (string) Str::uuid();
+        $raw = ['feed-race' => true];
+        $this->mock(DelfiProductListApiClient::class)
+            ->shouldReceive('fetchPage')->once()->with(0, 100)->andReturn($raw);
+        $this->mock(DelfiProductListParser::class)
+            ->shouldReceive('parsePage')->once()->with($raw, 0, 100)->andReturn([
+                'items' => [$this->bulkItem($source)],
+                'total' => 1,
+                'skip' => 0,
+                'limit' => 100,
+                'next_skip' => null,
+                'has_more' => false,
+            ]);
+        $mutated = false;
+        DB::listen(function ($query) use (&$mutated, $source, $newFeedToken) {
+            $sql = strtolower($query->sql);
+            if (! $mutated
+                && str_starts_with(ltrim($sql), 'select')
+                && (str_contains($sql, 'from "products"') || str_contains($sql, 'from `products`'))) {
+                $mutated = true;
+                DB::table('delfi_import_products')->where('id', $source->id)->update([
+                    'feed_token' => $newFeedToken,
+                    'source_hash' => hash('sha256', 'new-feed-token-snapshot'),
+                ]);
+            }
+        });
+
+        $this->actingAs($this->admin())
+            ->postJson(route('delfi-import.inspect-bulk'))
+            ->assertStatus(409)
+            ->assertJson([
+                'success' => false,
+                'processed' => 0,
+                'done' => false,
+            ]);
+
+        $source->refresh();
+        $this->assertTrue($mutated);
+        $this->assertSame($newFeedToken, $source->feed_token);
+        $this->assertNull($source->checked_source_hash);
+        $this->assertNull(Cache::get('delfi-import-bulk-state:' . $oldFeedToken));
+    }
+
+    public function test_empty_page_after_upstream_total_shrink_finishes_pass_without_cursor_loop(): void
+    {
+        $source = $this->source();
+        Cache::put('delfi-import-bulk-state:' . $source->feed_token, [
+            'feed_token' => $source->feed_token,
+            'skip' => 2,
+            'last_old_product_id' => 251900,
+            'pass' => 1,
+            'remaining' => 1,
+            'processed_total' => 0,
+            'succeeded_total' => 0,
+            'failed_total' => 0,
+            'ignored_total' => 2,
+            'scan_total' => 2,
+            'scan_processed' => 2,
+            'done' => false,
+            'incomplete' => false,
+        ], now()->addDay());
+        $raw = ['shrunk-total' => true];
+        $this->mock(DelfiProductListApiClient::class)
+            ->shouldReceive('fetchPage')->once()->with(2, 100)->andReturn($raw);
+        $this->mock(DelfiProductListParser::class)
+            ->shouldReceive('parsePage')->once()->with($raw, 2, 100)->andReturn([
+                'items' => [],
+                'total' => 1,
+                'skip' => 2,
+                'limit' => 100,
+                'next_skip' => null,
+                'has_more' => false,
+            ]);
+
+        $this->actingAs($this->admin())
+            ->postJson(route('delfi-import.inspect-bulk'))
+            ->assertOk()
+            ->assertJson([
+                'processed' => 0,
+                'remaining' => 1,
+                'done' => false,
+                'pass' => 2,
+                'scan_processed' => 0,
+            ]);
+    }
+
+    public function test_manual_click_restarts_a_cached_incomplete_bulk_run(): void
+    {
+        $source = $this->source();
+        Cache::put('delfi-import-bulk-state:' . $source->feed_token, [
+            'feed_token' => $source->feed_token,
+            'skip' => 1,
+            'last_old_product_id' => (int) $source->remote_product_id,
+            'pass' => 2,
+            'remaining' => 1,
+            'processed_total' => 0,
+            'succeeded_total' => 0,
+            'failed_total' => 0,
+            'ignored_total' => 2,
+            'scan_total' => 1,
+            'scan_processed' => 1,
+            'done' => true,
+            'incomplete' => true,
+        ], now()->addDay());
+        $raw = ['manual-retry' => true];
+        $this->mock(DelfiProductListApiClient::class)
+            ->shouldReceive('fetchPage')->once()->with(0, 100)->andReturn($raw);
+        $this->mock(DelfiProductListParser::class)
+            ->shouldReceive('parsePage')->once()->with($raw, 0, 100)->andReturn([
+                'items' => [$this->bulkItem($source)],
+                'total' => 1,
+                'skip' => 0,
+                'limit' => 100,
+                'next_skip' => null,
+                'has_more' => false,
+            ]);
+
+        $this->actingAs($this->admin())
+            ->postJson(route('delfi-import.inspect-bulk'))
+            ->assertOk()
+            ->assertJson([
+                'processed' => 1,
+                'remaining' => 0,
+                'done' => true,
+                'incomplete' => false,
+            ]);
+    }
+
+    public function test_bulk_inspection_stops_if_current_rows_have_multiple_feed_tokens(): void
+    {
+        $this->source();
+        $this->source([
+            'external_id' => 'SECOND-FEED-TOKEN',
+            'remote_product_id' => 251909,
+            'feed_position' => 2,
+            'source_url' => 'https://delfi.rs/knjige/251909-second-token.html',
+            'source_hash' => hash('sha256', 'second-token'),
+        ]);
+        $this->mock(DelfiProductListApiClient::class)->shouldNotReceive('fetchPage');
+
+        $this->actingAs($this->admin())
+            ->postJson(route('delfi-import.inspect-bulk'))
+            ->assertStatus(409)
+            ->assertJson([
+                'success' => false,
+                'processed' => 0,
+                'done' => false,
+            ]);
+    }
+
+    public function test_bulk_checked_changed_book_fetches_one_fresh_overview_when_imported(): void
+    {
+        $mapping = $this->configureImport();
+        $oldHash = hash('sha256', 'old-source');
+        $newHash = hash('sha256', 'new-source');
+        $source = $this->source([
+            'source_hash' => $newHash,
+            'checked_source_hash' => $oldHash,
+            'detail_payload' => ['description' => 'Stari detalji'],
+        ]);
+        $raw = ['page' => 'import'];
+        $this->mock(DelfiProductListApiClient::class)
+            ->shouldReceive('fetchPage')->once()->with(0, 100)->andReturn($raw);
+        $this->mock(DelfiProductListParser::class)
+            ->shouldReceive('parsePage')->once()->with($raw, 0, 100)->andReturn([
+                'items' => [$this->bulkItem($source)],
+                'total' => 1,
+                'skip' => 0,
+                'limit' => 100,
+                'next_skip' => null,
+                'has_more' => false,
+            ]);
+
+        $this->actingAs($this->admin())
+            ->postJson(route('delfi-import.inspect-bulk'))
+            ->assertOk()
+            ->assertJson(['processed' => 1, 'done' => true]);
+        $source->refresh();
+        $this->assertSame('new', $source->check_status);
+        $this->assertNull($source->detail_payload);
+
+        Http::fake([
+            'https://delfi.rs/api/pc-frontend-api/overview/251908' => Http::response($this->detailPayload(), 200),
+            'translate.googleapis.com/*' => Http::response([[['Svježi hrvatski opis.', 'Opis knjige.']]], 200),
+        ]);
+        app(DelfiImportService::class)->import($source, $mapping['additional_category_id']);
+
+        $overviewCalls = Http::recorded(function ($request) {
+            return $request->url() === 'https://delfi.rs/api/pc-frontend-api/overview/251908';
+        });
+        $this->assertCount(1, $overviewCalls);
+        $this->assertNotEmpty($source->fresh()->detail_payload);
+    }
+
+    public function test_bulk_uses_feed_title_and_api_author_and_clears_stale_identifiers(): void
+    {
+        $authorId = DB::table('authors')->insertGetId([
+            'letter' => 'A',
+            'title' => 'API Autor',
+            'slug' => 'api-autor',
+            'url' => '/autori/api-autor',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $productId = DB::table('products')->insertGetId([
+            'author_id' => $authorId,
+            'name' => 'Kanonski naslov iz feeda',
+            'sku' => 'BULK-TITLE-AUTHOR',
+            'itemid' => 900002,
+            'isbn' => '9789999999999',
+            'ean' => '9789999999999',
+            'slug' => 'kanonski-naslov-iz-feeda',
+            'url' => '/',
+            'price' => 10,
+            'quantity' => 1,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $source = $this->source([
+            'name' => 'Kanonski naslov iz feeda',
+            'author' => 'Stari autor',
+            'isbn' => '9788652162123',
+            'ean' => '9788652162123',
+        ]);
+        $raw = ['title-author' => true];
+        $this->mock(DelfiProductListApiClient::class)
+            ->shouldReceive('fetchPage')->once()->with(0, 100)->andReturn($raw);
+        $this->mock(DelfiProductListParser::class)
+            ->shouldReceive('parsePage')->once()->with($raw, 0, 100)->andReturn([
+                'items' => [$this->bulkItem($source, [
+                    'name' => 'Drukčiji API naslov',
+                    'title' => 'Drukčiji API naslov',
+                    'author' => 'API Autor',
+                    'authors' => ['API Autor'],
+                    'isbn' => null,
+                    'ean' => null,
+                ])],
+                'total' => 1,
+                'skip' => 0,
+                'limit' => 100,
+                'next_skip' => null,
+                'has_more' => false,
+            ]);
+
+        $this->actingAs($this->admin())
+            ->postJson(route('delfi-import.inspect-bulk'))
+            ->assertOk()
+            ->assertJson(['processed' => 1, 'succeeded' => 1, 'done' => true]);
+
+        $source->refresh();
+        $this->assertSame($productId, (int) $source->product_id);
+        $this->assertSame('matched', $source->check_status);
+        $this->assertSame('Kanonski naslov iz feeda', $source->name);
+        $this->assertSame('API Autor', $source->author);
+        $this->assertNull($source->isbn);
+        $this->assertNull($source->ean);
+    }
+
     private function configureImport(): array
     {
         $publisherParentCategoryId = $this->category('Nakladnici');
@@ -396,6 +892,48 @@ class DelfiImportTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    private function bulkItem(DelfiImportProduct $source, array $overrides = []): array
+    {
+        return array_merge([
+            'external_id' => $source->external_id,
+            'remote_product_id' => (int) $source->remote_product_id,
+            'nav_id' => 'A' . $source->remote_product_id,
+            'sku' => 'A' . $source->remote_product_id,
+            'name' => $source->name,
+            'title' => $source->name,
+            'isbn' => '9788652162123',
+            'ean' => '9788652162123',
+            'author' => $source->author,
+            'authors' => [$source->author],
+            'source_publisher' => 'Laguna',
+            'publisher' => 'Laguna',
+            'source_category' => $source->source_category,
+            'category' => $source->source_category,
+            'genre' => 'Fantastika',
+            'source_genres' => ['Fantastika'],
+            'format' => '13x20 cm',
+            'pages' => 298,
+            'letter' => 'Ćirilica',
+            'binding' => 'Meki',
+            'publication_year' => 2026,
+            'year' => 2026,
+            'description' => '',
+            'meta_description' => 'Opis s liste.',
+            'image_url' => null,
+            'additional_image_urls' => [],
+            'image' => null,
+            'images' => [],
+            'language' => null,
+            'origin' => null,
+            'price_rsd' => 1200,
+            'sale_price_rsd' => null,
+            'availability' => 'in_stock',
+            'is_available' => true,
+            'quantity' => null,
+            'updated_at_for_api' => null,
+        ], $overrides);
     }
 
     private function category(string $title, int $parentId = 0): int

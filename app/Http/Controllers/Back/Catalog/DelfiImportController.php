@@ -11,6 +11,7 @@ use App\Services\Delfi\DelfiFeedSynchronizer;
 use App\Services\Delfi\DelfiImportService;
 use App\Services\Delfi\DelfiImportSettings;
 use App\Services\Delfi\DelfiPriceCalculator;
+use App\Services\Delfi\DelfiProductListApiClient;
 use App\Services\Delfi\DelfiRetryableException;
 use App\Services\Delfi\DelfiTaxonomyService;
 use App\Services\Delfi\DelfiTerminalException;
@@ -72,6 +73,9 @@ class DelfiImportController extends Controller
             'supports_source_mapping' => true,
             'inspection_workers' => 1,
             'inspection_delay_ms' => 500,
+            'bulk_inspection_route' => 'delfi-import.inspect-bulk',
+            'bulk_inspection_limit' => 100,
+            'bulk_inspection_delay_ms' => 350,
         ];
 
         return view('back.catalog.laguna-import.index', compact(
@@ -206,6 +210,243 @@ class DelfiImportController extends Controller
         }
 
         return response()->json($payload);
+    }
+
+    /**
+     * Inspect up to 100 books through one ascending Delfi product-list page.
+     *
+     * The server owns the cursor. It is namespaced by the immutable feed token,
+     * so refreshing the XML automatically starts a clean bulk pass.
+     */
+    public function bulkInspect(Request $request, DelfiImportService $importService)
+    {
+        $validated = $request->validate([
+            'limit' => 'nullable|integer|min:1|max:100',
+            'reset' => 'nullable|boolean',
+        ]);
+        $limit = (int) ($validated['limit'] ?? 100);
+        // Reading one indexed current row is intentionally cheap. A DISTINCT
+        // scan across 130k rows is reserved for initialization, not every page.
+        $feedToken = $this->currentBulkFeedToken();
+        if ($feedToken === null) {
+            return response()->json([
+                'success' => false,
+                'processed' => 0,
+                'succeeded' => 0,
+                'failed' => 0,
+                'remaining' => 0,
+                'next_cursor' => null,
+                'done' => true,
+                'message' => 'Prvo osvježite Delfi feed.',
+            ]);
+        }
+        $stateKey = 'delfi-import-bulk-state:' . $feedToken;
+        $lock = Cache::lock('delfi-import-bulk-lock:' . $feedToken, 600);
+        if (! $lock->get()) {
+            return response()->json([
+                'success' => false,
+                'processed' => 0,
+                'succeeded' => 0,
+                'failed' => 0,
+                'remaining' => null,
+                'next_cursor' => null,
+                'done' => false,
+                'message' => 'Bulk provjera već je u tijeku u drugom tabu.',
+            ], 409);
+        }
+
+        $state = null;
+        try {
+            if ($request->boolean('reset')) {
+                Cache::forget($stateKey);
+            }
+            $state = Cache::get($stateKey);
+            if ($this->validBulkState($state, $feedToken)
+                && ! empty($state['done'])
+                && ! empty($state['incomplete'])) {
+                // A manual click after an incomplete two-pass run starts a new
+                // reconciliation run. Automatic UI looping already stops on done.
+                Cache::forget($stateKey);
+                $state = null;
+            }
+            if (! $this->validBulkState($state, $feedToken)) {
+                // This full integrity check runs only when a feed-token state is
+                // first created or explicitly reset. Resume requests stay O(1).
+                $tokens = $this->currentBulkFeedTokens();
+                if ($tokens->count() !== 1 || (string) $tokens->first() !== $feedToken) {
+                    Cache::forget($stateKey);
+
+                    return response()->json([
+                        'success' => false,
+                        'processed' => 0,
+                        'succeeded' => 0,
+                        'failed' => 0,
+                        'remaining' => null,
+                        'next_cursor' => null,
+                        'done' => false,
+                        'message' => 'Aktualni Delfi redovi pripadaju različitim verzijama feeda. Osvježite feed prije provjere.',
+                    ], 409);
+                }
+
+                $remaining = $this->bulkPendingQuery($feedToken)->count();
+                $state = [
+                    'feed_token' => $feedToken,
+                    'skip' => 0,
+                    'last_old_product_id' => null,
+                    'pass' => 1,
+                    'remaining' => $remaining,
+                    'processed_total' => 0,
+                    'succeeded_total' => 0,
+                    'failed_total' => 0,
+                    'ignored_total' => 0,
+                    'scan_total' => null,
+                    'scan_processed' => 0,
+                    'done' => $remaining === 0,
+                    'incomplete' => false,
+                ];
+            }
+
+            if ($state['done']) {
+                return response()->json($this->bulkResponse($state, [
+                    'processed' => 0,
+                    'succeeded' => 0,
+                    'failed' => 0,
+                    'failures' => [],
+                ]));
+            }
+
+            $page = $importService->inspectProductListPage($feedToken, (int) $state['skip'], $limit);
+            if ($this->currentBulkFeedToken() !== $feedToken) {
+                Cache::forget($stateKey);
+
+                return response()->json([
+                    'success' => false,
+                    'processed' => 0,
+                    'succeeded' => 0,
+                    'failed' => 0,
+                    'remaining' => null,
+                    'next_cursor' => null,
+                    'done' => false,
+                    'message' => 'Delfi feed osvježen je tijekom bulk provjere. Ponovno pokrenite provjeru za novi feed.',
+                ], 409);
+            }
+            $items = array_values((array) ($page['items'] ?? []));
+            $firstOldProductId = $items !== [] ? (int) ($items[0]['remote_product_id'] ?? 0) : null;
+            $lastOldProductId = $items !== []
+                ? (int) ($items[count($items) - 1]['remote_product_id'] ?? 0)
+                : $state['last_old_product_id'];
+            if ($items !== []
+                && $state['last_old_product_id'] !== null
+                && $firstOldProductId <= (int) $state['last_old_product_id']) {
+                // The ascending offset is no longer trustworthy (for example,
+                // an older upstream row was deleted). Keep local rows pending
+                // and let the next manual click restart safely from zero.
+                Cache::forget($stateKey);
+
+                return response()->json([
+                    'success' => false,
+                    'processed' => 0,
+                    'succeeded' => 0,
+                    'failed' => 0,
+                    'remaining' => (int) $state['remaining'],
+                    'next_cursor' => null,
+                    'done' => false,
+                    'message' => 'Delfi je promijenio redoslijed bulk rezultata. Ponovno pokrenite provjeru.',
+                ], 409);
+            }
+
+            $processed = (int) ($page['processed'] ?? 0);
+            $state['remaining'] = max(0, (int) $state['remaining'] - $processed);
+            $state['processed_total'] = (int) $state['processed_total'] + $processed;
+            $state['succeeded_total'] = (int) $state['succeeded_total'] + (int) ($page['succeeded'] ?? 0);
+            $state['failed_total'] = (int) $state['failed_total'] + (int) ($page['failed'] ?? 0);
+            $state['ignored_total'] = (int) $state['ignored_total'] + (int) ($page['ignored'] ?? 0);
+            $state['last_old_product_id'] = $lastOldProductId;
+            $state['scan_total'] = (int) ($page['total'] ?? 0);
+            $state['scan_processed'] = min(
+                $state['scan_total'],
+                (int) ($page['next_skip'] ?? $state['scan_total'])
+            );
+            if ((int) $state['remaining'] === 0) {
+                // Most incremental runs touch only the newest pages. Confirm
+                // that no pending row appeared concurrently, then stop without
+                // scanning the rest of the 130k upstream catalogue.
+                $state['remaining'] = $this->bulkPendingQuery($feedToken)->count();
+                if ((int) $state['remaining'] === 0) {
+                    $state['done'] = true;
+                    $state['incomplete'] = false;
+                }
+            }
+
+            if (! $state['done'] && ! empty($page['has_more'])) {
+                $state['skip'] = (int) ($page['next_skip'] ?? ((int) $state['skip'] + $limit));
+            } elseif (! $state['done']) {
+                $remaining = $this->bulkPendingQuery($feedToken)->count();
+                $state['remaining'] = $remaining;
+                if ($remaining > 0 && (int) $state['pass'] === 1) {
+                    // A second stable ascending pass reconciles rows missed if
+                    // Delfi changed its list while the first pass was running.
+                    $state['skip'] = 0;
+                    $state['last_old_product_id'] = null;
+                    $state['pass'] = 2;
+                    $state['scan_processed'] = 0;
+                } else {
+                    $state['done'] = true;
+                    $state['incomplete'] = $remaining > 0;
+                }
+            }
+            Cache::put($stateKey, $state, now()->addDays(30));
+
+            return response()->json($this->bulkResponse($state, $page));
+        } catch (DelfiRetryableException $exception) {
+            report($exception);
+
+            $hasState = $this->validBulkState($state, $feedToken);
+
+            return response()->json([
+                'success' => false,
+                'retryable' => true,
+                'processed' => 0,
+                'succeeded' => 0,
+                'failed' => 0,
+                'remaining' => $hasState ? (int) $state['remaining'] : null,
+                'next_cursor' => $hasState ? $this->encodeBulkCursor($state) : null,
+                'done' => false,
+                'message' => $exception->getMessage(),
+            ], $exception->responseStatus())->header(
+                'Retry-After',
+                (string) $exception->retryAfterSeconds()
+            );
+        } catch (DelfiTerminalException $exception) {
+            report($exception);
+
+            return response()->json([
+                'success' => false,
+                'retryable' => false,
+                'processed' => 0,
+                'succeeded' => 0,
+                'failed' => 0,
+                'remaining' => null,
+                'next_cursor' => null,
+                'done' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'success' => false,
+                'processed' => 0,
+                'succeeded' => 0,
+                'failed' => 0,
+                'remaining' => null,
+                'next_cursor' => null,
+                'done' => false,
+                'message' => 'Bulk provjera prekinuta je zbog neočekivane greške. Pokazivač nije pomaknut.',
+            ], 500);
+        } finally {
+            optional($lock)->release();
+        }
     }
 
     public function import(
@@ -375,6 +616,128 @@ class DelfiImportController extends Controller
             ->where(function (Builder $query) {
                 $query->whereNull('checked_source_hash')->orWhereColumn('checked_source_hash', '!=', 'source_hash');
             });
+    }
+
+    private function bulkPendingQuery(string $feedToken): Builder
+    {
+        return DelfiImportProduct::query()
+            ->where('is_current', true)
+            ->where('feed_token', $feedToken)
+            ->whereIn('source_category', DelfiProductListApiClient::CATEGORIES)
+            ->where(function (Builder $query) {
+                $query->whereNull('checked_source_hash')
+                    ->orWhereColumn('checked_source_hash', '!=', 'source_hash');
+            });
+    }
+
+    private function currentBulkFeedTokens()
+    {
+        return DelfiImportProduct::query()
+            ->where('is_current', true)
+            ->whereIn('source_category', DelfiProductListApiClient::CATEGORIES)
+            ->whereNotNull('feed_token')
+            ->distinct()
+            ->limit(2)
+            ->pluck('feed_token')
+            ->values();
+    }
+
+    private function currentBulkFeedToken(): ?string
+    {
+        $token = DelfiImportProduct::query()
+            ->where('is_current', true)
+            ->whereIn('source_category', DelfiProductListApiClient::CATEGORIES)
+            ->whereNotNull('feed_token')
+            ->value('feed_token');
+
+        return $token === null ? null : (string) $token;
+    }
+
+    private function validBulkState($state, string $feedToken): bool
+    {
+        return is_array($state)
+            && ($state['feed_token'] ?? null) === $feedToken
+            && is_int($state['skip'] ?? null)
+            && $state['skip'] >= 0
+            && (is_null($state['last_old_product_id'] ?? null)
+                || (is_int($state['last_old_product_id']) && $state['last_old_product_id'] > 0))
+            && in_array($state['pass'] ?? null, [1, 2], true)
+            && is_int($state['remaining'] ?? null)
+            && $state['remaining'] >= 0
+            && is_int($state['processed_total'] ?? null)
+            && $state['processed_total'] >= 0
+            && is_int($state['succeeded_total'] ?? null)
+            && $state['succeeded_total'] >= 0
+            && is_int($state['failed_total'] ?? null)
+            && $state['failed_total'] >= 0
+            && is_int($state['ignored_total'] ?? null)
+            && $state['ignored_total'] >= 0
+            && (is_null($state['scan_total'] ?? null)
+                || (is_int($state['scan_total']) && $state['scan_total'] >= 0))
+            && is_int($state['scan_processed'] ?? null)
+            && $state['scan_processed'] >= 0
+            && is_bool($state['done'] ?? null)
+            && is_bool($state['incomplete'] ?? null);
+    }
+
+    private function bulkResponse(array $state, array $page): array
+    {
+        $incomplete = ! empty($state['done']) && ! empty($state['incomplete']);
+        if ($incomplete) {
+            $message = sprintf(
+                'Bulk prolaz je dovršen, ali %s lokalnih knjiga nije pronađeno u Delfi listi. Ostale su neprovjerene.',
+                number_format((int) $state['remaining'], 0, ',', '.')
+            );
+        } elseif ($state['done'] && (int) $state['failed_total'] > 0) {
+            $message = sprintf(
+                'Bulk provjera je dovršena: %s uspješnih i %s provjera s greškom.',
+                number_format((int) $state['succeeded_total'], 0, ',', '.'),
+                number_format((int) $state['failed_total'], 0, ',', '.')
+            );
+        } elseif ($state['done']) {
+            $message = 'Sve aktualne Delfi knjige uspješno su provjerene.';
+        } elseif ((int) $state['pass'] === 2 && (int) $state['skip'] === 0) {
+            $message = 'Prvi prolaz je dovršen. Automatski slijedi završni kontrolni prolaz.';
+        } else {
+            $message = 'Bulk provjera je spremljena i može se sigurno nastaviti.';
+        }
+
+        return [
+            'success' => ! $incomplete,
+            'processed' => (int) ($page['processed'] ?? 0),
+            'succeeded' => (int) ($page['succeeded'] ?? 0),
+            'failed' => (int) ($page['failed'] ?? 0),
+            'ignored' => (int) ($page['ignored'] ?? 0),
+            'failures' => array_values((array) ($page['failures'] ?? [])),
+            'remaining' => (int) $state['remaining'],
+            'processed_total' => (int) $state['processed_total'],
+            'succeeded_total' => (int) $state['succeeded_total'],
+            'failed_total' => (int) $state['failed_total'],
+            'ignored_total' => (int) $state['ignored_total'],
+            'cumulative_succeeded' => (int) $state['succeeded_total'],
+            'cumulative_failed' => (int) $state['failed_total'],
+            'cumulative_ignored' => (int) $state['ignored_total'],
+            'scan_total' => $state['scan_total'] === null ? null : (int) $state['scan_total'],
+            'scan_processed' => (int) $state['scan_processed'],
+            'next_cursor' => $state['done'] ? null : $this->encodeBulkCursor($state),
+            'done' => (bool) $state['done'],
+            'incomplete' => $incomplete,
+            'can_reset' => (bool) $state['done'],
+            'pass' => (int) $state['pass'],
+            'message' => $message,
+        ];
+    }
+
+    private function encodeBulkCursor(array $state): string
+    {
+        $encoded = base64_encode((string) json_encode([
+            'feed_token' => $state['feed_token'],
+            'skip' => (int) $state['skip'],
+            'last_old_product_id' => $state['last_old_product_id'],
+            'pass' => (int) $state['pass'],
+        ], JSON_UNESCAPED_SLASHES));
+
+        return rtrim(strtr($encoded, '+/', '-_'), '=');
     }
 
     private function applyInspectionCursor(Builder $query, ?array $cursor): void

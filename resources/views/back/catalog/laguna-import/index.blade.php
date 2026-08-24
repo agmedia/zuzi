@@ -70,6 +70,9 @@
             'supports_source_mapping' => false,
             'inspection_workers' => 2,
             'inspection_delay_ms' => 250,
+            'bulk_inspection_route' => null,
+            'bulk_inspection_limit' => 100,
+            'bulk_inspection_delay_ms' => 350,
         ], $importUi ?? []);
         $productsTabId = $importUi['slug'] . '-products';
         $settingsTabId = $importUi['slug'] . '-settings';
@@ -779,12 +782,14 @@
             const inspectAllProgress = document.querySelector('[data-inspect-all-progress]');
             const inspectAllProgressBar = document.querySelector('[data-inspect-all-progress-bar]');
             const inspectionQueueEndpoint = @json(route($routePrefix . '.inspection-queue'));
+            const bulkInspectionEndpoint = @json($importUi['bulk_inspection_route'] ? route($importUi['bulk_inspection_route']) : null);
             const endpointTemplates = {
                 inspect: @json(route($routePrefix . '.inspect', [$importUi['route_parameter'] => '__ID__'])),
                 import: @json(route($routePrefix . '.import', [$importUi['route_parameter'] => '__ID__']))
             };
             let inspectAllRunning = false;
             let inspectAllStopRequested = false;
+            let inspectAllBulkResetRequested = false;
 
             const selectedIds = () => Array.from(document.querySelectorAll('[data-source-checkbox]:checked')).map(input => input.value);
             const endpoint = (action, id) => endpointTemplates[action].replace('__ID__', id);
@@ -907,7 +912,7 @@
                 inspectAllProgress.appendChild(reload);
             }
 
-            async function inspectAllPending() {
+            async function inspectAllPendingLegacy() {
                 inspectAllStopRequested = false;
                 setInspectAllRunning(true);
                 inspectAllButton.disabled = false;
@@ -980,6 +985,166 @@
                 inspectAllButton.disabled = state.remaining === 0;
                 document.querySelectorAll('[data-single-action]').forEach(button => button.disabled = false);
                 updateSelectionState();
+            }
+
+            async function fetchBulkInspectionPage(reset = false) {
+                const response = await fetch(bulkInspectionEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        limit: Math.min(100, Math.max(1, Number(@json($importUi['bulk_inspection_limit'])) || 100)),
+                        reset
+                    })
+                });
+
+                let payload = {};
+                try {
+                    payload = await response.json();
+                } catch (error) {
+                    // A proxy can return an HTML error page. Surface a useful
+                    // message and leave the server-owned cursor untouched.
+                }
+
+                if (!response.ok || (!payload.success && !payload.done && !payload.incomplete)) {
+                    const retryAfter = response.headers.get('Retry-After');
+                    const retryHint = retryAfter
+                        ? ` Pokušajte ponovno za ${Number(retryAfter).toLocaleString('hr-HR')} s.`
+                        : '';
+                    throw new Error((payload.message || `Bulk provjera nije dostupna (HTTP ${response.status}).`) + retryHint);
+                }
+
+                return payload;
+            }
+
+            function updateBulkInspectionProgress(state, payload) {
+                state.processed += Math.max(0, Number(payload.processed) || 0);
+                state.succeeded += Math.max(0, Number(payload.succeeded) || 0);
+                state.failed += Math.max(0, Number(payload.failed) || 0);
+                state.ignored += Math.max(0, Number(payload.ignored) || 0);
+                state.remaining = Math.max(0, Number(payload.remaining) || 0);
+                state.processedTotal = Math.max(state.processedTotal, Number(payload.processed_total) || 0);
+                const hasCumulativeTotals = ['cumulative_succeeded', 'cumulative_failed', 'cumulative_ignored', 'succeeded_total', 'failed_total', 'ignored_total']
+                    .some(key => Object.prototype.hasOwnProperty.call(payload, key));
+                state.hasCumulativeTotals = state.hasCumulativeTotals || hasCumulativeTotals;
+                state.succeededTotal = Math.max(state.succeededTotal, Number(payload.cumulative_succeeded ?? payload.succeeded_total) || 0);
+                state.failedTotal = Math.max(state.failedTotal, Number(payload.cumulative_failed ?? payload.failed_total) || 0);
+                state.ignoredTotal = Math.max(state.ignoredTotal, Number(payload.cumulative_ignored ?? payload.ignored_total) || 0);
+                const previousPass = state.pass;
+                state.pass = Math.max(1, Number(payload.pass) || state.pass);
+                state.scanTotal = Math.max(state.scanTotal, Number(payload.records_total ?? payload.scan_total) || 0);
+                const scanned = Math.max(0, Number(payload.scanned ?? payload.scan_processed) || 0);
+                state.scanned = state.pass !== previousPass ? scanned : Math.max(state.scanned, scanned);
+                state.done = Boolean(payload.done);
+                state.incomplete = Boolean(payload.incomplete);
+                state.canReset = Boolean(payload.can_reset);
+                state.message = payload.message || '';
+                setInspectAllCount(state.remaining);
+
+                const inspected = state.processedTotal || state.processed;
+                const scanText = state.scanTotal > 0
+                    ? `Skenirano ${state.scanned.toLocaleString('hr-HR')} / ${state.scanTotal.toLocaleString('hr-HR')} · `
+                    : '';
+                inspectAllProgress.textContent = `${scanText}provjereno ${inspected.toLocaleString('hr-HR')} · preostalo ${state.remaining.toLocaleString('hr-HR')} · prolaz ${state.pass}`;
+
+                let percent = state.scanTotal > 0
+                    ? Math.round((state.scanned / state.scanTotal) * 100)
+                    : Math.round((state.processed / Math.max(1, state.initialRemaining)) * 100);
+                if (state.incomplete) {
+                    percent = Math.min(99, percent);
+                }
+                inspectAllProgressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+            }
+
+            async function inspectAllPendingBulk() {
+                inspectAllStopRequested = false;
+                setInspectAllRunning(true);
+                inspectAllButton.disabled = false;
+                document.querySelectorAll('[data-run-action], [data-single-action]').forEach(button => button.disabled = true);
+                inspectAllProgressWrap.classList.remove('d-none');
+                inspectAllProgressBar.classList.remove('bg-warning', 'bg-danger');
+                inspectAllProgressBar.classList.add('progress-bar-animated');
+                inspectAllProgressBar.style.width = '0';
+
+                const state = {
+                    initialRemaining: Math.max(0, Number(inspectAllCount.dataset.count) || 0),
+                    processed: 0,
+                    succeeded: 0,
+                    failed: 0,
+                    ignored: 0,
+                    remaining: Math.max(0, Number(inspectAllCount.dataset.count) || 0),
+                    processedTotal: 0,
+                    succeededTotal: 0,
+                    failedTotal: 0,
+                    ignoredTotal: 0,
+                    hasCumulativeTotals: false,
+                    scanTotal: 0,
+                    scanned: 0,
+                    pass: 1,
+                    done: false,
+                    incomplete: false,
+                    canReset: false,
+                    message: '',
+                    networkError: false,
+                    errorMessage: ''
+                };
+                let reset = inspectAllBulkResetRequested;
+                inspectAllBulkResetRequested = false;
+
+                try {
+                    while (!inspectAllStopRequested && !state.done) {
+                        inspectAllProgress.textContent = state.processed === 0
+                            ? 'Pokrećem bulk provjeru Delfi kataloga…'
+                            : `Nastavljam bulk provjeru · preostalo ${state.remaining.toLocaleString('hr-HR')}…`;
+                        const payload = await fetchBulkInspectionPage(reset);
+                        reset = false;
+                        updateBulkInspectionProgress(state, payload);
+
+                        if (state.done || inspectAllStopRequested) {
+                            break;
+                        }
+
+                        await new Promise(resolve => window.setTimeout(
+                            resolve,
+                            Math.max(0, Number(@json($importUi['bulk_inspection_delay_ms'])) || 350)
+                        ));
+                    }
+                } catch (error) {
+                    state.networkError = true;
+                    state.errorMessage = error?.message || 'Bulk provjera je privremeno nedostupna.';
+                }
+
+                inspectAllProgressBar.classList.remove('progress-bar-animated');
+                if (state.incomplete) {
+                    inspectAllBulkResetRequested = state.canReset;
+                    inspectAllProgressBar.classList.add('bg-warning');
+                    const message = state.message || `Bulk prolaz je završen, ali ${state.remaining.toLocaleString('hr-HR')} knjiga nije pronađeno u Delfi listi.`;
+                    showInspectAllSummary(`${message} Provjera nije označena kao potpuno dovršena.`);
+                } else if (!state.networkError && state.done) {
+                    inspectAllProgressBar.style.width = '100%';
+                    const succeeded = state.hasCumulativeTotals ? state.succeededTotal : state.succeeded;
+                    const failed = state.hasCumulativeTotals ? state.failedTotal : state.failed;
+                    const totalsLabel = state.hasCumulativeTotals ? 'Ukupno' : 'U ovom pokretanju';
+                    showInspectAllSummary(`${state.message || 'Provjera je završena.'} ${totalsLabel}: ${succeeded.toLocaleString('hr-HR')} uspješno, ${failed.toLocaleString('hr-HR')} s greškom.`);
+                } else if (state.networkError) {
+                    inspectAllProgressBar.classList.add('bg-danger');
+                    showInspectAllSummary(`Bulk provjera je privremeno prekinuta. ${state.errorMessage} Već provjerene knjige su spremljene; ponovnim pokretanjem nastavlja se od istog mjesta.`);
+                } else {
+                    showInspectAllSummary(`Provjera je zaustavljena. U ovom pokretanju provjereno: ${state.processed.toLocaleString('hr-HR')}; preostalo: ${state.remaining.toLocaleString('hr-HR')}. Ponovnim pokretanjem nastavlja se od istog mjesta.`);
+                }
+
+                setInspectAllRunning(false);
+                inspectAllButton.disabled = (!state.incomplete && state.done) || state.remaining === 0;
+                document.querySelectorAll('[data-single-action]').forEach(button => button.disabled = false);
+                updateSelectionState();
+            }
+
+            function inspectAllPending() {
+                return bulkInspectionEndpoint ? inspectAllPendingBulk() : inspectAllPendingLegacy();
             }
 
             async function run(action, ids) {

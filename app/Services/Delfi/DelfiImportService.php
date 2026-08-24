@@ -12,6 +12,7 @@ use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Action;
 use App\Services\ProductIdentifierAllocator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -23,6 +24,8 @@ class DelfiImportService
 {
     private DelfiProductApiClient $api;
     private DelfiProductDetailParser $parser;
+    private DelfiProductListApiClient $listApi;
+    private DelfiProductListParser $listParser;
     private DelfiTranslationService $translator;
     private DelfiImportSettings $settings;
     private DelfiPriceCalculator $priceCalculator;
@@ -31,6 +34,8 @@ class DelfiImportService
     public function __construct(
         DelfiProductApiClient $api,
         DelfiProductDetailParser $parser,
+        DelfiProductListApiClient $listApi,
+        DelfiProductListParser $listParser,
         DelfiTranslationService $translator,
         DelfiImportSettings $settings,
         DelfiPriceCalculator $priceCalculator,
@@ -38,10 +43,118 @@ class DelfiImportService
     ) {
         $this->api = $api;
         $this->parser = $parser;
+        $this->listApi = $listApi;
+        $this->listParser = $listParser;
         $this->translator = $translator;
         $this->settings = $settings;
         $this->priceCalculator = $priceCalculator;
         $this->identifierAllocator = $identifierAllocator;
+    }
+
+    /**
+     * Inspect one Delfi product-list page without making per-product overview calls.
+     *
+     * Product candidates are prefetched for the whole page so a page costs a
+     * constant number of SELECT queries regardless of whether it contains one
+     * or one hundred books.
+     */
+    public function inspectProductListPage(string $feedToken, int $skip = 0, int $limit = 100): array
+    {
+        $payload = $this->listApi->fetchPage($skip, $limit);
+        $page = $this->listParser->parsePage($payload, $skip, $limit);
+        $items = collect((array) ($page['items'] ?? []));
+        $remoteIds = $items->pluck('remote_product_id')->filter()->map(fn ($id) => (int) $id)->unique()->values();
+        $externalIds = $items->pluck('external_id')->filter()->map(fn ($id) => (string) $id)->unique()->values();
+
+        $sources = collect();
+        if ($remoteIds->isNotEmpty() || $externalIds->isNotEmpty()) {
+            $sources = DelfiImportProduct::query()
+                ->where('is_current', true)
+                ->where('feed_token', $feedToken)
+                ->whereIn('source_category', DelfiProductListApiClient::CATEGORIES)
+                ->where(function ($query) {
+                    $query->whereNull('checked_source_hash')
+                        ->orWhereColumn('checked_source_hash', '!=', 'source_hash');
+                })
+                ->where(function ($query) use ($remoteIds, $externalIds) {
+                    if ($remoteIds->isNotEmpty()) {
+                        $query->whereIn('remote_product_id', $remoteIds);
+                    }
+                    if ($externalIds->isNotEmpty()) {
+                        $method = $remoteIds->isNotEmpty() ? 'orWhereIn' : 'whereIn';
+                        $query->{$method}('external_id', $externalIds);
+                    }
+                })
+                ->get();
+        }
+
+        $byRemoteId = $sources->whereNotNull('remote_product_id')->keyBy(fn ($source) => (int) $source->remote_product_id);
+        $byExternalId = $sources->keyBy(fn ($source) => (string) $source->external_id);
+        $records = [];
+        $seenSourceIds = [];
+        foreach ($items as $item) {
+            $remoteId = (int) ($item['remote_product_id'] ?? 0);
+            $externalId = trim((string) ($item['external_id'] ?? ''));
+            $source = $remoteId > 0 ? $byRemoteId->get($remoteId) : null;
+            if (! $source && $externalId !== '') {
+                $source = $byExternalId->get($externalId);
+            }
+            if (! $source || isset($seenSourceIds[$source->id])) {
+                continue;
+            }
+
+            $seenSourceIds[$source->id] = true;
+            $records[] = ['source' => $source, 'details' => (array) $item];
+        }
+
+        $matches = $this->prefetchProductMatches($records);
+        [$succeeded, $failed, $failures] = DB::transaction(function () use ($records, $matches) {
+            $succeeded = 0;
+            $failed = 0;
+            $failures = [];
+            foreach ($records as $record) {
+                /** @var DelfiImportProduct $source */
+                $source = $record['source'];
+                $details = $record['details'];
+
+                try {
+                    if ($this->applyProductListInspection(
+                        $source,
+                        $details,
+                        $matches[(int) $source->id] ?? collect()
+                    )) {
+                        $succeeded++;
+                    }
+                } catch (DelfiTerminalException $exception) {
+                    if ($this->conditionalInspectionUpdate($source, [
+                        'detail_payload' => null,
+                        'checked_source_hash' => $source->source_hash,
+                        'check_status' => 'error',
+                        'check_message' => $exception->getMessage(),
+                        'checked_at' => now(),
+                    ])) {
+                        $failed++;
+                        $failures[] = [
+                            'id' => (int) $source->id,
+                            'name' => $source->name,
+                            'message' => $exception->getMessage(),
+                        ];
+                    }
+                }
+            }
+
+            return [$succeeded, $failed, $failures];
+        }, 3);
+
+        Cache::forget('delfi-import-source-genre-counts');
+
+        return $page + [
+            'processed' => $succeeded + $failed,
+            'succeeded' => $succeeded,
+            'failed' => $failed,
+            'ignored' => max(0, $items->count() - $succeeded - $failed),
+            'failures' => $failures,
+        ];
     }
 
     public function inspect(DelfiImportProduct $source, bool $force = false): DelfiImportProduct
@@ -157,7 +270,9 @@ class DelfiImportService
 
     public function import(DelfiImportProduct $source, ?int $additionalCategoryId = null): array
     {
-        $source = $this->inspect($source);
+        // Bulk inspection intentionally avoids the per-product overview API.
+        // Fetch the complete detail exactly once when that book is actually imported.
+        $source = $this->inspect($source, empty($source->detail_payload));
         if ($source->check_status === 'conflict') {
             throw new RuntimeException($source->check_message ?: 'Artikl ima konflikt u Zuzi katalogu.');
         }
@@ -481,6 +596,210 @@ class DelfiImportService
         }
 
         return $matches->unique('id')->values();
+    }
+
+    /**
+     * @return array<int, \Illuminate\Support\Collection>
+     */
+    private function prefetchProductMatches(array $records): array
+    {
+        if ($records === []) {
+            return [];
+        }
+
+        $identifiers = collect($records)
+            ->flatMap(function (array $record) {
+                $details = $record['details'];
+
+                return [
+                    $details['isbn'] ?? null,
+                    $details['ean'] ?? null,
+                ];
+            })
+            ->map(fn ($value) => $this->normalizeIdentifier($value))
+            ->filter()
+            ->unique()
+            ->values();
+        $columns = ['id', 'name', 'sku', 'itemid', 'isbn', 'ean', 'price', 'quantity'];
+        $isbnProducts = $identifiers->isEmpty()
+            ? collect()
+            : Product::query()->whereIn('isbn', $identifiers)->get($columns);
+        $eanProducts = $identifiers->isEmpty()
+            ? collect()
+            : Product::query()->whereIn('ean', $identifiers)->get($columns);
+
+        $isbnMap = $isbnProducts->groupBy(fn ($product) => $this->normalizeIdentifier($product->isbn));
+        $eanMap = $eanProducts->groupBy(fn ($product) => $this->normalizeIdentifier($product->ean));
+        $titleAuthorPairs = collect($records)
+            ->map(function (array $record) {
+                $source = $record['source'];
+                $details = $record['details'];
+                $name = trim((string) $source->name);
+                $author = $this->firstAuthor($details['author'] ?? $source->author);
+
+                return compact('name', 'author');
+            })
+            ->filter(fn (array $pair) => $pair['name'] !== '' && $pair['author'] !== '')
+            ->unique(fn (array $pair) => $this->titleAuthorKey($pair['name'], $pair['author']))
+            ->values();
+        $titleAuthorMap = collect();
+        if ($titleAuthorPairs->isNotEmpty()) {
+            $titleProducts = Product::query()
+                ->join('authors', 'authors.id', '=', 'products.author_id')
+                ->whereIn('products.name', $titleAuthorPairs->pluck('name')->unique()->values())
+                ->whereIn('authors.title', $titleAuthorPairs->pluck('author')->unique()->values())
+                ->get([
+                    'products.id',
+                    'products.name',
+                    'products.sku',
+                    'products.itemid',
+                    'products.isbn',
+                    'products.ean',
+                    'products.price',
+                    'products.quantity',
+                    'authors.title as matched_author',
+                ]);
+            $titleAuthorMap = $titleProducts->groupBy(function ($product) {
+                return $this->titleAuthorKey($product->name, $product->matched_author);
+            });
+        }
+
+        $matches = [];
+        foreach ($records as $record) {
+            /** @var DelfiImportProduct $source */
+            $source = $record['source'];
+            $details = $record['details'];
+            $sourceMatches = collect();
+            foreach (array_unique(array_filter([
+                $this->normalizeIdentifier($details['isbn'] ?? null),
+                $this->normalizeIdentifier($details['ean'] ?? null),
+            ])) as $identifier) {
+                $sourceMatches = $sourceMatches
+                    ->concat($isbnMap->get($identifier, collect()))
+                    ->concat($eanMap->get($identifier, collect()));
+            }
+
+            $name = trim((string) $source->name);
+            $author = $this->firstAuthor($details['author'] ?? $source->author);
+            if ($name !== '' && $author !== '') {
+                $sourceMatches = $sourceMatches->concat(
+                    $titleAuthorMap->get($this->titleAuthorKey($name, $author), collect())
+                );
+            }
+
+            $matches[(int) $source->id] = $sourceMatches->unique('id')->values();
+        }
+
+        return $matches;
+    }
+
+    private function applyProductListInspection(
+        DelfiImportProduct $source,
+        array $details,
+        $matches
+    ): bool {
+        $remoteId = (int) ($details['remote_product_id'] ?? 0);
+        if ($remoteId < 1 || $remoteId !== (int) $source->remote_product_id) {
+            throw new DelfiTerminalException('Delfi bulk API identitet artikla ne odgovara zapisu iz feeda.');
+        }
+        $externalId = trim((string) ($details['external_id'] ?? ''));
+        if ($externalId !== '' && ! hash_equals((string) $source->external_id, $externalId)) {
+            throw new DelfiTerminalException('Delfi bulk API identitet artikla ne odgovara zapisu iz feeda.');
+        }
+        if (($details['source_category'] ?? null) !== $source->source_category) {
+            throw new DelfiTerminalException('Delfi bulk API kategorija artikla ne odgovara zapisu iz feeda.');
+        }
+
+        $isbn = $details['isbn'] ?? null;
+        $ean = $details['ean'] ?? null;
+        $author = trim((string) ($details['author'] ?? $source->author)) ?: null;
+        $status = 'new';
+        $message = 'ISBN, EAN ni kombinacija naziva i autora nisu pronađeni u Zuzi katalogu.';
+        $productId = null;
+        if ($matches->count() === 1) {
+            $productId = (int) $matches->first()->id;
+            $status = 'matched';
+            $message = 'Postojeći Zuzi artikl pronađen po ISBN-u, EAN-u ili kombinaciji naziva i autora.';
+        } elseif ($matches->count() > 1) {
+            $status = 'conflict';
+            $message = 'ISBN, EAN ili kombinacija naziva i autora odgovara na više Zuzi artikala: '
+                . $matches->pluck('id')->implode(', ') . '.';
+        } elseif (empty($isbn) && empty($ean)) {
+            throw new DelfiTerminalException(
+                'ISBN/EAN nije pronađen u Delfi bulk podacima, a naziv i autor ne odgovaraju postojećem Zuzi artiklu.'
+            );
+        }
+
+        $images = array_values(array_unique(array_filter(array_merge(
+            (array) ($details['images'] ?? []),
+            [$details['image_url'] ?? null, $source->image_url],
+            (array) ($details['additional_image_urls'] ?? []),
+            (array) $source->additional_image_urls
+        ))));
+        return $this->conditionalInspectionUpdate($source, [
+            'product_id' => $productId,
+            'image_url' => $images[0] ?? $source->image_url,
+            'additional_image_urls' => array_slice($images, 1),
+            'source_publisher' => $details['source_publisher'] ?? $source->source_publisher,
+            'isbn' => $isbn,
+            'ean' => $ean,
+            'nav_id' => $details['nav_id'] ?? $source->nav_id,
+            'author' => $author,
+            'source_genres' => $details['source_genres'] ?? ($source->source_genres ?: []),
+            'genre' => $details['genre'] ?? $source->genre,
+            'format' => $details['format'] ?? $source->format,
+            'pages' => $details['pages'] ?? $source->pages,
+            'letter' => $details['letter'] ?? $source->letter,
+            'binding' => $details['binding'] ?? $source->binding,
+            'publication_year' => $details['publication_year'] ?? $source->publication_year,
+            'language' => $details['language'] ?? $source->language,
+            'origin' => $details['origin'] ?? $source->origin,
+            // The list payload is sufficient for matching, but it is not the
+            // complete overview used by import. Clear an older detail snapshot
+            // so importing a changed feed row must fetch fresh details once.
+            'detail_payload' => null,
+            'checked_source_hash' => $source->source_hash,
+            'check_status' => $status,
+            'check_message' => $message,
+            'checked_at' => now(),
+        ]);
+    }
+
+    private function conditionalInspectionUpdate(DelfiImportProduct $source, array $attributes): bool
+    {
+        $snapshotHash = (string) $source->source_hash;
+        $snapshotFeedToken = (string) $source->feed_token;
+        $source->forceFill($attributes);
+        $serialized = [];
+        foreach (array_keys($attributes) as $key) {
+            $serialized[$key] = $source->getAttributes()[$key] ?? null;
+        }
+
+        return DelfiImportProduct::query()
+            ->whereKey($source->id)
+            ->where('is_current', true)
+            ->where('feed_token', $snapshotFeedToken)
+            ->where('source_hash', $snapshotHash)
+            ->where(function ($query) {
+                $query->whereNull('checked_source_hash')
+                    ->orWhereColumn('checked_source_hash', '!=', 'source_hash');
+            })
+            ->update($serialized) === 1;
+    }
+
+    private function normalizeIdentifier($value): string
+    {
+        return strtoupper(preg_replace('/[^0-9X]/i', '', (string) $value) ?? '');
+    }
+
+    private function firstAuthor($value): string
+    {
+        return trim(explode(',', (string) $value)[0]);
+    }
+
+    private function titleAuthorKey($name, $author): string
+    {
+        return mb_strtolower(trim((string) $name)) . "\0" . mb_strtolower(trim((string) $author));
     }
 
     private function resolvePublisherMapping(DelfiImportProduct $source, array $settings): array
