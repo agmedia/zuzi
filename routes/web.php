@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\v2\CartController;
 use App\Http\Controllers\Api\v2\FilterController;
 use App\Http\Controllers\Back\Catalog\AuthorController;
 use App\Http\Controllers\Back\Catalog\CategoryController;
+use App\Http\Controllers\Back\Catalog\DelfiImportController;
 use App\Http\Controllers\Back\Catalog\ProductController;
 use App\Http\Controllers\Back\Catalog\PublisherController;
 use App\Http\Controllers\Back\Catalog\LagunaImportController;
@@ -141,6 +142,14 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('laguna-import/inspection-queue', [LagunaImportController::class, 'inspectionQueue'])->name('laguna-import.inspection-queue');
         Route::post('laguna-import/{lagunaImportProduct}/inspect', [LagunaImportController::class, 'inspect'])->name('laguna-import.inspect');
         Route::post('laguna-import/{lagunaImportProduct}/import', [LagunaImportController::class, 'import'])->name('laguna-import.import');
+
+        // DELFI IMPORT
+        Route::get('delfi-import', [DelfiImportController::class, 'index'])->name('delfi-import.index');
+        Route::post('delfi-import/refresh', [DelfiImportController::class, 'refresh'])->name('delfi-import.refresh');
+        Route::post('delfi-import/settings', [DelfiImportController::class, 'updateSettings'])->name('delfi-import.settings');
+        Route::get('delfi-import/inspection-queue', [DelfiImportController::class, 'inspectionQueue'])->name('delfi-import.inspection-queue');
+        Route::post('delfi-import/{delfiImportProduct}/inspect', [DelfiImportController::class, 'inspect'])->name('delfi-import.inspect');
+        Route::post('delfi-import/{delfiImportProduct}/import', [DelfiImportController::class, 'import'])->name('delfi-import.import');
     });
 
     // NARUDŽBE

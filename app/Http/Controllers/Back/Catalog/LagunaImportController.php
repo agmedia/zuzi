@@ -216,7 +216,10 @@ class LagunaImportController extends Controller
 
     private function applyFilters(Builder $query, Request $request): void
     {
-        if (! $request->boolean('include_missing')) {
+        $status = trim((string) $request->input('status', 'new')) ?: 'new';
+        if ($status === 'missing') {
+            $query->where('is_current', false);
+        } elseif (! $request->boolean('include_missing')) {
             $query->where('is_current', true);
         }
 
@@ -234,8 +237,7 @@ class LagunaImportController extends Controller
             });
         }
 
-        $status = trim((string) $request->input('status', 'new')) ?: 'new';
-        if ($status !== 'all') {
+        if (! in_array($status, ['all', 'missing'], true)) {
             $this->applyStatusFilter($query, $status);
         }
     }
@@ -282,6 +284,7 @@ class LagunaImportController extends Controller
             'changed' => (clone $base)->whereNotNull('imported_at')->whereColumn('source_hash', '!=', 'imported_hash')->whereNotIn('check_status', ['conflict', 'error'])->count(),
             'conflict' => (clone $base)->where('check_status', 'conflict')->count(),
             'error' => (clone $base)->where('check_status', 'error')->count(),
+            'missing' => LagunaImportProduct::query()->where('is_current', false)->count(),
         ];
     }
 

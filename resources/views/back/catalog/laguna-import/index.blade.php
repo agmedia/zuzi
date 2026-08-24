@@ -54,6 +54,28 @@
 
 @section('content')
     @php
+        $importUi = array_merge([
+            'name' => 'Laguna',
+            'slug' => 'laguna',
+            'route_prefix' => 'laguna-import',
+            'route_parameter' => 'lagunaImportProduct',
+            'config_key' => 'laguna_import',
+            'source_site' => 'Laguna.rs',
+            'subtitle' => 'Inkrementalni uvoz knjiga s provjerom ISBN-a i prijevodom opisa na hrvatski',
+            'source_id_label' => 'Laguna šifra',
+            'allowed_categories_label' => 'Samo kategorija Knjige',
+            'required_mapping_label' => 'Nakladnici › Laguna',
+            'publisher_category_label' => 'Laguna podkategorija',
+            'default_publisher_label' => 'Laguna',
+            'supports_source_mapping' => false,
+            'inspection_workers' => 2,
+            'inspection_delay_ms' => 250,
+        ], $importUi ?? []);
+        $productsTabId = $importUi['slug'] . '-products';
+        $settingsTabId = $importUi['slug'] . '-settings';
+        $routePrefix = $importUi['route_prefix'];
+        $sourceGenres = collect($sourceGenres ?? []);
+        $genreCategoryMap = (array) ($settings['genre_category_map'] ?? []);
         $statusLabels = [
             'pending' => ['Nije provjeren', 'secondary'],
             'new' => ['Novi', 'info'],
@@ -73,10 +95,10 @@
         <div class="content content-full">
             <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center">
                 <div>
-                    <h1 class="flex-sm-fill font-size-h2 font-w400 mt-2 mb-0 mb-sm-2">Laguna import</h1>
-                    <div class="text-muted">Inkrementalni uvoz knjiga s provjerom ISBN-a i prijevodom opisa na hrvatski</div>
+                    <h1 class="flex-sm-fill font-size-h2 font-w400 mt-2 mb-0 mb-sm-2">{{ $importUi['name'] }} import</h1>
+                    <div class="text-muted">{{ $importUi['subtitle'] }}</div>
                 </div>
-                <form action="{{ route('laguna-import.refresh') }}" method="post" class="my-2" data-refresh-form>
+                <form action="{{ route($routePrefix . '.refresh') }}" method="post" class="my-2" data-refresh-form>
                     @csrf
                     <button class="btn btn-hero-primary" type="submit">
                         <i class="fa fa-sync-alt mr-1"></i> Osvježi feed
@@ -119,13 +141,13 @@
         <div class="block block-rounded mb-4">
             <ul class="nav nav-tabs nav-tabs-alt nav-justified" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link{{ ! $settingsTabActive ? ' active' : '' }}" data-toggle="tab" href="#laguna-products" role="tab">
+                    <a class="nav-link{{ ! $settingsTabActive ? ' active' : '' }}" data-toggle="tab" href="#{{ $productsTabId }}" role="tab">
                         <i class="fa fa-book mr-1"></i> Knjige
                         <span class="badge badge-pill badge-light ml-1">{{ number_format($statusCounts['all'], 0, ',', '.') }}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link{{ $settingsTabActive ? ' active' : '' }}" data-toggle="tab" href="#laguna-settings" role="tab">
+                    <a class="nav-link{{ $settingsTabActive ? ' active' : '' }}" data-toggle="tab" href="#{{ $settingsTabId }}" role="tab">
                         <i class="fa fa-sliders-h mr-1"></i> Postavke importa
                     </a>
                 </li>
@@ -133,7 +155,7 @@
         </div>
 
         <div class="tab-content">
-            <div class="tab-pane fade{{ ! $settingsTabActive ? ' show active' : '' }}" id="laguna-products" role="tabpanel">
+            <div class="tab-pane fade{{ ! $settingsTabActive ? ' show active' : '' }}" id="{{ $productsTabId }}" role="tabpanel">
                 <div class="block block-rounded">
                     <div class="block-content block-content-full">
                         <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between">
@@ -142,7 +164,7 @@
                                     <i class="fa fa-{{ $feedMetadata['exists'] ? 'check' : 'exclamation-triangle' }}"></i>
                                 </div>
                                 <div>
-                                    <div class="font-w600">{{ $feedMetadata['exists'] ? 'Laguna feed je spreman' : 'Feed još nije preuzet' }}</div>
+                                    <div class="font-w600">{{ $feedMetadata['exists'] ? $importUi['name'] . ' feed je spreman' : 'Feed još nije preuzet' }}</div>
                                     @if($feedMetadata['exists'])
                                         <div class="text-muted small">
                                             {{ number_format($feedMetadata['count'], 0, ',', '.') }} knjiga · {{ number_format($feedMetadata['bytes'] / 1048576, 1, ',', '.') }} MB · osvježeno {{ $feedMetadata['modified_at'] }}
@@ -153,8 +175,8 @@
                                 </div>
                             </div>
                             <div class="text-lg-right">
-                                <span class="badge badge-success p-2 mr-2"><i class="fa fa-filter mr-1"></i> Samo kategorija Knjige</span>
-                                <a class="btn btn-sm btn-alt-secondary" href="{{ config('laguna_import.feed_url') }}" target="_blank" rel="noopener noreferrer">
+                                <span class="badge badge-success p-2 mr-2"><i class="fa fa-filter mr-1"></i> {{ $importUi['allowed_categories_label'] }}</span>
+                                <a class="btn btn-sm btn-alt-secondary" href="{{ config($importUi['config_key'] . '.feed_url') }}" target="_blank" rel="noopener noreferrer">
                                     <i class="fa fa-external-link-alt mr-1"></i> Otvori RSS
                                 </a>
                             </div>
@@ -189,7 +211,7 @@
                                 $statusColor = $status === 'all' ? 'secondary' : ($statusLabels[$status][1] ?? 'secondary');
                             @endphp
                             <a class="btn btn-sm {{ $isActiveStatus ? 'btn-' . $statusColor : 'btn-alt-' . $statusColor }} mr-2 mb-2"
-                               href="{{ route('laguna-import.index', array_merge($statusFilterQuery, ['status' => $status])) }}">
+                               href="{{ route($routePrefix . '.index', array_merge($statusFilterQuery, ['status' => $status])) }}">
                                 {{ $status === 'all' ? 'Svi' : ($statusLabels[$status][0] ?? $status) }}
                                 <span class="badge badge-light ml-1">{{ $count }}</span>
                             </a>
@@ -202,10 +224,10 @@
                 <h3 class="block-title">Artikli iz feeda <span class="text-muted">{{ number_format($products->total(), 0, ',', '.') }}</span></h3>
             </div>
             <div class="block-content bg-body-light">
-                <form action="{{ route('laguna-import.index') }}" method="get">
+                <form action="{{ route($routePrefix . '.index') }}" method="get">
                     <div class="form-row align-items-end">
                         <div class="form-group col-lg-6">
-                            <label for="search">Naziv, Laguna šifra ili ISBN</label>
+                            <label for="search">Naziv, {{ $importUi['source_id_label'] }} ili ISBN</label>
                             <input id="search" class="form-control" type="text" name="search" value="{{ request('search') }}">
                         </div>
                         <div class="form-group col-lg-4">
@@ -220,7 +242,7 @@
                         <div class="form-group col-lg-2">
                             <button class="btn btn-primary btn-block" type="submit"><i class="fa fa-filter mr-1"></i> Filtriraj</button>
                             @if(request('search') || request('status'))
-                                <a class="btn btn-sm btn-link btn-block" href="{{ route('laguna-import.index') }}">Očisti filtre</a>
+                                <a class="btn btn-sm btn-link btn-block" href="{{ route($routePrefix . '.index') }}">Očisti filtre</a>
                             @endif
                         </div>
                     </div>
@@ -248,7 +270,7 @@
                                     @endforeach
                                 @endforeach
                             </select>
-                            <div class="small text-muted mt-1">Vrijedi za skupni i pojedinačni uvoz. Prazno polje znači samo obavezne kategorije Nakladnici › Laguna.</div>
+                            <div class="small text-muted mt-1">Vrijedi za skupni i pojedinačni uvoz. Prazno polje znači samo obavezne kategorije {{ $importUi['required_mapping_label'] }}.</div>
                         </div>
                         <div class="form-group col-lg-7 mb-2">
                             <div class="d-flex align-items-center justify-content-between mb-2">
@@ -305,7 +327,13 @@
                                 </td>
                                 <td>
                                     <a class="font-w600" href="{{ $source->source_url }}" target="_blank" rel="noopener noreferrer">{{ $source->name }}</a>
-                                    <div class="small text-muted">Laguna šifra: {{ $source->external_id }}</div>
+                                    <div class="small text-muted">{{ $importUi['source_id_label'] }}: {{ $importUi['supports_source_mapping'] ? ($source->nav_id ?: ($source->remote_product_id ?: $source->external_id)) : $source->external_id }}</div>
+                                    @if($importUi['supports_source_mapping'] && $source->nav_id && $source->remote_product_id)
+                                        <div class="small text-muted">Delfi ID: {{ $source->remote_product_id }}</div>
+                                    @endif
+                                    @if($importUi['supports_source_mapping'] && $source->source_publisher)
+                                        <div class="small text-muted">Izvorni nakladnik: {{ $source->source_publisher }}</div>
+                                    @endif
                                     @if($source->author)<div class="small">{{ $source->author }}</div>@endif
                                 </td>
                                 <td class="small">
@@ -314,6 +342,9 @@
                                     @if($source->pages)<div><span class="text-muted">Stranica:</span> {{ $source->pages }}</div>@endif
                                     @if($source->letter || $source->binding)<div>{{ $source->letter }}{{ $source->letter && $source->binding ? ' · ' : '' }}{{ $source->binding }}</div>@endif
                                     @if($source->publication_year)<div><span class="text-muted">Godina:</span> {{ $source->publication_year }}</div>@endif
+                                    @if($importUi['supports_source_mapping'] && ! empty($source->source_genres))
+                                        <div><span class="text-muted">Žanr:</span> {{ implode(' · ', (array) $source->source_genres) }}</div>
+                                    @endif
                                 </td>
                                 <td class="text-right small">
                                     <div>{{ number_format($source->price_rsd, 2, ',', '.') }} RSD</div>
@@ -331,7 +362,7 @@
                                     @if($source->check_message)<div class="small text-muted mt-1">{{ $source->check_message }}</div>@endif
                                 </td>
                                 <td class="text-right text-nowrap">
-                                    <a class="btn btn-sm btn-alt-secondary" href="{{ $source->source_url }}" target="_blank" rel="noopener noreferrer" title="Otvori na Laguna.rs" aria-label="Otvori {{ $source->name }} na Laguna.rs u novom tabu"><i class="fa fa-external-link-alt"></i></a>
+                                    <a class="btn btn-sm btn-alt-secondary" href="{{ $source->source_url }}" target="_blank" rel="noopener noreferrer" title="Otvori na {{ $importUi['source_site'] }}" aria-label="Otvori {{ $source->name }} na {{ $importUi['source_site'] }} u novom tabu"><i class="fa fa-external-link-alt"></i></a>
                                     @if($needsInspection)
                                         <button class="btn btn-sm btn-alt-primary" type="button" title="{{ $source->check_status === 'error' ? 'Ponovi provjeru' : 'Provjeri' }}" data-single-action="inspect" data-source-id="{{ $source->id }}"><i class="fa fa-search"></i></button>
                                     @endif
@@ -350,19 +381,19 @@
         </div>
             </div>
 
-            <div class="tab-pane fade{{ $settingsTabActive ? ' show active' : '' }}" id="laguna-settings" role="tabpanel">
+            <div class="tab-pane fade{{ $settingsTabActive ? ' show active' : '' }}" id="{{ $settingsTabId }}" role="tabpanel">
                 <div class="block block-rounded">
                     <div class="block-header block-header-default">
                         <div>
-                            <h3 class="block-title">Postavke Laguna importa</h3>
+                            <h3 class="block-title">Postavke {{ $importUi['name'] }} importa</h3>
                             <div class="small text-muted mt-1">Ovdje se određuju cijene, zaliha i obavezno Zuzi mapiranje.</div>
                         </div>
                     </div>
-                    <form action="{{ route('laguna-import.settings') }}" method="post">
+                    <form action="{{ route($routePrefix . '.settings') }}" method="post">
                         @csrf
                         <div class="block-content">
                             <h4 class="font-size-h5 mb-1"><i class="fa fa-euro-sign text-primary mr-2"></i>Cijena i dostupnost</h4>
-                            <p class="text-muted small mb-4">Izvorna Laguna cijena automatski se pretvara iz RSD u EUR i zatim uvećava za zadani postotak.</p>
+                            <p class="text-muted small mb-4">Izvorna {{ $importUi['name'] }} cijena automatski se pretvara iz RSD u EUR i zatim uvećava za zadani postotak.</p>
 
                             <div class="form-row">
                                 <div class="form-group col-md-6 col-xl-3">
@@ -417,7 +448,7 @@
                                     <small class="form-text text-muted">Zadano: Nakladnici</small>
                                 </div>
                                 <div class="form-group col-lg-4">
-                                    <label for="publisher-category">Laguna podkategorija</label>
+                                    <label for="publisher-category">{{ $importUi['publisher_category_label'] }}</label>
                                     <select id="publisher-category" class="js-select2 form-control" name="publisher_category_id" required style="width:100%">
                                         <option value="">Odaberi podkategoriju</option>
                                         @foreach($categories as $group => $groupCategories)
@@ -438,9 +469,100 @@
                                             <option value="{{ $publisher->id }}" {{ (int) old('publisher_id', $settings['publisher_id']) === (int) $publisher->id ? 'selected' : '' }}>{{ $publisher->title }}</option>
                                         @endforeach
                                     </select>
-                                    <small class="form-text text-muted">Zadano: Laguna</small>
+                                    <small class="form-text text-muted">Zadano: {{ $importUi['default_publisher_label'] }}</small>
                                 </div>
                             </div>
+
+                            @if($importUi['supports_source_mapping'])
+                                <div class="bg-body-light rounded p-3 mb-4">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="map-source-publishers" name="map_source_publishers" value="1" {{ old('map_source_publishers', $settings['map_source_publishers'] ?? true) ? 'checked' : '' }}>
+                                        <label class="custom-control-label font-w600" for="map-source-publishers">Mapiraj nakladnika iz Delfi podataka</label>
+                                    </div>
+                                    <div class="small text-muted mt-1 ml-4">Ako u Zuzi postoji nakladnik i njegova podkategorija istog naziva, koriste se automatski. Odabrani nakladnik i podkategorija iznad služe kao sigurna rezerva.</div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h4 class="font-size-h5 mb-1"><i class="fa fa-sitemap text-primary mr-2"></i>Mapiranje Delfi žanrova</h4>
+                                <p class="text-muted small mb-3">Popis dolazi iz Delfi kategorija, a broj uz žanr pokazuje koliko ga je provjerenih knjiga koristilo. Nove vrijednosti pojavit će se automatski; nemapirani žanr ne zaustavlja uvoz.</p>
+
+                                @if($sourceGenres->isEmpty() && empty($genreCategoryMap))
+                                    <div class="alert alert-light border mb-4">Još nema otkrivenih žanrova. Provjerite nekoliko knjiga pa se vratite u postavke.</div>
+                                @else
+                                    <div class="form-row align-items-end mb-3">
+                                        <div class="form-group col-lg-5 mb-2">
+                                            <label for="source-genre-picker">Delfi žanr</label>
+                                            <select id="source-genre-picker" class="form-control" style="width:100%">
+                                                <option value="">Odaberi Delfi žanr</option>
+                                                @foreach($sourceGenres as $genre => $count)
+                                                    <option value="{{ $genre }}">{{ $genre }}{{ $count > 0 ? ' · ' . $count . ' provjerenih' : '' }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-lg-5 mb-2">
+                                            <label for="genre-category-picker">Zuzi kategorija</label>
+                                            <select id="genre-category-picker" class="form-control" style="width:100%">
+                                                <option value="">Odaberi Zuzi kategoriju</option>
+                                                @foreach($categories as $group => $groupCategories)
+                                                    @foreach($groupCategories as $categoryId => $category)
+                                                        <option value="{{ $categoryId }}">{{ $category['title'] }}</option>
+                                                        @foreach($category['subs'] ?? [] as $subcategoryId => $subcategory)
+                                                            <option value="{{ $subcategoryId }}">↳ {{ $category['title'] }} › {{ $subcategory['title'] }}</option>
+                                                        @endforeach
+                                                    @endforeach
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-lg-2 mb-2">
+                                            <button class="btn btn-alt-primary btn-block" type="button" data-add-genre-mapping>
+                                                <i class="fa fa-plus mr-1"></i> Dodaj
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="table-responsive mb-4{{ empty($genreCategoryMap) ? ' d-none' : '' }}" data-genre-mappings-wrap>
+                                        <table class="table table-sm table-vcenter mb-0">
+                                            <thead>
+                                            <tr>
+                                                <th>Delfi žanr</th>
+                                                <th style="width:55%">Zuzi kategorija</th>
+                                                <th class="text-right" style="width:55px"></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody data-genre-mappings>
+                                            @foreach($genreCategoryMap as $genre => $mappedCategoryId)
+                                                <tr data-genre-key="{{ mb_strtolower(trim($genre)) }}">
+                                                    <td>
+                                                        <input type="hidden" name="source_genres[]" value="{{ $genre }}">
+                                                        <span class="font-w600">{{ $genre }}</span>
+                                                        @if(($sourceGenres[$genre] ?? 0) > 0)
+                                                            <span class="badge badge-light ml-1">{{ $sourceGenres[$genre] }}</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <select class="form-control" name="genre_category_ids[]" style="width:100%">
+                                                            <option value="">Bez dodatnog mapiranja</option>
+                                                            @foreach($categories as $group => $groupCategories)
+                                                                @foreach($groupCategories as $categoryId => $category)
+                                                                    <option value="{{ $categoryId }}" {{ (int) $mappedCategoryId === (int) $categoryId ? 'selected' : '' }}>{{ $category['title'] }}</option>
+                                                                    @foreach($category['subs'] ?? [] as $subcategoryId => $subcategory)
+                                                                        <option value="{{ $subcategoryId }}" {{ (int) $mappedCategoryId === (int) $subcategoryId ? 'selected' : '' }}>↳ {{ $category['title'] }} › {{ $subcategory['title'] }}</option>
+                                                                    @endforeach
+                                                                @endforeach
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                    <td class="text-right">
+                                                        <button class="btn btn-sm btn-alt-danger" type="button" title="Ukloni mapiranje" data-remove-genre-mapping><i class="fa fa-times"></i></button>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                            @endif
 
                             <div class="bg-body-light rounded p-3 mb-3">
                                 <div class="custom-control custom-switch">
@@ -535,10 +657,99 @@
                         ?.setAttribute('placeholder', 'Upišite naziv kategorije…');
                 });
             });
+
+            const sourceGenrePicker = $('#source-genre-picker');
+            const genreCategoryPicker = $('#genre-category-picker');
+            const genreMappings = document.querySelector('[data-genre-mappings]');
+            const genreMappingsWrap = document.querySelector('[data-genre-mappings-wrap]');
+
+            function initializeGenreCategorySelect(select) {
+                $(select).select2({ width: '100%' });
+            }
+
+            if (sourceGenrePicker.length) {
+                sourceGenrePicker.select2({
+                    width: '100%',
+                    placeholder: 'Pretražite Delfi žanr',
+                    allowClear: true
+                });
+                genreCategoryPicker.select2({
+                    width: '100%',
+                    placeholder: 'Pretražite Zuzi kategoriju',
+                    allowClear: true
+                });
+                genreMappings?.querySelectorAll('select[name="genre_category_ids[]"]')
+                    .forEach(initializeGenreCategorySelect);
+            }
+
+            function refreshGenreMappingsVisibility() {
+                genreMappingsWrap?.classList.toggle('d-none', !genreMappings?.children.length);
+            }
+
+            document.querySelector('[data-add-genre-mapping]')?.addEventListener('click', function () {
+                const genre = String(sourceGenrePicker.val() || '').trim();
+                const categoryId = String(genreCategoryPicker.val() || '');
+                if (!genre || !categoryId || !genreMappings) {
+                    return;
+                }
+
+                const key = genre.toLocaleLowerCase('hr-HR');
+                const existing = Array.from(genreMappings.children)
+                    .find(row => row.dataset.genreKey === key);
+                if (existing) {
+                    $(existing).find('select[name="genre_category_ids[]"]')
+                        .val(categoryId)
+                        .trigger('change');
+                } else {
+                    const row = document.createElement('tr');
+                    row.dataset.genreKey = key;
+
+                    const genreCell = document.createElement('td');
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'source_genres[]';
+                    hidden.value = genre;
+                    const label = document.createElement('span');
+                    label.className = 'font-w600';
+                    label.textContent = genre;
+                    genreCell.append(hidden, label);
+
+                    const categoryCell = document.createElement('td');
+                    const select = document.createElement('select');
+                    select.className = 'form-control';
+                    select.name = 'genre_category_ids[]';
+                    select.style.width = '100%';
+                    genreCategoryPicker.find('option').clone().appendTo(select);
+                    select.value = categoryId;
+                    categoryCell.appendChild(select);
+
+                    const actionCell = document.createElement('td');
+                    actionCell.className = 'text-right';
+                    actionCell.innerHTML = '<button class="btn btn-sm btn-alt-danger" type="button" title="Ukloni mapiranje" data-remove-genre-mapping><i class="fa fa-times"></i></button>';
+                    row.append(genreCell, categoryCell, actionCell);
+                    genreMappings.appendChild(row);
+                    initializeGenreCategorySelect(select);
+                }
+
+                sourceGenrePicker.val('').trigger('change');
+                genreCategoryPicker.val('').trigger('change');
+                refreshGenreMappingsVisibility();
+            });
+
+            genreMappings?.addEventListener('click', function (event) {
+                const button = event.target.closest('[data-remove-genre-mapping]');
+                if (!button) {
+                    return;
+                }
+                $(button.closest('tr')).find('select').select2('destroy');
+                button.closest('tr').remove();
+                refreshGenreMappingsVisibility();
+            });
             $('#publisher-parent-category').on('change', filterPublisherCategories);
 
-            if (window.location.hash === '#laguna-settings') {
-                $('a[href="#laguna-settings"]').tab('show');
+            const settingsTabSelector = @json('#' . $settingsTabId);
+            if (window.location.hash === settingsTabSelector) {
+                $(`a[href="${settingsTabSelector}"]`).tab('show');
             }
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
                 window.history.replaceState(null, '', event.target.hash);
@@ -567,10 +778,10 @@
             const inspectAllProgressWrap = document.querySelector('[data-inspect-all-progress-wrap]');
             const inspectAllProgress = document.querySelector('[data-inspect-all-progress]');
             const inspectAllProgressBar = document.querySelector('[data-inspect-all-progress-bar]');
-            const inspectionQueueEndpoint = @json(route('laguna-import.inspection-queue'));
+            const inspectionQueueEndpoint = @json(route($routePrefix . '.inspection-queue'));
             const endpointTemplates = {
-                inspect: @json(route('laguna-import.inspect', ['lagunaImportProduct' => '__ID__'])),
-                import: @json(route('laguna-import.import', ['lagunaImportProduct' => '__ID__']))
+                inspect: @json(route($routePrefix . '.inspect', [$importUi['route_parameter'] => '__ID__'])),
+                import: @json(route($routePrefix . '.import', [$importUi['route_parameter'] => '__ID__']))
             };
             let inspectAllRunning = false;
             let inspectAllStopRequested = false;
@@ -601,8 +812,15 @@
                 inspectAllLabel.textContent = running ? 'Zaustavi provjeru' : 'Provjeri sve neprovjerene';
             }
 
-            async function loadInspectionQueue(limit = 20) {
-                const response = await fetch(`${inspectionQueueEndpoint}?limit=${limit}`, {
+            async function loadInspectionQueue(limit = 20, cursor = null, includeCount = false) {
+                const query = new URLSearchParams({ limit: String(limit) });
+                if (cursor) {
+                    query.set('cursor', cursor);
+                }
+                if (includeCount) {
+                    query.set('include_count', '1');
+                }
+                const response = await fetch(`${inspectionQueueEndpoint}?${query.toString()}`, {
                     headers: {
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
@@ -658,6 +876,7 @@
                             succeeded = await inspectQueuedItem(item);
                         } catch (error) {
                             state.networkError = true;
+                            state.errorMessage = error?.message || 'Provjera je privremeno nedostupna.';
                             inspectAllStopRequested = true;
                             return;
                         }
@@ -674,7 +893,8 @@
                     }
                 };
 
-                await Promise.all(Array.from({ length: Math.min(2, items.length) }, worker));
+                const workerCount = Math.max(1, Number(@json($importUi['inspection_workers'])) || 1);
+                await Promise.all(Array.from({ length: Math.min(workerCount, items.length) }, worker));
             }
 
             function showInspectAllSummary(message) {
@@ -703,33 +923,41 @@
                     succeeded: 0,
                     failed: 0,
                     networkError: false,
-                    remaining: Number(inspectAllCount.dataset.count || 0)
+                    errorMessage: '',
+                    remaining: Number(inspectAllCount.dataset.count || 0),
+                    cursor: null
                 };
 
                 try {
-                    while (!inspectAllStopRequested) {
-                        const queue = await loadInspectionQueue();
-                        state.remaining = Number(queue.remaining || 0);
-                        setInspectAllCount(state.remaining);
+                    let queue = await loadInspectionQueue(20, null, true);
+                    state.remaining = Number(queue.remaining || 0);
+                    state.total = state.remaining;
+                    setInspectAllCount(state.remaining);
 
-                        if (!state.total) {
-                            state.total = state.remaining;
-                        }
+                    while (!inspectAllStopRequested) {
                         if (!queue.items.length) {
                             break;
                         }
 
                         await inspectQueueBatch(queue.items, state);
                         if (!inspectAllStopRequested) {
-                            await new Promise(resolve => window.setTimeout(resolve, 250));
+                            state.cursor = queue.next_cursor || null;
+                            state.remaining = Math.max(0, state.total - state.processed);
+                            setInspectAllCount(state.remaining);
+                            if (queue.has_more === false) {
+                                break;
+                            }
+                            await new Promise(resolve => window.setTimeout(resolve, Number(@json($importUi['inspection_delay_ms'])) || 250));
+                            queue = await loadInspectionQueue(20, state.cursor, false);
                         }
                     }
                 } catch (error) {
                     state.networkError = true;
+                    state.errorMessage = error?.message || 'Red za provjeru je privremeno nedostupan.';
                 }
 
                 try {
-                    const latestQueue = await loadInspectionQueue(1);
+                    const latestQueue = await loadInspectionQueue(1, null, true);
                     state.remaining = Number(latestQueue.remaining || 0);
                     setInspectAllCount(state.remaining);
                 } catch (error) {
@@ -742,7 +970,8 @@
                     inspectAllProgressBar.style.width = '100%';
                     showInspectAllSummary(`Provjera je završena: ${state.succeeded.toLocaleString('hr-HR')} uspješno, ${state.failed.toLocaleString('hr-HR')} s greškom.`);
                 } else if (state.networkError) {
-                    showInspectAllSummary(`Provjera je prekinuta zbog mrežne greške nakon ${state.processed.toLocaleString('hr-HR')} knjiga. Ponovnim pokretanjem nastavlja se od preostalih.`);
+                    const reason = state.errorMessage ? ` Razlog: ${state.errorMessage}` : '';
+                    showInspectAllSummary(`Provjera je privremeno prekinuta nakon ${state.processed.toLocaleString('hr-HR')} knjiga.${reason} Ponovnim pokretanjem nastavlja se od preostalih.`);
                 } else {
                     showInspectAllSummary(`Provjera je zaustavljena nakon ${state.processed.toLocaleString('hr-HR')} knjiga. Preostalo: ${state.remaining.toLocaleString('hr-HR')}.`);
                 }
@@ -767,6 +996,8 @@
                 let attempted = 0;
                 let succeeded = 0;
                 let failed = 0;
+                let stoppedEarly = false;
+                const errorMessages = [];
 
                 for (const id of ids) {
                     attempted++;
@@ -799,6 +1030,11 @@
                         if (!response.ok || !payload.success) {
                             failed++;
                             row?.classList.add('table-danger');
+                            errorMessages.push(`${productName}: ${payload.message || 'Akcija nije uspjela.'}`);
+                            if (payload.retryable || response.status === 429 || response.status >= 500) {
+                                stoppedEarly = true;
+                                break;
+                            }
                         } else {
                             succeeded++;
                             row?.classList.remove('table-danger');
@@ -816,12 +1052,20 @@
                     } catch (error) {
                         failed++;
                         row?.classList.add('table-danger');
+                        errorMessages.push(`${productName}: ${error?.message || 'Mrežna greška.'}`);
+                        stoppedEarly = true;
                         break;
                     }
                 }
 
                 progressBar.style.width = '100%';
-                progressText.innerHTML = `Završeno: <strong>${succeeded}</strong> uspješno, <strong>${failed}</strong> grešaka. <button class="btn btn-sm btn-link p-0 ml-1" type="button" data-reload-results>Osvježi rezultate</button>`;
+                progressText.innerHTML = `${stoppedEarly ? 'Prekinuto' : 'Završeno'}: <strong>${succeeded}</strong> uspješno, <strong>${failed}</strong> grešaka. <button class="btn btn-sm btn-link p-0 ml-1" type="button" data-reload-results>Osvježi rezultate</button>`;
+                if (errorMessages.length) {
+                    const errorDetail = document.createElement('div');
+                    errorDetail.className = 'text-danger mt-1';
+                    errorDetail.textContent = `Razlog: ${errorMessages[0]}`;
+                    progressText.appendChild(errorDetail);
+                }
                 progressText.querySelector('[data-reload-results]')?.addEventListener('click', () => window.location.reload());
                 document.querySelectorAll('[data-single-action]').forEach(button => button.disabled = false);
                 if (inspectAllButton) {
