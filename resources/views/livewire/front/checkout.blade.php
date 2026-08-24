@@ -351,14 +351,14 @@
 
                     @endif
 
-                    @if ($s_method->code == 'gls_eu' && $view_comment)
+                    @if (in_array($s_method->code, ['gls_eu', 'boxnow'], true) && $view_comment)
                         <tr>
                             <td colspan="4">
-                                <a href="javascript:;" class="boxnow-map-widget-button btn " style="color: #fff;padding: 10px 20px;margin-bottom: 15px;background-color: #6cd04e">Odaberite BOX NOW lokaciju</a>
+                                <button type="button" id="boxnow-select-button" class="boxnow-map-widget-button btn" style="color: #fff;padding: 10px 20px;margin-bottom: 15px;background-color: #6cd04e">Odaberite BOX NOW lokaciju</button>
 
-                                <div id="boxnowmap" style=""></div>
+                                <div id="boxnowmap"></div>
 
-                                <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
+                                <input class="form-control mt-2" type="text" data-checkout-pickup-location wire:model="comment" placeholder="Odabrani BoxNow paketomat" readonly required>
 
                                 @error('comment') <small class="text-danger">Obavezan odabir BoxNow paketomata </small> @enderror
                             </td>
@@ -374,9 +374,8 @@
                         </div>
 
 
-                        <input class="form-control mt-2" type="text" id="comment"  wire:model="comment" placeholder="" readonly required>
+                        <input class="form-control mt-2" type="text" data-checkout-pickup-location wire:model="comment" placeholder="Odabrani GLS paketomat" readonly required>
 
-                        @error('comment')             <script>location.reload();</script>         @enderror
                         @error('comment') <small class="text-danger">Obavezan odabir gls paketomata </small>
 
                         @enderror
@@ -465,14 +464,29 @@
             }
 
             function updateCheckoutComment(value) {
-                var commentField = document.getElementById('comment');
+                var commentField = document.querySelector('[data-checkout-pickup-location]');
 
                 if (!commentField) {
-                    return;
+                    return false;
                 }
 
                 commentField.value = value;
                 commentField.dispatchEvent(new Event('input', { bubbles: true }));
+
+                return true;
+            }
+
+            function notifyCheckoutPickupSelected(message) {
+                window.dispatchEvent(new CustomEvent('checkout-option-saved', {
+                    detail: {
+                        message: message,
+                        duration: 3500
+                    }
+                }));
+            }
+
+            function pickupLocationValue(label, id) {
+                return (label || 'Paketomat') + '_' + id;
             }
 
             function initGlsParcelLockerMap() {
@@ -484,39 +498,78 @@
 
                 glsMap.dataset.listenerAttached = '1';
                 glsMap.addEventListener('change', function (event) {
-                    if (!event.detail || !event.detail.contact) {
+                    var detail = event.detail || {};
+                    var contact = detail.contact || {};
+                    var lockerId = String(detail.id || '').trim();
+
+                    if (!lockerId) {
                         return;
                     }
 
-                    updateCheckoutComment(
-                        event.detail.contact.address + ', ' + event.detail.contact.city + '_' + event.detail.id
-                    );
+                    var locationParts = [contact.address, contact.city].filter(function (part) {
+                        return typeof part === 'string' && part.trim() !== '';
+                    });
+                    var locationLabel = locationParts.join(', ') || contact.name || 'GLS paketomat';
+
+                    if (updateCheckoutComment(pickupLocationValue(locationLabel, lockerId))) {
+                        notifyCheckoutPickupSelected('GLS paketomat je uspješno odabran.');
+                    }
                 });
+            }
+
+            function configureBoxNowMap(attachMessageListener) {
+                window._bn_map_widget_config = {
+                    type: 'popup',
+                    partnerId: 123,
+                    parentElement: '#boxnowmap',
+                    buttonSelector: '#boxnow-select-button',
+                    listener: attachMessageListener,
+                    afterSelect: function (selected) {
+                        var lockerId = selected && String(selected.boxnowLockerId || '').trim();
+
+                        if (!lockerId) {
+                            return;
+                        }
+
+                        var postalCode = String(selected.boxnowLockerPostalCode || '').trim();
+                        var address = String(selected.boxnowLockerAddressLine1 || selected.boxnowLockerName || '').trim();
+                        var locationLabel = [postalCode, address].filter(function (part) {
+                            return part !== '';
+                        }).join(', ') || 'BoxNow paketomat';
+
+                        if (updateCheckoutComment(pickupLocationValue(locationLabel, lockerId))) {
+                            notifyCheckoutPickupSelected('BoxNow paketomat je uspješno odabran.');
+                        }
+                    }
+                };
             }
 
             function initBoxNowMap() {
                 var boxNowContainer = document.getElementById('boxnowmap');
 
-                if (!boxNowContainer) {
+                if (!boxNowContainer || boxNowContainer.dataset.widgetInitialized === '1') {
                     return;
                 }
 
-                window._bn_map_widget_config = {
-                    type: 'popup',
-                    partnerId: 123,
-                    parentElement: '#boxnowmap',
-                    afterSelect: function (selected) {
-                        if (!selected || !selected.boxnowLockerPostalCode || !selected.boxnowLockerAddressLine1 || !selected.boxnowLockerId) {
-                            return;
-                        }
+                boxNowContainer.dataset.widgetInitialized = '1';
 
-                        updateCheckoutComment(
-                            selected.boxnowLockerPostalCode + ', ' + selected.boxnowLockerAddressLine1 + '_' + selected.boxnowLockerId
-                        );
+                var existingScript = document.querySelector('script[data-boxnow-widget="1"]');
+                configureBoxNowMap(!existingScript);
+
+                if (typeof window._bnclient_map_widget === 'function') {
+                    window._bn_map_widget_config.listener = false;
+
+                    try {
+                        window._bnclient_map_widget();
+                    } catch (error) {
+                        delete boxNowContainer.dataset.widgetInitialized;
+                        window.console.error('BoxNow widget initialization failed.', error);
                     }
-                };
 
-                if (document.querySelector('script[data-boxnow-widget="1"]')) {
+                    return;
+                }
+
+                if (existingScript) {
                     return;
                 }
 
@@ -525,6 +578,10 @@
                 script.async = true;
                 script.defer = true;
                 script.dataset.boxnowWidget = '1';
+                script.addEventListener('error', function () {
+                    delete boxNowContainer.dataset.widgetInitialized;
+                    script.remove();
+                }, { once: true });
                 document.head.appendChild(script);
             }
 

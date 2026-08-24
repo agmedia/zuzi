@@ -26,6 +26,10 @@ class Checkout extends Component
 {
     private const DEFAULT_COUNTRY = 'Croatia';
 
+    private const BOXNOW_SHIPPING_CODES = ['gls_eu', 'boxnow'];
+
+    private const PICKUP_LOCATION_SHIPPING_CODES = ['gls_eu', 'boxnow', 'gls_paketomat'];
+
     /**
      * @var string
      */
@@ -142,8 +146,7 @@ class Checkout extends Component
     ];
 
     protected $comment_rules = [
-
-        'comment'=> 'required',
+        'comment' => ['required', 'string', 'regex:/_[^_]+$/'],
     ];
 
     /**
@@ -341,11 +344,7 @@ class Checkout extends Component
             $this->validate($this->shipping_rules);
         }
 
-        if ($step == 'placanje' and $this->shipping == 'gls_eu') {
-            $this->validate($this->comment_rules);
-        }
-
-        if ($step == 'placanje' and $this->shipping == 'gls_paketomat') {
+        if ($step === 'placanje' && in_array($this->shipping, self::PICKUP_LOCATION_SHIPPING_CODES, true)) {
             $this->validate($this->comment_rules);
         }
 
@@ -379,6 +378,7 @@ class Checkout extends Component
         CheckoutSession::forgetShipping();
         $this->shipping = '';
         $this->comment = '';
+        CheckoutSession::forgetComment();
         CheckoutSession::forgetPayment();
         $this->payment = '';
 
@@ -416,12 +416,18 @@ class Checkout extends Component
             }
         }
 
+        if (CheckoutSession::getShipping() !== $shipping) {
+            $this->comment = '';
+            CheckoutSession::forgetComment();
+            $this->resetValidation('comment');
+
+            $this->payment = '';
+            CheckoutSession::forgetPayment();
+        }
+
         $this->shipping = $shipping;
         $this->checkShipping($shipping);
         CheckoutSession::setShipping($shipping);
-        if ($shipping == 'gls_eu') {
-            CheckoutSession::setComment('');
-        }
     }
 
 
@@ -671,11 +677,7 @@ class Checkout extends Component
             $this->gdl_shipping = 'dostava';
         }
 
-        if ($shipping == 'gls_eu') {
-            $this->view_comment = true;
-        } else {
-            $this->view_comment = false;
-        }
+        $this->view_comment = in_array($shipping, self::BOXNOW_SHIPPING_CODES, true);
 
         if ($shipping == 'gls_paketomat') {
             $this->view_commentt = true;
