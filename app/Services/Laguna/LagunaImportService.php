@@ -2,14 +2,13 @@
 
 namespace App\Services\Laguna;
 
-use App\Helpers\Helper;
-use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\LagunaImportProduct;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductImage;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Action;
+use App\Services\Catalog\AuthorResolver;
 use App\Services\ProductIdentifierAllocator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
@@ -27,19 +26,22 @@ class LagunaImportService
     private LagunaImportSettings $settings;
     private LagunaPriceCalculator $priceCalculator;
     private ProductIdentifierAllocator $identifierAllocator;
+    private AuthorResolver $authorResolver;
 
     public function __construct(
         LagunaProductPageParser $pageParser,
         LagunaTranslationService $translator,
         LagunaImportSettings $settings,
         LagunaPriceCalculator $priceCalculator,
-        ProductIdentifierAllocator $identifierAllocator
+        ProductIdentifierAllocator $identifierAllocator,
+        AuthorResolver $authorResolver
     ) {
         $this->pageParser = $pageParser;
         $this->translator = $translator;
         $this->settings = $settings;
         $this->priceCalculator = $priceCalculator;
         $this->identifierAllocator = $identifierAllocator;
+        $this->authorResolver = $authorResolver;
     }
 
     public function inspect(LagunaImportProduct $source, bool $force = false): LagunaImportProduct
@@ -232,17 +234,15 @@ class LagunaImportService
                 return $existing;
             }
 
-            $authorId = $this->resolveAuthorId($locked->author);
-
             return $this->identifierAllocator->confirm(null, function (array $identifiers) use (
                 $locked,
                 $settings,
                 $description,
                 $price,
                 $special,
-                $authorId,
                 $additionalCategoryId
             ) {
+                $authorId = $this->authorResolver->resolve($locked->author);
                 $request = Request::create('/admin/catalog/laguna-import', 'POST', [
                     'name' => $locked->name,
                     'sku' => $identifiers['sku'],
@@ -430,52 +430,6 @@ class LagunaImportService
                 }
             })
             ->get(['id', 'name', 'sku', 'itemid', 'isbn', 'ean', 'price', 'quantity']);
-    }
-
-    private function resolveAuthorId(?string $authors): int
-    {
-        $name = trim(explode(',', (string) $authors)[0]);
-        if ($name === '') {
-            return 0;
-        }
-
-        $existing = Author::query()
-            ->whereRaw('LOWER(TRIM(title)) = ?', [mb_strtolower($name)])
-            ->first();
-
-        if ($existing) {
-            return (int) $existing->id;
-        }
-
-        $slug = $this->uniqueAuthorSlug($name);
-        $author = Author::query()->create([
-            'letter' => Helper::resolveFirstLetter($name),
-            'title' => $name,
-            'description' => null,
-            'meta_title' => $name,
-            'meta_description' => null,
-            'lang' => 'hr',
-            'sort_order' => 0,
-            'status' => 1,
-            'slug' => $slug,
-            'url' => config('settings.author_path') . '/' . $slug,
-        ]);
-
-        return (int) $author->id;
-    }
-
-    private function uniqueAuthorSlug(string $name): string
-    {
-        $base = Str::slug($name) ?: 'laguna-autor';
-        $slug = $base;
-        $counter = 2;
-
-        while (Author::query()->where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $counter;
-            $counter++;
-        }
-
-        return $slug;
     }
 
     private function quantity(LagunaImportProduct $source, array $settings): int

@@ -6,6 +6,7 @@ use App\Models\Back\Catalog\DelfiImportProduct;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\User;
 use App\Models\UserDetail;
+use App\Services\Catalog\AuthorResolver;
 use App\Services\Delfi\DelfiImportService;
 use App\Services\Delfi\DelfiImportSettings;
 use App\Services\Delfi\DelfiProductApiClient;
@@ -133,6 +134,7 @@ class DelfiImportTest extends TestCase
         $authorId = DB::table('authors')->insertGetId([
             'letter' => 'G',
             'title' => 'Geri Penton',
+            'normalized_title' => AuthorResolver::normalizedKey('Geri Penton'),
             'slug' => 'geri-penton',
             'url' => '/autori/geri-penton',
             'created_at' => now(),
@@ -965,6 +967,7 @@ class DelfiImportTest extends TestCase
         $authorId = DB::table('authors')->insertGetId([
             'letter' => 'A',
             'title' => 'API Autor',
+            'normalized_title' => AuthorResolver::normalizedKey('API Autor'),
             'slug' => 'api-autor',
             'url' => '/autori/api-autor',
             'created_at' => now(),

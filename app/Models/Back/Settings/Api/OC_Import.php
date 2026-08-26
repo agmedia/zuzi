@@ -7,13 +7,13 @@ use App\Helpers\Helper;
 use App\Helpers\Import;
 use App\Helpers\ProductHelper;
 use App\Helpers\Query;
-use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductCategory;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\TempTable;
+use App\Services\Catalog\AuthorResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -253,53 +253,28 @@ class OC_Import
         // Try to resolve name from title of the book
         if ($pos) {
             $name = '';
-            $meta = '';
             $arr = explode(':', $text);
             $names = explode(' ', $arr[0]);
 
             if (isset($names[1])) {
-                $first = Helper::resolveFirstLetter(trim($names[1]));
-
                 if (count($names) > 2) {
-                    if (in_array(trim($names[1]), ['von', 'Von', 'fon', 'Fon']) || strpos(trim($names[1]), '.')) {
-                        $first = Helper::resolveFirstLetter(trim($names[2]));
-                    }
-
                     $name = trim($names[1]) . ' ' . trim($names[2]) . ' ' . trim($names[0]);
-                    $meta = trim($names[1]) . ' ' . trim($names[2]) . ', ' . trim($names[0]);
                 }
 
                 if (count($names) < 3) {
                     $name = trim($names[1]) . ' ' . trim($names[0]);
-                    $meta = trim($names[1]) . ', ' . trim($names[0]);
                 }
             }
 
             if ($name == '') {
                 return config('settings.unknown_author');
             }
-            // Check if author exist.
-            $exist = Author::where('title', $name)->first();
-
-            if ( ! $exist) {
-                return Author::insertGetId([
-                    'letter'           => $first,
-                    'title'            => $name,
-                    'description'      => '',
-                    'meta_title'       => $meta,
-                    'meta_description' => '',
-                    'image'            => 'media/avatars/avatar0.jpg',
-                    'lang'             => 'hr',
-                    'sort_order'       => 0,
-                    'status'           => 1,
-                    'slug'             => Str::slug($name),
-                    'url'              => config('settings.author_path') . '/' . Str::slug($name),
-                    'created_at'       => Carbon::now(),
-                    'updated_at'       => Carbon::now()
-                ]);
+            $authorId = app(AuthorResolver::class)->resolveName($name);
+            if ($authorId > 0) {
+                return $authorId;
             }
 
-            return $exist->id;
+            return (int) config('settings.unknown_author');
         }
 
         return config('settings.unknown_author');

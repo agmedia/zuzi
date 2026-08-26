@@ -2,9 +2,9 @@
 
 namespace App\Helpers;
 
-use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Publisher;
+use App\Services\Catalog\AuthorResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -163,34 +163,15 @@ class Import
      *
      * @return int
      */
-    public function resolveAuthor(string $author = null): int
+    public function resolveAuthor(?string $author = null): int
     {
-        if ($author) {
-            $author = trim($author);
+        $authorId = app(AuthorResolver::class)->resolveName($author);
 
-            $exist = Author::where('title', $author)->first();
-
-            if ( ! $exist) {
-                return Author::insertGetId([
-                    'letter'           => Helper::resolveFirstLetter($author),
-                    'title'            => $author,
-                    'description'      => '',
-                    'meta_title'       => $author,
-                    'meta_description' => '',
-                    'lang'             => 'hr',
-                    'sort_order'       => 0,
-                    'status'           => 1,
-                    'slug'             => Str::slug($author),
-                    'url'              => config('settings.author_path') . '/' . Str::slug($author),
-                    'created_at'       => Carbon::now(),
-                    'updated_at'       => Carbon::now()
-                ]);
-            }
-
-            return $exist->id;
+        if ($authorId > 0) {
+            return $authorId;
         }
 
-        return config('settings.unknown_author');
+        return (int) config('settings.unknown_author');
     }
 
 

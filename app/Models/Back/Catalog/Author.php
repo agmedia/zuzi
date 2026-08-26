@@ -4,12 +4,15 @@ namespace App\Models\Back\Catalog;
 
 use App\Helpers\Helper;
 use App\Models\Back\Catalog\Product\Product;
+use App\Services\Catalog\AuthorResolver;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class Author extends Model
 {
@@ -61,7 +64,30 @@ class Author extends Model
     public function validateRequest(Request $request)
     {
         $request->validate([
-            'title' => 'required'
+            'title' => [
+                'required',
+                'string',
+                'max:191',
+                function ($attribute, $value, $fail): void {
+                    $title = AuthorResolver::normalizeName((string) $value);
+                    if ($title === '') {
+                        $fail('Molimo unesite ime autora.');
+
+                        return;
+                    }
+
+                    $query = self::query()
+                        ->where('normalized_title', AuthorResolver::normalizedKey($title));
+
+                    if ($this->exists) {
+                        $query->where('id', '<>', $this->getKey());
+                    }
+
+                    if ($query->exists()) {
+                        $fail('Autor s tim imenom već postoji.');
+                    }
+                },
+            ],
         ]);
 
         $this->request = $request;
@@ -77,23 +103,29 @@ class Author extends Model
      */
     public function create()
     {
-        $slug = isset($this->request->slug) ? Str::slug($this->request->slug) : Str::slug($this->request->title);
+        $title = AuthorResolver::normalizeName((string) $this->request->title);
+        $slug = isset($this->request->slug) ? Str::slug($this->request->slug) : Str::slug($title);
 
-        $id = $this->insertGetId([
-            'letter'           => Helper::resolveFirstLetter($this->request->title),
-            'title'            => $this->request->title,
-            'description'      => $this->request->description,
-            'meta_title'       => $this->request->meta_title,
-            'meta_description' => $this->request->meta_description,
-            'lang'             => 'hr',
-            'sort_order'       => 0,
-            'status'           => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
-            'featured'         => (isset($this->request->featured) and $this->request->featured == 'on') ? 1 : 0,
-            'slug'             => $slug,
-            'url'              => config('settings.author_path') . '/' . $slug,
-            'created_at'       => Carbon::now(),
-            'updated_at'       => Carbon::now()
-        ]);
+        try {
+            $id = $this->insertGetId([
+                'letter'           => Helper::resolveFirstLetter($title),
+                'title'            => $title,
+                'normalized_title' => AuthorResolver::normalizedKey($title),
+                'description'      => $this->request->description,
+                'meta_title'       => $this->request->meta_title,
+                'meta_description' => $this->request->meta_description,
+                'lang'             => 'hr',
+                'sort_order'       => 0,
+                'status'           => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
+                'featured'         => (isset($this->request->featured) and $this->request->featured == 'on') ? 1 : 0,
+                'slug'             => $slug,
+                'url'              => config('settings.author_path') . '/' . $slug,
+                'created_at'       => Carbon::now(),
+                'updated_at'       => Carbon::now()
+            ]);
+        } catch (QueryException $exception) {
+            $this->throwDuplicateValidation($exception);
+        }
 
         if ($id) {
             return $this->find($id);
@@ -110,22 +142,28 @@ class Author extends Model
      */
     public function edit()
     {
-        $slug = isset($this->request->slug) ? Str::slug($this->request->slug) : Str::slug($this->request->title);
+        $title = AuthorResolver::normalizeName((string) $this->request->title);
+        $slug = isset($this->request->slug) ? Str::slug($this->request->slug) : Str::slug($title);
 
-        $id = $this->update([
-            'letter'           => Helper::resolveFirstLetter($this->request->title),
-            'title'            => $this->request->title,
-            'description'      => $this->request->description,
-            'meta_title'       => $this->request->meta_title,
-            'meta_description' => $this->request->meta_description,
-            'lang'             => 'hr',
-            'sort_order'       => 0,
-            'status'           => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
-            'featured'         => (isset($this->request->featured) and $this->request->featured == 'on') ? 1 : 0,
-            'slug'             => $slug,
-            'url'              => config('settings.author_path') . '/' . $slug,
-            'updated_at'       => Carbon::now()
-        ]);
+        try {
+            $id = $this->update([
+                'letter'           => Helper::resolveFirstLetter($title),
+                'title'            => $title,
+                'normalized_title' => AuthorResolver::normalizedKey($title),
+                'description'      => $this->request->description,
+                'meta_title'       => $this->request->meta_title,
+                'meta_description' => $this->request->meta_description,
+                'lang'             => 'hr',
+                'sort_order'       => 0,
+                'status'           => (isset($this->request->status) and $this->request->status == 'on') ? 1 : 0,
+                'featured'         => (isset($this->request->featured) and $this->request->featured == 'on') ? 1 : 0,
+                'slug'             => $slug,
+                'url'              => config('settings.author_path') . '/' . $slug,
+                'updated_at'       => Carbon::now()
+            ]);
+        } catch (QueryException $exception) {
+            $this->throwDuplicateValidation($exception);
+        }
 
         if ($id) {
             return $this;
@@ -153,6 +191,22 @@ class Author extends Model
         }
 
         return false;
+    }
+
+
+    private function throwDuplicateValidation(QueryException $exception): void
+    {
+        $sqlState = (string) ($exception->errorInfo[0] ?? $exception->getCode());
+        $driverCode = (int) ($exception->errorInfo[1] ?? 0);
+
+        if ($sqlState === '23505'
+            || ($sqlState === '23000' && in_array($driverCode, [19, 1062], true))) {
+            throw ValidationException::withMessages([
+                'title' => 'Autor s tim imenom već postoji.',
+            ]);
+        }
+
+        throw $exception;
     }
 
 

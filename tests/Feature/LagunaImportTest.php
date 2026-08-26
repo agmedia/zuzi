@@ -6,6 +6,7 @@ use App\Models\Back\Catalog\LagunaImportProduct;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\User;
 use App\Models\UserDetail;
+use App\Services\Catalog\AuthorResolver;
 use App\Services\Laguna\LagunaFeedSynchronizer;
 use App\Services\Laguna\LagunaImportService;
 use App\Services\Laguna\LagunaImportSettings;
@@ -454,6 +455,7 @@ class LagunaImportTest extends TestCase
         return DB::table('authors')->insertGetId([
             'letter' => mb_substr($title, 0, 1),
             'title' => $title,
+            'normalized_title' => AuthorResolver::normalizedKey($title),
             'description' => null,
             'meta_title' => $title,
             'meta_description' => null,

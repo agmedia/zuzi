@@ -2,14 +2,13 @@
 
 namespace App\Services\Novella;
 
-use App\Helpers\Helper;
-use App\Models\Back\Catalog\Author;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\NovellaImportProduct;
 use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Product\ProductImage;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Action;
+use App\Services\Catalog\AuthorResolver;
 use App\Services\ProductIdentifierAllocator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,18 +34,22 @@ class NovellaImportService
 
     private ProductIdentifierAllocator $identifierAllocator;
 
+    private AuthorResolver $authorResolver;
+
     public function __construct(
         NovellaProductPageClient $pageClient,
         NovellaProductDetailParser $detailParser,
         NovellaImportSettings $settings,
         NovellaPriceCalculator $priceCalculator,
-        ProductIdentifierAllocator $identifierAllocator
+        ProductIdentifierAllocator $identifierAllocator,
+        AuthorResolver $authorResolver
     ) {
         $this->pageClient = $pageClient;
         $this->detailParser = $detailParser;
         $this->settings = $settings;
         $this->priceCalculator = $priceCalculator;
         $this->identifierAllocator = $identifierAllocator;
+        $this->authorResolver = $authorResolver;
     }
 
     public function inspect(NovellaImportProduct $source, bool $force = false): NovellaImportProduct
@@ -438,7 +441,7 @@ class NovellaImportService
                         $mappedCategoryIds,
                         $additionalCategoryId
                     ),
-                    'author_id' => $this->resolveAuthorId($locked->author),
+                    'author_id' => $this->authorResolver->resolve($locked->author),
                     'publisher_id' => $publisherMapping['publisher_id'],
                     'meta_title' => $locked->name,
                     'meta_description' => Str::limit($description, 250, ''),
@@ -695,41 +698,6 @@ class NovellaImportService
         }
 
         return array_values(array_unique($ids));
-    }
-
-    private function resolveAuthorId(?string $authors): int
-    {
-        $name = trim(explode(',', (string) $authors)[0]);
-        if ($name === '') {
-            return 0;
-        }
-        $existing = Author::query()
-            ->whereRaw('LOWER(TRIM(title)) = ?', [mb_strtolower($name)])
-            ->first();
-        if ($existing) {
-            return (int) $existing->id;
-        }
-
-        $base = Str::slug($name) ?: 'novella-autor';
-        $slug = $base;
-        $counter = 2;
-        while (Author::query()->where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $counter++;
-        }
-        $author = Author::query()->create([
-            'letter' => Helper::resolveFirstLetter($name),
-            'title' => $name,
-            'description' => null,
-            'meta_title' => $name,
-            'meta_description' => null,
-            'lang' => 'hr',
-            'sort_order' => 0,
-            'status' => 1,
-            'slug' => $slug,
-            'url' => config('settings.author_path') . '/' . $slug,
-        ]);
-
-        return (int) $author->id;
     }
 
     private function validateImportSettings(
