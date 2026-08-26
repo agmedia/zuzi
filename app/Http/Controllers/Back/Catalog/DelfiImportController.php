@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\DelfiImportProduct;
 use App\Models\Back\Catalog\Publisher;
+use App\Services\Catalog\CachedNewImportProductReconciler;
 use App\Services\Delfi\DelfiFeedService;
 use App\Services\Delfi\DelfiFeedSynchronizer;
 use App\Services\Delfi\DelfiImportService;
@@ -26,7 +27,8 @@ class DelfiImportController extends Controller
         DelfiImportSettings $settingsService,
         DelfiFeedService $feedService,
         DelfiPriceCalculator $priceCalculator,
-        DelfiTaxonomyService $taxonomyService
+        DelfiTaxonomyService $taxonomyService,
+        CachedNewImportProductReconciler $catalogReconciler
     ) {
         $settings = $settingsService->all();
         $sourceGenreCountsByCategory = $this->sourceGenreCountsByCategory();
@@ -62,6 +64,7 @@ class DelfiImportController extends Controller
             ->orderByDesc('id')
             ->paginate(40)
             ->appends($request->query());
+        $products->setCollection($catalogReconciler->reconcile($products->getCollection()));
 
         $statusCounts = $this->statusCounts();
         $inspectionPendingCount = $this->inspectionPendingQuery()->count();
@@ -169,7 +172,11 @@ class DelfiImportController extends Controller
                 'success' => true,
                 'status' => $source->ui_status,
                 'message' => $source->check_message,
+                'check_message' => $source->check_message,
                 'product_id' => $source->product_id,
+                'product_url' => $source->product_id
+                    ? route('products.edit', ['product' => $source->product_id])
+                    : null,
                 'isbn' => $source->isbn,
             ]);
         } catch (DelfiRetryableException $exception) {
@@ -487,9 +494,18 @@ class DelfiImportController extends Controller
             ]);
             $categoryId = isset($validated['category_id']) ? (int) $validated['category_id'] : null;
 
+            $result = $importService->import($delfiImportProduct, $categoryId);
+            $source = $delfiImportProduct->fresh(['product']);
+
             return response()->json([
                 'success' => true,
-            ] + $importService->import($delfiImportProduct, $categoryId));
+            ] + $result + [
+                'status' => $source->ui_status,
+                'check_message' => $source->check_message,
+                'product_url' => $source->product_id
+                    ? route('products.edit', ['product' => $source->product_id])
+                    : null,
+            ]);
         } catch (DelfiRetryableException $exception) {
             report($exception);
 

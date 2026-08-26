@@ -171,6 +171,94 @@ class DelfiImportTest extends TestCase
         }));
     }
 
+    public function test_cached_new_inspection_rechecks_the_local_catalog_without_calling_delfi(): void
+    {
+        $hash = hash('sha256', 'cached-new-single-match');
+        $source = $this->source([
+            'isbn' => '9788652162123',
+            'ean' => null,
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'check_status' => 'new',
+            'checked_at' => now(),
+        ]);
+        $existingId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Već uvezena Delfi knjiga',
+            'sku' => '992',
+            'itemid' => 992,
+            'isbn' => '978-86-521-6212-3',
+            'ean' => null,
+            'slug' => 'vec-uvezena-delfi-knjiga',
+            'url' => '/',
+            'price' => 10,
+            'quantity' => 1,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        Http::fake();
+
+        $inspected = app(DelfiImportService::class)->inspect($source);
+
+        $this->assertSame($existingId, (int) $inspected->product_id);
+        $this->assertSame('matched', $inspected->check_status);
+        $this->assertStringContainsString('Postojeći Zuzi artikl pronađen', $inspected->check_message);
+        Http::assertNothingSent();
+    }
+
+    public function test_cached_new_local_recheck_marks_multiple_matches_as_a_conflict_without_calling_delfi(): void
+    {
+        $hash = hash('sha256', 'cached-new-conflict');
+        $source = $this->source([
+            'isbn' => '9788652162123',
+            'ean' => '9788652162123',
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'check_status' => 'new',
+            'checked_at' => now(),
+        ]);
+        $firstId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Prvi postojeći Delfi artikl',
+            'sku' => '993',
+            'itemid' => 993,
+            'isbn' => '9788652162123',
+            'ean' => null,
+            'slug' => 'prvi-postojeci-delfi-artikl',
+            'url' => '/',
+            'price' => 10,
+            'quantity' => 1,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $secondId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Drugi postojeći Delfi artikl',
+            'sku' => '994',
+            'itemid' => 994,
+            'isbn' => null,
+            'ean' => '9788652162123',
+            'slug' => 'drugi-postojeci-delfi-artikl',
+            'url' => '/',
+            'price' => 10,
+            'quantity' => 1,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        Http::fake();
+
+        $inspected = app(DelfiImportService::class)->recheckCachedNew($source);
+
+        $this->assertNull($inspected->product_id);
+        $this->assertSame('conflict', $inspected->check_status);
+        $this->assertStringContainsString((string) $firstId, $inspected->check_message);
+        $this->assertStringContainsString((string) $secondId, $inspected->check_message);
+        Http::assertNothingSent();
+    }
+
     public function test_inspection_rejects_a_detail_payload_for_another_delfi_product(): void
     {
         $source = $this->source();

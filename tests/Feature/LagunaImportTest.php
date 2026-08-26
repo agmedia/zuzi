@@ -124,6 +124,56 @@ class LagunaImportTest extends TestCase
         $this->assertNull($source->imported_at);
     }
 
+    public function test_cached_new_inspection_rechecks_local_catalog_without_remote_request(): void
+    {
+        $hash = hash('sha256', 'cached-new-local-match');
+        $source = $this->createSource([
+            'isbn' => '9788652164349',
+            'author' => 'Test Autor',
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'check_status' => 'new',
+            'check_message' => 'ISBN ni kombinacija naziva i autora nisu pronađeni u Zuzi katalogu.',
+            'checked_at' => now()->subMinute(),
+        ]);
+        $existingId = $this->createExistingProduct('Drugi naslov', '978-86-521-6434-9');
+        Http::fake();
+
+        $inspected = app(LagunaImportService::class)->inspect($source);
+
+        $this->assertSame($existingId, (int) $inspected->product_id);
+        $this->assertSame('matched', $inspected->check_status);
+        $this->assertSame('existing', $inspected->ui_status);
+        $this->assertStringContainsString('Postojeći Zuzi artikl pronađen', $inspected->check_message);
+        Http::assertNothingSent();
+    }
+
+    public function test_cached_new_inspection_marks_multiple_local_matches_as_conflict_without_remote_request(): void
+    {
+        $hash = hash('sha256', 'cached-new-local-conflict');
+        $source = $this->createSource([
+            'isbn' => '9788652164349',
+            'author' => 'Test Autor',
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'check_status' => 'new',
+            'check_message' => 'ISBN ni kombinacija naziva i autora nisu pronađeni u Zuzi katalogu.',
+            'checked_at' => now()->subMinute(),
+        ]);
+        $firstId = $this->createExistingProduct('Prvi naslov', '9788652164349', 0, 25);
+        $secondId = $this->createExistingProduct('Drugi naslov', '978-86-521-6434-9', 0, 26);
+        Http::fake();
+
+        $inspected = app(LagunaImportService::class)->inspect($source);
+
+        $this->assertNull($inspected->product_id);
+        $this->assertSame('conflict', $inspected->check_status);
+        $this->assertSame('conflict', $inspected->ui_status);
+        $this->assertStringContainsString((string) $firstId, $inspected->check_message);
+        $this->assertStringContainsString((string) $secondId, $inspected->check_message);
+        Http::assertNothingSent();
+    }
+
     public function test_inspection_queue_contains_the_entire_current_feed_beyond_one_page(): void
     {
         $expectedIds = [];
@@ -375,13 +425,18 @@ class LagunaImportTest extends TestCase
         ], $overrides));
     }
 
-    private function createExistingProduct(string $name, string $isbn, int $authorId = 0): int
+    private function createExistingProduct(
+        string $name,
+        string $isbn,
+        int $authorId = 0,
+        int $identifier = 25
+    ): int
     {
         return DB::table('products')->insertGetId([
             'author_id' => $authorId,
             'name' => $name,
-            'sku' => '25',
-            'itemid' => 25,
+            'sku' => (string) $identifier,
+            'itemid' => $identifier,
             'isbn' => $isbn,
             'ean' => null,
             'slug' => Str::slug($name),

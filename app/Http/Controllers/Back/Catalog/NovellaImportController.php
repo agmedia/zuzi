@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\NovellaImportProduct;
 use App\Models\Back\Catalog\Publisher;
+use App\Services\Catalog\CachedNewImportProductReconciler;
 use App\Services\Novella\NovellaFeedService;
 use App\Services\Novella\NovellaFeedSynchronizer;
 use App\Services\Novella\NovellaImportService;
@@ -25,7 +26,8 @@ class NovellaImportController extends Controller
         Request $request,
         NovellaImportSettings $settingsService,
         NovellaFeedService $feedService,
-        NovellaPriceCalculator $priceCalculator
+        NovellaPriceCalculator $priceCalculator,
+        CachedNewImportProductReconciler $catalogReconciler
     ) {
         $settings = $settingsService->all();
         $sourceGenres = $this->sourceGenreCounts();
@@ -51,6 +53,7 @@ class NovellaImportController extends Controller
             ->orderByDesc('id')
             ->paginate(40)
             ->appends($request->query());
+        $products->setCollection($catalogReconciler->reconcile($products->getCollection()));
 
         $statusCounts = $this->statusCounts();
         $inspectionPendingCount = $this->inspectionPendingQuery()->count();
@@ -175,7 +178,11 @@ class NovellaImportController extends Controller
                 'success' => true,
                 'status' => $source->ui_status,
                 'message' => $source->check_message,
+                'check_message' => $source->check_message,
                 'product_id' => $source->product_id,
+                'product_url' => $source->product_id
+                    ? route('products.edit', ['product' => $source->product_id])
+                    : null,
                 'isbn' => $source->isbn,
             ]);
         } catch (NovellaRetryableException $exception) {
@@ -244,9 +251,18 @@ class NovellaImportController extends Controller
                 ? (int) $validated['category_id']
                 : null;
 
+            $result = $importService->import($novellaImportProduct, $categoryId);
+            $source = $novellaImportProduct->fresh(['product']);
+
             return response()->json([
                 'success' => true,
-            ] + $importService->import($novellaImportProduct, $categoryId));
+            ] + $result + [
+                'status' => $source->ui_status,
+                'check_message' => $source->check_message,
+                'product_url' => $source->product_id
+                    ? route('products.edit', ['product' => $source->product_id])
+                    : null,
+            ]);
         } catch (NovellaRetryableException $exception) {
             report($exception);
 

@@ -269,6 +269,56 @@ class NovellaImportServiceTest extends TestCase
         $this->assertSame('new', $inspected->check_status);
     }
 
+    public function test_cached_new_inspection_rechecks_current_catalog_without_fetching_novella_again(): void
+    {
+        $hash = hash('sha256', 'novella-cached-new-anne-frank');
+        $source = NovellaImportProduct::query()->create([
+            'external_id' => '5156',
+            'remote_product_id' => 5156,
+            'name' => 'Anne Frank',
+            'source_category' => 'Knjige',
+            'source_categories' => ['Knjige'],
+            'source_url' => 'https://novella.hr/proizvod/anne-frank/',
+            'price_eur' => 9.90,
+            'availability' => 'in_stock',
+            'isbn' => '9789538551093',
+            'ean' => '9789538551093',
+            'author' => 'Maria Cecilia Cavallone',
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'feed_token' => (string) Str::uuid(),
+            'is_current' => true,
+            'check_status' => 'new',
+            'check_message' => 'ISBN, EAN ni kombinacija naziva i autora nisu pronađeni u Zuzi katalogu.',
+            'checked_at' => now()->subMinute(),
+            'last_seen_at' => now(),
+        ]);
+        $productId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Maria Cecilia Cavallone: Anne Frank',
+            'sku' => '754',
+            'itemid' => 123,
+            'isbn' => '978-953-8551-09-3',
+            'ean' => null,
+            'slug' => 'maria-cecilia-cavallone-anne-frank',
+            'url' => '/',
+            'price' => 9.90,
+            'quantity' => 0,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->mock(NovellaProductPageClient::class)
+            ->shouldNotReceive('fetch');
+
+        $inspected = app(NovellaImportService::class)->inspect($source);
+
+        $this->assertSame($productId, (int) $inspected->product_id);
+        $this->assertSame('matched', $inspected->check_status);
+        $this->assertSame('existing', $inspected->ui_status);
+        $this->assertStringContainsString('Postojeći Zuzi artikl pronađen', $inspected->check_message);
+    }
+
     public function test_inspection_uses_changed_feed_fallbacks_and_keeps_unrelated_enrichment(): void
     {
         $oldFeed = [

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\LagunaImportProduct;
 use App\Models\Back\Catalog\Publisher;
+use App\Services\Catalog\CachedNewImportProductReconciler;
 use App\Services\Laguna\LagunaFeedService;
 use App\Services\Laguna\LagunaFeedSynchronizer;
 use App\Services\Laguna\LagunaImportService;
@@ -21,7 +22,8 @@ class LagunaImportController extends Controller
         Request $request,
         LagunaImportSettings $settingsService,
         LagunaFeedService $feedService,
-        LagunaPriceCalculator $priceCalculator
+        LagunaPriceCalculator $priceCalculator,
+        CachedNewImportProductReconciler $catalogReconciler
     ) {
         $settings = $settingsService->all();
         $query = LagunaImportProduct::query()->with('product:id,name,sku,itemid,isbn,price,quantity');
@@ -33,6 +35,7 @@ class LagunaImportController extends Controller
             ->orderByDesc('id')
             ->paginate(40)
             ->appends($request->query());
+        $products->setCollection($catalogReconciler->reconcile($products->getCollection()));
 
         $statusCounts = $this->statusCounts();
         $inspectionPendingCount = $this->inspectionPendingQuery()->count();
@@ -112,7 +115,11 @@ class LagunaImportController extends Controller
                 'success' => true,
                 'status' => $source->ui_status,
                 'message' => $source->check_message,
+                'check_message' => $source->check_message,
                 'product_id' => $source->product_id,
+                'product_url' => $source->product_id
+                    ? route('products.edit', ['product' => $source->product_id])
+                    : null,
                 'isbn' => $source->isbn,
             ]);
         } catch (\Throwable $exception) {
@@ -166,9 +173,18 @@ class LagunaImportController extends Controller
 
             $categoryId = isset($validated['category_id']) ? (int) $validated['category_id'] : null;
 
+            $result = $importService->import($lagunaImportProduct, $categoryId);
+            $source = $lagunaImportProduct->fresh(['product']);
+
             return response()->json([
                 'success' => true,
-            ] + $importService->import($lagunaImportProduct, $categoryId));
+            ] + $result + [
+                'status' => $source->ui_status,
+                'check_message' => $source->check_message,
+                'product_url' => $source->product_id
+                    ? route('products.edit', ['product' => $source->product_id])
+                    : null,
+            ]);
         } catch (\Throwable $exception) {
             report($exception);
 

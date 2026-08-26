@@ -54,6 +54,58 @@ class NovellaImportTest extends TestCase
             ], false);
     }
 
+    public function test_admin_page_reconciles_a_cached_new_row_with_the_current_catalog(): void
+    {
+        $this->configureImport();
+        $source = $this->source([
+            'external_id' => '5156',
+            'remote_product_id' => 5156,
+            'name' => 'Anne Frank',
+            'isbn' => '9789538551093',
+            'ean' => '9789538551093',
+            'author' => 'Maria Cecilia Cavallone',
+            'check_message' => 'ISBN, EAN ni kombinacija naziva i autora nisu pronađeni u Zuzi katalogu.',
+        ]);
+        $productId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Maria Cecilia Cavallone: Anne Frank',
+            'sku' => '754',
+            'itemid' => 123,
+            'isbn' => '978-953-8551-09-3',
+            'ean' => null,
+            'slug' => 'maria-cecilia-cavallone-anne-frank',
+            'url' => '/',
+            'price' => 9.90,
+            'quantity' => 0,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->admin())->get(route('novella-import.index'));
+
+        $response->assertOk()
+            ->assertSee('Već postoji')
+            ->assertSee('Zuzi #' . $productId)
+            ->assertSee('Postojeći Zuzi artikl pronađen');
+        $source->refresh();
+        $this->assertSame($productId, (int) $source->product_id);
+        $this->assertSame('matched', $source->check_status);
+
+        $importResponse = $this->postJson(route('novella-import.import', [
+            'novellaImportProduct' => $source,
+        ]));
+        $importResponse->assertOk()->assertJson([
+            'success' => true,
+            'action' => 'skipped',
+            'status' => 'existing',
+            'message' => 'Artikl već postoji u Zuzi katalogu i preskočen je. Dodane su odabrane kategorije.',
+            'check_message' => 'Artikl već postoji u Zuzi katalogu i preskočen je. Dodane su odabrane kategorije.',
+            'product_id' => $productId,
+            'product_url' => route('products.edit', ['product' => $productId]),
+        ]);
+    }
+
     public function test_admin_feed_filters_by_novella_category_and_subcategory(): void
     {
         $this->configureImport();

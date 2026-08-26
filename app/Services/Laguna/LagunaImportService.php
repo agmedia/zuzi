@@ -50,6 +50,10 @@ class LagunaImportService
 
         if (! $force && $source->checked_source_hash === $source->source_hash
             && in_array($source->check_status, ['new', 'matched', 'conflict'], true)) {
+            if ($source->check_status === 'new') {
+                return $this->recheckCachedNew($source);
+            }
+
             return $source->fresh(['product']);
         }
 
@@ -119,6 +123,47 @@ class LagunaImportService
 
             throw $exception;
         }
+    }
+
+    public function recheckCachedNew(LagunaImportProduct $source): LagunaImportProduct
+    {
+        if (! $source->is_current
+            || $source->product_id
+            || $source->checked_source_hash !== $source->source_hash
+            || $source->check_status !== 'new') {
+            return $source->fresh(['product']);
+        }
+
+        $matches = $this->findExistingProducts($source->isbn, $source->name, $source->author);
+
+        $updates = null;
+        if ($matches->count() === 1) {
+            $updates = [
+                'product_id' => (int) $matches->first()->id,
+                'check_status' => 'matched',
+                'check_message' => 'Postojeći Zuzi artikl pronađen po ISBN-u ili kombinaciji naziva i autora.',
+            ];
+        } elseif ($matches->count() > 1) {
+            $updates = [
+                'product_id' => null,
+                'check_status' => 'conflict',
+                'check_message' => 'ISBN ili kombinacija naziva i autora odgovara na više Zuzi artikala: '
+                    . $matches->pluck('id')->implode(', ') . '.',
+            ];
+        }
+
+        if ($updates !== null) {
+            $source->newQuery()
+                ->whereKey($source->getKey())
+                ->where('is_current', true)
+                ->whereNull('product_id')
+                ->where('check_status', 'new')
+                ->where('source_hash', (string) $source->source_hash)
+                ->where('checked_source_hash', (string) $source->checked_source_hash)
+                ->update($updates);
+        }
+
+        return $source->fresh(['product']);
     }
 
     public function import(LagunaImportProduct $source, ?int $additionalCategoryId = null): array

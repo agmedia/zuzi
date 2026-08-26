@@ -59,6 +59,10 @@ class NovellaImportService
 
         if (! $force && $source->checked_source_hash === $source->source_hash
             && in_array($source->check_status, ['new', 'matched', 'conflict'], true)) {
+            if ($source->check_status === 'new') {
+                return $this->recheckCachedNew($source);
+            }
+
             return $source->fresh(['product']);
         }
 
@@ -207,6 +211,56 @@ class NovellaImportService
 
             throw $exception;
         }
+    }
+
+    /**
+     * Reconcile a cached "new" result with the current Zuzi catalogue without
+     * downloading the Novella detail page again.
+     */
+    public function recheckCachedNew(NovellaImportProduct $source): NovellaImportProduct
+    {
+        if (! $source->is_current
+            || $source->product_id
+            || $source->checked_source_hash !== $source->source_hash
+            || $source->check_status !== 'new') {
+            return $source->fresh(['product']);
+        }
+
+        $matches = $this->findExistingProducts(
+            $source->isbn,
+            $source->ean,
+            $source->name,
+            $source->author
+        );
+
+        $updates = null;
+        if ($matches->count() === 1) {
+            $updates = [
+                'product_id' => (int) $matches->first()->id,
+                'check_status' => 'matched',
+                'check_message' => 'Postojeći Zuzi artikl pronađen po ISBN-u, EAN-u ili kombinaciji naziva i autora.',
+            ];
+        } elseif ($matches->count() > 1) {
+            $updates = [
+                'product_id' => null,
+                'check_status' => 'conflict',
+                'check_message' => 'ISBN, EAN ili kombinacija naziva i autora odgovara na više Zuzi artikala: '
+                    . $matches->pluck('id')->implode(', ') . '.',
+            ];
+        }
+
+        if ($updates !== null) {
+            $source->newQuery()
+                ->whereKey($source->getKey())
+                ->where('is_current', true)
+                ->whereNull('product_id')
+                ->where('check_status', 'new')
+                ->where('source_hash', (string) $source->source_hash)
+                ->where('checked_source_hash', (string) $source->checked_source_hash)
+                ->update($updates);
+        }
+
+        return $source->fresh(['product']);
     }
 
     /**

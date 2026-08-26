@@ -216,7 +216,7 @@
                     <div class="block-header block-header-default d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center">
                         <h3 class="block-title">Filtriraj po statusu</h3>
                         <div class="block-options mt-2 mt-sm-0">
-                            <button class="btn btn-sm btn-alt-primary" type="button" data-inspect-all {{ $inspectionPendingCount === 0 ? 'disabled' : '' }}>
+                            <button class="btn btn-sm btn-alt-primary" type="button" data-inspect-all title="Broj označava zapise koji još nisu provjereni; status Novi dodatno se uspoređuje s aktualnim Zuzi katalogom." {{ $inspectionPendingCount === 0 ? 'disabled' : '' }}>
                                 <i class="fa fa-search mr-1" data-inspect-all-icon></i>
                                 <span data-inspect-all-label>Provjeri sve neprovjerene</span>
                                 <span class="badge badge-primary ml-1" data-inspect-all-count data-count="{{ $inspectionPendingCount }}">{{ number_format($inspectionPendingCount, 0, ',', '.') }}</span>
@@ -227,7 +227,7 @@
                         <div class="mb-3 d-none" data-inspect-all-progress-wrap>
                             <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-sm-between mb-2">
                                 <div class="small" data-inspect-all-progress>Pripremam provjeru…</div>
-                                <div class="small text-muted mt-1 mt-sm-0">Možete zaustaviti i nastaviti kasnije; već provjerene knjige automatski se preskaču.</div>
+                                <div class="small text-muted mt-1 mt-sm-0">Možete zaustaviti i nastaviti kasnije. Zapisi označeni „Novi” dodatno se uspoređuju s aktualnim Zuzi katalogom pri prikazu i prije importa.</div>
                             </div>
                             <div class="progress" style="height:8px">
                                 <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:0" data-inspect-all-progress-bar></div>
@@ -424,12 +424,14 @@
                                     @endif
                                     <div class="text-{{ $sourceAvailable ? 'success' : 'muted' }}">{{ $sourceAvailable ? 'Dostupno' : 'Nedostupno' }}</div>
                                 </td>
-                                <td>
-                                    <span class="badge badge-{{ $statusLabels[$status][1] ?? 'secondary' }}">{{ $statusLabels[$status][0] ?? $status }}</span>
-                                    @if($source->product)
-                                        <div class="small mt-1"><a href="{{ route('products.edit', ['product' => $source->product]) }}">Zuzi #{{ $source->product->id }}</a></div>
-                                    @endif
-                                    @if($source->check_message)<div class="small text-muted mt-1">{{ $source->check_message }}</div>@endif
+                                <td data-source-status>
+                                    <span class="badge badge-{{ $statusLabels[$status][1] ?? 'secondary' }}" data-source-status-badge>{{ $statusLabels[$status][0] ?? $status }}</span>
+                                    <div class="small mt-1{{ $source->product ? '' : ' d-none' }}" data-source-product-link>
+                                        @if($source->product)
+                                            <a href="{{ route('products.edit', ['product' => $source->product]) }}">Zuzi #{{ $source->product->id }}</a>
+                                        @endif
+                                    </div>
+                                    <div class="small text-muted mt-1{{ $source->check_message ? '' : ' d-none' }}" data-source-status-message>{{ $source->check_message }}</div>
                                 </td>
                                 <td class="text-right text-nowrap">
                                     <a class="btn btn-sm btn-alt-secondary" href="{{ $source->source_url }}" target="_blank" rel="noopener noreferrer" title="Otvori na {{ $importUi['source_site'] }}" aria-label="Otvori {{ $source->name }} na {{ $importUi['source_site'] }} u novom tabu"><i class="fa fa-external-link-alt"></i></a>
@@ -907,6 +909,7 @@
             const inspectAllProgressBar = document.querySelector('[data-inspect-all-progress-bar]');
             const inspectionQueueEndpoint = @json(route($routePrefix . '.inspection-queue'));
             const bulkInspectionEndpoint = @json($importUi['bulk_inspection_route'] ? route($importUi['bulk_inspection_route']) : null);
+            const sourceStatusLabels = @json($statusLabels);
             const endpointTemplates = {
                 inspect: @json(route($routePrefix . '.inspect', [$importUi['route_parameter'] => '__ID__'])),
                 import: @json(route($routePrefix . '.import', [$importUi['route_parameter'] => '__ID__']))
@@ -917,6 +920,51 @@
 
             const selectedIds = () => Array.from(document.querySelectorAll('[data-source-checkbox]:checked')).map(input => input.value);
             const endpoint = (action, id) => endpointTemplates[action].replace('__ID__', id);
+
+            function applySourceResult(row, payload) {
+                if (!row || !payload) {
+                    return;
+                }
+
+                if (payload.status && sourceStatusLabels[payload.status]) {
+                    const badge = row.querySelector('[data-source-status-badge]');
+                    const [label, color] = sourceStatusLabels[payload.status];
+                    if (badge) {
+                        badge.className = `badge badge-${color || 'secondary'}`;
+                        badge.textContent = label || payload.status;
+                    }
+                }
+
+                if (Object.prototype.hasOwnProperty.call(payload, 'product_id')) {
+                    const productLink = row.querySelector('[data-source-product-link]');
+                    if (productLink) {
+                        if (payload.product_id) {
+                            let anchor = productLink.querySelector('a');
+                            if (!anchor) {
+                                anchor = document.createElement('a');
+                                productLink.appendChild(anchor);
+                            }
+                            anchor.href = payload.product_url || '#';
+                            anchor.textContent = `Zuzi #${payload.product_id}`;
+                            productLink.classList.remove('d-none');
+                        } else {
+                            productLink.textContent = '';
+                            productLink.classList.add('d-none');
+                        }
+                    }
+                }
+
+                const statusMessage = typeof payload.check_message === 'string'
+                    ? payload.check_message
+                    : payload.message;
+                if (typeof statusMessage === 'string' && statusMessage.trim() !== '') {
+                    const message = row.querySelector('[data-source-status-message]');
+                    if (message) {
+                        message.textContent = statusMessage.trim();
+                        message.classList.remove('d-none');
+                    }
+                }
+            }
 
             function updateSelectionState() {
                 const ids = selectedIds();
@@ -975,7 +1023,7 @@
                 const payload = await response.json();
 
                 if (response.ok && payload.success) {
-                    return true;
+                    return payload;
                 }
 
                 // Inspect service stores a 422 as a checked error. Other failures are
@@ -1000,9 +1048,9 @@
                         state.started++;
                         inspectAllProgress.textContent = `Provjeravam ${state.started.toLocaleString('hr-HR')} / ${state.total.toLocaleString('hr-HR')}: ${item.name}`;
 
-                        let succeeded;
+                        let result;
                         try {
-                            succeeded = await inspectQueuedItem(item);
+                            result = await inspectQueuedItem(item);
                         } catch (error) {
                             state.networkError = true;
                             state.errorMessage = error?.message || 'Provjera je privremeno nedostupna.';
@@ -1010,12 +1058,14 @@
                             return;
                         }
 
+                        const succeeded = result !== false;
                         state.processed++;
                         state[succeeded ? 'succeeded' : 'failed']++;
                         const row = document.querySelector(`[data-source-row="${item.id}"]`);
                         row?.classList.remove(succeeded ? 'table-danger' : 'table-success');
                         row?.classList.add(succeeded ? 'table-success' : 'table-danger');
                         if (succeeded) {
+                            applySourceResult(row, result);
                             row?.querySelector('[data-single-action="inspect"]')?.remove();
                         }
                         inspectAllProgressBar.style.width = `${Math.round((state.processed / state.total) * 100)}%`;
@@ -1287,6 +1337,7 @@
                 let failed = 0;
                 let stoppedEarly = false;
                 const errorMessages = [];
+                const successMessages = [];
 
                 for (const id of ids) {
                     attempted++;
@@ -1328,6 +1379,10 @@
                             succeeded++;
                             row?.classList.remove('table-danger');
                             row?.classList.add('table-success');
+                            applySourceResult(row, payload);
+                            if (typeof payload.message === 'string' && payload.message.trim() !== '') {
+                                successMessages.push(`${productName}: ${payload.message.trim()}`);
+                            }
                             if (action === 'inspect') {
                                 row?.querySelector('[data-single-action="inspect"]')?.remove();
                             }
@@ -1354,6 +1409,16 @@
                     errorDetail.className = 'text-danger mt-1';
                     errorDetail.textContent = `Razlog: ${errorMessages[0]}`;
                     progressText.appendChild(errorDetail);
+                }
+                if (successMessages.length) {
+                    const successDetail = document.createElement('div');
+                    successDetail.className = 'text-success mt-1';
+                    const visibleMessages = successMessages.slice(0, 3);
+                    successDetail.textContent = visibleMessages.join(' · ')
+                        + (successMessages.length > visibleMessages.length
+                            ? ` · i još ${successMessages.length - visibleMessages.length}`
+                            : '');
+                    progressText.appendChild(successDetail);
                 }
                 progressText.querySelector('[data-reload-results]')?.addEventListener('click', () => window.location.reload());
                 document.querySelectorAll('[data-single-action]').forEach(button => button.disabled = false);

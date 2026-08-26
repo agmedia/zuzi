@@ -166,6 +166,10 @@ class DelfiImportService
 
         if (! $force && $source->checked_source_hash === $source->source_hash
             && in_array($source->check_status, ['new', 'matched', 'conflict'], true)) {
+            if ($source->check_status === 'new') {
+                return $this->recheckCachedNew($source);
+            }
+
             return $source->fresh(['product']);
         }
 
@@ -268,6 +272,55 @@ class DelfiImportService
             // Otherwise "Provjeri sve" could mark the whole feed as terminal.
             throw $exception;
         }
+    }
+
+    /**
+     * Recheck a stable cached-new row against the local catalog without calling Delfi.
+     */
+    public function recheckCachedNew(DelfiImportProduct $source): DelfiImportProduct
+    {
+        if (! $source->is_current
+            || $source->product_id
+            || $source->check_status !== 'new'
+            || $source->checked_source_hash !== $source->source_hash) {
+            return $source->fresh(['product']);
+        }
+
+        $matches = $this->findExistingProducts(
+            $source->isbn,
+            $source->ean,
+            $source->name,
+            $source->author
+        );
+
+        $updates = null;
+        if ($matches->count() === 1) {
+            $updates = [
+                'product_id' => (int) $matches->first()->id,
+                'check_status' => 'matched',
+                'check_message' => 'Postojeći Zuzi artikl pronađen po ISBN-u, EAN-u ili kombinaciji naziva i autora.',
+            ];
+        } elseif ($matches->count() > 1) {
+            $updates = [
+                'product_id' => null,
+                'check_status' => 'conflict',
+                'check_message' => 'ISBN, EAN ili kombinacija naziva i autora odgovara na više Zuzi artikala: '
+                    . $matches->pluck('id')->implode(', ') . '.',
+            ];
+        }
+
+        if ($updates !== null) {
+            $source->newQuery()
+                ->whereKey($source->getKey())
+                ->where('is_current', true)
+                ->whereNull('product_id')
+                ->where('check_status', 'new')
+                ->where('source_hash', (string) $source->source_hash)
+                ->where('checked_source_hash', (string) $source->checked_source_hash)
+                ->update($updates);
+        }
+
+        return $source->fresh(['product']);
     }
 
     public function import(DelfiImportProduct $source, ?int $additionalCategoryId = null): array
@@ -596,6 +649,7 @@ class DelfiImportService
                 }
                 $matches = $matches->concat($identifierQuery->get($columns));
             }
+
         }
 
         if ($hasTitleAuthor) {
@@ -611,6 +665,32 @@ class DelfiImportService
                 $titleAuthorQuery->lockForUpdate();
             }
             $matches = $matches->concat($titleAuthorQuery->get($columns));
+        }
+
+        // Only use the legacy separator-tolerant scan when both indexed
+        // identifier lookup and indexed title/author lookup miss.
+        if ($matches->isEmpty() && $identifiers->isNotEmpty()) {
+            $patterns = $identifiers->map(function (string $identifier) {
+                $characters = array_map(
+                    fn (string $character) => $character === 'X' ? '[Xx]' : $character,
+                    str_split($identifier)
+                );
+
+                return '^[^0-9Xx]*' . implode('[^0-9Xx]*', $characters) . '[^0-9Xx]*$';
+            });
+            $legacyIdentifierQuery = Product::query()->where(function ($query) use ($patterns) {
+                foreach ($patterns as $index => $pattern) {
+                    $method = $index === 0 ? 'where' : 'orWhere';
+                    $query->{$method}(function ($patternQuery) use ($pattern) {
+                        $patternQuery->whereRaw('isbn REGEXP ?', [$pattern])
+                            ->orWhereRaw('ean REGEXP ?', [$pattern]);
+                    });
+                }
+            });
+            if ($lockForUpdate) {
+                $legacyIdentifierQuery->lockForUpdate();
+            }
+            $matches = $matches->concat($legacyIdentifierQuery->get($columns));
         }
 
         return $matches->unique('id')->values();
