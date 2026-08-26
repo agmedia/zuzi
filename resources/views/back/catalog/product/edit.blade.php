@@ -405,7 +405,7 @@
     <script src="{{ asset('js/plugins/dropzone/min/dropzone.min.js') }}"></script>
     <script src="{{ asset('js/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js') }}"></script>
     <script src="{{ asset('js/plugins/jquery.maskedinput/jquery.maskedinput.min.js') }}"></script>
-    <script src="{{ asset('js/plugins/slim/slim.kickstart.js') }}"></script>
+    <script src="{{ asset('js/plugins/slim/slim.kickstart.js') }}?v={{ filemtime(public_path('js/plugins/slim/slim.kickstart.js')) }}"></script>
 
     <!-- Page JS Helpers (CKEditor 5 plugins) -->
     <script>jQuery(function(){Dashmix.helpers(['datepicker']);});</script>

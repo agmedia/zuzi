@@ -2672,10 +2672,11 @@ var MimeTypes = {
     jpe: 'image/jpeg',
     png: 'image/png',
     gif: 'image/gif',
-    bmp: 'image/bmp'
+    bmp: 'image/bmp',
+    webp: 'image/webp'
 };
 
-var ImageExtensionsRegex = /(\.png|\.bmp|\.gif|\.jpg|\.jpe|\.jpg|\.jpeg)$/;
+var ImageExtensionsRegex = /(\.png|\.bmp|\.gif|\.jpg|\.jpe|\.jpg|\.jpeg|\.webp)$/;
 
 var CanvasExportExtensions = /(jpe|jpg|jpeg|png)/;
 

@@ -175,7 +175,7 @@
 @push('js_after')
     <script src="{{ asset('js/plugins/select2/js/select2.full.min.js') }}"></script>
     <script src="{{ asset('js/plugins/dropzone/min/dropzone.min.js') }}"></script>
-    <script src="{{ asset('js/plugins/slim/slim.kickstart.js') }}"></script>
+    <script src="{{ asset('js/plugins/slim/slim.kickstart.js') }}?v={{ filemtime(public_path('js/plugins/slim/slim.kickstart.js')) }}"></script>
     <script src="{{ asset('js/plugins/ckeditor5-classic/build/ckeditor.js') }}"></script>
 
     <script>
