@@ -9,6 +9,7 @@ use App\Http\Controllers\Back\Catalog\DelfiImportController;
 use App\Http\Controllers\Back\Catalog\ProductController;
 use App\Http\Controllers\Back\Catalog\PublisherController;
 use App\Http\Controllers\Back\Catalog\LagunaImportController;
+use App\Http\Controllers\Back\Catalog\NovellaImportController;
 use App\Http\Controllers\Back\DashboardController;
 use App\Http\Controllers\Back\ContractWithdrawalController as AdminContractWithdrawalController;
 use App\Http\Controllers\Back\OrderController;
@@ -151,6 +152,14 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::post('delfi-import/inspect-bulk', [DelfiImportController::class, 'bulkInspect'])->name('delfi-import.inspect-bulk');
         Route::post('delfi-import/{delfiImportProduct}/inspect', [DelfiImportController::class, 'inspect'])->name('delfi-import.inspect');
         Route::post('delfi-import/{delfiImportProduct}/import', [DelfiImportController::class, 'import'])->name('delfi-import.import');
+
+        // NOVELLA IMPORT
+        Route::get('novella-import', [NovellaImportController::class, 'index'])->name('novella-import.index');
+        Route::post('novella-import/refresh', [NovellaImportController::class, 'refresh'])->name('novella-import.refresh');
+        Route::post('novella-import/settings', [NovellaImportController::class, 'updateSettings'])->name('novella-import.settings');
+        Route::get('novella-import/inspection-queue', [NovellaImportController::class, 'inspectionQueue'])->name('novella-import.inspection-queue');
+        Route::post('novella-import/{novellaImportProduct}/inspect', [NovellaImportController::class, 'inspect'])->name('novella-import.inspect');
+        Route::post('novella-import/{novellaImportProduct}/import', [NovellaImportController::class, 'import'])->name('novella-import.import');
     });
 
     // NARUDŽBE

@@ -68,13 +68,33 @@
             'publisher_category_label' => 'Laguna podkategorija',
             'default_publisher_label' => 'Laguna',
             'supports_source_mapping' => false,
+            'supports_source_publisher_mapping' => null,
+            'supports_source_taxonomy_mapping' => null,
             'supports_source_category_filter' => false,
+            'supports_translation' => true,
+            'uses_exchange_rate' => true,
+            'source_price_field' => 'price_rsd',
+            'source_sale_price_field' => 'sale_price_rsd',
+            'source_currency' => 'RSD',
+            'price_preview_source_amount' => 1500,
+            'feed_link_label' => 'Otvori RSS',
+            'feed_url_config_key' => 'feed_url',
+            'source_category_label' => 'Izvorna kategorija',
+            'source_subcategory_label' => 'Izvorna podkategorija',
+            'source_filter_help' => 'Podkategorija filtrira provjerene i obogaćene knjige. Neprovjerene knjige još nemaju taj podatak.',
+            'source_taxonomy_label' => 'izvornih',
+            'source_taxonomy_item_label' => 'podkategorija',
+            'source_taxonomy_items_label' => 'podkategorija',
+            'secondary_source_id_label' => null,
+            'source_id_field' => 'external_id',
             'inspection_workers' => 2,
             'inspection_delay_ms' => 250,
             'bulk_inspection_route' => null,
             'bulk_inspection_limit' => 100,
             'bulk_inspection_delay_ms' => 350,
         ], $importUi ?? []);
+        $importUi['supports_source_publisher_mapping'] = $importUi['supports_source_publisher_mapping'] ?? $importUi['supports_source_mapping'];
+        $importUi['supports_source_taxonomy_mapping'] = $importUi['supports_source_taxonomy_mapping'] ?? $importUi['supports_source_mapping'];
         $productsTabId = $importUi['slug'] . '-products';
         $settingsTabId = $importUi['slug'] . '-settings';
         $routePrefix = $importUi['route_prefix'];
@@ -184,8 +204,8 @@
                             </div>
                             <div class="text-lg-right">
                                 <span class="badge badge-success p-2 mr-2"><i class="fa fa-filter mr-1"></i> {{ $importUi['allowed_categories_label'] }}</span>
-                                <a class="btn btn-sm btn-alt-secondary" href="{{ config($importUi['config_key'] . '.feed_url') }}" target="_blank" rel="noopener noreferrer">
-                                    <i class="fa fa-external-link-alt mr-1"></i> Otvori RSS
+                                <a class="btn btn-sm btn-alt-secondary" href="{{ config($importUi['config_key'] . '.' . $importUi['feed_url_config_key']) }}" target="_blank" rel="noopener noreferrer">
+                                    <i class="fa fa-external-link-alt mr-1"></i> {{ $importUi['feed_link_label'] }}
                                 </a>
                             </div>
                         </div>
@@ -240,7 +260,7 @@
                         </div>
                         @if($importUi['supports_source_category_filter'])
                             <div class="form-group col-md-6 col-xl-2">
-                                <label for="source-category">Delfi kategorija</label>
+                                <label for="source-category">{{ $importUi['source_category_label'] }}</label>
                                 <select id="source-category" class="form-control" name="source_category">
                                     <option value="">Sve kategorije</option>
                                     @foreach($sourceTaxonomy as $sourceCategory => $sourceCategoryGenres)
@@ -249,7 +269,7 @@
                                 </select>
                             </div>
                             <div class="form-group col-md-6 col-xl-3">
-                                <label for="source-genre">Delfi podkategorija</label>
+                                <label for="source-genre">{{ $importUi['source_subcategory_label'] }}</label>
                                 <select id="source-genre" class="form-control" name="source_genre">
                                     <option value="">Sve podkategorije</option>
                                     @foreach($sourceTaxonomy as $sourceCategory => $sourceCategoryGenres)
@@ -278,7 +298,7 @@
                     @if($importUi['supports_source_category_filter'] || $hasListFilters)
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mt-n2 mb-3">
                             @if($importUi['supports_source_category_filter'])
-                                <small class="text-muted mr-md-3">Podkategorija/žanr filtrira provjerene i obogaćene knjige. Neprovjerene knjige još nemaju taj podatak.</small>
+                                <small class="text-muted mr-md-3">{{ $importUi['source_filter_help'] }}</small>
                             @else
                                 <span></span>
                             @endif
@@ -350,10 +370,19 @@
                                 $status = $source->ui_status;
                                 $needsInspection = $source->is_current
                                     && ($source->check_status === 'error' || $source->checked_source_hash !== $source->source_hash);
-                                $regularEur = $priceCalculator->convert($source->price_rsd, $settings['exchange_rate'], $settings['markup_percent']);
-                                $saleEur = $source->sale_price_rsd
-                                    ? $priceCalculator->convert($source->sale_price_rsd, $settings['exchange_rate'], $settings['markup_percent'])
+                                $sourcePrice = (float) data_get($source, $importUi['source_price_field'], 0);
+                                $sourceSalePrice = data_get($source, $importUi['source_sale_price_field']);
+                                $regularEur = $importUi['uses_exchange_rate']
+                                    ? $priceCalculator->convert($sourcePrice, $settings['exchange_rate'], $settings['markup_percent'])
+                                    : round($sourcePrice * (1 + max(0, (float) $settings['markup_percent']) / 100), 2);
+                                $saleEur = $sourceSalePrice
+                                    ? ($importUi['uses_exchange_rate']
+                                        ? $priceCalculator->convert((float) $sourceSalePrice, $settings['exchange_rate'], $settings['markup_percent'])
+                                        : round((float) $sourceSalePrice * (1 + max(0, (float) $settings['markup_percent']) / 100), 2))
                                     : null;
+                                $sourceAvailable = in_array(strtolower(trim((string) $source->availability)), [
+                                    'in stock', 'in_stock', 'instock', 'available', 'onbackorder',
+                                ], true);
                             @endphp
                             <tr data-source-row="{{ $source->id }}">
                                 <td><input type="checkbox" value="{{ $source->id }}" data-source-checkbox {{ ! $source->is_current ? 'disabled' : '' }}></td>
@@ -368,11 +397,11 @@
                                 </td>
                                 <td>
                                     <a class="font-w600" href="{{ $source->source_url }}" target="_blank" rel="noopener noreferrer">{{ $source->name }}</a>
-                                    <div class="small text-muted">{{ $importUi['source_id_label'] }}: {{ $importUi['supports_source_mapping'] ? ($source->nav_id ?: ($source->remote_product_id ?: $source->external_id)) : $source->external_id }}</div>
-                                    @if($importUi['supports_source_mapping'] && $source->nav_id && $source->remote_product_id)
-                                        <div class="small text-muted">Delfi ID: {{ $source->remote_product_id }}</div>
+                                    <div class="small text-muted">{{ $importUi['source_id_label'] }}: {{ data_get($source, $importUi['source_id_field']) ?: ($source->remote_product_id ?: $source->external_id) }}</div>
+                                    @if($importUi['secondary_source_id_label'] && $source->nav_id && $source->remote_product_id)
+                                        <div class="small text-muted">{{ $importUi['secondary_source_id_label'] }}: {{ $source->remote_product_id }}</div>
                                     @endif
-                                    @if($importUi['supports_source_mapping'] && $source->source_publisher)
+                                    @if($importUi['supports_source_publisher_mapping'] && $source->source_publisher)
                                         <div class="small text-muted">Izvorni nakladnik: {{ $source->source_publisher }}</div>
                                     @endif
                                     @if($source->author)<div class="small">{{ $source->author }}</div>@endif
@@ -383,17 +412,17 @@
                                     @if($source->pages)<div><span class="text-muted">Stranica:</span> {{ $source->pages }}</div>@endif
                                     @if($source->letter || $source->binding)<div>{{ $source->letter }}{{ $source->letter && $source->binding ? ' · ' : '' }}{{ $source->binding }}</div>@endif
                                     @if($source->publication_year)<div><span class="text-muted">Godina:</span> {{ $source->publication_year }}</div>@endif
-                                    @if($importUi['supports_source_mapping'] && ! empty($source->source_genres))
-                                        <div><span class="text-muted">Žanr:</span> {{ implode(' · ', (array) $source->source_genres) }}</div>
+                                    @if($importUi['supports_source_taxonomy_mapping'] && ! empty($source->source_genres))
+                                        <div><span class="text-muted">{{ ucfirst($importUi['source_taxonomy_item_label']) }}:</span> {{ implode(' · ', (array) $source->source_genres) }}</div>
                                     @endif
                                 </td>
                                 <td class="text-right small">
-                                    <div>{{ number_format($source->price_rsd, 2, ',', '.') }} RSD</div>
+                                    <div>{{ number_format($sourcePrice, 2, ',', '.') }} {{ $importUi['source_currency'] }}</div>
                                     <div class="font-w700">{{ number_format($regularEur, 2, ',', '.') }} EUR</div>
                                     @if($saleEur && $saleEur < $regularEur)
                                         <div class="text-danger">Akcija {{ number_format($saleEur, 2, ',', '.') }} EUR</div>
                                     @endif
-                                    <div class="text-{{ $source->availability === 'in stock' ? 'success' : 'muted' }}">{{ $source->availability === 'in stock' ? 'Dostupno' : 'Nedostupno' }}</div>
+                                    <div class="text-{{ $sourceAvailable ? 'success' : 'muted' }}">{{ $sourceAvailable ? 'Dostupno' : 'Nedostupno' }}</div>
                                 </td>
                                 <td>
                                     <span class="badge badge-{{ $statusLabels[$status][1] ?? 'secondary' }}">{{ $statusLabels[$status][0] ?? $status }}</span>
@@ -434,28 +463,34 @@
                         @csrf
                         <div class="block-content">
                             <h4 class="font-size-h5 mb-1"><i class="fa fa-euro-sign text-primary mr-2"></i>Cijena i dostupnost</h4>
-                            <p class="text-muted small mb-4">Izvorna {{ $importUi['name'] }} cijena automatski se pretvara iz RSD u EUR i zatim uvećava za zadani postotak.</p>
+                            @if($importUi['uses_exchange_rate'])
+                                <p class="text-muted small mb-4">Izvorna {{ $importUi['name'] }} cijena automatski se pretvara iz {{ $importUi['source_currency'] }} u EUR i zatim uvećava za zadani postotak.</p>
+                            @else
+                                <p class="text-muted small mb-4">Izvorna {{ $importUi['name'] }} cijena već je u EUR; na nju se primjenjuje samo zadano postotno uvećanje.</p>
+                            @endif
 
                             <div class="form-row">
-                                <div class="form-group col-md-6 col-xl-3">
-                                    <label for="exchange-rate">RSD za 1 EUR</label>
-                                    <input id="exchange-rate" class="form-control" type="number" step="0.0001" min="0.0001" name="exchange_rate" value="{{ old('exchange_rate', $settings['exchange_rate']) }}" required>
-                                    <small class="form-text text-muted">Primjer: 117,2</small>
-                                </div>
-                                <div class="form-group col-md-6 col-xl-3">
+                                @if($importUi['uses_exchange_rate'])
+                                    <div class="form-group col-md-6 col-xl-3">
+                                        <label for="exchange-rate">{{ $importUi['source_currency'] }} za 1 EUR</label>
+                                        <input id="exchange-rate" class="form-control" type="number" step="0.0001" min="0.0001" name="exchange_rate" value="{{ old('exchange_rate', $settings['exchange_rate']) }}" required>
+                                        <small class="form-text text-muted">Primjer: 117,2</small>
+                                    </div>
+                                @endif
+                                <div class="form-group col-md-6 {{ $importUi['uses_exchange_rate'] ? 'col-xl-3' : 'col-xl-4' }}">
                                     <label for="markup-percent">Uvećanje cijene</label>
                                     <div class="input-group">
                                         <input id="markup-percent" class="form-control" type="number" step="0.01" min="0" name="markup_percent" value="{{ old('markup_percent', $settings['markup_percent']) }}" required>
                                         <div class="input-group-append"><span class="input-group-text">%</span></div>
                                     </div>
-                                    <small class="form-text text-muted">Dodaje se nakon konverzije.</small>
+                                    <small class="form-text text-muted">{{ $importUi['uses_exchange_rate'] ? 'Dodaje se nakon konverzije.' : 'Dodaje se na izvornu EUR cijenu.' }}</small>
                                 </div>
-                                <div class="form-group col-md-6 col-xl-3">
+                                <div class="form-group col-md-6 {{ $importUi['uses_exchange_rate'] ? 'col-xl-3' : 'col-xl-4' }}">
                                     <label for="default-quantity">Količina kad je dostupno</label>
                                     <input id="default-quantity" class="form-control" type="number" min="0" name="default_quantity" value="{{ old('default_quantity', $settings['default_quantity']) }}" required>
                                     <small class="form-text text-muted">Za nedostupne knjige sprema se 0.</small>
                                 </div>
-                                <div class="form-group col-md-6 col-xl-3">
+                                <div class="form-group col-md-6 {{ $importUi['uses_exchange_rate'] ? 'col-xl-3' : 'col-xl-4' }}">
                                     <label for="existing-action">Ako artikl već postoji</label>
                                     <select id="existing-action" class="form-control" name="existing_action">
                                         <option value="skip" {{ old('existing_action', $settings['existing_action']) === 'skip' ? 'selected' : '' }}>Ne mijenjaj cijenu ni zalihu</option>
@@ -467,7 +502,7 @@
 
                             <div class="alert alert-info d-flex align-items-center mb-4" role="status">
                                 <i class="fa fa-calculator mr-3"></i>
-                                <div>Primjer izračuna: <strong>1.500 RSD</strong> → <strong data-price-preview>—</strong> EUR</div>
+                                <div>Primjer izračuna: <strong>{{ number_format($importUi['price_preview_source_amount'], 2, ',', '.') }} {{ $importUi['source_currency'] }}</strong> → <strong data-price-preview>—</strong> EUR</div>
                             </div>
 
                             <hr class="my-4">
@@ -514,28 +549,31 @@
                                 </div>
                             </div>
 
-                            @if($importUi['supports_source_mapping'])
+                            @if($importUi['supports_source_publisher_mapping'])
                                 <div class="bg-body-light rounded p-3 mb-4">
                                     <div class="custom-control custom-switch">
                                         <input type="checkbox" class="custom-control-input" id="map-source-publishers" name="map_source_publishers" value="1" {{ old('map_source_publishers', $settings['map_source_publishers'] ?? true) ? 'checked' : '' }}>
-                                        <label class="custom-control-label font-w600" for="map-source-publishers">Mapiraj nakladnika iz Delfi podataka</label>
+                                        <label class="custom-control-label font-w600" for="map-source-publishers">Mapiraj nakladnika iz {{ $importUi['name'] }} podataka</label>
                                     </div>
                                     <div class="small text-muted mt-1 ml-4">Ako u Zuzi postoji nakladnik i njegova podkategorija istog naziva, koriste se automatski. Odabrani nakladnik i podkategorija iznad služe kao sigurna rezerva.</div>
                                 </div>
 
+                            @endif
+
+                            @if($importUi['supports_source_taxonomy_mapping'])
                                 <hr class="my-4">
 
-                                <h4 class="font-size-h5 mb-1"><i class="fa fa-sitemap text-primary mr-2"></i>Mapiranje Delfi žanrova</h4>
-                                <p class="text-muted small mb-3">Popis dolazi iz Delfi kategorija, a broj uz žanr pokazuje koliko ga je provjerenih knjiga koristilo. Nove vrijednosti pojavit će se automatski; nemapirani žanr ne zaustavlja uvoz.</p>
+                                <h4 class="font-size-h5 mb-1"><i class="fa fa-sitemap text-primary mr-2"></i>Mapiranje {{ $importUi['name'] }} {{ $importUi['source_taxonomy_items_label'] }}</h4>
+                                <p class="text-muted small mb-3">Popis dolazi iz {{ $importUi['name'] }} kategorija, a broj uz vrijednost pokazuje koliko ju je provjerenih knjiga koristilo. Nove vrijednosti pojavit će se automatski; nemapirana vrijednost ne zaustavlja uvoz.</p>
 
                                 @if($sourceGenres->isEmpty() && empty($genreCategoryMap))
-                                    <div class="alert alert-light border mb-4">Još nema otkrivenih žanrova. Provjerite nekoliko knjiga pa se vratite u postavke.</div>
+                                    <div class="alert alert-light border mb-4">Još nema otkrivenih {{ $importUi['source_taxonomy_items_label'] }}. Osvježite feed ili provjerite nekoliko knjiga pa se vratite u postavke.</div>
                                 @else
                                     <div class="form-row align-items-end mb-3">
                                         <div class="form-group col-lg-5 mb-2">
-                                            <label for="source-genre-picker">Delfi žanr</label>
+                                            <label for="source-genre-picker">{{ $importUi['name'] }} {{ $importUi['source_taxonomy_item_label'] }}</label>
                                             <select id="source-genre-picker" class="form-control" style="width:100%">
-                                                <option value="">Odaberi Delfi žanr</option>
+                                                <option value="">Odaberi {{ $importUi['source_taxonomy_item_label'] }}</option>
                                                 @foreach($sourceGenres as $genre => $count)
                                                     <option value="{{ $genre }}">{{ $genre }}{{ $count > 0 ? ' · ' . $count . ' provjerenih' : '' }}</option>
                                                 @endforeach
@@ -566,7 +604,7 @@
                                         <table class="table table-sm table-vcenter mb-0">
                                             <thead>
                                             <tr>
-                                                <th>Delfi žanr</th>
+                                                <th>{{ $importUi['name'] }} {{ $importUi['source_taxonomy_item_label'] }}</th>
                                                 <th style="width:55%">Zuzi kategorija</th>
                                                 <th class="text-right" style="width:55px"></th>
                                             </tr>
@@ -606,13 +644,15 @@
                             @endif
 
                             <div class="bg-body-light rounded p-3 mb-3">
-                                <input type="hidden" name="translate_descriptions" value="0">
-                                <div class="custom-control custom-switch mb-3">
-                                    <input type="checkbox" class="custom-control-input" id="{{ $importUi['slug'] }}-translate-descriptions" name="translate_descriptions" value="1" {{ old('translate_descriptions', $settings['translate_descriptions'] ?? false) ? 'checked' : '' }}>
-                                    <label class="custom-control-label font-w600" for="{{ $importUi['slug'] }}-translate-descriptions">Prevedi opis na hrvatski</label>
-                                    <div class="small text-muted mt-1">Zadano je isključeno. Koristi se besplatni servis bez API ključa; ako nije dostupan, uvoz nastavlja s izvornim opisom i prikazuje upozorenje.</div>
-                                </div>
-                                <hr class="my-3">
+                                @if($importUi['supports_translation'])
+                                    <input type="hidden" name="translate_descriptions" value="0">
+                                    <div class="custom-control custom-switch mb-3">
+                                        <input type="checkbox" class="custom-control-input" id="{{ $importUi['slug'] }}-translate-descriptions" name="translate_descriptions" value="1" {{ old('translate_descriptions', $settings['translate_descriptions'] ?? false) ? 'checked' : '' }}>
+                                        <label class="custom-control-label font-w600" for="{{ $importUi['slug'] }}-translate-descriptions">Prevedi opis na hrvatski</label>
+                                        <div class="small text-muted mt-1">Zadano je isključeno. Koristi se besplatni servis bez API ključa; ako nije dostupan, uvoz nastavlja s izvornim opisom i prikazuje upozorenje.</div>
+                                    </div>
+                                    <hr class="my-3">
+                                @endif
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox" class="custom-control-input" id="activate-new" name="activate_new_products" value="1" {{ old('activate_new_products', $settings['activate_new_products']) ? 'checked' : '' }}>
                                     <label class="custom-control-label font-w600" for="activate-new">Odmah aktiviraj nove artikle</label>
@@ -718,7 +758,7 @@
             if (sourceGenrePicker.length) {
                 sourceGenrePicker.select2({
                     width: '100%',
-                    placeholder: 'Pretražite Delfi žanr',
+                    placeholder: @json('Pretražite ' . $importUi['name'] . ' ' . $importUi['source_taxonomy_item_label']),
                     allowClear: true
                 });
                 genreCategoryPicker.select2({
@@ -841,7 +881,11 @@
             function updatePricePreview() {
                 const rate = Number(String($('#exchange-rate').val() || '').replace(',', '.'));
                 const markup = Number(String($('#markup-percent').val() || '').replace(',', '.'));
-                const converted = rate > 0 ? (1500 / rate) * (1 + Math.max(0, markup) / 100) : 0;
+                const sourceAmount = Number(@json($importUi['price_preview_source_amount']));
+                const usesExchangeRate = Boolean(@json($importUi['uses_exchange_rate']));
+                const converted = usesExchangeRate
+                    ? (rate > 0 ? (sourceAmount / rate) * (1 + Math.max(0, markup) / 100) : 0)
+                    : sourceAmount * (1 + Math.max(0, markup) / 100);
                 $('[data-price-preview]').text(converted > 0
                     ? converted.toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                     : '—');
