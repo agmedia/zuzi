@@ -82,7 +82,9 @@ class NovellaImportTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->actingAs($this->admin())->get(route('novella-import.index'));
+        $response = $this->actingAs($this->admin())->get(route('novella-import.index', [
+            'status' => 'all',
+        ]));
 
         $response->assertOk()
             ->assertSee('Već postoji')
@@ -104,6 +106,120 @@ class NovellaImportTest extends TestCase
             'product_id' => $productId,
             'product_url' => route('products.edit', ['product' => $productId]),
         ]);
+    }
+
+    public function test_new_filter_on_second_page_hides_rows_reconciled_to_other_statuses(): void
+    {
+        $this->configureImport();
+
+        foreach (range(1, 40) as $position) {
+            $this->source([
+                'external_id' => (string) (6000 + $position),
+                'remote_product_id' => 6000 + $position,
+                'feed_position' => 100 + $position,
+                'name' => 'Novella knjiga ' . $position,
+            ]);
+        }
+
+        $matched = $this->source([
+            'external_id' => '5156',
+            'remote_product_id' => 5156,
+            'feed_position' => 3,
+            'name' => 'Anne Frank',
+            'isbn' => '9789538551093',
+            'ean' => '9789538551093',
+            'author' => 'Maria Cecilia Cavallone',
+        ]);
+        $conflict = $this->source([
+            'external_id' => '5157',
+            'remote_product_id' => 5157,
+            'feed_position' => 2,
+            'name' => 'Konfliktna knjiga',
+            'isbn' => '9789538551000',
+            'ean' => '9789538551000',
+        ]);
+        $stillNew = $this->source([
+            'external_id' => '5158',
+            'remote_product_id' => 5158,
+            'feed_position' => 1,
+            'name' => 'Stvarno nova knjiga',
+            'isbn' => '9789538551999',
+            'ean' => '9789538551999',
+        ]);
+
+        DB::table('products')->insert([
+            [
+                'author_id' => 0,
+                'name' => 'Anne Frank',
+                'sku' => '751',
+                'itemid' => 751,
+                'isbn' => '978-953-8551-09-3',
+                'ean' => null,
+                'slug' => 'anne-frank-existing',
+                'url' => '/',
+                'price' => 9.90,
+                'quantity' => 1,
+                'tax_id' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'author_id' => 0,
+                'name' => 'Prvi konfliktni artikl',
+                'sku' => '752',
+                'itemid' => 752,
+                'isbn' => '9789538551000',
+                'ean' => null,
+                'slug' => 'prvi-konfliktni-artikl',
+                'url' => '/',
+                'price' => 9.90,
+                'quantity' => 1,
+                'tax_id' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'author_id' => 0,
+                'name' => 'Drugi konfliktni artikl',
+                'sku' => '753',
+                'itemid' => 753,
+                'isbn' => null,
+                'ean' => '9789538551000',
+                'slug' => 'drugi-konfliktni-artikl',
+                'url' => '/',
+                'price' => 9.90,
+                'quantity' => 1,
+                'tax_id' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $response = $this->actingAs($this->admin())->get(route('novella-import.index', [
+            'status' => 'new',
+            'page' => 2,
+        ]));
+
+        $response->assertOk()
+            ->assertViewHas('products', function ($products) use ($matched, $conflict, $stillNew) {
+                $visibleIds = $products->getCollection()->pluck('id');
+
+                return $products->currentPage() === 2
+                    && $products->total() === 41
+                    && str_contains($products->url(2), 'status=new')
+                    && str_contains($products->url(2), 'page=2')
+                    && ! $visibleIds->contains($matched->id)
+                    && ! $visibleIds->contains($conflict->id)
+                    && $visibleIds->contains($stillNew->id)
+                    && $products->getCollection()->every(
+                        fn (NovellaImportProduct $source) => $source->ui_status === 'new'
+                    );
+            });
+
+        $matched->refresh();
+        $conflict->refresh();
+        $this->assertSame('matched', $matched->check_status);
+        $this->assertSame('conflict', $conflict->check_status);
     }
 
     public function test_admin_feed_filters_by_novella_category_and_subcategory(): void

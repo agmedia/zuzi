@@ -243,6 +243,96 @@ class LagunaImportTest extends TestCase
             ->assertDontSee('data-single-action="inspect" data-source-id="' . $checkedSource->id . '"', false);
     }
 
+    public function test_new_filter_on_second_page_hides_rows_reconciled_to_other_statuses(): void
+    {
+        foreach (range(1, 40) as $position) {
+            $hash = hash('sha256', 'laguna-pagination-new-' . $position);
+            $this->createSource([
+                'external_id' => 'LAGUNA-PAGE-' . $position,
+                'feed_position' => $position,
+                'name' => 'Laguna nova knjiga ' . $position,
+                'source_hash' => $hash,
+                'checked_source_hash' => $hash,
+                'check_status' => 'new',
+            ]);
+        }
+
+        $matchedHash = hash('sha256', 'laguna-pagination-matched');
+        $matched = $this->createSource([
+            'external_id' => 'LAGUNA-PAGE-MATCHED',
+            'feed_position' => 41,
+            'name' => 'Laguna naknadno pronađena knjiga',
+            'isbn' => '9788652169001',
+            'source_hash' => $matchedHash,
+            'checked_source_hash' => $matchedHash,
+            'check_status' => 'new',
+        ]);
+        $conflictHash = hash('sha256', 'laguna-pagination-conflict');
+        $conflict = $this->createSource([
+            'external_id' => 'LAGUNA-PAGE-CONFLICT',
+            'feed_position' => 42,
+            'name' => 'Laguna naknadno konfliktna knjiga',
+            'isbn' => '9788652169002',
+            'source_hash' => $conflictHash,
+            'checked_source_hash' => $conflictHash,
+            'check_status' => 'new',
+        ]);
+        $stillNewHash = hash('sha256', 'laguna-pagination-still-new');
+        $stillNew = $this->createSource([
+            'external_id' => 'LAGUNA-PAGE-STILL-NEW',
+            'feed_position' => 43,
+            'name' => 'Laguna stvarno nova knjiga',
+            'isbn' => '9788652169003',
+            'source_hash' => $stillNewHash,
+            'checked_source_hash' => $stillNewHash,
+            'check_status' => 'new',
+        ]);
+
+        $matchedProductId = $this->createExistingProduct(
+            'Postojeći Laguna artikl',
+            '978-86-521-6900-1',
+            0,
+            69001
+        );
+        $this->createExistingProduct('Prvi konfliktni Laguna artikl', '9788652169002', 0, 69002);
+        $this->createExistingProduct('Drugi konfliktni Laguna artikl', '9788652169002', 0, 69003);
+
+        $admin = User::factory()->create();
+        UserDetail::query()->create([
+            'user_id' => $admin->id,
+            'fname' => 'Admin',
+            'lname' => 'Test',
+            'role' => 'admin',
+        ]);
+        Bouncer::allow($admin)->everything();
+
+        $response = $this->actingAs($admin)->get(route('laguna-import.index', [
+            'status' => 'new',
+            'page' => 2,
+        ]));
+
+        $response->assertOk()
+            ->assertViewHas('products', function ($products) use ($matched, $conflict, $stillNew) {
+                $visibleIds = $products->getCollection()->pluck('id');
+
+                return $products->currentPage() === 2
+                    && str_contains($products->url(2), 'status=new')
+                    && str_contains($products->url(2), 'page=2')
+                    && ! $visibleIds->contains($matched->id)
+                    && ! $visibleIds->contains($conflict->id)
+                    && $visibleIds->contains($stillNew->id)
+                    && $products->getCollection()->every(
+                        fn (LagunaImportProduct $source) => $source->ui_status === 'new'
+                    );
+            });
+
+        $matched->refresh();
+        $conflict->refresh();
+        $this->assertSame($matchedProductId, (int) $matched->product_id);
+        $this->assertSame('matched', $matched->check_status);
+        $this->assertSame('conflict', $conflict->check_status);
+    }
+
     public function test_text_search_does_not_match_unrelated_products_with_isbns(): void
     {
         $matchingSource = $this->createSource([

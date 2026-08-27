@@ -341,6 +341,137 @@ class DelfiImportTest extends TestCase
             ->assertSee('Fantastika');
     }
 
+    public function test_new_filter_on_second_page_hides_rows_reconciled_to_other_statuses(): void
+    {
+        foreach (range(1, 40) as $position) {
+            $hash = hash('sha256', 'delfi-pagination-new-' . $position);
+            $this->source([
+                'external_id' => 'DELFI-PAGE-' . $position,
+                'remote_product_id' => 270000 + $position,
+                'feed_position' => $position,
+                'name' => 'Delfi nova knjiga ' . $position,
+                'source_hash' => $hash,
+                'checked_source_hash' => $hash,
+                'check_status' => 'new',
+            ]);
+        }
+
+        $matchedHash = hash('sha256', 'delfi-pagination-matched');
+        $matched = $this->source([
+            'external_id' => 'DELFI-PAGE-MATCHED',
+            'remote_product_id' => 270041,
+            'feed_position' => 41,
+            'name' => 'Delfi naknadno pronađena knjiga',
+            'isbn' => '9788652169101',
+            'ean' => '9788652169101',
+            'source_hash' => $matchedHash,
+            'checked_source_hash' => $matchedHash,
+            'check_status' => 'new',
+        ]);
+        $conflictHash = hash('sha256', 'delfi-pagination-conflict');
+        $conflict = $this->source([
+            'external_id' => 'DELFI-PAGE-CONFLICT',
+            'remote_product_id' => 270042,
+            'feed_position' => 42,
+            'name' => 'Delfi naknadno konfliktna knjiga',
+            'isbn' => '9788652169102',
+            'ean' => '9788652169102',
+            'source_hash' => $conflictHash,
+            'checked_source_hash' => $conflictHash,
+            'check_status' => 'new',
+        ]);
+        $stillNewHash = hash('sha256', 'delfi-pagination-still-new');
+        $stillNew = $this->source([
+            'external_id' => 'DELFI-PAGE-STILL-NEW',
+            'remote_product_id' => 270043,
+            'feed_position' => 43,
+            'name' => 'Delfi stvarno nova knjiga',
+            'isbn' => '9788652169103',
+            'ean' => '9788652169103',
+            'source_hash' => $stillNewHash,
+            'checked_source_hash' => $stillNewHash,
+            'check_status' => 'new',
+        ]);
+
+        $matchedProductId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Postojeći Delfi artikl',
+            'sku' => 'DELFI-PAGE-9101',
+            'itemid' => 69101,
+            'isbn' => '978-86-521-6910-1',
+            'ean' => null,
+            'slug' => 'postojeci-delfi-page-artikl',
+            'url' => '/',
+            'price' => 10,
+            'quantity' => 1,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('products')->insert([
+            [
+                'author_id' => 0,
+                'name' => 'Prvi konfliktni Delfi artikl',
+                'sku' => 'DELFI-PAGE-9102-A',
+                'itemid' => 69102,
+                'isbn' => '9788652169102',
+                'ean' => null,
+                'slug' => 'prvi-konfliktni-delfi-page-artikl',
+                'url' => '/',
+                'price' => 10,
+                'quantity' => 1,
+                'tax_id' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'author_id' => 0,
+                'name' => 'Drugi konfliktni Delfi artikl',
+                'sku' => 'DELFI-PAGE-9102-B',
+                'itemid' => 69103,
+                'isbn' => null,
+                'ean' => '9788652169102',
+                'slug' => 'drugi-konfliktni-delfi-page-artikl',
+                'url' => '/',
+                'price' => 10,
+                'quantity' => 1,
+                'tax_id' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        Cache::forget('delfi-import-book-genres-by-category');
+        Cache::forget('delfi-import-source-genre-counts-by-category');
+        Http::fake();
+
+        $response = $this->actingAs($this->admin())->get(route('delfi-import.index', [
+            'status' => 'new',
+            'page' => 2,
+        ]));
+
+        $response->assertOk()
+            ->assertViewHas('products', function ($products) use ($matched, $conflict, $stillNew) {
+                $visibleIds = $products->getCollection()->pluck('id');
+
+                return $products->currentPage() === 2
+                    && str_contains($products->url(2), 'status=new')
+                    && str_contains($products->url(2), 'page=2')
+                    && ! $visibleIds->contains($matched->id)
+                    && ! $visibleIds->contains($conflict->id)
+                    && $visibleIds->contains($stillNew->id)
+                    && $products->getCollection()->every(
+                        fn (DelfiImportProduct $source) => $source->ui_status === 'new'
+                    );
+            });
+
+        $matched->refresh();
+        $conflict->refresh();
+        $this->assertSame($matchedProductId, (int) $matched->product_id);
+        $this->assertSame('matched', $matched->check_status);
+        $this->assertSame('conflict', $conflict->check_status);
+    }
+
     public function test_admin_feed_filters_by_delfi_category_and_subcategory(): void
     {
         $this->configureImport();

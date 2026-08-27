@@ -46,14 +46,26 @@ class NovellaImportController extends Controller
 
         // The API is synchronized oldest-first to make pagination stable, while
         // the admin list intentionally presents the newest Novella titles first.
-        $products = $query->orderByDesc('is_current')
-            ->orderByRaw('CASE WHEN feed_position IS NULL THEN 1 ELSE 0 END')
-            ->orderByDesc('feed_position')
-            ->orderByDesc('remote_product_id')
-            ->orderByDesc('id')
-            ->paginate(40)
-            ->appends($request->query());
+        $paginate = function () use ($query, $request) {
+            return (clone $query)->orderByDesc('is_current')
+                ->orderByRaw('CASE WHEN feed_position IS NULL THEN 1 ELSE 0 END')
+                ->orderByDesc('feed_position')
+                ->orderByDesc('remote_product_id')
+                ->orderByDesc('id')
+                ->paginate(40)
+                ->appends($request->query());
+        };
+        $products = $paginate();
         $products->setCollection($catalogReconciler->reconcile($products->getCollection()));
+
+        // Reconciliation can change a cached "new" row after the SQL page was
+        // selected. Reload once so the paginator, total and rendered rows all
+        // reflect the active Novi filter without an unbounded reconciliation loop.
+        $selectedStatus = trim((string) $request->input('status', 'new')) ?: 'new';
+        if ($selectedStatus === 'new'
+            && $products->getCollection()->contains(fn ($product) => $product->ui_status !== 'new')) {
+            $products = $paginate();
+        }
 
         $statusCounts = $this->statusCounts();
         $inspectionPendingCount = $this->inspectionPendingQuery()->count();
