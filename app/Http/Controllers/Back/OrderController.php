@@ -20,6 +20,7 @@ use App\Models\Front\Checkout\Shipping\Glsstari;
 use App\Models\Front\Checkout\Shipping\HP;
 use App\Models\Front\Loyalty;
 use App\Services\GiftVoucherService;
+use App\Services\MailchimpOrderSynchronizer;
 use App\Services\Shipping\BoxNowService;
 use App\Services\Shipping\GlsTrackingService;
 use App\Services\Shipping\OrderTrackingService;
@@ -169,6 +170,8 @@ class OrderController extends Controller
         $updated = $order->validateRequest($request)->store($order->id);
 
         if ($updated) {
+            app(MailchimpOrderSynchronizer::class)->markForSync((int) $updated->id);
+
             return redirect()->route('orders.edit', ['order' => $updated])->with(['success' => 'Narudžba je snimljena!']);
         }
 
@@ -193,7 +196,7 @@ class OrderController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function api_status_change(Request $request)
+    public function api_status_change(Request $request, MailchimpOrderSynchronizer $mailchimpOrders)
     {
         if ($request->has('orders')) {
             $selectedStatus = (int) $request->input('selected');
@@ -210,6 +213,7 @@ class OrderController extends Controller
             Order::whereIn('id', $orders)->update([
                 'order_status_id' => $selectedStatus
             ]);
+            $mailchimpOrders->markForSync($orders);
             $fullOrders = Order::query()
                 ->whereIn('id', $orders)
                 ->get()
@@ -269,6 +273,7 @@ class OrderController extends Controller
                 $order->update([
                     'order_status_id' => $selectedStatus
                 ]);
+                $mailchimpOrders->markForSync((int) $order->id);
 
                 if (OrderHelper::shouldReturnStockOnStatusChange($previousStatus, $selectedStatus, (int) $order->id)) {
                     ProductHelper::makeAvailable($request->input('order_id'));

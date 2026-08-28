@@ -20,6 +20,8 @@ use App\Models\Front\Page;
 use App\Services\CouponUsageService;
 use App\Services\GoogleAnalyticsService;
 use App\Services\GiftVoucherService;
+use App\Services\MailchimpAttributionService;
+use App\Services\MailchimpOrderSynchronizer;
 use App\Services\ProductRecommendationService;
 use App\Services\Pelion\PelionStockService;
 use Illuminate\Http\Request;
@@ -184,6 +186,12 @@ class CheckoutController extends Controller
             $data['id'] = CheckoutSession::getOrder()['id'];
         }
 
+        if (! empty($data['id'])) {
+            // Attribution is consent-gated metadata and never participates in
+            // order creation or payment resolution.
+            app(MailchimpAttributionService::class)->attachToOrder((int) $data['id'], $request);
+        }
+
         $data['payment_form'] = $order->resolvePaymentForm();
         $termsPage = Page::query()->select('id', 'title', 'description')->find(1);
 
@@ -254,6 +262,16 @@ class CheckoutController extends Controller
             if ($order->getData()) {
                 CheckoutSession::setOrder($order->getData());
 
+                // Finalize the conversion before redirecting: the customer may
+                // close the tab and never load the success page.
+                app(MailchimpAttributionService::class)->attachToOrder(
+                    (int) $order->getData()->id,
+                    $request
+                );
+                app(MailchimpOrderSynchronizer::class)->markCheckoutProcessed(
+                    (int) $order->getData()->id
+                );
+
                 app(GoogleAnalyticsService::class)->dispatchPurchaseFromRequest($order->getData(), $request);
             }
 
@@ -285,6 +303,16 @@ class CheckoutController extends Controller
         $order = OrderHelper::get($data['order']['id']);
 
         if ($order->isValid()) {
+            // Idempotent fallback for orders finalized before this hook was
+            // deployed. A missing cookie does not erase prior consented data.
+            app(MailchimpAttributionService::class)->attachToOrder(
+                (int) $order->getOrder()->id,
+                $request
+            );
+            app(MailchimpOrderSynchronizer::class)->markCheckoutProcessed(
+                (int) $order->getOrder()->id
+            );
+
             $selected_loyalty = intval(session(config('session.cart') . '_loyalty', 0));
             $subscribe_to_newsletter = (bool) CheckoutSession::getNewsletter();
 

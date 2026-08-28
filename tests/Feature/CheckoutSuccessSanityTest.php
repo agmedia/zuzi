@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Tests\TestCase;
 
@@ -88,6 +89,7 @@ class CheckoutSuccessSanityTest extends TestCase
         $response = app(CheckoutController::class)->success(Request::create('/uspjeh', 'GET'));
 
         $this->assertInstanceOf(View::class, $response);
+        $this->assertNotNull($order->fresh()->checkout_processed_at);
         $this->assertSame(20, Loyalty::hasLoyaltyTotal($user->id));
         $this->assertDatabaseHas('loyalty', [
             'user_id' => $user->id,
@@ -103,6 +105,36 @@ class CheckoutSuccessSanityTest extends TestCase
             'user_id' => $user->id,
             'session_id' => 'manual-cart',
         ]);
+    }
+
+    public function test_finished_order_is_marked_before_the_success_page_is_visited(): void
+    {
+        Bus::fake();
+        config()->set('services.pelion.checkout_stock_check_enabled', false);
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $order = $this->createOrder($user, 20, null, [
+            'order_status_id' => (int) config('settings.order.status.unfinished'),
+            'checkout_processed_at' => null,
+        ]);
+
+        session()->start();
+        session([config('session.cart') => 'manual-cart']);
+
+        $response = app(CheckoutController::class)->order(Request::create(
+            '/narudzba',
+            'POST',
+            ['provjera' => (string) $order->id]
+        ));
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertSame(route('checkout.success'), $response->getTargetUrl());
+        $this->assertSame(
+            (int) config('settings.order.status.new'),
+            (int) $order->fresh()->order_status_id
+        );
+        $this->assertNotNull($order->fresh()->checkout_processed_at);
     }
 
     public function test_success_flow_saves_first_checkout_address_to_customer_details(): void
@@ -247,6 +279,12 @@ class CheckoutSuccessSanityTest extends TestCase
             $table->string('tracking_code');
             $table->boolean('shipped')->default(false);
             $table->boolean('printed')->default(false);
+            $table->timestamp('checkout_processed_at')->nullable();
+            $table->string('mailchimp_campaign_id', 100)->nullable();
+            $table->timestamp('mailchimp_ecommerce_synced_at')->nullable();
+            $table->string('mailchimp_ecommerce_financial_status', 20)->nullable();
+            $table->timestamp('mailchimp_ecommerce_last_attempt_at')->nullable();
+            $table->text('mailchimp_ecommerce_last_error')->nullable();
             $table->timestamps();
         });
 

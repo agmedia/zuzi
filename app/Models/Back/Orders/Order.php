@@ -38,6 +38,9 @@ class Order extends Model
      * @var array
      */
     protected $casts = [
+        'checkout_processed_at' => 'datetime',
+        'mailchimp_ecommerce_synced_at' => 'datetime',
+        'mailchimp_ecommerce_last_attempt_at' => 'datetime',
         'review_request_sent_at' => 'datetime',
         'shipping_tracking_updated_at' => 'datetime',
         'shipping_tracking_email_sent_at' => 'datetime',

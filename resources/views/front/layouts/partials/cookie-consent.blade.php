@@ -11,7 +11,7 @@
     $cookieAnalyticsTitle = 'Analitika';
     $cookieAnalyticsDescription = 'Pomaže nam razumjeti kako koristiš stranicu kako bismo je mogli učiniti još boljom.';
     $cookieMarketingTitle = 'Marketing';
-    $cookieMarketingDescription = 'Pomaže nam prikazati relevantnije preporuke i oglase, unutar i izvan Zuzi svijeta.';
+    $cookieMarketingDescription = 'Pomaže nam mjeriti uspješnost Google, Meta i Mailchimp kampanja te prikazati relevantnije preporuke i oglase.';
     $cookieLocale = app()->getLocale();
     $cookieDescription = $cookieMessage;
 @endphp
@@ -20,6 +20,47 @@
     window.cookieAnalyticsAllowed = window.cookieAnalyticsAllowed === true;
     window.cookieMarketingAllowed = window.cookieMarketingAllowed === true;
     window.canTrackAnalytics = () => window.cookieAnalyticsAllowed === true;
+
+    const mailchimpAttributionCookies = {
+        zuzi_mc_cid: 'mc_cid'
+    };
+    const validMailchimpIdentifier = (value) => /^[a-z0-9_-]{1,100}$/i.test(value || '');
+    const pendingMailchimpCampaignId = new URL(window.location.href).searchParams.get('mc_cid');
+    const mailchimpConsentCookie = 'zuzi_marketing_consent';
+    const mailchimpCookieMaxAge = 60 * 60 * 24 * 30;
+
+    const setMailchimpConsentState = (state) => {
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `${mailchimpConsentCookie}=${state}; Max-Age=${mailchimpCookieMaxAge}; Path=/; SameSite=Lax${secure}`;
+    };
+
+    const clearMailchimpAttribution = () => {
+        Object.keys(mailchimpAttributionCookies).forEach((cookieName) => {
+            document.cookie = `${cookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
+        });
+
+        setMailchimpConsentState('denied');
+    };
+
+    const syncMailchimpAttribution = (marketingGranted) => {
+        if (!marketingGranted) {
+            clearMailchimpAttribution();
+            return;
+        }
+
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        setMailchimpConsentState('granted');
+
+        Object.entries(mailchimpAttributionCookies).forEach(([cookieName, parameterName]) => {
+            const value = parameterName === 'mc_cid'
+                ? pendingMailchimpCampaignId
+                : new URL(window.location.href).searchParams.get(parameterName);
+
+            if (validMailchimpIdentifier(value)) {
+                document.cookie = `${cookieName}=${encodeURIComponent(value)}; Max-Age=${mailchimpCookieMaxAge}; Path=/; SameSite=Lax${secure}`;
+            }
+        });
+    };
 
     const syncGoogleConsent = () => {
         if (!window.CookieConsent) {
@@ -32,6 +73,7 @@
         window.cookieAnalyticsAllowed = analyticsGranted;
         window.cookieMarketingAllowed = marketingGranted;
         window.canTrackAnalytics = () => window.cookieAnalyticsAllowed === true;
+        syncMailchimpAttribution(marketingGranted);
 
         if (typeof window.updateGoogleConsentFromCookie === 'function') {
             window.updateGoogleConsentFromCookie(analyticsGranted, marketingGranted);
@@ -214,7 +256,7 @@
     const hasStoredCookieConsent = () => document.cookie.split(';').some((entry) => entry.trim().startsWith('cc_cookie='));
 
     const scheduleCookieConsentBoot = () => {
-        if (hasStoredCookieConsent()) {
+        if (hasStoredCookieConsent() || validMailchimpIdentifier(pendingMailchimpCampaignId)) {
             bootCookieConsent();
             return;
         }
