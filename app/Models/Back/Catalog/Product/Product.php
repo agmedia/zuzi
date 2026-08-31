@@ -816,7 +816,9 @@ class Product extends Model
      */
     private function isDuplicateSku(): bool
     {
-        $query = $this->newQuery()->where('sku', $this->request->sku);
+        // products.sku is a VARCHAR column. Keep numeric-looking SKUs bound as
+        // strings so MySQL does not treat values such as "978-..." as 978.
+        $query = $this->newQuery()->where('sku', (string) $this->request->sku);
 
         if ($this->exists) {
             $query->where('id', '!=', $this->id);

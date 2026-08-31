@@ -93,6 +93,44 @@ class ProductIdentifierAllocationTest extends TestCase
         ]);
     }
 
+    public function test_store_compares_numeric_sku_with_existing_textual_skus_exactly(): void
+    {
+        $this->createProduct('Artikl s ISBN šifrom', '978-953-11-092', 1);
+        $categoryId = $this->createCategory();
+        $token = (string) Str::uuid();
+
+        DB::table('product_identifier_reservations')->insert([
+            'token' => $token,
+            'sku' => 978,
+            'itemid' => 2,
+            'expires_at' => now()->addHour(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->post(route('products.store'), [
+            ProductIdentifierAllocator::SESSION_KEY => $token,
+            'name' => 'Artikl s automatskom šifrom',
+            'sku' => 978,
+            'itemid' => 2,
+            'price' => 10,
+            'quantity' => 1,
+            'tax_id' => 1,
+            'category' => [$categoryId],
+        ]);
+
+        $response->assertRedirect(route('products'));
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('products', [
+            'name' => 'Artikl s automatskom šifrom',
+            'sku' => '978',
+            'itemid' => 2,
+        ]);
+        $this->assertDatabaseMissing('product_identifier_reservations', [
+            'token' => $token,
+        ]);
+    }
+
     public function test_expired_reservations_are_released_for_reuse(): void
     {
         $expiredReservation = $this->get(route('products.create'))
