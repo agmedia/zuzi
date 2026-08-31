@@ -61,10 +61,12 @@ class ZnanjeImportTest extends TestCase
             ->assertSee('<option value="505">Strane knjige (engleske)</option>', false)
             ->assertSee(json_encode(route('znanje-import.refresh-start')), false)
             ->assertSee(json_encode(route('znanje-import.refresh-step')), false)
+            ->assertSee(json_encode(route('znanje-import.refresh-cancel')), false)
             ->assertViewHas('importUi', function (array $importUi) {
                 return $importUi['supports_batched_refresh'] === true
                     && $importUi['refresh_start_route'] === 'znanje-import.refresh-start'
-                    && $importUi['refresh_step_route'] === 'znanje-import.refresh-step';
+                    && $importUi['refresh_step_route'] === 'znanje-import.refresh-step'
+                    && $importUi['refresh_cancel_route'] === 'znanje-import.refresh-cancel';
             })
             ->assertSeeInOrder([
                 'data-source-row="' . $newer->id . '"',
@@ -157,6 +159,49 @@ class ZnanjeImportTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('refresh_scope');
+    }
+
+    public function test_refresh_cancel_ajax_validates_the_token_and_is_idempotent(): void
+    {
+        $admin = $this->admin();
+        $synchronizer = app(ZnanjeFeedSynchronizer::class);
+        $started = $synchronizer->start();
+        $token = $started['token'];
+
+        $stepLock = Cache::lock('znanje-import-feed-step:' . $token, 60);
+        $this->assertTrue($stepLock->get());
+        try {
+            $this->actingAs($admin)
+                ->postJson(route('znanje-import.refresh-cancel'), ['token' => $token])
+                ->assertStatus(503)
+                ->assertJsonPath('retryable', true);
+            $this->assertTrue(Cache::has('znanje-import-feed-active-session'));
+            $this->assertTrue(Cache::has('znanje-import-feed-state:' . $token));
+        } finally {
+            $stepLock->release();
+        }
+
+        foreach ([1, 2] as $_attempt) {
+            $this->actingAs($admin)
+                ->postJson(route('znanje-import.refresh-cancel'), ['token' => $token])
+                ->assertOk()
+                ->assertJson([
+                    'success' => true,
+                    'done' => true,
+                    'cancelled' => true,
+                    'message' => 'Znanje osvježavanje je prekinuto.',
+                ]);
+        }
+        $this->assertFalse(Cache::has('znanje-import-feed-active-session'));
+        $this->assertSame(
+            'cancelled',
+            Cache::get('znanje-import-feed-state:' . $token)['phase'] ?? null
+        );
+
+        $this->actingAs($admin)
+            ->postJson(route('znanje-import.refresh-cancel'), ['token' => 'not-a-uuid'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('token');
     }
 
     public function test_refresh_step_ajax_hard_caps_one_page_and_finalizes_a_ready_session(): void

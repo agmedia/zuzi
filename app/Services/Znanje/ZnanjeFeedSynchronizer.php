@@ -448,23 +448,54 @@ class ZnanjeFeedSynchronizer
         }
     }
 
-    public function cancel(string $token, bool $remember = true): void
+    public function cancel(string $token, bool $remember = true): array
     {
         if (! $this->validToken($token)) {
-            return;
+            return ['cancelled' => true, 'completed' => false];
         }
-        $state = Cache::get($this->stateKey($token));
-        $this->deleteStagingToken($token);
-        if ($remember && is_array($state)) {
-            $state['phase'] = 'cancelled';
-            $state['message'] = 'Znanje osvježavanje je prekinuto.';
-            $state['error'] = null;
-            $state['updated_at'] = now()->toIso8601String();
-            Cache::put($this->stateKey($token), $state, 600);
-        } else {
-            Cache::forget($this->stateKey($token));
+        // Never remove staging while step/finalize is reading or merging it.
+        // The UI stops scheduling new steps and retries this short operation
+        // once the currently active request releases the same mutex.
+        $mutex = Cache::lock(self::STEP_LOCK_PREFIX . $token, 60);
+        if (! $mutex->get()) {
+            throw new ZnanjeRetryableException(
+                'Trenutačni korak još završava; prekid će se automatski ponoviti.',
+                503,
+                1
+            );
         }
-        $this->releaseSession($token);
+
+        try {
+            $state = Cache::get($this->stateKey($token));
+            if (is_array($state) && ($state['phase'] ?? null) === 'complete') {
+                $this->releaseSession($token);
+
+                return [
+                    'cancelled' => false,
+                    'completed' => true,
+                    'message' => 'Znanje osvježavanje je već završeno.',
+                ];
+            }
+            $this->deleteStagingToken($token);
+            if ($remember && is_array($state)) {
+                $state['phase'] = 'cancelled';
+                $state['message'] = 'Znanje osvježavanje je prekinuto.';
+                $state['error'] = null;
+                $state['updated_at'] = now()->toIso8601String();
+                Cache::put($this->stateKey($token), $state, 600);
+            } else {
+                Cache::forget($this->stateKey($token));
+            }
+            $this->releaseSession($token);
+
+            return [
+                'cancelled' => true,
+                'completed' => false,
+                'message' => 'Znanje osvježavanje je prekinuto.',
+            ];
+        } finally {
+            $mutex->release();
+        }
     }
 
     private function validateNextRoot(array &$state): void

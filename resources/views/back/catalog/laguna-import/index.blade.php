@@ -95,6 +95,7 @@
             'supports_batched_refresh' => false,
             'refresh_start_route' => null,
             'refresh_step_route' => null,
+            'refresh_cancel_route' => null,
             'refresh_root_options' => [],
         ], $importUi ?? []);
         $importUi['supports_source_publisher_mapping'] = $importUi['supports_source_publisher_mapping'] ?? $importUi['supports_source_mapping'];
@@ -107,6 +108,9 @@
             : null;
         $feedRefreshStepEndpoint = $importUi['supports_batched_refresh'] && $importUi['refresh_step_route']
             ? route($importUi['refresh_step_route'])
+            : null;
+        $feedRefreshCancelEndpoint = $importUi['supports_batched_refresh'] && $importUi['refresh_cancel_route']
+            ? route($importUi['refresh_cancel_route'])
             : null;
         $sourceGenres = collect($sourceGenres ?? []);
         $sourceTaxonomy = (array) ($sourceTaxonomy ?? []);
@@ -149,9 +153,14 @@
                                 </select>
                             </div>
                         @endif
-                        <button class="btn btn-hero-primary" type="submit">
+                        <button class="btn btn-hero-primary" type="submit" data-feed-refresh-submit>
                             <i class="fa fa-sync-alt mr-1"></i> Osvježi feed
                         </button>
+                        @if($feedRefreshCancelEndpoint)
+                            <button class="btn btn-light border ml-sm-2 mt-2 mt-sm-0 d-none" type="button" data-feed-refresh-cancel>
+                                <i class="fa fa-stop-circle mr-1"></i> Prekini
+                            </button>
+                        @endif
                     </div>
                 </form>
             </div>
@@ -934,6 +943,7 @@
             const supportsBatchedRefresh = Boolean(@json($importUi['supports_batched_refresh']));
             const feedRefreshStartEndpoint = @json($feedRefreshStartEndpoint);
             const feedRefreshStepEndpoint = @json($feedRefreshStepEndpoint);
+            const feedRefreshCancelEndpoint = @json($feedRefreshCancelEndpoint);
             const feedRefreshStorageKey = @json($importUi['slug'] . '-import-refresh-token');
             const feedRefreshScopeStorageKey = @json($importUi['slug'] . '-import-refresh-scope');
             const feedRefreshState = document.querySelector('[data-feed-refresh-state]');
@@ -941,6 +951,7 @@
             const feedRefreshPages = document.querySelector('[data-feed-refresh-pages]');
             const feedRefreshProgress = document.querySelector('[data-feed-refresh-progress]');
             const feedRefreshScope = document.querySelector('[data-feed-refresh-scope]');
+            const feedRefreshCancelButton = document.querySelector('[data-feed-refresh-cancel]');
             const progressText = document.querySelector('[data-progress]');
             const progressWrap = document.querySelector('[data-progress-bar-wrap]');
             const progressBar = document.querySelector('[data-progress-bar]');
@@ -963,6 +974,7 @@
             let inspectAllStopRequested = false;
             let inspectAllBulkResetRequested = false;
             let feedRefreshRunning = false;
+            let feedRefreshStopRequested = false;
 
             function storedFeedRefreshToken() {
                 try {
@@ -1060,6 +1072,7 @@
                 if (!response.ok || payload.success === false) {
                     const exception = new Error(payload.message || 'Osvježavanje feeda privremeno nije uspjelo.');
                     exception.status = response.status;
+                    exception.retryable = Boolean(payload.retryable);
                     throw exception;
                 }
 
@@ -1080,7 +1093,7 @@
                 if (payload.token) {
                     storeFeedRefreshToken(String(payload.token), scope);
                 }
-                feedRefreshState.classList.remove('d-none', 'alert-danger', 'alert-success');
+                feedRefreshState.classList.remove('d-none', 'alert-danger', 'alert-success', 'alert-warning');
                 feedRefreshState.classList.add(payload.done ? 'alert-success' : 'alert-info');
                 if (feedRefreshMessage) {
                     feedRefreshMessage.textContent = payload.message
@@ -1099,14 +1112,74 @@
                 }
             }
 
+            function setFeedRefreshCancelState(visible, pending = false) {
+                if (!feedRefreshCancelButton) {
+                    return;
+                }
+                feedRefreshCancelButton.classList.toggle('d-none', !visible);
+                feedRefreshCancelButton.disabled = pending;
+                feedRefreshCancelButton.innerHTML = pending
+                    ? '<i class="fa fa-spinner fa-spin mr-1"></i> Prekidam…'
+                    : '<i class="fa fa-stop-circle mr-1"></i> Prekini';
+            }
+
+            async function cancelFeedRefresh(token) {
+                let cancelResult = { cancelled: true, completed: false };
+                if (token && feedRefreshCancelEndpoint) {
+                    for (let attempt = 0; attempt < 120; attempt++) {
+                        try {
+                            cancelResult = await postFeedRefresh(feedRefreshCancelEndpoint, { token });
+                            break;
+                        } catch (error) {
+                            if (!error.retryable || attempt === 119) {
+                                throw error;
+                            }
+                            await new Promise(resolve => window.setTimeout(resolve, 500));
+                        }
+                    }
+                }
+                storeFeedRefreshToken('');
+                removeFeedRefreshTokenFromUrl();
+                feedRefreshStopRequested = false;
+                setFeedRefreshCancelState(false);
+                if (feedRefreshScope) {
+                    feedRefreshScope.disabled = false;
+                }
+                if (feedRefreshState) {
+                    feedRefreshState.classList.remove('d-none', 'alert-info', 'alert-danger', 'alert-success');
+                    feedRefreshState.classList.add(cancelResult.completed ? 'alert-success' : 'alert-warning');
+                }
+                if (feedRefreshMessage) {
+                    feedRefreshMessage.textContent = cancelResult.completed
+                        ? 'Znanje osvježavanje je već završeno.'
+                        : 'Znanje osvježavanje je prekinuto. Možete odabrati što želite osvježiti.';
+                }
+                if (feedRefreshPages) {
+                    feedRefreshPages.textContent = '';
+                }
+                const submitButton = document.querySelector('[data-feed-refresh-submit]');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = cancelResult.completed
+                        ? '<i class="fa fa-check mr-1"></i> Feed je osvježen'
+                        : '<i class="fa fa-sync-alt mr-1"></i> Osvježi feed';
+                }
+
+                if (cancelResult.completed) {
+                    window.setTimeout(() => window.location.reload(), 900);
+                }
+            }
+
             async function runBatchedFeedRefresh(resumeToken = '') {
                 if (feedRefreshRunning || !feedRefreshStartEndpoint || !feedRefreshStepEndpoint) {
                     return;
                 }
                 const form = document.querySelector('[data-refresh-form]');
-                const button = form?.querySelector('button');
+                const button = form?.querySelector('[data-feed-refresh-submit]');
                 const requestedScope = selectedFeedRefreshScope();
                 feedRefreshRunning = true;
+                feedRefreshStopRequested = false;
+                setFeedRefreshCancelState(true);
                 if (button) {
                     button.disabled = true;
                     button.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> Preuzimam feed…';
@@ -1129,7 +1202,17 @@
                     }
 
                     do {
+                        if (feedRefreshStopRequested) {
+                            setFeedRefreshCancelState(true, true);
+                            await cancelFeedRefresh(token);
+                            return;
+                        }
                         payload = await postFeedRefresh(feedRefreshStepEndpoint, { token });
+                        if (feedRefreshStopRequested) {
+                            setFeedRefreshCancelState(true, true);
+                            await cancelFeedRefresh(token);
+                            return;
+                        }
                         renderFeedRefresh(payload);
                         if (!payload.done) {
                             await new Promise(resolve => window.setTimeout(resolve, 125));
@@ -1137,6 +1220,7 @@
                     } while (!payload.done);
 
                     storeFeedRefreshToken('');
+                    setFeedRefreshCancelState(false);
                     if (button) {
                         button.innerHTML = '<i class="fa fa-check mr-1"></i> Feed je osvježen';
                     }
@@ -1146,12 +1230,22 @@
                         window.location.assign(cleanUrl.toString());
                     }, 900);
                 } catch (error) {
+                    if (feedRefreshStopRequested && token) {
+                        try {
+                            setFeedRefreshCancelState(true, true);
+                            await cancelFeedRefresh(token);
+                            return;
+                        } catch (cancelError) {
+                            error = cancelError;
+                        }
+                    }
                     if (Number(error.status) === 404 || Number(error.status) === 410) {
                         storeFeedRefreshToken('');
                         removeFeedRefreshTokenFromUrl();
+                        setFeedRefreshCancelState(false);
                     }
                     if (feedRefreshState) {
-                        feedRefreshState.classList.remove('d-none', 'alert-info', 'alert-success');
+                        feedRefreshState.classList.remove('d-none', 'alert-info', 'alert-success', 'alert-warning');
                         feedRefreshState.classList.add('alert-danger');
                     }
                     if (feedRefreshMessage) {
@@ -1159,15 +1253,42 @@
                     }
                     if (button) {
                         button.disabled = false;
-                        button.innerHTML = '<i class="fa fa-redo mr-1"></i> Nastavi osvježavanje';
+                        button.innerHTML = storedFeedRefreshToken()
+                            ? '<i class="fa fa-redo mr-1"></i> Nastavi osvježavanje'
+                            : '<i class="fa fa-sync-alt mr-1"></i> Osvježi feed';
                     }
                     if (feedRefreshScope) {
                         feedRefreshScope.disabled = Boolean(storedFeedRefreshToken());
+                    }
+                    feedRefreshStopRequested = false;
+                    if (storedFeedRefreshToken()) {
+                        setFeedRefreshCancelState(true);
                     }
                 } finally {
                     feedRefreshRunning = false;
                 }
             }
+
+            feedRefreshCancelButton?.addEventListener('click', async function () {
+                const token = storedFeedRefreshToken();
+                feedRefreshStopRequested = true;
+                setFeedRefreshCancelState(true, true);
+                if (feedRefreshMessage) {
+                    feedRefreshMessage.textContent = 'Prekidam Znanje osvježavanje nakon trenutačnog kratkog koraka…';
+                }
+                if (feedRefreshRunning) {
+                    return;
+                }
+                try {
+                    await cancelFeedRefresh(token);
+                } catch (error) {
+                    feedRefreshStopRequested = false;
+                    setFeedRefreshCancelState(true);
+                    if (feedRefreshMessage) {
+                        feedRefreshMessage.textContent = error.message || 'Prekid osvježavanja nije uspio.';
+                    }
+                }
+            });
 
             const selectedIds = () => Array.from(document.querySelectorAll('[data-source-checkbox]:checked')).map(input => input.value);
             const endpoint = (action, id) => endpointTemplates[action].replace('__ID__', id);

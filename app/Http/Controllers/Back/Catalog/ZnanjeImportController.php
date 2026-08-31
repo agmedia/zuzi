@@ -134,6 +134,7 @@ class ZnanjeImportController extends Controller
             'supports_batched_refresh' => true,
             'refresh_start_route' => 'znanje-import.refresh-start',
             'refresh_step_route' => 'znanje-import.refresh-step',
+            'refresh_cancel_route' => 'znanje-import.refresh-cancel',
             'refresh_root_options' => [
                 'all' => 'Sve dostupne knjige',
                 '500' => 'Knjige',
@@ -270,6 +271,24 @@ class ZnanjeImportController extends Controller
                 'message' => $exception->getMessage(),
             ]), $terminal ? 410 : 409);
         }
+    }
+
+    public function refreshCancel(Request $request, ZnanjeFeedSynchronizer $synchronizer)
+    {
+        $validated = $request->validate([
+            'token' => 'required|uuid',
+        ]);
+
+        try {
+            $result = $synchronizer->cancel((string) $validated['token'], true);
+        } catch (ZnanjeRetryableException $exception) {
+            return $this->retryableResponse($exception);
+        }
+
+        return response()->json(array_merge([
+            'success' => true,
+            'done' => true,
+        ], $result));
     }
 
     public function inspect(

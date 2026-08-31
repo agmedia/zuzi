@@ -166,6 +166,7 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('znanje-import', [ZnanjeImportController::class, 'index'])->name('znanje-import.index');
         Route::post('znanje-import/refresh/start', [ZnanjeImportController::class, 'refreshStart'])->name('znanje-import.refresh-start');
         Route::post('znanje-import/refresh/step', [ZnanjeImportController::class, 'refreshStep'])->name('znanje-import.refresh-step');
+        Route::post('znanje-import/refresh/cancel', [ZnanjeImportController::class, 'refreshCancel'])->name('znanje-import.refresh-cancel');
         Route::post('znanje-import/refresh', [ZnanjeImportController::class, 'refresh'])->name('znanje-import.refresh');
         Route::post('znanje-import/settings', [ZnanjeImportController::class, 'updateSettings'])->name('znanje-import.settings');
         Route::get('znanje-import/inspection-queue', [ZnanjeImportController::class, 'inspectionQueue'])->name('znanje-import.inspection-queue');
