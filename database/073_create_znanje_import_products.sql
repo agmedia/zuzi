@@ -102,6 +102,3 @@ CREATE TABLE IF NOT EXISTS `znanje_import_products` (
 
 SHOW TABLES LIKE 'znanje_import_feed_rows';
 SHOW TABLES LIKE 'znanje_import_products';
-
--- Brza provjera po EAN-u koristi indeks iz database/069_add_products_ean_index.sql.
-SHOW INDEX FROM `products` WHERE `Key_name` = 'products_ean_index';
