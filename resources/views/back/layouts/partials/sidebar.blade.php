@@ -62,7 +62,7 @@
                     </a>
                 </li>
                 {{--<li class="nav-main-heading">Various</li>--}}
-                <li class="nav-main-item{{ request()->is(['admin/catalog/*']) && ! request()->routeIs(['laguna-import.*', 'delfi-import.*', 'novella-import.*']) ? ' open' : '' }}">
+                <li class="nav-main-item{{ request()->is(['admin/catalog/*']) && ! request()->routeIs(['laguna-import.*', 'delfi-import.*', 'novella-import.*', 'znanje-import.*']) ? ' open' : '' }}">
                     <a class="nav-main-link nav-main-link-submenu" data-toggle="submenu" aria-haspopup="true" aria-expanded="true" href="#">
                         <i class="nav-main-link-icon si si-layers"></i>
                         <span class="nav-main-link-name">Katalog</span>
@@ -188,7 +188,7 @@
                     </a>
                 </li>
 
-                <li class="nav-main-item{{ request()->is(['admin/settings/*']) || request()->routeIs(['laguna-import.*', 'delfi-import.*', 'novella-import.*']) ? ' open' : '' }}">
+                <li class="nav-main-item{{ request()->is(['admin/settings/*']) || request()->routeIs(['laguna-import.*', 'delfi-import.*', 'novella-import.*', 'znanje-import.*']) ? ' open' : '' }}">
                     <a class="nav-main-link nav-main-link-submenu" data-toggle="submenu" aria-haspopup="true" aria-expanded="true" href="#">
                         <i class="nav-main-link-icon si si-settings"></i>
                         <span class="nav-main-link-name">Postavke</span>
@@ -218,6 +218,11 @@
                         <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs('novella-import.*') ? ' active' : '' }}" href="{{ route('novella-import.index') }}">
                                 <span class="nav-main-link-name">Novella import</span>
+                            </a>
+                        </li>
+                        <li class="nav-main-item">
+                            <a class="nav-main-link{{ request()->routeIs('znanje-import.*') ? ' active' : '' }}" href="{{ route('znanje-import.index') }}">
+                                <span class="nav-main-link-name">Znanje import</span>
                             </a>
                         </li>
                         <li class="nav-main-item">

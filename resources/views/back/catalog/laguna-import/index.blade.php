@@ -92,12 +92,21 @@
             'bulk_inspection_route' => null,
             'bulk_inspection_limit' => 100,
             'bulk_inspection_delay_ms' => 350,
+            'supports_batched_refresh' => false,
+            'refresh_start_route' => null,
+            'refresh_step_route' => null,
         ], $importUi ?? []);
         $importUi['supports_source_publisher_mapping'] = $importUi['supports_source_publisher_mapping'] ?? $importUi['supports_source_mapping'];
         $importUi['supports_source_taxonomy_mapping'] = $importUi['supports_source_taxonomy_mapping'] ?? $importUi['supports_source_mapping'];
         $productsTabId = $importUi['slug'] . '-products';
         $settingsTabId = $importUi['slug'] . '-settings';
         $routePrefix = $importUi['route_prefix'];
+        $feedRefreshStartEndpoint = $importUi['supports_batched_refresh'] && $importUi['refresh_start_route']
+            ? route($importUi['refresh_start_route'])
+            : null;
+        $feedRefreshStepEndpoint = $importUi['supports_batched_refresh'] && $importUi['refresh_step_route']
+            ? route($importUi['refresh_step_route'])
+            : null;
         $sourceGenres = collect($sourceGenres ?? []);
         $sourceTaxonomy = (array) ($sourceTaxonomy ?? []);
         $genreCategoryMap = (array) ($settings['genre_category_map'] ?? []);
@@ -116,7 +125,7 @@
         $selectedSourceCategory = trim((string) request('source_category'));
         $selectedSourceGenre = trim((string) request('source_genre'));
         $hasListFilters = request('search') || request('status') || request('source_category') || request('source_genre');
-        $statusFilterQuery = request()->except(['page', 'status', 'tab', 'product_type']);
+        $statusFilterQuery = request()->except(['page', 'status', 'tab', 'product_type', 'refresh_token']);
     @endphp
 
     <div class="bg-body-light">
@@ -126,7 +135,7 @@
                     <h1 class="flex-sm-fill font-size-h2 font-w400 mt-2 mb-0 mb-sm-2">{{ $importUi['name'] }} import</h1>
                     <div class="text-muted">{{ $importUi['subtitle'] }}</div>
                 </div>
-                <form action="{{ route($routePrefix . '.refresh') }}" method="post" class="my-2" data-refresh-form>
+                <form action="{{ route($routePrefix . '.refresh') }}" method="post" class="my-2 text-sm-right" data-refresh-form>
                     @csrf
                     <button class="btn btn-hero-primary" type="submit">
                         <i class="fa fa-sync-alt mr-1"></i> Osvježi feed
@@ -163,6 +172,19 @@
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
+            </div>
+        @endif
+
+        @if($importUi['supports_batched_refresh'])
+            <div class="alert alert-info d-none" role="status" aria-live="polite" data-feed-refresh-state>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="font-w600" data-feed-refresh-message>Pripremam preuzimanje…</div>
+                    <div class="small ml-3 text-nowrap" data-feed-refresh-pages></div>
+                </div>
+                <div class="progress" style="height:8px">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:0" data-feed-refresh-progress></div>
+                </div>
+                <div class="small mt-2 mb-0">Preuzimanje ide u kratkim koracima i može se sigurno nastaviti ako se stranica prekine.</div>
             </div>
         @endif
 
@@ -896,6 +918,14 @@
             updatePricePreview();
 
             const csrf = @json(csrf_token());
+            const supportsBatchedRefresh = Boolean(@json($importUi['supports_batched_refresh']));
+            const feedRefreshStartEndpoint = @json($feedRefreshStartEndpoint);
+            const feedRefreshStepEndpoint = @json($feedRefreshStepEndpoint);
+            const feedRefreshStorageKey = @json($importUi['slug'] . '-import-refresh-token');
+            const feedRefreshState = document.querySelector('[data-feed-refresh-state]');
+            const feedRefreshMessage = document.querySelector('[data-feed-refresh-message]');
+            const feedRefreshPages = document.querySelector('[data-feed-refresh-pages]');
+            const feedRefreshProgress = document.querySelector('[data-feed-refresh-progress]');
             const progressText = document.querySelector('[data-progress]');
             const progressWrap = document.querySelector('[data-progress-bar-wrap]');
             const progressBar = document.querySelector('[data-progress-bar]');
@@ -917,6 +947,160 @@
             let inspectAllRunning = false;
             let inspectAllStopRequested = false;
             let inspectAllBulkResetRequested = false;
+            let feedRefreshRunning = false;
+
+            function storedFeedRefreshToken() {
+                try {
+                    const stored = window.localStorage.getItem(feedRefreshStorageKey) || '';
+                    return stored || (new URL(window.location.href)).searchParams.get('refresh_token') || '';
+                } catch (error) {
+                    try {
+                        return (new URL(window.location.href)).searchParams.get('refresh_token') || '';
+                    } catch (urlError) {
+                        return '';
+                    }
+                }
+            }
+
+            function storeFeedRefreshToken(token) {
+                try {
+                    if (token) {
+                        window.localStorage.setItem(feedRefreshStorageKey, token);
+                    } else {
+                        window.localStorage.removeItem(feedRefreshStorageKey);
+                    }
+                } catch (error) {
+                    // Preuzimanje radi i kad preglednik ne dopušta localStorage.
+                }
+            }
+
+            function removeFeedRefreshTokenFromUrl() {
+                try {
+                    const cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('refresh_token');
+                    window.history.replaceState(null, '', cleanUrl.toString());
+                } catch (error) {
+                    // URL ostaje nepromijenjen samo u vrlo starom pregledniku.
+                }
+            }
+
+            async function postFeedRefresh(endpoint, values = {}) {
+                const body = new URLSearchParams();
+                Object.entries(values).forEach(([key, value]) => body.set(key, String(value)));
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'X-CSRF-TOKEN': csrf,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: body.toString()
+                });
+                const text = await response.text();
+                let payload = {};
+                try {
+                    payload = text ? JSON.parse(text) : {};
+                } catch (error) {
+                    payload = {};
+                }
+                if (!response.ok || payload.success === false) {
+                    const exception = new Error(payload.message || 'Osvježavanje feeda privremeno nije uspjelo.');
+                    exception.status = response.status;
+                    throw exception;
+                }
+
+                return payload;
+            }
+
+            function renderFeedRefresh(payload = {}) {
+                if (!feedRefreshState) {
+                    return;
+                }
+                const processed = Math.max(0, Number(payload.processed_pages || 0));
+                const total = Math.max(processed, Number(payload.total_pages || 0));
+                const percent = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+                const staged = Math.max(0, Number(payload.staged || 0));
+                feedRefreshState.classList.remove('d-none', 'alert-danger', 'alert-success');
+                feedRefreshState.classList.add(payload.done ? 'alert-success' : 'alert-info');
+                if (feedRefreshMessage) {
+                    feedRefreshMessage.textContent = payload.message
+                        || (payload.done ? 'Znanje feed je uspješno osvježen.' : 'Preuzimam dostupne Znanje knjige…');
+                }
+                if (feedRefreshPages) {
+                    feedRefreshPages.textContent = total > 0
+                        ? `${processed.toLocaleString('hr-HR')} / ${total.toLocaleString('hr-HR')} stranica · ${staged.toLocaleString('hr-HR')} knjiga`
+                        : `${staged.toLocaleString('hr-HR')} knjiga`;
+                }
+                if (feedRefreshProgress) {
+                    feedRefreshProgress.style.width = `${payload.done ? 100 : percent}%`;
+                    feedRefreshProgress.setAttribute('aria-valuenow', String(payload.done ? 100 : percent));
+                    feedRefreshProgress.classList.toggle('progress-bar-animated', !payload.done);
+                }
+            }
+
+            async function runBatchedFeedRefresh(resumeToken = '') {
+                if (feedRefreshRunning || !feedRefreshStartEndpoint || !feedRefreshStepEndpoint) {
+                    return;
+                }
+                const form = document.querySelector('[data-refresh-form]');
+                const button = form?.querySelector('button');
+                feedRefreshRunning = true;
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> Preuzimam feed…';
+                }
+
+                let token = resumeToken;
+                try {
+                    let payload;
+                    if (!token) {
+                        payload = await postFeedRefresh(feedRefreshStartEndpoint);
+                        token = String(payload.token || '');
+                        if (!token) {
+                            throw new Error('Znanje osvježavanje nije vratilo identifikator postupka.');
+                        }
+                        storeFeedRefreshToken(token);
+                        renderFeedRefresh(payload);
+                    }
+
+                    do {
+                        payload = await postFeedRefresh(feedRefreshStepEndpoint, { token });
+                        renderFeedRefresh(payload);
+                        if (!payload.done) {
+                            await new Promise(resolve => window.setTimeout(resolve, 125));
+                        }
+                    } while (!payload.done);
+
+                    storeFeedRefreshToken('');
+                    if (button) {
+                        button.innerHTML = '<i class="fa fa-check mr-1"></i> Feed je osvježen';
+                    }
+                    window.setTimeout(() => {
+                        const cleanUrl = new URL(window.location.href);
+                        cleanUrl.searchParams.delete('refresh_token');
+                        window.location.assign(cleanUrl.toString());
+                    }, 900);
+                } catch (error) {
+                    if (Number(error.status) === 404 || Number(error.status) === 410) {
+                        storeFeedRefreshToken('');
+                        removeFeedRefreshTokenFromUrl();
+                    }
+                    if (feedRefreshState) {
+                        feedRefreshState.classList.remove('d-none', 'alert-info', 'alert-success');
+                        feedRefreshState.classList.add('alert-danger');
+                    }
+                    if (feedRefreshMessage) {
+                        feedRefreshMessage.textContent = error.message || 'Osvježavanje feeda je prekinuto.';
+                    }
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fa fa-redo mr-1"></i> Nastavi osvježavanje';
+                    }
+                } finally {
+                    feedRefreshRunning = false;
+                }
+            }
 
             const selectedIds = () => Array.from(document.querySelectorAll('[data-source-checkbox]:checked')).map(input => input.value);
             const endpoint = (action, id) => endpointTemplates[action].replace('__ID__', id);
@@ -1463,9 +1647,18 @@
 
             document.querySelector('[data-refresh-form]')?.addEventListener('submit', event => {
                 const button = event.currentTarget.querySelector('button');
+                if (supportsBatchedRefresh) {
+                    event.preventDefault();
+                    runBatchedFeedRefresh(storedFeedRefreshToken());
+                    return;
+                }
                 button.disabled = true;
                 button.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> Preuzimam i uspoređujem...';
             });
+
+            if (supportsBatchedRefresh && storedFeedRefreshToken()) {
+                runBatchedFeedRefresh(storedFeedRefreshToken());
+            }
 
             updateSelectionState();
         });

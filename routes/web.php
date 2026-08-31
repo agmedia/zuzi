@@ -10,6 +10,7 @@ use App\Http\Controllers\Back\Catalog\ProductController;
 use App\Http\Controllers\Back\Catalog\PublisherController;
 use App\Http\Controllers\Back\Catalog\LagunaImportController;
 use App\Http\Controllers\Back\Catalog\NovellaImportController;
+use App\Http\Controllers\Back\Catalog\ZnanjeImportController;
 use App\Http\Controllers\Back\DashboardController;
 use App\Http\Controllers\Back\ContractWithdrawalController as AdminContractWithdrawalController;
 use App\Http\Controllers\Back\OrderController;
@@ -160,6 +161,16 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('novella-import/inspection-queue', [NovellaImportController::class, 'inspectionQueue'])->name('novella-import.inspection-queue');
         Route::post('novella-import/{novellaImportProduct}/inspect', [NovellaImportController::class, 'inspect'])->name('novella-import.inspect');
         Route::post('novella-import/{novellaImportProduct}/import', [NovellaImportController::class, 'import'])->name('novella-import.import');
+
+        // ZNANJE IMPORT
+        Route::get('znanje-import', [ZnanjeImportController::class, 'index'])->name('znanje-import.index');
+        Route::post('znanje-import/refresh/start', [ZnanjeImportController::class, 'refreshStart'])->name('znanje-import.refresh-start');
+        Route::post('znanje-import/refresh/step', [ZnanjeImportController::class, 'refreshStep'])->name('znanje-import.refresh-step');
+        Route::post('znanje-import/refresh', [ZnanjeImportController::class, 'refresh'])->name('znanje-import.refresh');
+        Route::post('znanje-import/settings', [ZnanjeImportController::class, 'updateSettings'])->name('znanje-import.settings');
+        Route::get('znanje-import/inspection-queue', [ZnanjeImportController::class, 'inspectionQueue'])->name('znanje-import.inspection-queue');
+        Route::post('znanje-import/{znanjeImportProduct}/inspect', [ZnanjeImportController::class, 'inspect'])->name('znanje-import.inspect');
+        Route::post('znanje-import/{znanjeImportProduct}/import', [ZnanjeImportController::class, 'import'])->name('znanje-import.import');
     });
 
     // NARUDŽBE

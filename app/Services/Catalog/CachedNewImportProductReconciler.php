@@ -5,6 +5,7 @@ namespace App\Services\Catalog;
 use App\Models\Back\Catalog\DelfiImportProduct;
 use App\Models\Back\Catalog\LagunaImportProduct;
 use App\Models\Back\Catalog\NovellaImportProduct;
+use App\Models\Back\Catalog\ZnanjeImportProduct;
 use App\Models\Back\Catalog\Product\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -130,7 +131,9 @@ class CachedNewImportProductReconciler
             $titleMatches = $pair['name'] !== '' && $pair['author'] !== ''
                 ? $titleAuthorMap->get($this->titleAuthorKey($pair['name'], $pair['author']), collect())
                 : collect();
-            $matches = $source instanceof NovellaImportProduct && $identifierMatches->isNotEmpty()
+            $identifierIsAuthoritative = $source instanceof NovellaImportProduct
+                || $source instanceof ZnanjeImportProduct;
+            $matches = $identifierIsAuthoritative && $identifierMatches->isNotEmpty()
                 ? $identifierMatches
                 : $identifierMatches->concat($titleMatches)->unique('id')->values();
 
