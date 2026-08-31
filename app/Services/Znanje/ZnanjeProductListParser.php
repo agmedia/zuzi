@@ -61,25 +61,40 @@ class ZnanjeProductListParser
         }
 
         $items = [];
+        $skippedItems = [];
         $seen = [];
         foreach ($cards as $card) {
             if (! $card instanceof DOMElement) {
                 continue;
             }
-            $item = $this->parseCard($xpath, $card, $roots[$rootCategoryId]['name']);
-            if (isset($seen[$item['external_id']])) {
+            $cardResult = $this->parseCard($xpath, $card, $roots[$rootCategoryId]['name']);
+            $item = $cardResult['item'];
+            $skippedItem = $cardResult['skipped'];
+            $externalId = (string) (($item ?? $skippedItem)['external_id'] ?? '');
+            if (isset($seen[$externalId])) {
                 throw new ZnanjeTerminalException(
-                    'Znanje stranica sadrži ponovljeni artikl ' . $item['external_id'] . '.'
+                    'Znanje stranica sadrži ponovljeni artikl ' . $externalId . '.'
                 );
             }
-            $seen[$item['external_id']] = true;
+            $seen[$externalId] = true;
+            if ($skippedItem !== null) {
+                $skippedItems[] = $skippedItem;
+                continue;
+            }
             $items[] = $item;
         }
 
         $totalPages = (int) ceil($total / ZnanjeProductListClient::PER_PAGE);
+        $skippedReasons = array_count_values(array_column($skippedItems, 'reason'));
 
         return [
             'items' => $items,
+            'skipped' => [
+                'count' => count($skippedItems),
+                'ids' => array_values(array_column($skippedItems, 'external_id')),
+                'reasons' => $skippedReasons,
+                'items' => $skippedItems,
+            ],
             'total' => $total,
             'total_pages' => $totalPages,
             'page' => $page,
@@ -160,7 +175,15 @@ class ZnanjeProductListParser
         $genres = array_values(array_filter($categories, fn (string $value) => $value !== $rootName));
         [$regularPrice, $salePrice] = $this->prices($xpath, $card, $metadata);
         if ($regularPrice === null || $regularPrice <= 0) {
-            throw new ZnanjeTerminalException('Znanje artikl ' . $remoteId . ' nema valjanu EUR cijenu.');
+            return [
+                'item' => null,
+                'skipped' => [
+                    'external_id' => (string) $remoteId,
+                    'remote_product_id' => $remoteId,
+                    'reason' => 'invalid_eur_price',
+                    'message' => 'Znanje artikl ' . $remoteId . ' nema valjanu EUR cijenu.',
+                ],
+            ];
         }
 
         $year = $this->positiveInteger($metadata[13] ?? null);
@@ -199,7 +222,10 @@ class ZnanjeProductListParser
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION
         ));
 
-        return $item;
+        return [
+            'item' => $item,
+            'skipped' => null,
+        ];
     }
 
     private function prices(DOMXPath $xpath, DOMElement $card, array $metadata): array

@@ -214,6 +214,72 @@ class ZnanjeFeedSynchronizerTest extends TestCase
         );
     }
 
+    public function test_single_root_session_persists_scope_and_uses_partial_sanity(): void
+    {
+        config(['znanje_import.minimum_expected_books' => 20000]);
+        Http::fake(['*' => Http::sequence()
+            ->push($this->listing('Strane knjige', 5001, 'Foreign', 20), 200, ['Content-Type' => 'text/html'])
+            ->push($this->listing('Strane knjige', 5001, 'Foreign', 20), 200, ['Content-Type' => 'text/html'])]);
+        $synchronizer = app(ZnanjeFeedSynchronizer::class);
+
+        $progress = $synchronizer->start(505);
+        $this->assertSame(505, $progress['selected_root_id']);
+        $this->assertSame('Strane knjige (engleske)', $progress['selected_root_label']);
+        $this->assertSame('Strane knjige', $progress['root']);
+        do {
+            $progress = $synchronizer->step($progress['token'], 10);
+        } while (! $progress['ready_to_finalize']);
+        $result = $synchronizer->finalize($progress['token']);
+
+        $this->assertSame(505, $result['selected_root_id']);
+        $this->assertSame(1, $result['current']);
+        $this->assertSame(['Knjige' => 0, 'Strane knjige' => 1], $result['root_totals']);
+        Http::assertSentCount(2);
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/strane-knjige/505'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/knjige/500'));
+    }
+
+    public function test_partial_refresh_retires_only_its_root_and_snapshots_all_current_books(): void
+    {
+        Http::fake(['*' => Http::sequence()
+            // Initial complete catalogue.
+            ->push($this->listing('Knjige', 100, 'Prva', 10), 200, ['Content-Type' => 'text/html'])
+            ->push($this->listing('Strane knjige', 200, 'Foreign', 20), 200, ['Content-Type' => 'text/html'])
+            ->push($this->listing('Knjige', 100, 'Prva', 10), 200, ['Content-Type' => 'text/html'])
+            ->push($this->listing('Strane knjige', 200, 'Foreign', 20), 200, ['Content-Type' => 'text/html'])
+            // First selected-root miss keeps 100 current.
+            ->push($this->listing('Knjige', 101, 'Nova', 11), 200, ['Content-Type' => 'text/html'])
+            ->push($this->listing('Knjige', 101, 'Nova', 11), 200, ['Content-Type' => 'text/html'])
+            // Second selected-root miss retires 100, never foreign 200.
+            ->push($this->listing('Knjige', 101, 'Nova', 12), 200, ['Content-Type' => 'text/html'])
+            ->push($this->listing('Knjige', 101, 'Nova', 12), 200, ['Content-Type' => 'text/html'])]);
+        $synchronizer = app(ZnanjeFeedSynchronizer::class);
+
+        $synchronizer->refresh();
+        $firstPartial = $synchronizer->refresh(500);
+        $this->assertSame(3, $firstPartial['current']);
+        $this->assertTrue(ZnanjeImportProduct::query()->where('external_id', '100')->firstOrFail()->is_current);
+        $this->assertTrue(ZnanjeImportProduct::query()->where('external_id', '200')->firstOrFail()->is_current);
+        $firstSnapshot = json_decode((string) file_get_contents($this->snapshotPath), true);
+        $this->assertSame(3, $firstSnapshot['count']);
+        $this->assertSame(['Knjige' => 2, 'Strane knjige' => 1], $firstSnapshot['root_totals']);
+
+        $secondPartial = $synchronizer->refresh(500);
+
+        $this->assertSame(500, $secondPartial['selected_root_id']);
+        $this->assertSame(2, $secondPartial['current']);
+        $this->assertSame(1, $secondPartial['retired_now']);
+        $this->assertFalse(ZnanjeImportProduct::query()->where('external_id', '100')->firstOrFail()->is_current);
+        $this->assertTrue(ZnanjeImportProduct::query()->where('external_id', '200')->firstOrFail()->is_current);
+        $snapshot = json_decode((string) file_get_contents($this->snapshotPath), true);
+        $metadata = json_decode((string) file_get_contents($this->metadataPath), true);
+        $this->assertSame(2, $snapshot['count']);
+        $this->assertCount(2, $snapshot['items']);
+        $this->assertSame(['Knjige' => 1, 'Strane knjige' => 1], $snapshot['root_totals']);
+        $this->assertSame(2, $metadata['count']);
+        $this->assertSame($snapshot['root_totals'], $metadata['root_totals']);
+    }
+
     public function test_cross_root_duplicate_is_deduplicated_without_retiring_a_first_miss(): void
     {
         $existing = ZnanjeImportProduct::query()->create([
@@ -268,6 +334,26 @@ class ZnanjeFeedSynchronizerTest extends TestCase
             'external_id' => '101',
             'is_current' => true,
         ]);
+    }
+
+    public function test_one_invalid_price_is_skipped_without_aborting_the_selected_root_refresh(): void
+    {
+        $listing = $this->listingMany('Knjige', [
+            [303701, 'Valjana knjiga', 19.90],
+            [303702, 'Knjiga bez cijene', 0],
+        ]);
+        Http::fake(['*' => Http::sequence()
+            ->push($listing, 200, ['Content-Type' => 'text/html'])
+            ->push($listing, 200, ['Content-Type' => 'text/html'])]);
+
+        $result = app(ZnanjeFeedSynchronizer::class)->refresh(500);
+
+        $this->assertSame(1, $result['staged']);
+        $this->assertSame(1, $result['current']);
+        $this->assertSame(1, $result['skipped']);
+        $this->assertSame(0, $result['reconciliation_gap']);
+        $this->assertDatabaseHas('znanje_import_products', ['external_id' => '303701']);
+        $this->assertDatabaseMissing('znanje_import_products', ['external_id' => '303702']);
     }
 
     public function test_remote_identity_conflict_rolls_back_without_retiring_live_rows(): void

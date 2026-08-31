@@ -34,6 +34,48 @@ class ZnanjeProductListParserTest extends TestCase
         $this->assertSame('Meki', $item['binding']);
         $this->assertSame('Hrvatski', $item['language']);
         $this->assertMatchesRegularExpression('/\A[a-f0-9]{64}\z/', $item['source_hash']);
+        $this->assertSame([
+            'count' => 0,
+            'ids' => [],
+            'reasons' => [],
+            'items' => [],
+        ], $parsed['skipped']);
+    }
+
+    public function test_it_skips_only_a_card_without_a_valid_eur_price_and_reports_its_reason(): void
+    {
+        $html = $this->listingWithCards([
+            $this->card(
+                'Knjige',
+                303702,
+                'Artikl bez cijene',
+                '/product/artikl-bez-cijene/303702',
+                'Artikl bez cijene',
+                '0,00 €',
+                '0.00'
+            ),
+            $this->card(
+                'Knjige',
+                303703,
+                'Ispravna knjiga',
+                '/product/ispravna-knjiga/303703',
+                'Ispravna knjiga'
+            ),
+        ]);
+
+        $parsed = app(ZnanjeProductListParser::class)->parse($html, 500, 1);
+
+        $this->assertSame(2, $parsed['total']);
+        $this->assertSame(['303703'], array_column($parsed['items'], 'external_id'));
+        $this->assertSame(1, $parsed['skipped']['count']);
+        $this->assertSame(['303702'], $parsed['skipped']['ids']);
+        $this->assertSame(['invalid_eur_price' => 1], $parsed['skipped']['reasons']);
+        $this->assertSame([
+            'external_id' => '303702',
+            'remote_product_id' => 303702,
+            'reason' => 'invalid_eur_price',
+            'message' => 'Znanje artikl 303702 nema valjanu EUR cijenu.',
+        ], $parsed['skipped']['items'][0]);
     }
 
     public function test_it_rejects_an_unavailable_card_even_if_the_filter_claims_available(): void
@@ -68,22 +110,43 @@ class ZnanjeProductListParserTest extends TestCase
         string $url,
         string $eventName
     ): string {
-        $onclick = "sendFullEventForClick('select_item', 0, '{$id}', '{$eventName}', 15.90, 0.00, "
-            . "'Nakladnik d.o.o.', '{$root}', 'Književnost', 'Humor', '', '0.00%', "
-            . "'Autor, Drugi Autor', '2026', 'Hrvatski', 'meki uvez', '', '', 1);";
+        return $this->listingWithCards([
+            $this->card($root, $id, $name, $url, $eventName),
+        ]);
+    }
 
+    private function listingWithCards(array $cards): string
+    {
         return '<html><body>'
             . '<select id="sorting"><option value="date|desc" selected>Novi</option></select>'
             . '<select id="numberOfProducts"><option value="84" selected>84</option></select>'
             . '<input id="showAvailableOnly" checked>'
-            . '<span itemprop="numberOfItems">1</span>'
-            . '<div class="grid-item"><div class="product-card">'
+            . '<span itemprop="numberOfItems">' . count($cards) . '</span>'
+            . implode('', $cards)
+            . '</body></html>';
+    }
+
+    private function card(
+        string $root,
+        int $id,
+        string $name,
+        string $url,
+        string $eventName,
+        string $visiblePrice = '15,90 €',
+        string $eventCurrentPrice = '15.90'
+    ): string {
+        $onclick = "sendFullEventForClick('select_item', 0, '{$id}', '{$eventName}', 15.90, 0.00, "
+            . "'Nakladnik d.o.o.', '{$root}', 'Književnost', 'Humor', '', '0.00%', "
+            . "'Autor, Drugi Autor', '2026', 'Hrvatski', 'meki uvez', '', '', 1);";
+        $onclick = str_replace("15.90, 0.00", $eventCurrentPrice . ', 0.00', $onclick);
+
+        return '<div class="grid-item"><div class="product-card">'
             . '<a class="product-thumb" href="' . $url . '" onclick="' . htmlspecialchars($onclick, ENT_QUOTES) . '">'
             . '<img src="https://znanje.hr/product-images/a.jpg"></a>'
             . '<p class="product-author">Autor, Drugi Autor</p>'
             . '<h3 class="product-title"><span>' . htmlspecialchars($name) . '</span></h3>'
-            . '<h4 class="product-price"><p>15,90 €</p></h4>'
+            . '<h4 class="product-price"><p>' . $visiblePrice . '</p></h4>'
             . '<div class="product-buttons"><button type="button">U košaricu</button></div>'
-            . '</div></div></body></html>';
+            . '</div></div>';
     }
 }

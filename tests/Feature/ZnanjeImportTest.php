@@ -55,6 +55,10 @@ class ZnanjeImportTest extends TestCase
             ->assertSee('href="' . $newer->source_url . '" target="_blank"', false)
             ->assertSee('class="img-link img-link-zoom-in img-lightbox"', false)
             ->assertSee('data-feed-refresh-state', false)
+            ->assertSee('name="refresh_scope"', false)
+            ->assertSee('<option value="all">Sve dostupne knjige</option>', false)
+            ->assertSee('<option value="500">Knjige</option>', false)
+            ->assertSee('<option value="505">Strane knjige (engleske)</option>', false)
             ->assertSee(json_encode(route('znanje-import.refresh-start')), false)
             ->assertSee(json_encode(route('znanje-import.refresh-step')), false)
             ->assertViewHas('importUi', function (array $importUi) {
@@ -72,7 +76,7 @@ class ZnanjeImportTest extends TestCase
     {
         $token = (string) Str::uuid();
         $synchronizer = $this->mock(ZnanjeFeedSynchronizer::class);
-        $synchronizer->shouldReceive('start')->once()->andReturn([
+        $synchronizer->shouldReceive('start')->once()->with(null)->andReturn([
             'token' => $token,
             'phase' => 'crawling',
             'processed_pages' => 0,
@@ -94,6 +98,65 @@ class ZnanjeImportTest extends TestCase
             ->assertJsonPath('done', false)
             ->assertJsonPath('token', $token)
             ->assertJsonPath('phase', 'crawling');
+    }
+
+    public function test_refresh_start_ajax_can_start_only_the_foreign_books_root(): void
+    {
+        $token = (string) Str::uuid();
+        $synchronizer = $this->mock(ZnanjeFeedSynchronizer::class);
+        $synchronizer->shouldReceive('start')->once()->with(505)->andReturn([
+            'token' => $token,
+            'phase' => 'crawling',
+            'selected_root_id' => 505,
+            'selected_root_label' => 'Strane knjige (engleske)',
+            'processed_pages' => 0,
+            'total_pages' => 0,
+            'staged' => 0,
+            'ready_to_finalize' => false,
+            'completed' => false,
+        ]);
+
+        $response = $this->actingAs($this->admin())->postJson(
+            route('znanje-import.refresh-start'),
+            ['refresh_scope' => '505']
+        );
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('token', $token)
+            ->assertJsonPath('selected_root_id', 505)
+            ->assertJsonPath('selected_root_label', 'Strane knjige (engleske)');
+    }
+
+    public function test_refresh_fallback_form_can_start_only_the_books_root(): void
+    {
+        $token = (string) Str::uuid();
+        $synchronizer = $this->mock(ZnanjeFeedSynchronizer::class);
+        $synchronizer->shouldReceive('start')->once()->with(500)->andReturn([
+            'token' => $token,
+        ]);
+
+        $response = $this->actingAs($this->admin())->post(
+            route('znanje-import.refresh'),
+            ['refresh_scope' => '500']
+        );
+
+        $response->assertRedirect(route('znanje-import.index', [
+            'refresh_token' => $token,
+        ]));
+    }
+
+    public function test_refresh_scope_rejects_unknown_roots(): void
+    {
+        $synchronizer = $this->mock(ZnanjeFeedSynchronizer::class);
+        $synchronizer->shouldNotReceive('start');
+
+        $this->actingAs($this->admin())
+            ->postJson(route('znanje-import.refresh-start'), [
+                'refresh_scope' => '999',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('refresh_scope');
     }
 
     public function test_refresh_step_ajax_hard_caps_one_page_and_finalizes_a_ready_session(): void

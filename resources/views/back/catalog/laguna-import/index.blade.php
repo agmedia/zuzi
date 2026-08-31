@@ -95,6 +95,7 @@
             'supports_batched_refresh' => false,
             'refresh_start_route' => null,
             'refresh_step_route' => null,
+            'refresh_root_options' => [],
         ], $importUi ?? []);
         $importUi['supports_source_publisher_mapping'] = $importUi['supports_source_publisher_mapping'] ?? $importUi['supports_source_mapping'];
         $importUi['supports_source_taxonomy_mapping'] = $importUi['supports_source_taxonomy_mapping'] ?? $importUi['supports_source_mapping'];
@@ -137,9 +138,21 @@
                 </div>
                 <form action="{{ route($routePrefix . '.refresh') }}" method="post" class="my-2 text-sm-right" data-refresh-form>
                     @csrf
-                    <button class="btn btn-hero-primary" type="submit">
-                        <i class="fa fa-sync-alt mr-1"></i> Osvježi feed
-                    </button>
+                    <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-end">
+                        @if(! empty($importUi['refresh_root_options']))
+                            <div class="text-left mr-sm-2 mb-2 mb-sm-0">
+                                <label class="small font-w600 mb-1" for="{{ $importUi['slug'] }}-refresh-scope">Što osvježiti</label>
+                                <select class="form-control" id="{{ $importUi['slug'] }}-refresh-scope" name="refresh_scope" data-feed-refresh-scope>
+                                    @foreach($importUi['refresh_root_options'] as $scope => $label)
+                                        <option value="{{ $scope }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+                        <button class="btn btn-hero-primary" type="submit">
+                            <i class="fa fa-sync-alt mr-1"></i> Osvježi feed
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -922,10 +935,12 @@
             const feedRefreshStartEndpoint = @json($feedRefreshStartEndpoint);
             const feedRefreshStepEndpoint = @json($feedRefreshStepEndpoint);
             const feedRefreshStorageKey = @json($importUi['slug'] . '-import-refresh-token');
+            const feedRefreshScopeStorageKey = @json($importUi['slug'] . '-import-refresh-scope');
             const feedRefreshState = document.querySelector('[data-feed-refresh-state]');
             const feedRefreshMessage = document.querySelector('[data-feed-refresh-message]');
             const feedRefreshPages = document.querySelector('[data-feed-refresh-pages]');
             const feedRefreshProgress = document.querySelector('[data-feed-refresh-progress]');
+            const feedRefreshScope = document.querySelector('[data-feed-refresh-scope]');
             const progressText = document.querySelector('[data-progress]');
             const progressWrap = document.querySelector('[data-progress-bar-wrap]');
             const progressBar = document.querySelector('[data-progress-bar]');
@@ -962,12 +977,50 @@
                 }
             }
 
-            function storeFeedRefreshToken(token) {
+            function normalizeFeedRefreshScope(scope) {
+                const normalized = String(scope ?? 'all');
+                return normalized === '500' || normalized === '505' ? normalized : 'all';
+            }
+
+            function selectedFeedRefreshScope() {
+                return normalizeFeedRefreshScope(feedRefreshScope?.value || 'all');
+            }
+
+            function storedFeedRefreshScope() {
+                try {
+                    return normalizeFeedRefreshScope(window.localStorage.getItem(feedRefreshScopeStorageKey) || 'all');
+                } catch (error) {
+                    return 'all';
+                }
+            }
+
+            function payloadFeedRefreshScope(payload = {}) {
+                if (!Object.prototype.hasOwnProperty.call(payload, 'selected_root_id')) {
+                    return null;
+                }
+
+                return normalizeFeedRefreshScope(payload.selected_root_id ?? 'all');
+            }
+
+            function applyFeedRefreshScope(scope) {
+                const normalized = normalizeFeedRefreshScope(scope);
+                if (feedRefreshScope && Array.from(feedRefreshScope.options).some(option => option.value === normalized)) {
+                    feedRefreshScope.value = normalized;
+                }
+
+                return normalized;
+            }
+
+            function storeFeedRefreshToken(token, scope = null) {
                 try {
                     if (token) {
                         window.localStorage.setItem(feedRefreshStorageKey, token);
+                        if (scope !== null) {
+                            window.localStorage.setItem(feedRefreshScopeStorageKey, normalizeFeedRefreshScope(scope));
+                        }
                     } else {
                         window.localStorage.removeItem(feedRefreshStorageKey);
+                        window.localStorage.removeItem(feedRefreshScopeStorageKey);
                     }
                 } catch (error) {
                     // Preuzimanje radi i kad preglednik ne dopušta localStorage.
@@ -1021,6 +1074,12 @@
                 const total = Math.max(processed, Number(payload.total_pages || 0));
                 const percent = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
                 const staged = Math.max(0, Number(payload.staged || 0));
+                const responseScope = payloadFeedRefreshScope(payload);
+                const scope = applyFeedRefreshScope(responseScope ?? selectedFeedRefreshScope());
+                const scopeLabel = String(payload.selected_root_label || feedRefreshScope?.selectedOptions?.[0]?.textContent || '').trim();
+                if (payload.token) {
+                    storeFeedRefreshToken(String(payload.token), scope);
+                }
                 feedRefreshState.classList.remove('d-none', 'alert-danger', 'alert-success');
                 feedRefreshState.classList.add(payload.done ? 'alert-success' : 'alert-info');
                 if (feedRefreshMessage) {
@@ -1028,9 +1087,10 @@
                         || (payload.done ? 'Znanje feed je uspješno osvježen.' : 'Preuzimam dostupne Znanje knjige…');
                 }
                 if (feedRefreshPages) {
-                    feedRefreshPages.textContent = total > 0
+                    const progressLabel = total > 0
                         ? `${processed.toLocaleString('hr-HR')} / ${total.toLocaleString('hr-HR')} stranica · ${staged.toLocaleString('hr-HR')} knjiga`
                         : `${staged.toLocaleString('hr-HR')} knjiga`;
+                    feedRefreshPages.textContent = scopeLabel ? `${scopeLabel} · ${progressLabel}` : progressLabel;
                 }
                 if (feedRefreshProgress) {
                     feedRefreshProgress.style.width = `${payload.done ? 100 : percent}%`;
@@ -1045,22 +1105,26 @@
                 }
                 const form = document.querySelector('[data-refresh-form]');
                 const button = form?.querySelector('button');
+                const requestedScope = selectedFeedRefreshScope();
                 feedRefreshRunning = true;
                 if (button) {
                     button.disabled = true;
                     button.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> Preuzimam feed…';
+                }
+                if (feedRefreshScope) {
+                    feedRefreshScope.disabled = true;
                 }
 
                 let token = resumeToken;
                 try {
                     let payload;
                     if (!token) {
-                        payload = await postFeedRefresh(feedRefreshStartEndpoint);
+                        payload = await postFeedRefresh(feedRefreshStartEndpoint, { refresh_scope: requestedScope });
                         token = String(payload.token || '');
                         if (!token) {
                             throw new Error('Znanje osvježavanje nije vratilo identifikator postupka.');
                         }
-                        storeFeedRefreshToken(token);
+                        storeFeedRefreshToken(token, payloadFeedRefreshScope(payload) ?? requestedScope);
                         renderFeedRefresh(payload);
                     }
 
@@ -1096,6 +1160,9 @@
                     if (button) {
                         button.disabled = false;
                         button.innerHTML = '<i class="fa fa-redo mr-1"></i> Nastavi osvježavanje';
+                    }
+                    if (feedRefreshScope) {
+                        feedRefreshScope.disabled = Boolean(storedFeedRefreshToken());
                     }
                 } finally {
                     feedRefreshRunning = false;
@@ -1657,6 +1724,7 @@
             });
 
             if (supportsBatchedRefresh && storedFeedRefreshToken()) {
+                applyFeedRefreshScope(storedFeedRefreshScope());
                 runBatchedFeedRefresh(storedFeedRefreshToken());
             }
 

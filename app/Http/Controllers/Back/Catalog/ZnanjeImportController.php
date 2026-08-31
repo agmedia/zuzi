@@ -134,6 +134,11 @@ class ZnanjeImportController extends Controller
             'supports_batched_refresh' => true,
             'refresh_start_route' => 'znanje-import.refresh-start',
             'refresh_step_route' => 'znanje-import.refresh-step',
+            'refresh_root_options' => [
+                'all' => 'Sve dostupne knjige',
+                '500' => 'Knjige',
+                '505' => 'Strane knjige (engleske)',
+            ],
         ];
 
         return view('back.catalog.laguna-import.index', compact(
@@ -151,10 +156,12 @@ class ZnanjeImportController extends Controller
         ));
     }
 
-    public function refresh(ZnanjeFeedSynchronizer $synchronizer)
+    public function refresh(Request $request, ZnanjeFeedSynchronizer $synchronizer)
     {
+        $rootCategoryId = $this->validatedRefreshRoot($request);
+
         try {
-            $state = $synchronizer->start();
+            $state = $synchronizer->start($rootCategoryId);
 
             return redirect()->route('znanje-import.index', [
                 'refresh_token' => $state['token'],
@@ -166,10 +173,12 @@ class ZnanjeImportController extends Controller
         }
     }
 
-    public function refreshStart(ZnanjeFeedSynchronizer $synchronizer)
+    public function refreshStart(Request $request, ZnanjeFeedSynchronizer $synchronizer)
     {
+        $rootCategoryId = $this->validatedRefreshRoot($request);
+
         try {
-            $state = $synchronizer->start();
+            $state = $synchronizer->start($rootCategoryId);
 
             return response()->json(array_merge([
                 'success' => true,
@@ -184,6 +193,16 @@ class ZnanjeImportController extends Controller
                 'message' => $exception->getMessage(),
             ], 409);
         }
+    }
+
+    private function validatedRefreshRoot(Request $request): ?int
+    {
+        $validated = $request->validate([
+            'refresh_scope' => 'nullable|in:all,500,505',
+        ]);
+        $root = (string) ($validated['refresh_scope'] ?? 'all');
+
+        return $root === 'all' ? null : (int) $root;
     }
 
     public function refreshStep(Request $request, ZnanjeFeedSynchronizer $synchronizer)

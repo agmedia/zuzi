@@ -23,6 +23,8 @@ class ZnanjeFeedSynchronizer
 
     private const STEP_LOCK_PREFIX = 'znanje-import-feed-step:';
 
+    private const ROOT_SUCCESS_TOKEN_PREFIX = 'znanje-import-feed-root-token:';
+
     private ZnanjeProductListClient $client;
 
     private ZnanjeProductListParser $parser;
@@ -33,14 +35,14 @@ class ZnanjeFeedSynchronizer
         $this->parser = $parser;
     }
 
-    public function sync(): array
+    public function sync(?int $rootCategoryId = null): array
     {
-        return $this->refresh();
+        return $this->refresh($rootCategoryId);
     }
 
-    public function refresh(): array
+    public function refresh(?int $rootCategoryId = null): array
     {
-        $session = $this->start();
+        $session = $this->start($rootCategoryId);
         $token = $session['token'];
         try {
             do {
@@ -54,8 +56,9 @@ class ZnanjeFeedSynchronizer
         }
     }
 
-    public function start(): array
+    public function start(?int $rootCategoryId = null): array
     {
+        $selectedRoots = $this->rootsFor($rootCategoryId);
         $resumable = $this->resumableActiveProgress();
         if ($resumable !== null) {
             return $resumable;
@@ -75,8 +78,11 @@ class ZnanjeFeedSynchronizer
         try {
             $this->deleteAbandonedStagingRows();
             $now = now()->toIso8601String();
+            $selectedRootNames = array_column($selectedRoots, 'name');
             $state = [
                 'token' => $token,
+                'selected_root_id' => $rootCategoryId,
+                'selected_root_label' => $this->rootLabel($rootCategoryId),
                 'phase' => 'crawling',
                 'root_index' => 0,
                 'next_page' => 1,
@@ -87,8 +93,15 @@ class ZnanjeFeedSynchronizer
                 'drift' => [],
                 'processed_pages' => 0,
                 'skipped' => 0,
+                'skipped_external_ids' => [],
                 'duplicates' => 0,
-                'previous_current' => ZnanjeImportProduct::query()->where('is_current', true)->count(),
+                // Sanity and retirement comparisons must use the same scope
+                // that is being refreshed. The global current count remains
+                // represented by the final snapshot/result.
+                'previous_current' => ZnanjeImportProduct::query()
+                    ->where('is_current', true)
+                    ->whereIn('source_category', $selectedRootNames)
+                    ->count(),
                 'created_at' => $now,
                 'updated_at' => $now,
                 'error' => null,
@@ -168,7 +181,7 @@ class ZnanjeFeedSynchronizer
                 return $this->progress($state);
             }
             $limit = max(1, min(10, $maxPages));
-            $roots = ZnanjeProductListClient::roots();
+            $roots = $this->rootsForState($state);
             $rootIds = array_keys($roots);
             $maxConfiguredPages = max(1, (int) config('znanje_import.max_pages_per_category', 500));
 
@@ -194,6 +207,7 @@ class ZnanjeFeedSynchronizer
                     $rootId,
                     $page
                 );
+                $this->recordParserSkips($state, $parsed);
                 $pageTotal = (int) ($parsed['total'] ?? -1);
                 $pageTotalPages = (int) ($parsed['total_pages'] ?? -1);
                 if ($pageTotal < 1 || $pageTotalPages < $page || $pageTotalPages > $maxConfiguredPages) {
@@ -309,7 +323,7 @@ class ZnanjeFeedSynchronizer
             $state['error'] = null;
             $this->saveState($state);
 
-            $roots = ZnanjeProductListClient::roots();
+            $roots = $this->rootsForState($state);
             $rootTotals = (array) ($state['root_totals'] ?? []);
             foreach ($roots as $root) {
                 $rootName = $root['name'];
@@ -324,7 +338,12 @@ class ZnanjeFeedSynchronizer
 
             $staged = DB::table(self::STAGING_TABLE)->where('feed_token', $token)->count();
             $announced = array_sum($rootTotals);
-            $reconciliationGap = abs($staged - $announced);
+            // Cards explicitly rejected by the parser (for example, one
+            // product without a usable EUR price) still belong to the remote
+            // announced total. Count those known skips for reconciliation so
+            // one bad product cannot abort an otherwise valid refresh.
+            $knownParserSkips = count((array) ($state['skipped_external_ids'] ?? []));
+            $reconciliationGap = abs(($staged + $knownParserSkips) - $announced);
             $allowedDrift = $this->allowedCatalogDrift($announced);
             foreach ($state['drift'] as $rootName => &$rootDrift) {
                 $rootAllowedDrift = $this->allowedCatalogDrift((int) $rootDrift['final_total']);
@@ -348,21 +367,28 @@ class ZnanjeFeedSynchronizer
                     $allowedDrift
                 ));
             }
-            $this->assertSaneBookCount($staged, (int) $state['previous_current']);
+            $this->assertSaneBookCount(
+                $staged,
+                (int) $state['previous_current'],
+                ($state['selected_root_id'] ?? null) !== null
+            );
             $seenAt = now();
             $retiredNow = $this->mergeStagingIntoLive(
                 $token,
                 $seenAt,
-                max(10, min(500, (int) config('znanje_import.sync_batch_size', 100)))
+                max(10, min(500, (int) config('znanje_import.sync_batch_size', 100))),
+                array_column($roots, 'name')
             );
+
+            $current = ZnanjeImportProduct::query()->where('is_current', true)->count();
+            $snapshotRootTotals = $this->currentRootTotals();
 
             $snapshotWarning = null;
             try {
-                $this->writeSnapshotFromStaging(
-                    $token,
-                    $staged,
+                $this->writeSnapshotFromCurrent(
+                    $current,
                     $seenAt->toIso8601String(),
-                    $rootTotals
+                    $snapshotRootTotals
                 );
             } catch (\Throwable $exception) {
                 report($exception);
@@ -370,23 +396,25 @@ class ZnanjeFeedSynchronizer
             }
             $result = [
                 'staged' => $staged,
-                'current' => ZnanjeImportProduct::query()->where('is_current', true)->count(),
+                'current' => $current,
                 'retired' => ZnanjeImportProduct::query()->where('is_current', false)->count(),
                 'retired_now' => $retiredNow,
                 'skipped' => (int) $state['skipped'],
                 'duplicates' => (int) $state['duplicates'],
                 'pages' => (int) $state['processed_pages'] + count($roots),
-                'root_totals' => $rootTotals,
+                'root_totals' => $snapshotRootTotals,
                 'drift' => $state['drift'],
                 'reconciliation_gap' => $reconciliationGap,
                 'allowed_drift' => $allowedDrift,
                 'path' => (string) config('znanje_import.snapshot_path'),
                 'snapshot_warning' => $snapshotWarning,
+                'selected_root_id' => $state['selected_root_id'],
+                'selected_root_label' => $state['selected_root_label'],
             ];
 
             $state['phase'] = 'complete';
             $state['result'] = $result;
-            $state['root_totals'] = $rootTotals;
+            $state['root_totals'] = $snapshotRootTotals;
             $state['message'] = 'Znanje katalog je uspješno osvježen.';
             $state['error'] = null;
             $this->saveState($state, false);
@@ -441,7 +469,7 @@ class ZnanjeFeedSynchronizer
 
     private function validateNextRoot(array &$state): void
     {
-        $roots = ZnanjeProductListClient::roots();
+        $roots = $this->rootsForState($state);
         $rootIds = array_keys($roots);
         $rootIndex = max(0, (int) ($state['finalize_root_index'] ?? 0));
         if (! isset($rootIds[$rootIndex])) {
@@ -461,6 +489,7 @@ class ZnanjeFeedSynchronizer
             $rootId,
             1
         );
+        $this->recordParserSkips($state, $parsed);
         $finalTotal = (int) ($parsed['total'] ?? -1);
         $finalPages = (int) ($parsed['total_pages'] ?? -1);
         if ($finalTotal < 1 || $finalPages < 1 || $finalPages > $maxPages) {
@@ -575,9 +604,31 @@ class ZnanjeFeedSynchronizer
         return ['skipped' => $skipped, 'duplicates' => $duplicates];
     }
 
+    private function recordParserSkips(array &$state, array $parsed): void
+    {
+        $knownIds = array_fill_keys(
+            array_map('strval', (array) ($state['skipped_external_ids'] ?? [])),
+            true
+        );
+
+        foreach ((array) ($parsed['skipped']['items'] ?? []) as $skippedItem) {
+            if (! is_array($skippedItem)) {
+                continue;
+            }
+            $externalId = trim((string) ($skippedItem['external_id'] ?? ''));
+            if ($externalId === '' || isset($knownIds[$externalId])) {
+                continue;
+            }
+            $knownIds[$externalId] = true;
+            $state['skipped'] = (int) ($state['skipped'] ?? 0) + 1;
+        }
+
+        $state['skipped_external_ids'] = array_keys($knownIds);
+    }
+
     private function progress(array $state): array
     {
-        $roots = array_values(ZnanjeProductListClient::roots());
+        $roots = array_values($this->rootsForState($state));
         $rootIndex = (int) ($state['root_index'] ?? 0);
         $phase = (string) ($state['phase'] ?? 'error');
         $result = is_array($state['result'] ?? null) ? $state['result'] : null;
@@ -589,6 +640,8 @@ class ZnanjeFeedSynchronizer
 
         return [
             'token' => (string) $state['token'],
+            'selected_root_id' => $state['selected_root_id'] ?? null,
+            'selected_root_label' => (string) ($state['selected_root_label'] ?? $this->rootLabel(null)),
             'phase' => $phase,
             'processed_pages' => (int) ($state['processed_pages'] ?? 0),
             'total_pages' => array_sum(array_map('intval', (array) ($state['root_pages'] ?? []))),
@@ -712,6 +765,65 @@ class ZnanjeFeedSynchronizer
         return self::STATE_PREFIX . $token;
     }
 
+    private function rootSuccessTokenKey(string $rootName): string
+    {
+        return self::ROOT_SUCCESS_TOKEN_PREFIX . hash('sha256', $rootName);
+    }
+
+    private function rootsFor(?int $rootCategoryId): array
+    {
+        $roots = ZnanjeProductListClient::roots();
+        if ($rootCategoryId === null) {
+            return $roots;
+        }
+        if (! isset($roots[$rootCategoryId])) {
+            throw new RuntimeException('Znanje import podržava samo korijenske kategorije 500 i 505.');
+        }
+
+        return [$rootCategoryId => $roots[$rootCategoryId]];
+    }
+
+    private function rootsForState(array $state): array
+    {
+        $rootCategoryId = array_key_exists('selected_root_id', $state)
+            && $state['selected_root_id'] !== null
+                ? (int) $state['selected_root_id']
+                : null;
+
+        return $this->rootsFor($rootCategoryId);
+    }
+
+    private function rootLabel(?int $rootCategoryId): string
+    {
+        if ($rootCategoryId === null) {
+            return 'Sve dostupne knjige';
+        }
+
+        if ($rootCategoryId === 505) {
+            return 'Strane knjige (engleske)';
+        }
+
+        return (string) $this->rootsFor($rootCategoryId)[$rootCategoryId]['name'];
+    }
+
+    private function currentRootTotals(): array
+    {
+        $counts = ZnanjeImportProduct::query()
+            ->where('is_current', true)
+            ->whereIn('source_category', array_column(ZnanjeProductListClient::roots(), 'name'))
+            ->select('source_category')
+            ->selectRaw('COUNT(*) as aggregate')
+            ->groupBy('source_category')
+            ->pluck('aggregate', 'source_category');
+
+        $totals = [];
+        foreach (ZnanjeProductListClient::roots() as $root) {
+            $totals[$root['name']] = (int) ($counts[$root['name']] ?? 0);
+        }
+
+        return $totals;
+    }
+
     private function sessionTtl(): int
     {
         return max(900, min(86400, (int) config('znanje_import.sync_session_seconds', 14400)));
@@ -796,30 +908,36 @@ class ZnanjeFeedSynchronizer
         );
     }
 
-    private function mergeStagingIntoLive(string $token, $seenAt, int $batchSize): int
+    private function mergeStagingIntoLive(
+        string $token,
+        $seenAt,
+        int $batchSize,
+        array $selectedRootNames
+    ): int
     {
         $alreadyMerged = ZnanjeImportProduct::query()
             ->where('feed_token', $token)
             ->where('is_current', true)
             ->exists();
-        $previousToken = $alreadyMerged
-            ? null
-            : ZnanjeImportProduct::query()
-                ->where('is_current', true)
-                ->whereNotNull('feed_token')
-                ->select('feed_token')
-                ->selectRaw('COUNT(*) as token_count')
-                ->selectRaw('MAX(last_seen_at) as token_last_seen_at')
-                ->groupBy('feed_token')
-                ->orderByDesc('token_count')
-                ->orderByDesc('token_last_seen_at')
-                ->value('feed_token');
+        $previousTokens = [];
+        if (! $alreadyMerged) {
+            // Partial refreshes give each root its own successful token. Keep
+            // the two-consecutive-miss guard independent per root so a later
+            // partial or full refresh compares like with like.
+            foreach ($selectedRootNames as $rootName) {
+                $previous = Cache::get($this->rootSuccessTokenKey($rootName));
+                $previousTokens[$rootName] = is_string($previous) && $this->validToken($previous)
+                    ? $previous
+                    : null;
+            }
+        }
 
-        return DB::transaction(function () use (
+        $retired = DB::transaction(function () use (
             $token,
             $seenAt,
             $batchSize,
-            $previousToken,
+            $selectedRootNames,
+            $previousTokens,
             $alreadyMerged
         ) {
             $this->assertNoIdentifierConflicts($token);
@@ -898,19 +1016,26 @@ class ZnanjeFeedSynchronizer
                 });
 
             $retired = 0;
-            if (! $alreadyMerged && $previousToken !== null) {
-                // A product must be absent from two consecutive successful
-                // refreshes before it is retired. This shields the catalog from
-                // a moving page boundary or a short-lived upstream omission.
-                $retired = ZnanjeImportProduct::query()
-                    ->where('is_current', true)
-                    ->where(function ($query) use ($token) {
-                        $query->whereNull('feed_token')->orWhere('feed_token', '!=', $token);
-                    })
-                    ->where(function ($query) use ($previousToken) {
-                        $query->whereNull('feed_token')->orWhere('feed_token', '!=', $previousToken);
-                    })
-                    ->update(['is_current' => false, 'updated_at' => $seenAt]);
+            if (! $alreadyMerged) {
+                foreach ($selectedRootNames as $rootName) {
+                    $previousToken = $previousTokens[$rootName] ?? null;
+                    if ($previousToken === null) {
+                        continue;
+                    }
+                    // A product must be absent from two consecutive successful
+                    // refreshes of its own root before it is retired. Unselected
+                    // roots are deliberately invisible to this query.
+                    $retired += ZnanjeImportProduct::query()
+                        ->where('is_current', true)
+                        ->where('source_category', $rootName)
+                        ->where(function ($query) use ($token) {
+                            $query->whereNull('feed_token')->orWhere('feed_token', '!=', $token);
+                        })
+                        ->where(function ($query) use ($previousToken) {
+                            $query->whereNull('feed_token')->orWhere('feed_token', '!=', $previousToken);
+                        })
+                        ->update(['is_current' => false, 'updated_at' => $seenAt]);
+                }
             }
             ZnanjeImportProduct::query()
                 ->where('feed_token', $token)
@@ -919,6 +1044,15 @@ class ZnanjeFeedSynchronizer
 
             return $retired;
         }, 3);
+
+        // Persist the successful baseline separately per root. If this marker
+        // is ever flushed, one refresh becomes conservatively non-retiring
+        // rather than guessing a token and risking a false retirement.
+        foreach ($selectedRootNames as $rootName) {
+            Cache::forever($this->rootSuccessTokenKey($rootName), $token);
+        }
+
+        return $retired;
     }
 
     private function feedBaseline(object $row): array
@@ -1004,10 +1138,18 @@ class ZnanjeFeedSynchronizer
             && ($item['availability'] ?? null) === 'in_stock';
     }
 
-    private function assertSaneBookCount(int $staged, int $previousCurrent): void
+    private function assertSaneBookCount(
+        int $staged,
+        int $previousCurrent,
+        bool $partial
+    ): void
     {
         $minimum = max(1, (int) config('znanje_import.minimum_expected_books', 20000));
-        if ($previousCurrent === 0 && $staged < $minimum) {
+        // The configured global floor is intentionally not applied to one
+        // selected root. Its remote announced total and reconciliation check
+        // still protect a first partial refresh; subsequent ones also use the
+        // selected root's own current-count ratio below.
+        if (! $partial && $previousCurrent === 0 && $staged < $minimum) {
             throw new RuntimeException(sprintf(
                 'Znanje katalog sadrži samo %d knjiga; očekuje se najmanje %d. Postojeći podaci nisu promijenjeni.',
                 $staged,
@@ -1040,8 +1182,7 @@ class ZnanjeFeedSynchronizer
         );
     }
 
-    private function writeSnapshotFromStaging(
-        string $token,
+    private function writeSnapshotFromCurrent(
         int $expectedCount,
         string $syncedAt,
         array $rootTotals
@@ -1076,8 +1217,11 @@ class ZnanjeFeedSynchronizer
                 . ',"items":[';
             $this->writeSnapshotChunk($handle, $hash, $bytes, $prefix);
 
-            DB::table(self::STAGING_TABLE)
-                ->where('feed_token', $token)
+            // A partial staging set contains only one root. The durable
+            // snapshot must always remain a complete view of every current
+            // Znanje book, including untouched roots.
+            DB::table('znanje_import_products')
+                ->where('is_current', true)
                 ->orderBy('id')
                 ->chunkById(500, function ($rows) use (
                     $handle,
