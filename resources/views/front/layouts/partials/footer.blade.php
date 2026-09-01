@@ -78,10 +78,10 @@
 
 
 
-                        <p class=" text-dark  fs-md pb-1 d-block">  <strong>Ljetno radno vrijeme</strong><br>
-                            01.07.2026- 31.08.2026<br>
-                            Ponedjeljak, srijeda, petak: 09-17h<br>
-                            Utorak, četvrtak: 12-20h<br>
+                        <p class=" text-dark  fs-md pb-1 d-block">  <strong>Radno vrijeme</strong><br>
+
+                            Ponedjeljak, srijeda, petak: 12-20h<br>
+                            Utorak, četvrtak: 09-17h<br>
                             Subota: 09-14h
 
 
