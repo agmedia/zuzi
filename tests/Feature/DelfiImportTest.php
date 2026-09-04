@@ -449,6 +449,72 @@ class DelfiImportTest extends TestCase
             ->assertSee('name="source_genres[]" value="Ljubići"', false);
     }
 
+    public function test_stale_admin_form_cannot_erase_another_admins_genre_mapping(): void
+    {
+        $mapping = $this->configureImport();
+        $settings = app(DelfiImportSettings::class);
+        $settings->save(['genre_category_map' => []]);
+        $emptyVersion = $settings->genreMapVersion([]);
+        $firstAdmin = $this->admin();
+        $secondAdmin = $this->admin();
+        $basePayload = [
+            'exchange_rate' => 117.2,
+            'markup_percent' => 30,
+            'publisher_parent_category_id' => $mapping['publisher_parent_category_id'],
+            'publisher_category_id' => $mapping['fallbackPublisherCategoryId'],
+            'publisher_id' => $mapping['fallbackPublisherId'],
+            'default_quantity' => 5,
+            'existing_action' => 'skip',
+            'map_source_publishers' => 1,
+        ];
+
+        $this->actingAs($firstAdmin)
+            ->post(route('delfi-import.settings'), $basePayload + [
+                'source_genres' => ['Publicistika'],
+                'genre_category_ids' => [$mapping['genre_category_id']],
+                'genre_mapping_version' => $emptyVersion,
+                'genre_mapping_touched' => 1,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($secondAdmin)
+            ->post(route('delfi-import.settings'), array_merge($basePayload, [
+                'markup_percent' => 35,
+                'genre_mapping_version' => $emptyVersion,
+                'genre_mapping_touched' => 0,
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            ['Publicistika' => $mapping['genre_category_id']],
+            $settings->all()['genre_category_map']
+        );
+        $this->assertSame(35.0, $settings->all()['markup_percent']);
+
+        $currentVersion = $settings->genreMapVersion(['Publicistika' => $mapping['genre_category_id']]);
+        $this->actingAs($secondAdmin)
+            ->getJson(route('delfi-import.genre-mappings'))
+            ->assertOk()
+            ->assertJson([
+                'mappings' => ['Publicistika' => $mapping['genre_category_id']],
+                'version' => $currentVersion,
+            ]);
+
+        $this->actingAs($secondAdmin)
+            ->post(route('delfi-import.settings'), $basePayload + [
+                'source_genres' => ['Ljubići'],
+                'genre_category_ids' => [$mapping['genre_category_id']],
+                'genre_mapping_version' => $emptyVersion,
+                'genre_mapping_touched' => 1,
+            ])
+            ->assertSessionHasErrors('genre_category_map');
+
+        $this->assertSame(
+            ['Publicistika' => $mapping['genre_category_id']],
+            $settings->all()['genre_category_map']
+        );
+    }
+
     public function test_new_filter_on_second_page_hides_rows_reconciled_to_other_statuses(): void
     {
         foreach (range(1, 40) as $position) {

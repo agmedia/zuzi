@@ -37,6 +37,7 @@ class DelfiImportController extends Controller
         }
 
         $settings = $settingsService->all();
+        $genreMappingVersion = $settingsService->genreMapVersion($settings['genre_category_map']);
         $sourceGenreCountsByCategory = $this->sourceGenreCountsByCategory();
         $sourceTaxonomy = $taxonomyService->bookGenresByCategory();
         $sourceGenres = [];
@@ -118,6 +119,7 @@ class DelfiImportController extends Controller
             'bulk_inspection_limit' => 100,
             'bulk_inspection_delay_ms' => 350,
             'hide_unavailable_imports' => true,
+            'genre_mappings_route' => 'delfi-import.genre-mappings',
         ];
 
         return view('back.catalog.laguna-import.index', compact(
@@ -131,6 +133,7 @@ class DelfiImportController extends Controller
             'priceCalculator',
             'sourceGenres',
             'sourceTaxonomy',
+            'genreMappingVersion',
             'importUi'
         ));
     }
@@ -556,6 +559,8 @@ class DelfiImportController extends Controller
             'source_genres.*' => 'string|max:255',
             'genre_category_ids' => 'array',
             'genre_category_ids.*' => 'nullable|integer|exists:categories,id',
+            'genre_mapping_version' => 'nullable|string|size:64',
+            'genre_mapping_touched' => 'nullable|boolean',
         ]);
 
         $parentCategory = Category::query()->find((int) $validated['publisher_parent_category_id']);
@@ -579,15 +584,57 @@ class DelfiImportController extends Controller
             }
         }
 
-        unset($validated['source_genres'], $validated['genre_category_ids']);
-        $validated['genre_category_map'] = $genreCategoryMap;
-        $validated['map_source_publishers'] = $request->boolean('map_source_publishers') ? 1 : 0;
-        $validated['activate_new_products'] = $request->boolean('activate_new_products') ? 1 : 0;
-        $validated['translate_descriptions'] = $request->boolean('translate_descriptions') ? 1 : 0;
-        $settingsService->save($validated);
+        $settingsLock = Cache::lock('delfi-import-settings', 15);
+        if (! $settingsLock->get()) {
+            return redirect()->back()->withErrors([
+                'genre_category_map' => 'Drugi administrator upravo sprema postavke. Pokušajte ponovno.',
+            ]);
+        }
+
+        try {
+            $currentGenreMap = $settingsService->all()['genre_category_map'];
+            if ($request->filled('genre_mapping_version')) {
+                $submittedVersion = (string) $validated['genre_mapping_version'];
+                $currentVersion = $settingsService->genreMapVersion($currentGenreMap);
+
+                if (! $request->boolean('genre_mapping_touched')) {
+                    // Spremanje cijene ili drugih opcija iz starijeg taba ne smije
+                    // izbrisati mapiranje koje je u međuvremenu spremio drugi admin.
+                    $genreCategoryMap = $currentGenreMap;
+                } elseif (! hash_equals($currentVersion, $submittedVersion)) {
+                    return redirect()->back()->withErrors([
+                        'genre_category_map' => 'Drugi administrator promijenio je mapiranje. Prikaz je osvježen; ponovite svoju izmjenu.',
+                    ]);
+                }
+            }
+
+            unset(
+                $validated['source_genres'],
+                $validated['genre_category_ids'],
+                $validated['genre_mapping_version'],
+                $validated['genre_mapping_touched']
+            );
+            $validated['genre_category_map'] = $genreCategoryMap;
+            $validated['map_source_publishers'] = $request->boolean('map_source_publishers') ? 1 : 0;
+            $validated['activate_new_products'] = $request->boolean('activate_new_products') ? 1 : 0;
+            $validated['translate_descriptions'] = $request->boolean('translate_descriptions') ? 1 : 0;
+            $settingsService->save($validated);
+        } finally {
+            optional($settingsLock)->release();
+        }
 
         return redirect()->route('delfi-import.index', ['tab' => 'settings'])
             ->with('success', 'Postavke Delfi importa su spremljene.');
+    }
+
+    public function genreMappings(DelfiImportSettings $settingsService)
+    {
+        $map = $settingsService->all()['genre_category_map'];
+
+        return response()->json([
+            'mappings' => $map,
+            'version' => $settingsService->genreMapVersion($map),
+        ]);
     }
 
     private function applyFilters(Builder $query, Request $request): void

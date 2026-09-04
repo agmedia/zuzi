@@ -83,6 +83,16 @@ class DelfiImportSettings
         return $this->all();
     }
 
+    public function genreMapVersion(?array $map = null): string
+    {
+        $map = $this->sanitizeGenreMap($map ?? $this->all()['genre_category_map']);
+
+        return hash('sha256', (string) json_encode(
+            $map,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        ));
+    }
+
     private function store(string $key, string $value, bool $json): void
     {
         $query = Settings::query()->where('code', self::CODE)->where('key', $key);

@@ -149,6 +149,7 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('delfi-import', [DelfiImportController::class, 'index'])->name('delfi-import.index');
         Route::post('delfi-import/refresh', [DelfiImportController::class, 'refresh'])->name('delfi-import.refresh');
         Route::post('delfi-import/settings', [DelfiImportController::class, 'updateSettings'])->name('delfi-import.settings');
+        Route::get('delfi-import/settings/genre-mappings', [DelfiImportController::class, 'genreMappings'])->name('delfi-import.genre-mappings');
         Route::get('delfi-import/inspection-queue', [DelfiImportController::class, 'inspectionQueue'])->name('delfi-import.inspection-queue');
         Route::post('delfi-import/inspect-bulk', [DelfiImportController::class, 'bulkInspect'])->name('delfi-import.inspect-bulk');
         Route::post('delfi-import/{delfiImportProduct}/inspect', [DelfiImportController::class, 'inspect'])->name('delfi-import.inspect');

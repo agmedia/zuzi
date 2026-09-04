@@ -98,6 +98,7 @@
             'refresh_cancel_route' => null,
             'refresh_root_options' => [],
             'hide_unavailable_imports' => false,
+            'genre_mappings_route' => null,
         ], $importUi ?? []);
         $importUi['supports_source_publisher_mapping'] = $importUi['supports_source_publisher_mapping'] ?? $importUi['supports_source_mapping'];
         $importUi['supports_source_taxonomy_mapping'] = $importUi['supports_source_taxonomy_mapping'] ?? $importUi['supports_source_mapping'];
@@ -116,6 +117,13 @@
         $sourceGenres = collect($sourceGenres ?? []);
         $sourceTaxonomy = (array) ($sourceTaxonomy ?? []);
         $genreCategoryMap = (array) ($settings['genre_category_map'] ?? []);
+        $genreMappingVersion = $genreMappingVersion ?? hash('sha256', (string) json_encode(
+            $genreCategoryMap,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        ));
+        $genreMappingsEndpoint = $importUi['genre_mappings_route']
+            ? route($importUi['genre_mappings_route'])
+            : null;
         $statusLabels = [
             'pending' => ['Nije provjeren', 'secondary'],
             'new' => ['Novi', 'info'],
@@ -615,6 +623,8 @@
                             @endif
 
                             @if($importUi['supports_source_taxonomy_mapping'])
+                                <input type="hidden" name="genre_mapping_version" value="{{ $genreMappingVersion }}" data-genre-mapping-version>
+                                <input type="hidden" name="genre_mapping_touched" value="0" data-genre-mapping-touched>
                                 <hr class="my-4">
 
                                 <h4 class="font-size-h5 mb-1"><i class="fa fa-sitemap text-primary mr-2"></i>Mapiranje {{ $importUi['name'] }} {{ $importUi['source_taxonomy_items_label'] }}</h4>
@@ -804,6 +814,10 @@
             const genreCategoryPicker = $('#genre-category-picker');
             const genreMappings = document.querySelector('[data-genre-mappings]');
             const genreMappingsWrap = document.querySelector('[data-genre-mappings-wrap]');
+            const genreMappingVersionInput = document.querySelector('[data-genre-mapping-version]');
+            const genreMappingTouchedInput = document.querySelector('[data-genre-mapping-touched]');
+            const genreMappingsEndpoint = @json($genreMappingsEndpoint);
+            const settingsPane = document.getElementById(@json($settingsTabId));
 
             function initializeGenreCategorySelect(select) {
                 $(select).select2({ width: '100%' });
@@ -828,9 +842,15 @@
                 genreMappingsWrap?.classList.toggle('d-none', !genreMappings?.children.length);
             }
 
-            document.querySelector('[data-add-genre-mapping]')?.addEventListener('click', function () {
-                const genre = String(sourceGenrePicker.val() || '').trim();
-                const categoryId = String(genreCategoryPicker.val() || '');
+            function markGenreMappingsTouched() {
+                if (genreMappingTouchedInput) {
+                    genreMappingTouchedInput.value = '1';
+                }
+            }
+
+            function upsertGenreMapping(genre, categoryId) {
+                genre = String(genre || '').trim();
+                categoryId = String(categoryId || '');
                 if (!genre || !categoryId || !genreMappings) {
                     return;
                 }
@@ -841,37 +861,50 @@
                 if (existing) {
                     $(existing).find('select[name="genre_category_ids[]"]')
                         .val(categoryId)
-                        .trigger('change');
-                } else {
-                    const row = document.createElement('tr');
-                    row.dataset.genreKey = key;
+                        .trigger('change.select2');
 
-                    const genreCell = document.createElement('td');
-                    const hidden = document.createElement('input');
-                    hidden.type = 'hidden';
-                    hidden.name = 'source_genres[]';
-                    hidden.value = genre;
-                    const label = document.createElement('span');
-                    label.className = 'font-w600';
-                    label.textContent = genre;
-                    genreCell.append(hidden, label);
-
-                    const categoryCell = document.createElement('td');
-                    const select = document.createElement('select');
-                    select.className = 'form-control';
-                    select.name = 'genre_category_ids[]';
-                    select.style.width = '100%';
-                    genreCategoryPicker.find('option').clone().appendTo(select);
-                    select.value = categoryId;
-                    categoryCell.appendChild(select);
-
-                    const actionCell = document.createElement('td');
-                    actionCell.className = 'text-right';
-                    actionCell.innerHTML = '<button class="btn btn-sm btn-alt-danger" type="button" title="Ukloni mapiranje" data-remove-genre-mapping><i class="fa fa-times"></i></button>';
-                    row.append(genreCell, categoryCell, actionCell);
-                    genreMappings.appendChild(row);
-                    initializeGenreCategorySelect(select);
+                    return;
                 }
+
+                const row = document.createElement('tr');
+                row.dataset.genreKey = key;
+
+                const genreCell = document.createElement('td');
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'source_genres[]';
+                hidden.value = genre;
+                const label = document.createElement('span');
+                label.className = 'font-w600';
+                label.textContent = genre;
+                genreCell.append(hidden, label);
+
+                const categoryCell = document.createElement('td');
+                const select = document.createElement('select');
+                select.className = 'form-control';
+                select.name = 'genre_category_ids[]';
+                select.style.width = '100%';
+                genreCategoryPicker.find('option').clone().appendTo(select);
+                select.value = categoryId;
+                categoryCell.appendChild(select);
+
+                const actionCell = document.createElement('td');
+                actionCell.className = 'text-right';
+                actionCell.innerHTML = '<button class="btn btn-sm btn-alt-danger" type="button" title="Ukloni mapiranje" data-remove-genre-mapping><i class="fa fa-times"></i></button>';
+                row.append(genreCell, categoryCell, actionCell);
+                genreMappings.appendChild(row);
+                initializeGenreCategorySelect(select);
+            }
+
+            document.querySelector('[data-add-genre-mapping]')?.addEventListener('click', function () {
+                const genre = String(sourceGenrePicker.val() || '').trim();
+                const categoryId = String(genreCategoryPicker.val() || '');
+                if (!genre || !categoryId || !genreMappings) {
+                    return;
+                }
+
+                upsertGenreMapping(genre, categoryId);
+                markGenreMappingsTouched();
 
                 sourceGenrePicker.val('').trigger('change');
                 genreCategoryPicker.val('').trigger('change');
@@ -885,8 +918,62 @@
                 }
                 $(button.closest('tr')).find('select').select2('destroy');
                 button.closest('tr').remove();
+                markGenreMappingsTouched();
                 refreshGenreMappingsVisibility();
             });
+            genreMappings?.addEventListener('change', function (event) {
+                if (event.target.matches('select[name="genre_category_ids[]"]')) {
+                    markGenreMappingsTouched();
+                }
+            });
+
+            let genreMappingsRefreshing = false;
+            async function refreshSavedGenreMappings() {
+                if (!genreMappingsEndpoint || !genreMappings || genreMappingsRefreshing
+                    || genreMappingTouchedInput?.value === '1'
+                    || document.hidden || !settingsPane?.classList.contains('active')) {
+                    return;
+                }
+
+                genreMappingsRefreshing = true;
+                try {
+                    const response = await fetch(genreMappingsEndpoint, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.version || payload.version === genreMappingVersionInput?.value) {
+                        return;
+                    }
+
+                    genreMappings.querySelectorAll('select[name="genre_category_ids[]"]')
+                        .forEach(function (select) {
+                            if ($(select).hasClass('select2-hidden-accessible')) {
+                                $(select).select2('destroy');
+                            }
+                        });
+                    genreMappings.replaceChildren();
+                    Object.entries(payload.mappings || {}).forEach(function ([genre, categoryId]) {
+                        upsertGenreMapping(genre, categoryId);
+                    });
+                    if (genreMappingVersionInput) {
+                        genreMappingVersionInput.value = payload.version;
+                    }
+                    refreshGenreMappingsVisibility();
+                } catch (error) {
+                    // Privremena mrežna greška ne smije ometati uređivanje postavki.
+                } finally {
+                    genreMappingsRefreshing = false;
+                }
+            }
+
+            window.addEventListener('focus', refreshSavedGenreMappings);
+            document.addEventListener('visibilitychange', refreshSavedGenreMappings);
+            window.setInterval(refreshSavedGenreMappings, 30000);
             $('#publisher-parent-category').on('change', filterPublisherCategories);
 
             const sourceCategoryFilter = $('#source-category');
@@ -930,7 +1017,11 @@
             }
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
                 window.history.replaceState(null, '', event.target.hash);
+                if (event.target.hash === settingsTabSelector) {
+                    refreshSavedGenreMappings();
+                }
             });
+            refreshSavedGenreMappings();
 
             function updatePricePreview() {
                 const rate = Number(String($('#exchange-rate').val() || '').replace(',', '.'));
