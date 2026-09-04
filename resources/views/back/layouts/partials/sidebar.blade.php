@@ -188,7 +188,7 @@
                     </a>
                 </li>
 
-                <li class="nav-main-item{{ request()->is(['admin/settings/*']) || request()->routeIs(['laguna-import.*', 'delfi-import.*', 'novella-import.*', 'znanje-import.*']) ? ' open' : '' }}">
+                <li class="nav-main-item{{ request()->is(['admin/settings/*']) || request()->routeIs(['delfi-import.*', 'novella-import.*', 'znanje-import.*']) ? ' open' : '' }}">
                     <a class="nav-main-link nav-main-link-submenu" data-toggle="submenu" aria-haspopup="true" aria-expanded="true" href="#">
                         <i class="nav-main-link-icon si si-settings"></i>
                         <span class="nav-main-link-name">Postavke</span>
@@ -203,11 +203,6 @@
                         <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs(['pelion.index']) ? ' active' : '' }}" href="{{ route('pelion.index') }}">
                                 <span class="nav-main-link-name">Pelion</span>
-                            </a>
-                        </li>
-                        <li class="nav-main-item">
-                            <a class="nav-main-link{{ request()->routeIs('laguna-import.*') ? ' active' : '' }}" href="{{ route('laguna-import.index') }}">
-                                <span class="nav-main-link-name">Laguna import</span>
                             </a>
                         </li>
                         <li class="nav-main-item">

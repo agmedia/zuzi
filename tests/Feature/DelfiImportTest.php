@@ -332,6 +332,7 @@ class DelfiImportTest extends TestCase
 
         $response->assertOk()
             ->assertSee('Delfi import')
+            ->assertDontSee('Laguna import')
             ->assertSee('Samo Knjiga i Strana knjiga')
             ->assertSee('value="new" selected', false)
             ->assertSee('data-source-row="' . $source->id . '"', false)
