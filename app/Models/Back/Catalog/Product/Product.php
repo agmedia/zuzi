@@ -10,6 +10,7 @@ use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Action;
 use App\Models\Back\Settings\Settings;
+use App\Services\Catalog\ImportedProductLinkResetter;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,8 +35,9 @@ class Product extends Model
             Njuskalo::clearExport();
         });
 
-        static::deleted(function () {
+        static::deleted(function (Product $product) {
             Njuskalo::clearExport();
+            app(ImportedProductLinkResetter::class)->reset((int) $product->id);
         });
     }
 
