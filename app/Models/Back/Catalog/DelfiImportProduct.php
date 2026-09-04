@@ -3,6 +3,7 @@
 namespace App\Models\Back\Catalog;
 
 use App\Models\Back\Catalog\Product\Product;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class DelfiImportProduct extends Model
@@ -30,6 +31,16 @@ class DelfiImportProduct extends Model
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function scopeAvailableForImport(Builder $query): Builder
+    {
+        return $query->whereRaw('LOWER(TRIM(availability)) = ?', ['in stock']);
+    }
+
+    public function isAvailableForImport(): bool
+    {
+        return strtolower(trim((string) $this->availability)) === 'in stock';
     }
 
     public function getUiStatusAttribute(): string

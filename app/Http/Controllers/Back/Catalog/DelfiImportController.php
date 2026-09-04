@@ -117,6 +117,7 @@ class DelfiImportController extends Controller
             'bulk_inspection_route' => 'delfi-import.inspect-bulk',
             'bulk_inspection_limit' => 100,
             'bulk_inspection_delay_ms' => 350,
+            'hide_unavailable_imports' => true,
         ];
 
         return view('back.catalog.laguna-import.index', compact(
@@ -636,7 +637,10 @@ class DelfiImportController extends Controller
                 $query->whereNull('checked_source_hash')->orWhereColumn('checked_source_hash', '!=', 'source_hash');
             });
         } elseif ($status === 'new') {
-            $query->whereNull('product_id')->where('check_status', 'new')->whereColumn('checked_source_hash', 'source_hash');
+            $query->availableForImport()
+                ->whereNull('product_id')
+                ->where('check_status', 'new')
+                ->whereColumn('checked_source_hash', 'source_hash');
         } elseif ($status === 'existing') {
             $query->whereNotNull('product_id')->whereNull('imported_at')->whereNotIn('check_status', ['conflict', 'error']);
         } elseif ($status === 'imported') {
@@ -653,8 +657,8 @@ class DelfiImportController extends Controller
         $counts = DelfiImportProduct::query()
             ->where('is_current', true)
             ->selectRaw("COUNT(*) AS all_count")
-            ->selectRaw("SUM(CASE WHEN product_id IS NULL AND (checked_source_hash IS NULL OR checked_source_hash != source_hash) THEN 1 ELSE 0 END) AS pending_count")
-            ->selectRaw("SUM(CASE WHEN product_id IS NULL AND check_status = 'new' AND checked_source_hash = source_hash THEN 1 ELSE 0 END) AS new_count")
+            ->selectRaw("SUM(CASE WHEN LOWER(TRIM(availability)) = 'in stock' AND product_id IS NULL AND (checked_source_hash IS NULL OR checked_source_hash != source_hash) THEN 1 ELSE 0 END) AS pending_count")
+            ->selectRaw("SUM(CASE WHEN LOWER(TRIM(availability)) = 'in stock' AND product_id IS NULL AND check_status = 'new' AND checked_source_hash = source_hash THEN 1 ELSE 0 END) AS new_count")
             ->selectRaw("SUM(CASE WHEN product_id IS NOT NULL AND imported_at IS NULL AND check_status NOT IN ('conflict', 'error') THEN 1 ELSE 0 END) AS existing_count")
             ->selectRaw("SUM(CASE WHEN imported_at IS NOT NULL AND source_hash = imported_hash AND check_status NOT IN ('conflict', 'error') THEN 1 ELSE 0 END) AS imported_count")
             ->selectRaw("SUM(CASE WHEN imported_at IS NOT NULL AND source_hash != imported_hash AND check_status NOT IN ('conflict', 'error') THEN 1 ELSE 0 END) AS changed_count")
@@ -678,6 +682,7 @@ class DelfiImportController extends Controller
     private function inspectionPendingQuery(): Builder
     {
         return DelfiImportProduct::query()
+            ->availableForImport()
             ->where('is_current', true)
             ->where(function (Builder $query) {
                 $query->whereNull('checked_source_hash')->orWhereColumn('checked_source_hash', '!=', 'source_hash');
@@ -687,6 +692,7 @@ class DelfiImportController extends Controller
     private function bulkPendingQuery(string $feedToken): Builder
     {
         return DelfiImportProduct::query()
+            ->availableForImport()
             ->where('is_current', true)
             ->where('feed_token', $feedToken)
             ->whereIn('source_category', DelfiProductListApiClient::CATEGORIES)

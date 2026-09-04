@@ -97,6 +97,7 @@
             'refresh_step_route' => null,
             'refresh_cancel_route' => null,
             'refresh_root_options' => [],
+            'hide_unavailable_imports' => false,
         ], $importUi ?? []);
         $importUi['supports_source_publisher_mapping'] = $importUi['supports_source_publisher_mapping'] ?? $importUi['supports_source_mapping'];
         $importUi['supports_source_taxonomy_mapping'] = $importUi['supports_source_taxonomy_mapping'] ?? $importUi['supports_source_mapping'];
@@ -431,9 +432,10 @@
                                 $sourceAvailable = in_array(strtolower(trim((string) $source->availability)), [
                                     'in stock', 'in_stock', 'instock', 'available', 'onbackorder',
                                 ], true);
+                                $canImport = ! $importUi['hide_unavailable_imports'] || $sourceAvailable;
                             @endphp
                             <tr data-source-row="{{ $source->id }}">
-                                <td><input type="checkbox" value="{{ $source->id }}" data-source-checkbox {{ ! $source->is_current ? 'disabled' : '' }}></td>
+                                <td><input type="checkbox" value="{{ $source->id }}" data-source-checkbox {{ ! $source->is_current || ! $canImport ? 'disabled' : '' }}></td>
                                 <td>
                                     @if($source->image_url)
                                         <a class="img-link img-link-zoom-in img-lightbox"
@@ -486,7 +488,9 @@
                                     @if($needsInspection)
                                         <button class="btn btn-sm btn-alt-primary" type="button" title="{{ $source->check_status === 'error' ? 'Ponovi provjeru' : 'Provjeri' }}" data-single-action="inspect" data-source-id="{{ $source->id }}"><i class="fa fa-search"></i></button>
                                     @endif
-                                    <button class="btn btn-sm btn-alt-success" type="button" title="Uvezi" data-single-action="import" data-source-id="{{ $source->id }}"><i class="fa fa-download"></i></button>
+                                    @if($canImport)
+                                        <button class="btn btn-sm btn-alt-success" type="button" title="Uvezi" data-single-action="import" data-source-id="{{ $source->id }}"><i class="fa fa-download"></i></button>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

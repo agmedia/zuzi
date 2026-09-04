@@ -343,6 +343,62 @@ class DelfiImportTest extends TestCase
             ->assertSee('Fantastika');
     }
 
+    public function test_unavailable_books_are_not_offered_for_import(): void
+    {
+        $this->configureImport();
+        $availableHash = hash('sha256', 'available-delfi-book');
+        $available = $this->source([
+            'external_id' => 'AVAILABLE-DELFI-BOOK',
+            'remote_product_id' => 280001,
+            'name' => 'Dostupna Delfi knjiga',
+            'source_hash' => $availableHash,
+            'checked_source_hash' => $availableHash,
+            'check_status' => 'new',
+        ]);
+        $unavailableHash = hash('sha256', 'unavailable-delfi-book');
+        $unavailable = $this->source([
+            'external_id' => 'UNAVAILABLE-DELFI-BOOK',
+            'remote_product_id' => 280002,
+            'feed_position' => 2,
+            'name' => 'Nedostupna Delfi knjiga',
+            'availability' => 'out of stock',
+            'source_hash' => $unavailableHash,
+            'checked_source_hash' => $unavailableHash,
+            'check_status' => 'new',
+        ]);
+        Cache::put('delfi-import-book-genres-by-category', [
+            'Knjiga' => [],
+            'Strana knjiga' => [],
+        ]);
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get(route('delfi-import.index', ['status' => 'new']))
+            ->assertOk()
+            ->assertViewHas('products', function ($products) use ($available, $unavailable) {
+                $ids = $products->getCollection()->pluck('id');
+
+                return $ids->contains($available->id) && ! $ids->contains($unavailable->id);
+            })
+            ->assertViewHas('statusCounts', fn (array $counts) => $counts['new'] === 1);
+
+        $this->actingAs($admin)
+            ->get(route('delfi-import.index', ['status' => 'all']))
+            ->assertOk()
+            ->assertSee('data-source-row="' . $unavailable->id . '"', false)
+            ->assertDontSee('data-single-action="import" data-source-id="' . $unavailable->id . '"', false);
+
+        $this->actingAs($admin)
+            ->postJson(route('delfi-import.import', $unavailable))
+            ->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Artikl nije dostupan u Delfi feedu i nije ponuđen za uvoz.',
+            ]);
+
+        $this->assertDatabaseMissing('products', ['name' => 'Nedostupna Delfi knjiga']);
+    }
+
     public function test_admin_saved_genre_mapping_remains_visible_with_duplicate_legacy_settings(): void
     {
         $mapping = $this->configureImport();

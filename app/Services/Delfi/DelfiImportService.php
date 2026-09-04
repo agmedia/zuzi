@@ -73,6 +73,7 @@ class DelfiImportService
         $sources = collect();
         if ($remoteIds->isNotEmpty() || $externalIds->isNotEmpty()) {
             $sources = DelfiImportProduct::query()
+                ->availableForImport()
                 ->where('is_current', true)
                 ->where('feed_token', $feedToken)
                 ->whereIn('source_category', DelfiProductListApiClient::CATEGORIES)
@@ -328,6 +329,10 @@ class DelfiImportService
 
     public function import(DelfiImportProduct $source, ?int $additionalCategoryId = null): array
     {
+        if (! $source->isAvailableForImport()) {
+            throw new RuntimeException('Artikl nije dostupan u Delfi feedu i nije ponuđen za uvoz.');
+        }
+
         // Bulk inspection intentionally avoids the per-product overview API.
         // Fetch the complete detail exactly once when that book is actually imported.
         $source = $this->inspect($source, empty($source->detail_payload));
@@ -960,7 +965,7 @@ class DelfiImportService
 
     private function quantity(DelfiImportProduct $source, array $settings): int
     {
-        return $source->availability === 'in stock'
+        return $source->isAvailableForImport()
             ? max(0, (int) $settings['default_quantity'])
             : 0;
     }
