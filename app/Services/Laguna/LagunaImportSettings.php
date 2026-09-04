@@ -14,6 +14,8 @@ class LagunaImportSettings
     {
         $stored = Settings::query()
             ->where('code', self::CODE)
+            ->orderBy('updated_at')
+            ->orderBy('id')
             ->pluck('value', 'key');
         $existingAction = (string) $stored->get('existing_action', 'skip');
 
@@ -44,10 +46,14 @@ class LagunaImportSettings
     public function save(array $values): array
     {
         foreach ($values as $key => $value) {
-            Settings::query()->updateOrCreate(
-                ['code' => self::CODE, 'key' => $key],
-                ['value' => (string) $value, 'json' => 0]
-            );
+            $query = Settings::query()->where('code', self::CODE)->where('key', $key);
+            $attributes = ['value' => (string) $value, 'json' => 0];
+
+            if ($query->exists()) {
+                $query->update($attributes);
+            } else {
+                Settings::query()->create(['code' => self::CODE, 'key' => $key] + $attributes);
+            }
         }
 
         return $this->all();

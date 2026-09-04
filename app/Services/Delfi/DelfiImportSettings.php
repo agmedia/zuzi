@@ -14,7 +14,11 @@ class DelfiImportSettings
     public function all(): array
     {
         $stored = Schema::hasTable('settings')
-            ? Settings::query()->where('code', self::CODE)->pluck('value', 'key')
+            ? Settings::query()
+                ->where('code', self::CODE)
+                ->orderBy('updated_at')
+                ->orderBy('id')
+                ->pluck('value', 'key')
             : collect();
         $existingAction = (string) $stored->get('existing_action', 'skip');
 
@@ -81,10 +85,19 @@ class DelfiImportSettings
 
     private function store(string $key, string $value, bool $json): void
     {
-        Settings::query()->updateOrCreate(
-            ['code' => self::CODE, 'key' => $key],
-            ['value' => $value, 'json' => $json ? 1 : 0]
-        );
+        $query = Settings::query()->where('code', self::CODE)->where('key', $key);
+        $attributes = ['value' => $value, 'json' => $json ? 1 : 0];
+
+        if ($query->exists()) {
+            // Stariji podaci mogu sadržavati više redaka za isti ključ jer u
+            // tablici nema jedinstvenog indeksa. Ažuriraj ih sve kako pluck()
+            // ne bi nakon spremanja pročitao zastarjelu vrijednost.
+            $query->update($attributes);
+
+            return;
+        }
+
+        Settings::query()->create(['code' => self::CODE, 'key' => $key] + $attributes);
     }
 
     private function decodeGenreMap($value): array

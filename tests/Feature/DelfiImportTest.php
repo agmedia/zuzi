@@ -343,6 +343,56 @@ class DelfiImportTest extends TestCase
             ->assertSee('Fantastika');
     }
 
+    public function test_admin_saved_genre_mapping_remains_visible_with_duplicate_legacy_settings(): void
+    {
+        $mapping = $this->configureImport();
+        DB::table('settings')->insert([
+            'code' => 'delfi_import',
+            'key' => 'genre_category_map',
+            'value' => '{}',
+            'json' => 1,
+            'created_at' => now()->addSecond(),
+            'updated_at' => now()->addSecond(),
+        ]);
+        $admin = $this->admin();
+
+        $response = $this->actingAs($admin)->post(route('delfi-import.settings'), [
+            'exchange_rate' => 117.2,
+            'markup_percent' => 30,
+            'publisher_parent_category_id' => $mapping['publisher_parent_category_id'],
+            'publisher_category_id' => $mapping['fallbackPublisherCategoryId'],
+            'publisher_id' => $mapping['fallbackPublisherId'],
+            'default_quantity' => 5,
+            'existing_action' => 'skip',
+            'map_source_publishers' => 1,
+            'source_genres' => ['Ljubići'],
+            'genre_category_ids' => [$mapping['genre_category_id']],
+        ]);
+
+        $response->assertSessionHasNoErrors()
+            ->assertRedirect(route('delfi-import.index', ['tab' => 'settings']));
+        $this->assertSame(
+            ['Ljubići' => $mapping['genre_category_id']],
+            app(DelfiImportSettings::class)->all()['genre_category_map']
+        );
+        $this->assertTrue(
+            DB::table('settings')
+                ->where('code', 'delfi_import')
+                ->where('key', 'genre_category_map')
+                ->pluck('value')
+                ->every(fn (string $value) => $value === json_encode(
+                    ['Ljubići' => $mapping['genre_category_id']],
+                    JSON_UNESCAPED_UNICODE
+                ))
+        );
+
+        Cache::put('delfi-import-book-genres-by-category', ['Knjiga' => ['Ljubići']]);
+        $this->actingAs($admin)
+            ->get(route('delfi-import.index', ['tab' => 'settings']))
+            ->assertOk()
+            ->assertSee('name="source_genres[]" value="Ljubići"', false);
+    }
+
     public function test_new_filter_on_second_page_hides_rows_reconciled_to_other_statuses(): void
     {
         foreach (range(1, 40) as $position) {
