@@ -83,7 +83,7 @@ class NovellaImportServiceTest extends TestCase
         $this->assertSame('Katherine Center: Agentica', $product->meta_title);
         $this->assertSame('9789534002261', $product->isbn);
         $this->assertSame(12.0, (float) $product->price);
-        $this->assertSame(9.6, (float) $product->special);
+        $this->assertSame(10.0, (float) $product->special);
         $this->assertSame(3, (int) $product->quantity);
         $this->assertSame($publisherId, (int) $product->publisher_id);
         $this->assertSame(0, (int) $product->status);

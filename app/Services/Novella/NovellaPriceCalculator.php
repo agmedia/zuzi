@@ -2,6 +2,7 @@
 
 namespace App\Services\Novella;
 
+use App\Services\Catalog\ImportPriceRounder;
 use InvalidArgumentException;
 
 class NovellaPriceCalculator
@@ -27,10 +28,8 @@ class NovellaPriceCalculator
             );
         }
 
-        return round(
-            $priceEur * (1 + ($markupPercent / 100)),
-            2,
-            PHP_ROUND_HALF_UP
+        return ImportPriceRounder::upToHalfEuro(
+            $priceEur * (1 + ($markupPercent / 100))
         );
     }
 }

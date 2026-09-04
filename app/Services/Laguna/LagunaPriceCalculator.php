@@ -2,6 +2,7 @@
 
 namespace App\Services\Laguna;
 
+use App\Services\Catalog\ImportPriceRounder;
 use InvalidArgumentException;
 
 class LagunaPriceCalculator
@@ -17,6 +18,8 @@ class LagunaPriceCalculator
             throw new InvalidArgumentException('Cijena, tečaj i postotak uvećanja moraju biti valjani pozitivni brojevi.');
         }
 
-        return round(($priceRsd / $rsdPerEuro) * (1 + ($markupPercent / 100)), 2, PHP_ROUND_HALF_UP);
+        return ImportPriceRounder::upToHalfEuro(
+            ($priceRsd / $rsdPerEuro) * (1 + ($markupPercent / 100))
+        );
     }
 }

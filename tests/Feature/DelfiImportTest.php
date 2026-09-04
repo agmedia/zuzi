@@ -50,7 +50,7 @@ class DelfiImportTest extends TestCase
         $this->assertSame('9788652162123', $product->isbn);
         $this->assertSame('9788652162123', $product->ean);
         $this->assertSame($mapping['source_publisher_id'], (int) $product->publisher_id);
-        $this->assertSame(12.29, (float) $product->price);
+        $this->assertSame(12.50, (float) $product->price);
         $this->assertSame(3, (int) $product->quantity);
         $this->assertSame('298', $product->pages);
         $this->assertSame('13x20 cm', $product->dimensions);

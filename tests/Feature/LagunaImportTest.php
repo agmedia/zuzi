@@ -420,8 +420,8 @@ class LagunaImportTest extends TestCase
         $this->assertSame('Test Autor: Test knjiga', $product->meta_title);
         $this->assertSame('9788652164349', $product->isbn);
         $this->assertSame('9788652164349', $product->ean);
-        $this->assertSame(12.29, (float) $product->price);
-        $this->assertSame(10.24, (float) $product->special);
+        $this->assertSame(12.50, (float) $product->price);
+        $this->assertSame(10.50, (float) $product->special);
         $this->assertSame(3, (int) $product->quantity);
         $this->assertSame('344', $product->pages);
         $this->assertSame('13x20', $product->dimensions);

@@ -14,7 +14,9 @@ class ZnanjePriceCalculatorTest extends TestCase
 
         $this->assertSame(12.50, $calculator->calculate(10, 25));
         $this->assertSame(12.50, $calculator->convert(10, 117.2, 25));
-        $this->assertSame(11.99, $calculator->calculate(11.99, 0));
+        $this->assertSame(12.00, $calculator->calculate(11.99, 0));
+        $this->assertSame(8.50, $calculator->calculate(8.13, 0));
+        $this->assertSame(9.00, $calculator->calculate(8.75, 0));
     }
 
     public function test_it_rejects_negative_or_non_finite_values(): void

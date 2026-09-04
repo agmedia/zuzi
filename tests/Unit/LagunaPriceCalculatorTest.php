@@ -12,7 +12,15 @@ class LagunaPriceCalculatorTest extends TestCase
     {
         $price = app(LagunaPriceCalculator::class)->convert(1199, 117.2, 20);
 
-        $this->assertSame(12.28, $price);
+        $this->assertSame(12.50, $price);
+    }
+
+    public function test_it_rounds_up_without_markup_too(): void
+    {
+        $calculator = app(LagunaPriceCalculator::class);
+
+        $this->assertSame(8.50, $calculator->convert(813, 100, 0));
+        $this->assertSame(9.00, $calculator->convert(875, 100, 0));
     }
 
     public function test_it_rejects_an_invalid_exchange_rate(): void

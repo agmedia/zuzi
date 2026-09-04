@@ -2,6 +2,7 @@
 
 namespace App\Services\Delfi;
 
+use App\Services\Catalog\ImportPriceRounder;
 use InvalidArgumentException;
 
 class DelfiPriceCalculator
@@ -19,10 +20,8 @@ class DelfiPriceCalculator
             );
         }
 
-        return round(
-            ($priceRsd / $rsdPerEuro) * (1 + ($markupPercent / 100)),
-            2,
-            PHP_ROUND_HALF_UP
+        return ImportPriceRounder::upToHalfEuro(
+            ($priceRsd / $rsdPerEuro) * (1 + ($markupPercent / 100))
         );
     }
 }

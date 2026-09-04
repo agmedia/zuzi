@@ -416,13 +416,17 @@
                                     && ($source->check_status === 'error' || $source->checked_source_hash !== $source->source_hash);
                                 $sourcePrice = (float) data_get($source, $importUi['source_price_field'], 0);
                                 $sourceSalePrice = data_get($source, $importUi['source_sale_price_field']);
-                                $regularEur = $importUi['uses_exchange_rate']
-                                    ? $priceCalculator->convert($sourcePrice, $settings['exchange_rate'], $settings['markup_percent'])
-                                    : round($sourcePrice * (1 + max(0, (float) $settings['markup_percent']) / 100), 2);
+                                $regularEur = $priceCalculator->convert(
+                                    $sourcePrice,
+                                    $settings['exchange_rate'] ?? 1,
+                                    $settings['markup_percent']
+                                );
                                 $saleEur = $sourceSalePrice
-                                    ? ($importUi['uses_exchange_rate']
-                                        ? $priceCalculator->convert((float) $sourceSalePrice, $settings['exchange_rate'], $settings['markup_percent'])
-                                        : round((float) $sourceSalePrice * (1 + max(0, (float) $settings['markup_percent']) / 100), 2))
+                                    ? $priceCalculator->convert(
+                                        (float) $sourceSalePrice,
+                                        $settings['exchange_rate'] ?? 1,
+                                        $settings['markup_percent']
+                                    )
                                     : null;
                                 $sourceAvailable = in_array(strtolower(trim((string) $source->availability)), [
                                     'in stock', 'in_stock', 'instock', 'available', 'onbackorder',
