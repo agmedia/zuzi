@@ -75,7 +75,8 @@ class ZnanjeImportServiceTest extends TestCase
 
         $this->assertSame('created', $result['action']);
         $product = Product::query()->findOrFail($result['product_id']);
-        $this->assertSame('Jedno zlatno ljeto', $product->name);
+        $this->assertSame('Ivo Horvat: Jedno zlatno ljeto', $product->name);
+        $this->assertSame('Ivo Horvat: Jedno zlatno ljeto', $product->meta_title);
         $this->assertSame('9789530000001', $product->isbn);
         $this->assertSame('9789530000001', $product->ean);
         $this->assertSame(25.0, (float) $product->price);

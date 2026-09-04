@@ -9,6 +9,7 @@ use App\Models\Back\Catalog\Product\ProductImage;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Action;
 use App\Services\Catalog\AuthorResolver;
+use App\Services\Catalog\ImportedProductName;
 use App\Services\ProductIdentifierAllocator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -509,8 +510,9 @@ class ZnanjeImportService
                         ];
                     }
 
+                    $productName = ImportedProductName::format($locked->author, $locked->name);
                     $request = Request::create('/admin/catalog/znanje-import', 'POST', [
-                        'name' => $locked->name,
+                        'name' => $productName,
                         'sku' => $identifiers['sku'],
                         'itemid' => $identifiers['itemid'],
                         'isbn' => $locked->isbn,
@@ -526,7 +528,7 @@ class ZnanjeImportService
                         ),
                         'author_id' => $this->authorResolver->resolveName($locked->author),
                         'publisher_id' => $publisherMapping['publisher_id'],
-                        'meta_title' => $locked->name,
+                        'meta_title' => $productName,
                         'meta_description' => Str::limit($description, 250, ''),
                         'pages' => $locked->pages,
                         'dimensions' => $locked->format,
@@ -913,7 +915,12 @@ class ZnanjeImportService
 
         return $query->get($this->matchColumns())
             ->filter(function (Product $product) use ($name, $author) {
-                return $this->normalizeComparableText((string) $product->name) === $name
+                $productName = ImportedProductName::withoutAuthor(
+                    (string) optional($product->author)->title,
+                    (string) $product->name
+                );
+
+                return $this->normalizeComparableText($productName) === $name
                     && $this->normalizeComparableText((string) optional($product->author)->title) === $author;
             })
             ->unique('id')

@@ -79,7 +79,8 @@ class NovellaImportServiceTest extends TestCase
 
         $this->assertSame('created', $result['action']);
         $product = Product::query()->findOrFail($result['product_id']);
-        $this->assertSame('Agentica', $product->name);
+        $this->assertSame('Katherine Center: Agentica', $product->name);
+        $this->assertSame('Katherine Center: Agentica', $product->meta_title);
         $this->assertSame('9789534002261', $product->isbn);
         $this->assertSame(12.0, (float) $product->price);
         $this->assertSame(9.6, (float) $product->special);

@@ -45,7 +45,8 @@ class DelfiImportTest extends TestCase
 
         $this->assertSame('created', $result['action']);
         $product = Product::query()->findOrFail($result['product_id']);
-        $this->assertSame('Test Delfi knjiga', $product->name);
+        $this->assertSame('Geri Penton: Test Delfi knjiga', $product->name);
+        $this->assertSame('Geri Penton: Test Delfi knjiga', $product->meta_title);
         $this->assertSame('9788652162123', $product->isbn);
         $this->assertSame('9788652162123', $product->ean);
         $this->assertSame($mapping['source_publisher_id'], (int) $product->publisher_id);

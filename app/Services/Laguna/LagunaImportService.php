@@ -9,6 +9,7 @@ use App\Models\Back\Catalog\Product\ProductImage;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Action;
 use App\Services\Catalog\AuthorResolver;
+use App\Services\Catalog\ImportedProductName;
 use App\Services\ProductIdentifierAllocator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
@@ -243,8 +244,9 @@ class LagunaImportService
                 $additionalCategoryId
             ) {
                 $authorId = $this->authorResolver->resolve($locked->author);
+                $productName = ImportedProductName::format($locked->author, $locked->name);
                 $request = Request::create('/admin/catalog/laguna-import', 'POST', [
-                    'name' => $locked->name,
+                    'name' => $productName,
                     'sku' => $identifiers['sku'],
                     'itemid' => $identifiers['itemid'],
                     'isbn' => $locked->isbn,
@@ -256,7 +258,7 @@ class LagunaImportService
                     'category' => $this->creationCategoryIds($settings, $additionalCategoryId),
                     'author_id' => $authorId,
                     'publisher_id' => (int) $settings['publisher_id'],
-                    'meta_title' => $locked->name,
+                    'meta_title' => $productName,
                     'meta_description' => Str::limit($description, 250, ''),
                     'pages' => $locked->pages,
                     'dimensions' => $locked->format,
@@ -392,6 +394,9 @@ class LagunaImportService
         $normalizedIsbn = strtoupper(preg_replace('/[^0-9X]/i', '', (string) $isbn) ?? '');
         $normalizedName = mb_strtolower(trim((string) $name));
         $normalizedAuthor = mb_strtolower(trim(explode(',', (string) $author)[0]));
+        $normalizedNames = collect(ImportedProductName::variants($normalizedAuthor, $normalizedName))
+            ->map(fn (string $value) => mb_strtolower($value))
+            ->values();
         $hasTitleAuthor = $normalizedName !== '' && $normalizedAuthor !== '';
 
         if ($normalizedIsbn === '' && ! $hasTitleAuthor) {
@@ -399,7 +404,7 @@ class LagunaImportService
         }
 
         return Product::query()
-            ->where(function ($query) use ($normalizedIsbn, $normalizedName, $normalizedAuthor, $hasTitleAuthor) {
+            ->where(function ($query) use ($normalizedIsbn, $normalizedNames, $normalizedAuthor, $hasTitleAuthor) {
                 if ($normalizedIsbn !== '') {
                     $query->where(function ($isbnQuery) use ($normalizedIsbn) {
                         $isbnQuery->where('isbn', $normalizedIsbn)
@@ -417,9 +422,9 @@ class LagunaImportService
 
                 if ($hasTitleAuthor) {
                     $method = $normalizedIsbn !== '' ? 'orWhere' : 'where';
-                    $query->{$method}(function ($titleAuthorQuery) use ($normalizedName, $normalizedAuthor) {
+                    $query->{$method}(function ($titleAuthorQuery) use ($normalizedNames, $normalizedAuthor) {
                         $titleAuthorQuery
-                            ->whereRaw("LOWER(TRIM(COALESCE(products.name, ''))) = ?", [$normalizedName])
+                            ->whereIn(DB::raw("LOWER(TRIM(COALESCE(products.name, '')))"), $normalizedNames)
                             ->whereHas('author', function ($authorQuery) use ($normalizedAuthor) {
                                 $authorQuery->whereRaw(
                                     "LOWER(TRIM(COALESCE(authors.title, ''))) = ?",

@@ -416,7 +416,8 @@ class LagunaImportTest extends TestCase
 
         $this->assertSame('created', $result['action']);
         $product = Product::query()->findOrFail($result['product_id']);
-        $this->assertSame('Test knjiga', $product->name);
+        $this->assertSame('Test Autor: Test knjiga', $product->name);
+        $this->assertSame('Test Autor: Test knjiga', $product->meta_title);
         $this->assertSame('9788652164349', $product->isbn);
         $this->assertSame('9788652164349', $product->ean);
         $this->assertSame(12.29, (float) $product->price);

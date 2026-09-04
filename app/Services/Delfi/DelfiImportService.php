@@ -9,6 +9,7 @@ use App\Models\Back\Catalog\Product\ProductImage;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Marketing\Action;
 use App\Services\Catalog\AuthorResolver;
+use App\Services\Catalog\ImportedProductName;
 use App\Services\ProductIdentifierAllocator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
@@ -443,8 +444,9 @@ class DelfiImportService
                 }
 
                 $authorId = $this->authorResolver->resolve($locked->author);
+                $productName = ImportedProductName::format($locked->author, $locked->name);
                 $request = Request::create('/admin/delfi-import', 'POST', [
-                    'name' => $locked->name,
+                    'name' => $productName,
                     'sku' => $identifiers['sku'],
                     'itemid' => $identifiers['itemid'],
                     'isbn' => $locked->isbn,
@@ -460,7 +462,7 @@ class DelfiImportService
                     ),
                     'author_id' => $authorId,
                     'publisher_id' => $mapping['publisher_id'],
-                    'meta_title' => $locked->name,
+                    'meta_title' => $productName,
                     'meta_description' => Str::limit($description, 250, ''),
                     'pages' => $locked->pages,
                     'dimensions' => $locked->format,
@@ -635,6 +637,7 @@ class DelfiImportService
             ->values();
         $exactName = trim((string) $name);
         $exactAuthor = trim(explode(',', (string) $author)[0]);
+        $catalogNames = ImportedProductName::variants($exactAuthor, $exactName);
         $hasTitleAuthor = $exactName !== '' && $exactAuthor !== '';
         if ($identifiers->isEmpty() && ! $hasTitleAuthor) {
             return collect();
@@ -659,7 +662,7 @@ class DelfiImportService
             // exact comparison therefore keeps the indexes usable while still
             // matching capitalization differences from Delfi.
             $titleAuthorQuery = Product::query()
-                ->where('products.name', $exactName)
+                ->whereIn('products.name', $catalogNames)
                 ->whereHas('author', function ($authorQuery) use ($exactAuthor) {
                     $authorQuery->where('authors.title', $exactAuthor);
                 });
@@ -746,7 +749,9 @@ class DelfiImportService
         if ($titleAuthorPairs->isNotEmpty()) {
             $titleProducts = Product::query()
                 ->join('authors', 'authors.id', '=', 'products.author_id')
-                ->whereIn('products.name', $titleAuthorPairs->pluck('name')->unique()->values())
+                ->whereIn('products.name', $titleAuthorPairs->flatMap(
+                    fn (array $pair) => ImportedProductName::variants($pair['author'], $pair['name'])
+                )->unique()->values())
                 ->whereIn('authors.title', $titleAuthorPairs->pluck('author')->unique()->values())
                 ->get([
                     'products.id',
@@ -760,7 +765,10 @@ class DelfiImportService
                     'authors.title as matched_author',
                 ]);
             $titleAuthorMap = $titleProducts->groupBy(function ($product) {
-                return $this->titleAuthorKey($product->name, $product->matched_author);
+                return $this->titleAuthorKey(
+                    ImportedProductName::withoutAuthor($product->matched_author, $product->name),
+                    $product->matched_author
+                );
             });
         }
 

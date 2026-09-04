@@ -100,7 +100,9 @@ class CachedNewImportProductReconciler
         if ($validPairs->isNotEmpty()) {
             $titleProducts = Product::query()
                 ->join('authors', 'authors.id', '=', 'products.author_id')
-                ->whereIn('products.name', $validPairs->pluck('name')->unique()->values())
+                ->whereIn('products.name', $validPairs->flatMap(
+                    fn (array $pair) => ImportedProductName::variants($pair['author'], $pair['name'])
+                )->unique()->values())
                 ->whereIn('authors.title', $validPairs->pluck('author')->unique()->values())
                 ->get([
                     'products.id',
@@ -114,7 +116,10 @@ class CachedNewImportProductReconciler
                     'authors.title as matched_author',
                 ]);
             $titleAuthorMap = $titleProducts->groupBy(function ($product) {
-                return $this->titleAuthorKey($product->name, $product->matched_author);
+                return $this->titleAuthorKey(
+                    ImportedProductName::withoutAuthor($product->matched_author, $product->name),
+                    $product->matched_author
+                );
             });
         }
 
