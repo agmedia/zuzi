@@ -8,6 +8,7 @@ use App\Models\Back\Catalog\NovellaImportProduct;
 use App\Models\Back\Catalog\ZnanjeImportProduct;
 use App\Services\Delfi\DelfiFeedSynchronizer;
 use App\Services\Delfi\DelfiImportService;
+use App\Services\Delfi\DelfiImportedProductStockSynchronizer;
 use App\Services\Novella\NovellaFeedSynchronizer;
 use App\Services\Novella\NovellaImportService;
 use App\Services\Novella\NovellaRetryableException;
@@ -32,7 +33,7 @@ class RefreshAndInspectCatalogImports extends Command
         {--batch=50 : Number of Novella or Znanje records loaded per batch}
         {--delay-ms=250 : Pause between upstream inspection requests}';
 
-    protected $description = 'Refresh and inspect Delfi, Znanje and Novella catalog feeds.';
+    protected $description = 'Refresh and inspect catalog feeds and synchronize imported Delfi stock.';
 
     public function handle(): int
     {
@@ -71,6 +72,14 @@ class RefreshAndInspectCatalogImports extends Command
                     $result['remaining'],
                     $result['completed'] ? '' : ' (nastavlja se u sljedećem pokretanju)'
                 ));
+                if ($source === 'delfi') {
+                    $this->line(sprintf(
+                        'Delfi zaliha: %d postavljeno na 0, %d vraćeno na %d.',
+                        $result['stock']['zeroed'],
+                        $result['stock']['restored'],
+                        $result['stock']['default_quantity']
+                    ));
+                }
                 Log::info('Noćno osvježavanje kataloga je završilo obradu izvora.', [
                     'source' => $source,
                     'result' => $result,
@@ -138,6 +147,7 @@ class RefreshAndInspectCatalogImports extends Command
 
         try {
             app(DelfiFeedSynchronizer::class)->refresh();
+            $stock = app(DelfiImportedProductStockSynchronizer::class)->sync();
         } finally {
             optional($refreshLock)->release();
         }
@@ -171,7 +181,7 @@ class RefreshAndInspectCatalogImports extends Command
             $this->pause($delayMilliseconds);
         } while ((microtime(true) - $startedAt) < $maxSeconds);
 
-        return compact('processed', 'failed', 'remaining', 'completed');
+        return compact('processed', 'failed', 'remaining', 'completed', 'stock');
     }
 
     /**

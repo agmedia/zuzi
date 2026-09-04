@@ -7,6 +7,7 @@ use App\Models\Back\Catalog\NovellaImportProduct;
 use App\Models\Back\Catalog\ZnanjeImportProduct;
 use App\Services\Delfi\DelfiFeedSynchronizer;
 use App\Services\Delfi\DelfiImportService;
+use App\Services\Delfi\DelfiImportedProductStockSynchronizer;
 use App\Services\Novella\NovellaFeedSynchronizer;
 use App\Services\Novella\NovellaImportService;
 use App\Services\Znanje\ZnanjeFeedSynchronizer;
@@ -53,6 +54,11 @@ class RefreshAndInspectCatalogImportsTest extends TestCase
             ->once()
             ->ordered()
             ->andReturn(['current' => 1]);
+        $this->mock(DelfiImportedProductStockSynchronizer::class)
+            ->shouldReceive('sync')
+            ->once()
+            ->ordered()
+            ->andReturn(['zeroed' => 1, 'restored' => 2, 'default_quantity' => 5]);
         $delfiImport = $this->mock(DelfiImportService::class);
         $this->mock(DelfiImportController::class)
             ->shouldReceive('bulkInspect')
