@@ -347,7 +347,7 @@
                                 <span></span>
                             @endif
                             @if($hasListFilters)
-                                <a class="btn btn-sm btn-link px-0 flex-shrink-0" href="{{ route($routePrefix . '.index') }}">Očisti filtre</a>
+                                <a class="btn btn-sm btn-link px-0 flex-shrink-0" href="{{ route($routePrefix . '.index', ['clear_filters' => 1]) }}">Očisti filtre</a>
                             @endif
                         </div>
                     @endif

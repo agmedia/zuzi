@@ -7,6 +7,7 @@ use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Catalog\ZnanjeImportProduct;
 use App\Services\Catalog\CachedNewImportProductReconciler;
+use App\Services\Catalog\ImportFilterMemory;
 use App\Services\Znanje\ZnanjeFeedService;
 use App\Services\Znanje\ZnanjeFeedSynchronizer;
 use App\Services\Znanje\ZnanjeImportService;
@@ -27,8 +28,13 @@ class ZnanjeImportController extends Controller
         ZnanjeImportSettings $settingsService,
         ZnanjeFeedService $feedService,
         ZnanjePriceCalculator $priceCalculator,
-        CachedNewImportProductReconciler $catalogReconciler
+        CachedNewImportProductReconciler $catalogReconciler,
+        ImportFilterMemory $filterMemory
     ) {
+        if ($filterMemory->restore($request, 'znanje')) {
+            return redirect()->route('znanje-import.index');
+        }
+
         $settings = $settingsService->all();
         $countsByCategory = $this->sourceGenreCountsByCategory();
         $sourceCategoryCounts = $this->sourceCategoryCounts();
@@ -54,6 +60,7 @@ class ZnanjeImportController extends Controller
         }
         uksort($sourceGenres, 'strnatcasecmp');
         $this->normalizeSourceFilters($request, $sourceTaxonomy);
+        $filterMemory->remember($request, 'znanje');
 
         $query = ZnanjeImportProduct::query()
             ->with('product:id,name,sku,itemid,isbn,price,quantity');

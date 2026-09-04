@@ -7,6 +7,7 @@ use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\LagunaImportProduct;
 use App\Models\Back\Catalog\Publisher;
 use App\Services\Catalog\CachedNewImportProductReconciler;
+use App\Services\Catalog\ImportFilterMemory;
 use App\Services\Laguna\LagunaFeedService;
 use App\Services\Laguna\LagunaFeedSynchronizer;
 use App\Services\Laguna\LagunaImportService;
@@ -23,8 +24,14 @@ class LagunaImportController extends Controller
         LagunaImportSettings $settingsService,
         LagunaFeedService $feedService,
         LagunaPriceCalculator $priceCalculator,
-        CachedNewImportProductReconciler $catalogReconciler
+        CachedNewImportProductReconciler $catalogReconciler,
+        ImportFilterMemory $filterMemory
     ) {
+        if ($filterMemory->restore($request, 'laguna')) {
+            return redirect()->route('laguna-import.index');
+        }
+        $filterMemory->remember($request, 'laguna');
+
         $settings = $settingsService->all();
         $query = LagunaImportProduct::query()->with('product:id,name,sku,itemid,isbn,price,quantity');
         $this->applyFilters($query, $request);

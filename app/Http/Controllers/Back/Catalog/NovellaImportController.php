@@ -7,6 +7,7 @@ use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\NovellaImportProduct;
 use App\Models\Back\Catalog\Publisher;
 use App\Services\Catalog\CachedNewImportProductReconciler;
+use App\Services\Catalog\ImportFilterMemory;
 use App\Services\Novella\NovellaFeedService;
 use App\Services\Novella\NovellaFeedSynchronizer;
 use App\Services\Novella\NovellaImportService;
@@ -27,8 +28,13 @@ class NovellaImportController extends Controller
         NovellaImportSettings $settingsService,
         NovellaFeedService $feedService,
         NovellaPriceCalculator $priceCalculator,
-        CachedNewImportProductReconciler $catalogReconciler
+        CachedNewImportProductReconciler $catalogReconciler,
+        ImportFilterMemory $filterMemory
     ) {
+        if ($filterMemory->restore($request, 'novella')) {
+            return redirect()->route('novella-import.index');
+        }
+
         $settings = $settingsService->all();
         $sourceGenres = $this->sourceGenreCounts();
         foreach (array_keys((array) ($settings['category_map'] ?? [])) as $sourceGenre) {
@@ -39,6 +45,7 @@ class NovellaImportController extends Controller
         uksort($sourceGenres, 'strnatcasecmp');
         $sourceTaxonomy = [self::SOURCE_CATEGORY => array_keys($sourceGenres)];
         $this->normalizeSourceFilters($request, $sourceTaxonomy);
+        $filterMemory->remember($request, 'novella');
 
         $query = NovellaImportProduct::query()
             ->with('product:id,name,sku,itemid,isbn,price,quantity');

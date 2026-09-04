@@ -7,6 +7,7 @@ use App\Models\Back\Catalog\Category;
 use App\Models\Back\Catalog\DelfiImportProduct;
 use App\Models\Back\Catalog\Publisher;
 use App\Services\Catalog\CachedNewImportProductReconciler;
+use App\Services\Catalog\ImportFilterMemory;
 use App\Services\Delfi\DelfiFeedService;
 use App\Services\Delfi\DelfiFeedSynchronizer;
 use App\Services\Delfi\DelfiImportService;
@@ -28,8 +29,13 @@ class DelfiImportController extends Controller
         DelfiFeedService $feedService,
         DelfiPriceCalculator $priceCalculator,
         DelfiTaxonomyService $taxonomyService,
-        CachedNewImportProductReconciler $catalogReconciler
+        CachedNewImportProductReconciler $catalogReconciler,
+        ImportFilterMemory $filterMemory
     ) {
+        if ($filterMemory->restore($request, 'delfi')) {
+            return redirect()->route('delfi-import.index');
+        }
+
         $settings = $settingsService->all();
         $sourceGenreCountsByCategory = $this->sourceGenreCountsByCategory();
         $sourceTaxonomy = $taxonomyService->bookGenresByCategory();
@@ -54,6 +60,7 @@ class DelfiImportController extends Controller
         }
         uksort($sourceGenres, 'strnatcasecmp');
         $this->normalizeSourceFilters($request, $sourceTaxonomy);
+        $filterMemory->remember($request, 'delfi');
 
         $query = DelfiImportProduct::query()->with('product:id,name,sku,itemid,isbn,price,quantity');
         $this->applyFilters($query, $request);
