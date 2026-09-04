@@ -27,6 +27,10 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('clean:authors')->dailyAt('00:03');
         $schedule->command('clean:publishers')->dailyAt('00:04');
+        $schedule->command('imports:refresh-and-inspect all --max-seconds=7200')
+            ->dailyAt('00:10')
+            ->timezone(config('app.timezone'))
+            ->withoutOverlapping(480);
         $schedule->command('sessions:prune-expired')->hourly()->withoutOverlapping();
 
         $schedule->command('sync:category-actions')->everyFifteenMinutes()->withoutOverlapping();
