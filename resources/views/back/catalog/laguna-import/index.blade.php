@@ -564,7 +564,10 @@
 
                             <div class="alert alert-info d-flex align-items-center mb-4" role="status">
                                 <i class="fa fa-calculator mr-3"></i>
-                                <div>Primjer izračuna: <strong>{{ number_format($importUi['price_preview_source_amount'], 2, ',', '.') }} {{ $importUi['source_currency'] }}</strong> → <strong data-price-preview>—</strong> EUR</div>
+                                <div>
+                                    Primjer izračuna: <strong>{{ number_format($importUi['price_preview_source_amount'], 2, ',', '.') }} {{ $importUi['source_currency'] }}</strong> → <strong data-price-preview>—</strong> EUR
+                                    <div class="small">Iznos uključuje uvećanje i zaokruživanje prema gore na sljedećih 0,50 EUR.</div>
+                                </div>
                             </div>
 
                             <hr class="my-4">
@@ -1031,8 +1034,9 @@
                 const converted = usesExchangeRate
                     ? (rate > 0 ? (sourceAmount / rate) * (1 + Math.max(0, markup) / 100) : 0)
                     : sourceAmount * (1 + Math.max(0, markup) / 100);
-                $('[data-price-preview]').text(converted > 0
-                    ? converted.toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                const rounded = Math.ceil(Number(converted.toFixed(8)) * 2) / 2;
+                $('[data-price-preview]').text(rounded > 0
+                    ? rounded.toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                     : '—');
             }
             $('#exchange-rate, #markup-percent').on('input change', updatePricePreview);
