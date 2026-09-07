@@ -97,6 +97,24 @@ class ZnanjeImportServiceTest extends TestCase
         $this->assertNotNull($source->imported_at);
     }
 
+    public function test_it_imports_regular_and_sale_prices_exactly_as_provided_by_znanje(): void
+    {
+        $this->configuredSettings();
+        $source = $this->checkedSource([
+            'isbn' => '9789530000095',
+            'ean' => '9789530000095',
+            'price_eur' => 11.99,
+            'sale_price_eur' => 8.13,
+        ]);
+        $this->mockFreshDetail($source);
+
+        $result = app(ZnanjeImportService::class)->import($source);
+
+        $product = Product::query()->findOrFail($result['product_id']);
+        $this->assertSame(11.99, (float) $product->price);
+        $this->assertSame(8.13, (float) $product->special);
+    }
+
     public function test_new_product_and_source_link_are_written_in_the_same_transaction(): void
     {
         $this->configuredSettings();

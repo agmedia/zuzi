@@ -2,7 +2,6 @@
 
 namespace App\Services\Znanje;
 
-use App\Services\Catalog\ImportPriceRounder;
 use InvalidArgumentException;
 
 class ZnanjePriceCalculator
@@ -28,8 +27,6 @@ class ZnanjePriceCalculator
             );
         }
 
-        return ImportPriceRounder::upToHalfEuro(
-            $priceEur * (1 + ($markupPercent / 100))
-        );
+        return $priceEur * (1 + ($markupPercent / 100));
     }
 }
