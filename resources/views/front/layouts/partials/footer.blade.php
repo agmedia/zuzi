@@ -132,6 +132,7 @@
 
                                 <li class="widget-list-item"><a href="{{ url('info/nacini-placanja') }}" class="widget-list-link" >osobno preuzimanje i plaćanje u antikvarijatu</a></li>
                             </ul>
+                            <p class="text-dark fs-md mt-3 mb-0"><strong>Žiro račun</strong><br>HR1624020061140345999</p>
 
                         </div>
                     </div>
