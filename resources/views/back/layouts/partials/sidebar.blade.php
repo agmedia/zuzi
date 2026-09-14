@@ -122,6 +122,11 @@
                             </a>
                         </li>
                         <li class="nav-main-item">
+                            <a class="nav-main-link{{ request()->routeIs(['marketing.fair-discounts', 'marketing.fair-discounts.*']) ? ' active' : '' }}" href="{{ route('marketing.fair-discounts') }}">
+                                <span class="nav-main-link-name">Sajamske akcije</span>
+                            </a>
+                        </li>
+                        <li class="nav-main-item">
                             <a class="nav-main-link{{ request()->routeIs(['blogs', 'blogs.*']) ? ' active' : '' }}" href="{{ route('blogs') }}">
                                 <span class="nav-main-link-name">Blog</span>
                             </a>

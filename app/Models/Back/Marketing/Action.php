@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Schema;
 class Action extends Model
 {
     public const GROUP_BOGO = 'bogo';
+    public const GROUP_FAIR_DISCOUNT = 'fair_discount';
 
     protected $table = 'product_actions';
     protected $guarded = ['id', 'created_at', 'updated_at'];
@@ -36,7 +37,15 @@ class Action extends Model
 
     public function getDiscountTextAttribute($value)
     {
-        if (self::isBogoGroup((string) $this->group)) {
+        if (self::isBogoGroup((string) $this->group) || self::isFairDiscountGroup((string) $this->group)) {
+            if (self::isFairDiscountGroup((string) $this->group)) {
+                $tiers = self::normalizeFairDiscountTiers(is_array($this->data) ? $this->data : []);
+
+                return empty($tiers)
+                    ? 'Sajamski popust'
+                    : 'do ' . self::formatPercentForHumans((float) collect($tiers)->max('discount')) . ' %';
+            }
+
             $tiers = self::normalizeBogoTiers(is_array($this->data) ? $this->data : []);
 
             if (empty($tiers)) {
@@ -61,6 +70,22 @@ class Action extends Model
 
     public function getSelectionTextAttribute(): string
     {
+        if (self::isFairDiscountGroup((string) $this->group)) {
+            return collect(self::normalizeFairDiscountTiers(is_array($this->data) ? $this->data : []))
+                ->map(function (array $tier) {
+                    $range = self::formatMoneyForHumans((float) $tier['min_total']) . ' €';
+
+                    if ($tier['max_total'] !== null) {
+                        $range .= '–' . self::formatMoneyForHumans((float) $tier['max_total']) . ' €';
+                    } else {
+                        $range .= '+';
+                    }
+
+                    return $range . ': ' . self::formatPercentForHumans((float) $tier['discount']) . '%';
+                })
+                ->implode(', ');
+        }
+
         if (self::isBogoGroup((string) $this->group)) {
             $tiers = self::normalizeBogoTiers(is_array($this->data) ? $this->data : []);
 
@@ -411,7 +436,7 @@ class Action extends Model
 
     private function listRequired(): bool
     {
-        return !in_array($this->request->group, ['all', 'total', 'combined_category', self::GROUP_BOGO]);
+        return !in_array($this->request->group, ['all', 'total', 'combined_category', self::GROUP_BOGO, self::GROUP_FAIR_DISCOUNT]);
     }
 
     /**
@@ -600,6 +625,11 @@ class Action extends Model
         return (string) $group === self::GROUP_BOGO;
     }
 
+    public static function isFairDiscountGroup(?string $group): bool
+    {
+        return (string) $group === self::GROUP_FAIR_DISCOUNT;
+    }
+
     /**
      * @param array<string, mixed>|null $data
      * @return array<int, array{quantity:int, discount:float}>
@@ -655,9 +685,184 @@ class Action extends Model
             ->first();
     }
 
+    /**
+     * @param array<string, mixed>|null $data
+     * @return array<int, array{min_total:float, max_total:?float, discount:float}>
+     */
+    public static function normalizeFairDiscountTiers(?array $data): array
+    {
+        $tiers = collect($data['tiers'] ?? $data ?? []);
+
+        return $tiers
+            ->map(function ($tier) {
+                if (is_object($tier)) {
+                    $tier = (array) $tier;
+                }
+
+                if (! is_array($tier)) {
+                    return null;
+                }
+
+                $minTotal = self::parseDecimal($tier['min_total'] ?? $tier['from'] ?? null);
+                $maxTotal = self::parseNullableDecimal($tier['max_total'] ?? $tier['to'] ?? null);
+                $discount = self::parseDecimal($tier['discount'] ?? null);
+
+                if ($minTotal === null || $minTotal < 0 || $discount === null || $discount <= 0) {
+                    return null;
+                }
+
+                if ($maxTotal !== null && $maxTotal < $minTotal) {
+                    return null;
+                }
+
+                return [
+                    'min_total' => round($minTotal, 2),
+                    'max_total' => $maxTotal === null ? null : round($maxTotal, 2),
+                    'discount' => min(round($discount, 2), 100),
+                ];
+            })
+            ->filter()
+            ->sortBy([
+                ['min_total', 'asc'],
+                ['discount', 'asc'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    public static function resolveFairDiscountTierForTotal(self $action, float $total): ?array
+    {
+        if ($total <= 0) {
+            return null;
+        }
+
+        return collect(self::normalizeFairDiscountTiers(is_array($action->data) ? $action->data : []))
+            ->filter(function (array $tier) use ($total) {
+                return $total >= (float) $tier['min_total']
+                    && ($tier['max_total'] === null || $total <= (float) $tier['max_total']);
+            })
+            ->sortBy([
+                ['min_total', 'desc'],
+                ['discount', 'desc'],
+            ])
+            ->first();
+    }
+
     public static function formatPercentForHumans(float $value): string
     {
         return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+    }
+
+    public static function formatMoneyForHumans(float $value): string
+    {
+        return number_format($value, 2, ',', '.');
+    }
+
+    public static function activeFairDiscountCartPromo(): ?array
+    {
+        if (! Schema::hasTable((new self())->getTable())) {
+            return null;
+        }
+
+        $actions = self::activeFairDiscountActions();
+        $tiers = [];
+        $titles = [];
+        $freeBoxNow = false;
+
+        foreach ($actions as $action) {
+            $actionTiers = self::normalizeFairDiscountTiers(is_array($action->data) ? $action->data : []);
+
+            if (! empty($actionTiers)) {
+                $tiers = array_merge($tiers, $actionTiers);
+            }
+
+            $title = trim((string) $action->title);
+
+            if ($title !== '') {
+                $titles[(int) $action->id] = $title;
+            }
+
+            if ((bool) data_get($action->data, 'free_boxnow')) {
+                $freeBoxNow = true;
+            }
+        }
+
+        if (empty($tiers) && ! $freeBoxNow) {
+            return null;
+        }
+
+        $tiers = collect($tiers)
+            ->sortBy([
+                ['min_total', 'asc'],
+                ['discount', 'asc'],
+            ])
+            ->values()
+            ->map(function (array $tier) {
+                $rangeLabel = self::formatMoneyForHumans((float) $tier['min_total']) . ' €';
+
+                if ($tier['max_total'] !== null) {
+                    $rangeLabel .= '–' . self::formatMoneyForHumans((float) $tier['max_total']) . ' €';
+                } else {
+                    $rangeLabel .= '+';
+                }
+
+                return array_merge($tier, [
+                    'range_label' => $rangeLabel,
+                    'discount_label' => self::formatPercentForHumans((float) $tier['discount']) . '%',
+                ]);
+            })
+            ->all();
+
+        return [
+            'eyebrow' => 'Aktivna sajamska akcija',
+            'title' => count($titles) === 1 ? reset($titles) : 'Sajamski popust',
+            'description' => 'Popust se automatski obračunava prema ukupnoj vrijednosti artikala u košarici.',
+            'note' => 'Kuponi i sajamski popust ne mogu se koristiti zajedno.',
+            'free_boxnow' => $freeBoxNow,
+            'free_boxnow_label' => $freeBoxNow ? 'BOX NOW dostava je besplatna dok traje akcija.' : null,
+            'tiers' => $tiers,
+        ];
+    }
+
+    public static function hasActiveFairFreeBoxNow(): bool
+    {
+        if (! Schema::hasTable((new self())->getTable())) {
+            return false;
+        }
+
+        return self::activeFairDiscountActions()
+            ->contains(fn (self $action) => (bool) data_get($action->data, 'free_boxnow'));
+    }
+
+    private static function activeFairDiscountActions(): Collection
+    {
+        return self::query()
+            ->where('group', self::GROUP_FAIR_DISCOUNT)
+            ->where('status', 1)
+            ->where(function ($query) {
+                $query->whereNull('date_start')->orWhere('date_start', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('date_end')->orWhere('date_end', '>=', now());
+            })
+            ->orderBy('date_start')
+            ->get();
+    }
+
+    private static function parseDecimal($value): ?float
+    {
+        if ($value === null || trim((string) $value) === '') {
+            return null;
+        }
+
+        $normalized = str_replace(',', '.', trim((string) $value));
+
+        return is_numeric($normalized) ? (float) $normalized : null;
+    }
+
+    private static function parseNullableDecimal($value): ?float
+    {
+        return self::parseDecimal($value);
     }
 
     public static function activeBogoListingBadge(): ?array

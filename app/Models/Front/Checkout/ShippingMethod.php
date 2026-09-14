@@ -4,6 +4,7 @@ namespace App\Models\Front\Checkout;
 
 use App\Helpers\Helper;
 use App\Helpers\Session\CheckoutSession;
+use App\Models\Back\Marketing\Action;
 use App\Models\Back\Settings\Settings;
 use App\Services\GiftVoucherService;
 use Illuminate\Support\Collection;
@@ -154,6 +155,10 @@ class ShippingMethod
      */
     public static function hasFreeShipping($shipping, float $cart_total): bool
     {
+        if (self::isBoxNow($shipping) && Action::hasActiveFairFreeBoxNow()) {
+            return true;
+        }
+
         // Promo/gift codes and free-shipping thresholds are mutually exclusive.
         if (self::checkoutHasCoupon()) {
             return false;
@@ -170,6 +175,11 @@ class ShippingMethod
         }
 
         return $cart_total > $threshold;
+    }
+
+    private static function isBoxNow($shipping): bool
+    {
+        return in_array(strtolower(trim((string) data_get($shipping, 'code'))), ['gls_eu', 'boxnow'], true);
     }
 
 

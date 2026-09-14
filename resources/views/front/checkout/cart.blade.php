@@ -25,6 +25,7 @@
     ];
     $bookmarkersUrl = route('catalog.route', ['group' => 'kategorija-proizvoda', 'cat' => 'bookmarkeri']);
     $activeBogoCartPromo = \App\Models\Back\Marketing\Action::activeBogoCartPromo();
+    $activeFairDiscountPromo = \App\Models\Back\Marketing\Action::activeFairDiscountCartPromo();
 @endphp
 
 @push('css_after')
@@ -118,6 +119,45 @@
 
         .cart-shelf-card--bookmarkers .cart-shelf-card__image-link {
             background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .cart-fair-promo {
+            border: 1px solid rgba(229, 0, 119, 0.2);
+            border-radius: 0.65rem;
+            background: linear-gradient(135deg, #fff7fb 0%, #ffffff 65%);
+            box-shadow: 0 10px 24px rgba(43, 52, 69, 0.05);
+        }
+
+        .cart-fair-promo__eyebrow {
+            color: #e50077;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .cart-fair-promo__tiers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .cart-fair-promo__tier {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.4rem 0.6rem;
+            border: 1px solid rgba(229, 0, 119, 0.2);
+            border-radius: 0.5rem;
+            background: #ffffff;
+            color: #5f6c82;
+            font-size: 0.82rem;
+        }
+
+        .cart-fair-promo__tier strong,
+        .cart-fair-promo__shipping {
+            color: #e50077;
+            font-weight: 800;
         }
 
         @media (min-width: 1400px) {
@@ -214,6 +254,29 @@
                     <div class="step-label"><i class="ci-check-circle"></i>Uspješno</div>
                 </a>
             </div>
+            @if ($activeFairDiscountPromo)
+                <div class="cart-fair-promo p-3 mb-3">
+                    <div class="cart-fair-promo__eyebrow mb-1">{{ $activeFairDiscountPromo['eyebrow'] }}</div>
+                    <h2 class="h5 mb-2">{{ $activeFairDiscountPromo['title'] }}</h2>
+                    <p class="text-muted fs-sm mb-2">{{ $activeFairDiscountPromo['description'] }}</p>
+                    @if (! empty($activeFairDiscountPromo['tiers']))
+                        <div class="cart-fair-promo__tiers" aria-label="Pragovi sajamskog popusta">
+                            @foreach ($activeFairDiscountPromo['tiers'] as $tier)
+                                <span class="cart-fair-promo__tier">
+                                    {{ $tier['range_label'] }}
+                                    <strong>-{{ $tier['discount_label'] }}</strong>
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
+                    @if ($activeFairDiscountPromo['free_boxnow_label'])
+                        <p class="cart-fair-promo__shipping fs-sm mt-2 mb-0">
+                            <i class="ci-package mr-1"></i> {{ $activeFairDiscountPromo['free_boxnow_label'] }}
+                        </p>
+                    @endif
+                    <p class="small text-muted mt-2 mb-0">{{ $activeFairDiscountPromo['note'] }}</p>
+                </div>
+            @endif
             <div class="card px-3">
             <cart-view
                 continueurl="{{ \Illuminate\Support\Facades\URL::previous() }}"

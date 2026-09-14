@@ -517,6 +517,12 @@ class AgCart extends Model
         $payment_method    = PaymentMethod::condition($this->cart);
         $special_condition = Helper::hasSpecialCartCondition($this->cart);
         $bogo_condition = Helper::hasBogoCartCondition($this->cart, $this->coupon);
+        $fair_discount_condition = Helper::hasFairDiscountCartCondition($this->cart, $this->coupon);
+        $automatic_discount_condition = Helper::bestAutomaticCartCondition([
+            $special_condition,
+            $bogo_condition,
+            $fair_discount_condition,
+        ]);
         $coupon_conditions = Helper::hasCouponCartConditions($this->cart, $this->coupon);
         $loyalty_conditions = $this->hasExclusiveDiscount()
             ? false
@@ -533,12 +539,8 @@ class AgCart extends Model
             $this->cart->condition($shipping_method);
         }
 
-        if ($special_condition) {
-            $this->cart->condition($special_condition);
-        }
-
-        if ($bogo_condition) {
-            $this->cart->condition($bogo_condition);
+        if ($automatic_discount_condition) {
+            $this->cart->condition($automatic_discount_condition);
         }
 
         if ($coupon_conditions) {

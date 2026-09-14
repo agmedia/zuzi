@@ -17,6 +17,7 @@ use App\Http\Controllers\Back\OrderController;
 use App\Http\Controllers\Back\Marketing\AccountNoticeController;
 use App\Http\Controllers\Back\Marketing\ActionController;
 use App\Http\Controllers\Back\Marketing\BogoController;
+use App\Http\Controllers\Back\Marketing\FairDiscountController;
 use App\Http\Controllers\Back\Marketing\BlogController;
 use App\Http\Controllers\Back\Marketing\CompletedPromoController;
 use App\Http\Controllers\Back\Marketing\GiftVoucherController as AdminGiftVoucherController;
@@ -206,6 +207,14 @@ Route::middleware(['auth:sanctum', 'verified', 'no.customers'])->prefix('admin')
         Route::get('bogo/{bogo}/edit', [BogoController::class, 'edit'])->name('marketing.bogo.edit');
         Route::patch('bogo/{bogo}', [BogoController::class, 'update'])->name('marketing.bogo.update');
         Route::delete('bogo/{bogo}', [BogoController::class, 'destroy'])->name('marketing.bogo.destroy');
+
+        // SAJAMSKI POPUSTI PREMA IZNOSU KOŠARICE
+        Route::get('fair-discounts', [FairDiscountController::class, 'index'])->name('marketing.fair-discounts');
+        Route::get('fair-discounts/create', [FairDiscountController::class, 'create'])->name('marketing.fair-discounts.create');
+        Route::post('fair-discounts', [FairDiscountController::class, 'store'])->name('marketing.fair-discounts.store');
+        Route::get('fair-discounts/{fairDiscount}/edit', [FairDiscountController::class, 'edit'])->name('marketing.fair-discounts.edit');
+        Route::patch('fair-discounts/{fairDiscount}', [FairDiscountController::class, 'update'])->name('marketing.fair-discounts.update');
+        Route::delete('fair-discounts/{fairDiscount}', [FairDiscountController::class, 'destroy'])->name('marketing.fair-discounts.destroy');
 
         // BLOG
         Route::get('blogs', [BlogController::class, 'index'])->name('blogs');

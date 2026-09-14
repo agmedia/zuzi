@@ -1517,6 +1517,101 @@ class Helper
         ));
     }
 
+    /**
+     * Resolve the active cart-value promotion without combining it with a coupon.
+     *
+     * @param mixed $cart
+     * @return CartCondition|false
+     * @throws \Darryldecode\Cart\Exceptions\InvalidConditionException
+     */
+    public static function hasFairDiscountCartCondition($cart, string $coupon = '')
+    {
+        if (! $cart || self::normalizeCoupon($coupon) !== '' || ! Schema::hasTable('product_actions')) {
+            return false;
+        }
+
+        $discountableTotal = self::discountableBogoCartTotal($cart);
+
+        if ($discountableTotal <= 0) {
+            return false;
+        }
+
+        $best = null;
+
+        $actions = Action::query()
+            ->where('group', Action::GROUP_FAIR_DISCOUNT)
+            ->where('status', 1)
+            ->where(function ($query) {
+                $query->whereNull('date_start')->orWhere('date_start', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('date_end')->orWhere('date_end', '>=', now());
+            })
+            ->get();
+
+        foreach ($actions as $action) {
+            $tier = Action::resolveFairDiscountTierForTotal($action, $discountableTotal);
+
+            if (! $tier) {
+                continue;
+            }
+
+            $discountPercent = (float) $tier['discount'];
+            $discountedTotal = self::calculateDiscountPrice($discountableTotal, $discountPercent, 'P');
+            $discount = round($discountableTotal - $discountedTotal, 2);
+
+            if (
+                $discount <= 0
+                || (
+                    $best !== null
+                    && ($discount < $best['discount'] || ($discount === $best['discount'] && (int) $action->id <= (int) $best['action']->id))
+                )
+            ) {
+                continue;
+            }
+
+            $best = [
+                'action' => $action,
+                'tier' => $tier,
+                'discount' => $discount,
+            ];
+        }
+
+        if ($best === null) {
+            return false;
+        }
+
+        $discountPercent = (float) $best['tier']['discount'];
+        $label = Action::formatPercentForHumans($discountPercent);
+
+        return new CartCondition([
+            'name' => $best['action']->title . ' ' . $label . '%',
+            'type' => 'special',
+            'target' => 'total',
+            'value' => '-' . $best['discount'],
+            'attributes' => [
+                'type' => 'fair_discount',
+                'description' => $best['action']->title,
+                'discount' => $discountPercent,
+                'cart_total' => $discountableTotal,
+            ],
+        ]);
+    }
+
+    /**
+     * Keep automatic cart promotions mutually exclusive and use the larger saving.
+     *
+     * @param array<int, mixed> $conditions
+     * @return mixed
+     */
+    public static function bestAutomaticCartCondition(array $conditions)
+    {
+        return collect($conditions)
+            ->filter()
+            ->sortByDesc(fn ($condition) => abs((float) $condition->getValue()))
+            ->first() ?: false;
+    }
+
 
     /**
      * @param        $cart

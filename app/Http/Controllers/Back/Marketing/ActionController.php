@@ -23,7 +23,7 @@ class ActionController extends Controller
     {
         $groups = Settings::get('action', 'group_list');
         $query  = Action::query()
-            ->where('group', '!=', Action::GROUP_BOGO);
+            ->whereNotIn('group', [Action::GROUP_BOGO, Action::GROUP_FAIR_DISCOUNT]);
 
         if ($request->has('lock')) {
             $query->where('lock', $request->input('lock') == 'da' ? 1 : 0);
