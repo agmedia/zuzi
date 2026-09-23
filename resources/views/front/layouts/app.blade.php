@@ -121,117 +121,6 @@
             }
         }
 
-        .floating-gift-voucher {
-            position: fixed;
-            right: 1.25rem;
-            bottom: 1.25rem;
-            z-index: 1027;
-            display: inline-flex;
-            align-items: center;
-            gap: .72rem;
-            max-width: calc(100vw - 2rem);
-            padding: .72rem .9rem .72rem .76rem;
-            border: 1px solid rgba(229, 0, 119, .2);
-            border-radius: .5rem;
-            background: #e50077;
-            color: #fff;
-            box-shadow: 0 .8rem 1.65rem rgba(43, 52, 69, .2);
-            text-decoration: none;
-            transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
-        }
-
-        .floating-gift-voucher:hover,
-        .floating-gift-voucher:focus {
-            color: #fff;
-            background: #c70064;
-            box-shadow: 0 1rem 2rem rgba(43, 52, 69, .24);
-            text-decoration: none;
-            transform: translateY(-.12rem);
-        }
-
-        .floating-gift-voucher:focus-visible {
-            outline: 3px solid rgba(229, 0, 119, .26);
-            outline-offset: 3px;
-        }
-
-        .floating-gift-voucher__icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 2.15rem;
-            width: 2.15rem;
-            height: 2.15rem;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, .18);
-            font-size: 1.15rem;
-            line-height: 1;
-        }
-
-        .floating-gift-voucher__copy {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            line-height: 1.15;
-        }
-
-        .floating-gift-voucher__eyebrow {
-            font-size: .72rem;
-            font-weight: 700;
-            opacity: .86;
-            white-space: nowrap;
-        }
-
-        .floating-gift-voucher__discount {
-            font-size: .98rem;
-            font-weight: 800;
-            letter-spacing: 0;
-            white-space: nowrap;
-        }
-
-        @media (max-width: 991.98px) {
-            .floating-gift-voucher {
-                right: .85rem;
-                bottom: .85rem;
-                gap: 0;
-                width: 3.35rem;
-                height: 3.35rem;
-                padding: 0;
-                border-radius: 999px;
-            }
-
-            .floating-gift-voucher__icon {
-                flex-basis: 100%;
-                width: 100%;
-                height: 100%;
-                background: transparent;
-                font-size: 1.45rem;
-            }
-
-            .floating-gift-voucher__copy {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                margin: -1px;
-                padding: 0;
-                overflow: hidden;
-                clip: rect(0, 0, 0, 0);
-                white-space: nowrap;
-                border: 0;
-            }
-        }
-
-        @media (max-width: 374.98px) {
-            .floating-gift-voucher {
-                width: 3rem;
-                height: 3rem;
-            }
-
-            .floating-gift-voucher__icon {
-                font-size: 1.3rem;
-            }
-        }
-
-
         @-webkit-keyframes sk-scaleout {
             0% { -webkit-transform: scale(0) }
             100% {
@@ -785,7 +674,6 @@
 
                 @include('front.layouts.partials.footer')
                 @include('front.layouts.partials.handheld')
-                @include('front.layouts.partials.floating-gift-voucher')
             </main>
         </div>
     </div>
