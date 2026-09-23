@@ -817,7 +817,7 @@ class Action extends Model
             'eyebrow' => 'Aktivna sajamska akcija',
             'title' => count($titles) === 1 ? reset($titles) : 'Sajamski popust',
             'description' => 'Popust se automatski obračunava prema ukupnoj vrijednosti artikala u košarici.',
-            'note' => 'Kuponi i sajamski popust ne mogu se koristiti zajedno.',
+            'note' => 'Dok traje sajamska akcija nije moguće koristiti druge popuste, kupone ni Loyalty.',
             'free_boxnow' => $freeBoxNow,
             'free_boxnow_label' => $freeBoxNow ? 'BOX NOW dostava je besplatna dok traje akcija.' : null,
             'tiers' => $tiers,
@@ -832,6 +832,15 @@ class Action extends Model
 
         return self::activeFairDiscountActions()
             ->contains(fn (self $action) => (bool) data_get($action->data, 'free_boxnow'));
+    }
+
+    public static function hasActiveFairDiscount(): bool
+    {
+        if (! Schema::hasTable((new self())->getTable())) {
+            return false;
+        }
+
+        return self::activeFairDiscountActions()->isNotEmpty();
     }
 
     private static function activeFairDiscountActions(): Collection

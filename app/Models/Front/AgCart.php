@@ -49,6 +49,9 @@ class AgCart extends Model
      */
     private $loyalty;
 
+    /** @var bool|null */
+    private $fair_discount_active;
+
 
 
     /**
@@ -83,6 +86,7 @@ class AgCart extends Model
             'coupon'          => $this->coupon,
             'loyalty'         => $this->loyalty,
             'has_loyalty'     => $this->hasLoyalty(),
+            'fair_discount_active' => $this->hasActiveFairDiscount(),
             'loyalty_points_per_euro' => $this->loyaltyPointsPerEuro(),
             'has_gift_voucher' => $this->hasGiftVoucherItems(),
             'gift_voucher_only' => $this->hasOnlyGiftVoucherItems(),
@@ -284,6 +288,20 @@ class AgCart extends Model
                 'coupon' => '',
                 'cart' => $this->get(),
                 'message' => 'Kodovi za popust ne mogu se koristiti pri kupnji poklon bona.',
+            ];
+        }
+
+        if ($this->hasActiveFairDiscount()) {
+            session()->forget($this->session_key . '_coupon');
+            $this->coupon = '';
+            $this->clearLoyalty();
+            $this->refreshCouponAwareItems();
+
+            return [
+                'success' => false,
+                'coupon' => '',
+                'cart' => $this->get(),
+                'message' => 'Kodovi za popust ne mogu se koristiti dok traje sajamska akcija.',
             ];
         }
 
@@ -515,18 +533,24 @@ class AgCart extends Model
 
         $shipping_method   = ShippingMethod::condition($this->cart);
         $payment_method    = PaymentMethod::condition($this->cart);
-        $special_condition = Helper::hasSpecialCartCondition($this->cart);
-        $bogo_condition = Helper::hasBogoCartCondition($this->cart, $this->coupon);
-        $fair_discount_condition = Helper::hasFairDiscountCartCondition($this->cart, $this->coupon);
-        $automatic_discount_condition = Helper::bestAutomaticCartCondition([
-            $special_condition,
-            $bogo_condition,
-            $fair_discount_condition,
-        ]);
-        $coupon_conditions = Helper::hasCouponCartConditions($this->cart, $this->coupon);
-        $loyalty_conditions = $this->hasExclusiveDiscount()
-            ? false
-            : Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
+        $fairDiscountActive = $this->hasActiveFairDiscount();
+
+        if ($fairDiscountActive) {
+            $automatic_discount_condition = Helper::hasFairDiscountCartCondition($this->cart);
+            $coupon_conditions = false;
+            $loyalty_conditions = false;
+        } else {
+            $special_condition = Helper::hasSpecialCartCondition($this->cart);
+            $bogo_condition = Helper::hasBogoCartCondition($this->cart, $this->coupon);
+            $automatic_discount_condition = Helper::bestAutomaticCartCondition([
+                $special_condition,
+                $bogo_condition,
+            ]);
+            $coupon_conditions = Helper::hasCouponCartConditions($this->cart, $this->coupon);
+            $loyalty_conditions = $this->hasExclusiveDiscount()
+                ? false
+                : Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
+        }
 
         if ($payment_method) {
             $str = str_replace('+', '', $payment_method->getValue());
@@ -715,6 +739,12 @@ class AgCart extends Model
      */
     private function structureCartItemConditions($product, int $quantity = 1)
     {
+        if ($this->hasActiveFairDiscount()) {
+            session([$this->session_key . '_fair_items_refreshed' => true]);
+
+            return false;
+        }
+
         // Ako artikl ima akciju.
         $special = (float) $product->special();
 
@@ -765,12 +795,20 @@ class AgCart extends Model
 
     private function hasExclusiveDiscount(): bool
     {
-        return $this->hasGiftVoucherItems() || $this->hasActiveCoupon();
+        return $this->hasGiftVoucherItems()
+            || $this->hasActiveCoupon()
+            || $this->hasActiveFairDiscount();
     }
 
     private function reconcileExclusiveDiscounts(): void
     {
         $hasGiftVoucher = $this->hasGiftVoucherItems();
+        $hasFairDiscount = $this->hasActiveFairDiscount();
+
+        if ($hasFairDiscount && $this->hasActiveCoupon()) {
+            session()->forget($this->session_key . '_coupon');
+            $this->coupon = '';
+        }
 
         if ($hasGiftVoucher && $this->hasActiveCoupon()) {
             session()->forget($this->session_key . '_coupon');
@@ -778,9 +816,48 @@ class AgCart extends Model
             $this->refreshCouponAwareItems();
         }
 
-        if ($hasGiftVoucher || $this->hasActiveCoupon()) {
+        if ($hasGiftVoucher || $this->hasActiveCoupon() || $hasFairDiscount) {
             $this->clearLoyalty();
         }
+
+        $fairItemsSessionKey = $this->session_key . '_fair_items_refreshed';
+
+        if ($hasFairDiscount) {
+            if ($this->hasDiscountedCartItems()) {
+                $this->refreshCouponAwareItems();
+            }
+
+            if ($this->cart->getContent()->isNotEmpty()) {
+                session([$fairItemsSessionKey => true]);
+            }
+        } elseif (! $hasFairDiscount && session()->pull($fairItemsSessionKey, false)) {
+            $this->refreshCouponAwareItems();
+        }
+    }
+
+    private function hasActiveFairDiscount(): bool
+    {
+        if ($this->fair_discount_active === null) {
+            $this->fair_discount_active = Action::hasActiveFairDiscount();
+        }
+
+        return $this->fair_discount_active;
+    }
+
+    private function hasDiscountedCartItems(): bool
+    {
+        foreach ($this->cart->getContent() as $item) {
+            foreach ($item->getConditions() as $condition) {
+                if (
+                    in_array($condition->getType(), ['coupon', 'promo'], true)
+                    && (float) $condition->getValue() < 0
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function clearLoyalty(): void

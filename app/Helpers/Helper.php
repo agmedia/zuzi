@@ -1530,7 +1530,7 @@ class Helper
             return false;
         }
 
-        $discountableTotal = self::discountableBogoCartTotal($cart);
+        $discountableTotal = self::discountableFairCartTotal($cart);
 
         if ($discountableTotal <= 0) {
             return false;
@@ -1811,6 +1811,25 @@ class Helper
             }
 
             $total += (float) $item->getPriceSumWithConditions(false);
+        }
+
+        return max(0.0, round($total, 2));
+    }
+
+    private static function discountableFairCartTotal($cart): float
+    {
+        if (! $cart) {
+            return 0.0;
+        }
+
+        $total = 0.0;
+
+        foreach ($cart->getContent() as $item) {
+            if (GiftWrapService::isGiftWrapItem($item) || GiftVoucherService::isGiftVoucherItem($item)) {
+                continue;
+            }
+
+            $total += (float) $item->price * (int) $item->quantity;
         }
 
         return max(0.0, round($total, 2));
