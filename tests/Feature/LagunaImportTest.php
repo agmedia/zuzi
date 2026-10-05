@@ -13,6 +13,7 @@ use App\Services\Laguna\LagunaImportSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Bouncer;
 use Tests\TestCase;
@@ -453,6 +454,94 @@ class LagunaImportTest extends TestCase
         });
     }
 
+    public function test_new_product_stores_webp_image_and_thumbnail(): void
+    {
+        Storage::fake('products');
+        $mapping = $this->configureLagunaImport();
+        app(LagunaImportSettings::class)->save(['translate_descriptions' => 0]);
+        $imageUrl = 'https://laguna.oozmi-cdn.com/test-cover.png';
+        $source = $this->createSource(['image_url' => $imageUrl]);
+
+        Http::fake([
+            $source->source_url => Http::response($this->productPage(), 200),
+            $imageUrl => Http::response($this->tinyPng(), 200, ['Content-Type' => 'image/png']),
+        ]);
+
+        $result = app(LagunaImportService::class)->import($source, $mapping['additional_category_id']);
+        $product = Product::query()->findOrFail($result['product_id']);
+        $base = $product->id . '/' . Str::slug($product->name) . '-laguna-1';
+
+        $this->assertSame('created', $result['action']);
+        $this->assertSame(config('filesystems.disks.products.url') . $base . '.webp', $product->image);
+        Storage::disk('products')->assertExists($base . '.webp');
+        Storage::disk('products')->assertExists($base . '-thumb.webp');
+    }
+
+    public function test_failed_image_download_is_retried_for_an_imported_product_without_an_image(): void
+    {
+        Storage::fake('products');
+        $mapping = $this->configureLagunaImport();
+        app(LagunaImportSettings::class)->save(['translate_descriptions' => 0]);
+        $imageUrl = 'https://laguna.oozmi-cdn.com/retry-cover.png';
+        $source = $this->createSource(['image_url' => $imageUrl]);
+
+        Http::fake([
+            $source->source_url => Http::response($this->productPage(), 200),
+            $imageUrl => Http::sequence()
+                ->push('', 503)
+                ->push($this->tinyPng(), 200, ['Content-Type' => 'image/png']),
+        ]);
+
+        $firstResult = app(LagunaImportService::class)->import($source, $mapping['additional_category_id']);
+        $product = Product::query()->findOrFail($firstResult['product_id']);
+
+        $this->assertNull($product->image);
+        $this->assertStringContainsString('Uvoz slike nije uspio', $firstResult['message']);
+        $this->assertNotNull($source->fresh()->imported_at);
+
+        $retryResult = app(LagunaImportService::class)->import($source->fresh(), $mapping['additional_category_id']);
+        $product->refresh();
+        $base = $product->id . '/' . Str::slug($product->name) . '-laguna-1';
+
+        $this->assertSame('skipped', $retryResult['action']);
+        $this->assertStringContainsString('Slika je uspješno ponovno uvezena', $retryResult['message']);
+        $this->assertSame(config('filesystems.disks.products.url') . $base . '.webp', $product->image);
+        Storage::disk('products')->assertExists($base . '.webp');
+        Storage::disk('products')->assertExists($base . '-thumb.webp');
+    }
+
+    public function test_importer_owned_image_path_is_repaired_when_its_files_are_missing(): void
+    {
+        Storage::fake('products');
+        $mapping = $this->configureLagunaImport();
+        $productId = $this->createExistingProduct('Već postoji', '9788652164349');
+        $base = $productId . '/vec-postoji-laguna-1';
+        DB::table('products')->where('id', $productId)->update([
+            'image' => config('filesystems.disks.products.url') . $base . '.webp',
+        ]);
+        $hash = hash('sha256', 'laguna-missing-files');
+        $imageUrl = 'https://laguna.oozmi-cdn.com/missing-files.png';
+        $source = $this->createSource([
+            'product_id' => $productId,
+            'image_url' => $imageUrl,
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'check_status' => 'matched',
+            'imported_hash' => $hash,
+            'imported_at' => now(),
+        ]);
+        Http::fake([
+            $imageUrl => Http::response($this->tinyPng(), 200, ['Content-Type' => 'image/png']),
+        ]);
+
+        $result = app(LagunaImportService::class)->import($source, $mapping['additional_category_id']);
+
+        $this->assertSame('skipped', $result['action']);
+        $this->assertStringContainsString('Slika je uspješno ponovno uvezena', $result['message']);
+        Storage::disk('products')->assertExists($base . '.webp');
+        Storage::disk('products')->assertExists($base . '-thumb.webp');
+    }
+
     public function test_translation_can_be_disabled_and_does_not_call_external_service(): void
     {
         $mapping = $this->configureLagunaImport();
@@ -670,5 +759,17 @@ class LagunaImportTest extends TestCase
     private function detailRow(string $label, string $value): string
     {
         return '<div><span>' . $label . '</span><span>' . $value . '</span></div>';
+    }
+
+    private function tinyPng(): string
+    {
+        $image = imagecreatetruecolor(20, 30);
+        imagefill($image, 0, 0, imagecolorallocate($image, 80, 120, 160));
+        ob_start();
+        imagepng($image);
+        $contents = ob_get_clean();
+        imagedestroy($image);
+
+        return $contents;
     }
 }

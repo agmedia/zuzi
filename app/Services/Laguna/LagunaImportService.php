@@ -11,6 +11,7 @@ use App\Models\Back\Marketing\Action;
 use App\Services\Catalog\AuthorResolver;
 use App\Services\Catalog\ImportedProductName;
 use App\Services\ProductIdentifierAllocator;
+use App\Support\ProductImageFileSet;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -319,6 +320,13 @@ class LagunaImportService
 
         $categoriesAdded = $this->ensureCategories($product, $settings, $additionalCategoryId);
         $categoryMessage = $categoriesAdded ? ' Dodane su odabrane kategorije.' : '';
+        $imageMessage = '';
+        if ($source->imported_at && $source->image_url && $this->needsImageRepair($product)) {
+            $imageWarning = $this->storeImages($product, $source);
+            $imageMessage = $imageWarning !== ''
+                ? ' ' . $imageWarning
+                : ' Slika je uspješno ponovno uvezena.';
+        }
 
         if ($settings['existing_action'] === 'price_stock') {
             $price = $this->priceCalculator->convert($source->price_rsd, $settings['exchange_rate'], $settings['markup_percent']);
@@ -334,25 +342,43 @@ class LagunaImportService
             $source->update([
                 'imported_hash' => $source->source_hash,
                 'imported_at' => now(),
-                'check_message' => 'Postojećem artiklu ažurirane su cijena i količina.' . $categoryMessage,
+                'check_message' => 'Postojećem artiklu ažurirane su cijena i količina.' . $categoryMessage . $imageMessage,
             ]);
 
             return [
                 'action' => 'updated',
-                'message' => 'Postojećem artiklu ažurirane su cijena i količina.' . $categoryMessage,
+                'message' => 'Postojećem artiklu ažurirane su cijena i količina.' . $categoryMessage . $imageMessage,
                 'product_id' => (int) $product->id,
             ];
         }
 
         $source->update([
-            'check_message' => 'Artikl već postoji u Zuzi katalogu i preskočen je.' . $categoryMessage,
+            'check_message' => 'Artikl već postoji u Zuzi katalogu i preskočen je.' . $categoryMessage . $imageMessage,
         ]);
 
         return [
             'action' => 'skipped',
-            'message' => 'Artikl već postoji u Zuzi katalogu i preskočen je.' . $categoryMessage,
+            'message' => 'Artikl već postoji u Zuzi katalogu i preskočen je.' . $categoryMessage . $imageMessage,
             'product_id' => (int) $product->id,
         ];
+    }
+
+    private function needsImageRepair(Product $product): bool
+    {
+        $storedPath = $product->getRawOriginal('image');
+        if (! $storedPath) {
+            return true;
+        }
+
+        $family = ProductImageFileSet::familyKeyFromStoredPath($storedPath);
+        if (! is_string($family) || ! Str::endsWith($family, '-laguna-1')) {
+            return false;
+        }
+
+        $disk = Storage::disk('products');
+
+        return ! $disk->exists($family . '.webp')
+            || ! $disk->exists($family . '-thumb.webp');
     }
 
     private function importDescription(LagunaImportProduct $source, array $settings): array
@@ -572,32 +598,39 @@ class LagunaImportService
             return '';
         }
 
-        try {
-            foreach (array_slice($urls, 0, 4) as $index => $url) {
+        $failures = [];
+        $storedImages = 0;
+        $attemptedUrls = array_slice($urls, 0, 4);
+
+        foreach ($attemptedUrls as $index => $url) {
+            $temporaryPath = null;
+            $path = null;
+            $thumbPath = null;
+
+            try {
                 $this->assertImageUrl($url);
-                $response = Http::withOptions(['connect_timeout' => 5])
-                    ->timeout(30)
-                    ->withHeaders(['User-Agent' => 'Zuzi-Laguna-Importer/1.0'])
-                    ->get($url);
-
-                if (! $response->successful() || strlen($response->body()) > (int) config('laguna_import.max_image_bytes')) {
-                    throw new RuntimeException('Slika nije dostupna ili je prevelika.');
-                }
-
-                $image = Image::make($response->body());
-                $base = $product->id . '/' . Str::slug($product->name) . '-laguna-' . ($index + 1);
+                $temporaryPath = $this->downloadImage($url);
+                $image = Image::make($temporaryPath);
+                $base = $product->id . '/' . Str::slug($product->name) . '-laguna-' . ($storedImages + 1);
                 $path = $base . '.webp';
-                Storage::disk('products')->put($path, (string) $image->encode('webp'));
+                $thumbPath = $base . '-thumb.webp';
+                $disk = Storage::disk('products');
+
+                if (! $disk->put($path, (string) $image->encode('webp'))) {
+                    throw new RuntimeException('Nije moguće spremiti sliku proizvoda.');
+                }
 
                 $thumb = clone $image;
                 $thumb->resize(null, 300, function ($constraint) {
                     $constraint->aspectRatio();
                     $constraint->upsize();
                 })->resizeCanvas(250, null);
-                Storage::disk('products')->put($base . '-thumb.webp', (string) $thumb->encode('webp', 80));
+                if (! $disk->put($thumbPath, (string) $thumb->encode('webp', 80))) {
+                    throw new RuntimeException('Nije moguće spremiti umanjenu sliku proizvoda.');
+                }
 
                 $storedPath = config('filesystems.disks.products.url') . $path;
-                if ($index === 0) {
+                if ($storedImages === 0) {
                     $product->update(['image' => $storedPath]);
                 } else {
                     ProductImage::query()->create([
@@ -605,15 +638,104 @@ class LagunaImportService
                         'image' => $storedPath,
                         'alt' => $product->name,
                         'published' => 1,
-                        'sort_order' => $index,
+                        'sort_order' => $storedImages,
                     ]);
                 }
+
+                $storedImages++;
+            } catch (\Throwable $exception) {
+                if ($path !== null || $thumbPath !== null) {
+                    Storage::disk('products')->delete(array_filter([$path, $thumbPath]));
+                }
+
+                $failures[] = $exception->getMessage();
+                logger()->warning('Laguna slika nije uvezena.', [
+                    'source_id' => $source->id,
+                    'product_id' => $product->id,
+                    'url' => $url,
+                    'reason' => $exception->getMessage(),
+                ]);
+            } finally {
+                if ($temporaryPath !== null) {
+                    @unlink($temporaryPath);
+                }
             }
-        } catch (\Throwable $exception) {
-            return 'Uvoz slike nije uspio: ' . $exception->getMessage();
         }
 
-        return '';
+        if ($failures === []) {
+            return '';
+        }
+
+        if ($storedImages === 0) {
+            return 'Uvoz slike nije uspio: ' . $failures[0];
+        }
+
+        return sprintf(
+            'Neke slike nisu uvezene (%d od %d).',
+            count($failures),
+            count($attemptedUrls)
+        );
+    }
+
+    private function downloadImage(string $url): string
+    {
+        $maximum = max(1024, (int) config('laguna_import.max_image_bytes', 15 * 1024 * 1024));
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'zuzi-laguna-image-');
+        if ($temporaryPath === false) {
+            throw new RuntimeException('Nije moguće pripremiti privremenu datoteku za sliku.');
+        }
+
+        try {
+            $response = Http::withOptions([
+                    'sink' => $temporaryPath,
+                    'connect_timeout' => 5,
+                    'allow_redirects' => false,
+                    'on_headers' => function ($response) use ($maximum) {
+                        $length = trim((string) $response->getHeaderLine('Content-Length'));
+                        if (ctype_digit($length) && (int) $length > $maximum) {
+                            throw new RuntimeException('Slika je veća od dopuštene veličine.');
+                        }
+                    },
+                    'progress' => function ($downloadTotal, $downloadedBytes) use ($maximum) {
+                        if ((int) $downloadedBytes > $maximum) {
+                            throw new RuntimeException('Slika je veća od dopuštene veličine.');
+                        }
+                    },
+                ])
+                ->timeout(30)
+                ->withHeaders(['User-Agent' => 'Zuzi-Laguna-Importer/1.0'])
+                ->get($url);
+            clearstatcache(true, $temporaryPath);
+            $bytes = filesize($temporaryPath);
+            if (($bytes === false || $bytes < 1) && $response->successful()) {
+                $body = $response->body();
+                if ($body !== '' && strlen($body) <= $maximum) {
+                    $written = file_put_contents($temporaryPath, $body);
+                    if ($written === false || $written !== strlen($body)) {
+                        throw new RuntimeException('Nije moguće pripremiti preuzetu sliku.');
+                    }
+                    clearstatcache(true, $temporaryPath);
+                    $bytes = filesize($temporaryPath);
+                }
+            }
+            if (! $response->successful() || $bytes === false || $bytes < 1 || $bytes > $maximum) {
+                throw new RuntimeException('Slika nije dostupna ili je prevelika.');
+            }
+
+            $dimensions = @getimagesize($temporaryPath);
+            $maximumPixels = max(1000000, (int) config('laguna_import.max_image_pixels', 40000000));
+            if (! is_array($dimensions)
+                || empty($dimensions[0])
+                || empty($dimensions[1])
+                || ((int) $dimensions[0] * (int) $dimensions[1]) > $maximumPixels) {
+                throw new RuntimeException('Datoteka nije podržana slika ili su joj dimenzije prevelike.');
+            }
+
+            return $temporaryPath;
+        } catch (\Throwable $exception) {
+            @unlink($temporaryPath);
+            throw $exception;
+        }
     }
 
     private function assertImageUrl(string $url): void
