@@ -4417,6 +4417,22 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'ProductsList',
@@ -4486,6 +4502,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       search_zero_result: false,
       navigation_zero_result: false,
       deliveryTooltip: 'Dostava unutar 24 sata.',
+      twentyDayDeliveryTooltip: 'Dostupno u roku 20 dana.',
       bestSellerTooltip: 'Bestseller',
       popularTooltip: 'Popularno',
       bestSellerIconPath: 'M528 0c8.7998 0 16-7.2002 16-16v-32c0-8.7998-7.2002-16-16-16h-416c-8.7998 0-16 7.2002-16 16v32c0 8.7998 7.2002 16 16 16h416zM592 320c26.5 0 48-21.5 48-48s-21.5-48-48-48c-2.59961 0-5.2002 .400391-7.7002 .799805l-72.2998-192.8h-384l-72.2998 192.8c-2.5-.399414-5.10059-.799805-7.7002-.799805c-26.5 0-48 21.5-48 48s21.5996 48 48.0996 48s48-21.5 48-48c0-7.09961-1.69922-13.7998-4.39941-19.7998l72.2998-43.4004c15.2998-9.2002 35.2998-4 44.2002 11.6006l81.5 142.6c-10.7002 8.7998-17.7002 22-17.7002 37c0 26.5 21.5 48 48 48s48-21.5 48-48c0-15-7-28.2002-17.7002-37l81.5-142.6c8.90039-15.6006 28.7998-20.8008 44.2002-11.6006l72.4004 43.4004c-2.80078 6.09961-4.40039 12.7002-4.40039 19.7998c0 26.5 21.5 48 48 48z',
@@ -12072,7 +12089,31 @@ var render = function() {
                                             )
                                           : _vm._e()
                                       ]
-                                    )
+                                    ),
+                                    _vm._v(" "),
+                                    product.uses_twenty_day_delivery_window
+                                      ? _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "product-delivery-window-icon",
+                                            attrs: {
+                                              title:
+                                                _vm.twentyDayDeliveryTooltip,
+                                              "aria-label":
+                                                _vm.twentyDayDeliveryTooltip,
+                                              tabindex: "0",
+                                              role: "img"
+                                            }
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "ci-time",
+                                              attrs: { "aria-hidden": "true" }
+                                            })
+                                          ]
+                                        )
+                                      : _vm._e()
                                   ])
                                 : _c("div", { staticClass: "product-price" }, [
                                     _c(
@@ -12100,7 +12141,31 @@ var render = function() {
                                             )
                                           : _vm._e()
                                       ]
-                                    )
+                                    ),
+                                    _vm._v(" "),
+                                    product.uses_twenty_day_delivery_window
+                                      ? _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "product-delivery-window-icon",
+                                            attrs: {
+                                              title:
+                                                _vm.twentyDayDeliveryTooltip,
+                                              "aria-label":
+                                                _vm.twentyDayDeliveryTooltip,
+                                              tabindex: "0",
+                                              role: "img"
+                                            }
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "ci-time",
+                                              attrs: { "aria-hidden": "true" }
+                                            })
+                                          ]
+                                        )
+                                      : _vm._e()
                                   ]),
                               _vm._v(" "),
                               product.bogo_badge && product.bogo_badge.text

@@ -332,8 +332,22 @@ class Product extends Model
         $bestsellerLookup = static::listingBestsellerIds($bestsellerLimit)
             ->flip();
         $bogoBadge = MarketingAction::activeBogoListingBadge();
+        $publisherIds = $products->pluck('publisher_id')
+            ->map(fn ($publisherId) => (int) $publisherId)
+            ->filter()
+            ->unique()
+            ->values();
+        $twentyDayDeliveryPublisherLookup = $publisherIds->isEmpty()
+            ? collect()
+            : Publisher::query()
+                ->whereIn('id', $publisherIds)
+                ->get(['id', 'title', 'slug'])
+                ->filter(fn (Publisher $publisher) => $publisher->usesTwentyDayDeliveryWindow())
+                ->pluck('id')
+                ->map(fn ($publisherId) => (int) $publisherId)
+                ->flip();
 
-        return $products->map(function ($product) use ($popularLookup, $bestsellerLookup, $bogoBadge) {
+        return $products->map(function ($product) use ($popularLookup, $bestsellerLookup, $bogoBadge, $twentyDayDeliveryPublisherLookup) {
             $productId = (int) $product->id;
             $isBestSeller = $bestsellerLookup->has($productId);
             $isPopular = $popularLookup->has($productId);
@@ -342,6 +356,10 @@ class Product extends Model
             $product->setAttribute('is_popular', $isPopular);
             $product->setAttribute('sales_badge_type', $isBestSeller ? 'bestseller' : ($isPopular ? 'popular' : null));
             $product->setAttribute('bogo_badge', $bogoBadge);
+            $product->setAttribute(
+                'uses_twenty_day_delivery_window',
+                $twentyDayDeliveryPublisherLookup->has((int) $product->publisher_id)
+            );
 
             return $product;
         });

@@ -14,6 +14,11 @@
         $bookmarkerImageLinkStyle = $isBookmarkerProduct && ! $isCartShelfLayout ? 'display:flex;align-items:center;justify-content:center;min-height:15rem;padding:.75rem .5rem;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);' : '';
         $bookmarkerImageStyle = $isBookmarkerProduct && ! $isCartShelfLayout ? 'display:block;width:auto;height:auto;max-width:100%;max-height:15rem;margin:0 auto;object-fit:contain;object-position:center;' : '';
         $deliveryTooltip = 'Dostava unutar 24 sata.';
+        $twentyDayDeliveryTooltip = 'Dostupno u roku 20 dana.';
+        $usesTwentyDayDeliveryWindow = (bool) $product->getAttribute('uses_twenty_day_delivery_window')
+            || ($product->relationLoaded('publisher')
+                && $product->publisher
+                && $product->publisher->usesTwentyDayDeliveryWindow());
         $salesBadgeType = $product->sales_badge_type ?? (!empty($product->is_best_seller) ? 'bestseller' : (!empty($product->is_popular) ? 'popular' : null));
         $bestSellerTooltip = 'Bestseller';
         $popularTooltip = 'Popularno';
@@ -101,9 +106,21 @@
             <div class="@if($isCartShelfLayout) cart-shelf-card__price-group @else mt-auto @endif">
                 @if ($product->main_price > $product->main_special)
                     <div class="product-price"><small><span class="text-muted">NC30: <s>{{ $product->main_price_text }}</s>  @if($product->secondary_price_text){{ $product->secondary_price_text }} @endif</span></small>
-                   <span class="text-dark fs-md">{{ $product->main_special_text }} @if($product->secondary_special_text) <small class="text-muted">{{ $product->secondary_special_text }}</small> @endif</span></div>
+                        <span class="text-dark fs-md">{{ $product->main_special_text }} @if($product->secondary_special_text) <small class="text-muted">{{ $product->secondary_special_text }}</small> @endif</span>
+                        @if ($usesTwentyDayDeliveryWindow)
+                            <span class="product-delivery-window-icon" title="{{ $twentyDayDeliveryTooltip }}" aria-label="{{ $twentyDayDeliveryTooltip }}" tabindex="0" role="img">
+                                <i class="ci-time" aria-hidden="true"></i>
+                            </span>
+                        @endif
+                    </div>
                 @else
-                    <div class="product-price"><span class="text-dark fs-md">{{ $product->main_price_text }}  @if($product->secondary_price_text) <small class="fs-sm text-muted">{{ $product->secondary_price_text }} </small>@endif</span></div>
+                    <div class="product-price"><span class="text-dark fs-md">{{ $product->main_price_text }}  @if($product->secondary_price_text) <small class="fs-sm text-muted">{{ $product->secondary_price_text }} </small>@endif</span>
+                        @if ($usesTwentyDayDeliveryWindow)
+                            <span class="product-delivery-window-icon" title="{{ $twentyDayDeliveryTooltip }}" aria-label="{{ $twentyDayDeliveryTooltip }}" tabindex="0" role="img">
+                                <i class="ci-time" aria-hidden="true"></i>
+                            </span>
+                        @endif
+                    </div>
                 @endif
                 @if ($bogoListingBadge && ! $isCartShelfLayout)
                     <div

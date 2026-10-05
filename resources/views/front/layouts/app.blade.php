@@ -261,6 +261,29 @@
             transform: translateY(0);
         }
 
+        .product-delivery-window-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.35rem;
+            height: 1.35rem;
+            margin-left: .3rem;
+            border: 1px solid rgba(229, 0, 119, .28);
+            border-radius: 999px;
+            background: rgba(229, 0, 119, .08);
+            color: #e50077;
+            font-size: .78rem;
+            line-height: 1;
+            vertical-align: middle;
+            cursor: help;
+            outline: 0;
+        }
+
+        .product-delivery-window-icon:focus-visible {
+            box-shadow: 0 0 0 .16rem rgba(229, 0, 119, .2);
+        }
+
         .page-carousel-widget {
             position: relative;
         }

@@ -150,7 +150,7 @@ class ProductRecommendationService
             $attempts++;
         }
 
-        return $bookmarkers->values();
+        return Product::attachListingBadges($bookmarkers->values());
     }
 
 
@@ -291,7 +291,9 @@ class ProductRecommendationService
                 ->values();
         }
 
-        return $rankedCandidates->take($limit)->pluck('product')->values();
+        return Product::attachListingBadges(
+            $rankedCandidates->take($limit)->pluck('product')->values()
+        );
     }
 
 
