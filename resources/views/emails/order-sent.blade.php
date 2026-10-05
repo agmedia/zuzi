@@ -15,7 +15,7 @@
         </tr>
         <tr>
             <td class="ag-mail-tableset">
-                @include('emails.layouts.partials.order-price-table', ['order' => $order])
+                @include('emails.layouts.partials.order-price-table', ['order' => $order, 'showDeliveryWindowNote' => true])
             </td>
         </tr>
         @include('emails.layouts.partials.loyalty-summary', ['loyaltyMailData' => $loyaltyMailData, 'context' => 'order-sent'])

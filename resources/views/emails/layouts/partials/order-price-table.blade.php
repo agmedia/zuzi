@@ -46,6 +46,9 @@
                 @if($product->product && $product->product->sku)
                     - {{ $product->product->sku }}
                 @endif
+                @if(($showDeliveryWindowNote ?? false) && $product->product && $product->product->publisher && $product->product->publisher->usesTwentyDayDeliveryWindow())
+                    <br><span style="display: inline-block; margin-top: 4px; color: #b3005f; font-size: 12px; font-weight: bold;">Dostupno u roku 20 dana.</span>
+                @endif
             </td>
             <td style="text-align: center;">{{ $product->quantity }}</td>
             <td style="text-align: right;">€ {{ number_format($product->price, 2, ',', '.') }}</td>

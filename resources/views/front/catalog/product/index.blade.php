@@ -11,6 +11,8 @@
     $relatedHeading = $subcat ? 'Slične knjige iz kategorije ' . $subcat->title : ($cat ? 'Slične knjige iz kategorije ' . $cat->title : 'Možda vas zanima');
     $hasKnownPublisher = $prod->publisher
         && \Illuminate\Support\Str::lower(trim((string) $prod->publisher->title)) !== 'nepoznati izdavač';
+    $hasTwentyDayDeliveryWindow = $prod->publisher
+        && $prod->publisher->usesTwentyDayDeliveryWindow();
     $reviews = $reviews ?? collect();
     $reviewsCount = $reviews->count();
     $reviewsAverage = $reviewsCount ? round((float) $reviews->avg('stars'), 1) : 0;
@@ -927,6 +929,21 @@
             font-size: 0.8rem;
         }
 
+        .product-price-stack__delivery-note {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-top: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid rgba(229, 0, 119, 0.18);
+            border-radius: 0.75rem;
+            background: rgba(229, 0, 119, 0.06);
+            color: #b3005f;
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
         .product-purchase-meta {
             display: grid;
             gap: 0.8rem;
@@ -1347,6 +1364,12 @@
    @if ($prod->main_price > $prod->main_special)
        <div class="product-price-stack__legal">
            <span>*Najniža cijena u zadnjih 30 dana.</span>
+       </div>
+   @endif
+   @if ($hasTwentyDayDeliveryWindow)
+       <div class="product-price-stack__delivery-note" role="note">
+           <i class="ci-time" aria-hidden="true"></i>
+           <span>Dostupno u roku 20 dana.</span>
        </div>
    @endif
    @if ($bogoListingBadge)

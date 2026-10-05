@@ -3,6 +3,7 @@
 namespace App\Models\Back\Catalog;
 
 use App\Models\Back\Catalog\Product\Product;
+use App\Models\Concerns\HasTwentyDayDeliveryWindow;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Support\Str;
 
 class Publisher extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTwentyDayDeliveryWindow;
 
     /**
      * @var string

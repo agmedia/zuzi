@@ -5,6 +5,7 @@ namespace App\Models\Front\Catalog;
 use App\Models\Front\Catalog\Category;
 use App\Helpers\Helper;
 use App\Helpers\ProductHelper;
+use App\Models\Concerns\HasTwentyDayDeliveryWindow;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Log;
  */
 class Publisher extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTwentyDayDeliveryWindow;
 
     /**
      * @var string

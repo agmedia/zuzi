@@ -31,7 +31,7 @@ class OrderSent extends Mailable
      */
     public function __construct(Order $order)
     {
-        $this->order = $order;
+        $this->order = $order->loadMissing(['products.product.publisher', 'totals']);
         $this->loyaltyMailData = OrderHelper::resolveLoyaltyMailData($order);
     }
 
