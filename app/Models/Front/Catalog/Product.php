@@ -199,7 +199,13 @@ class Product extends Model
      */
     public function getImageAttribute($value)
     {
-        return config('settings.images_domain') . str_replace('.jpg', '.webp', $value);
+        $imageDomain = rtrim((string) config('settings.images_domain'), '/');
+
+        if (blank($value)) {
+            return $imageDomain . '/media/img/knjiga-detalj.jpg';
+        }
+
+        return $imageDomain . '/' . ltrim(str_replace('.jpg', '.webp', $value), '/');
     }
 
 

@@ -11,6 +11,7 @@ use App\Models\Back\Marketing\Action;
 use App\Services\Catalog\AuthorResolver;
 use App\Services\Catalog\ImportedProductName;
 use App\Services\ProductIdentifierAllocator;
+use App\Support\ProductImageFileSet;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -521,6 +522,100 @@ class DelfiImportService
         ];
     }
 
+    /**
+     * Repair only the image belonging to an already imported Delfi product.
+     * Prices, stock and category links are intentionally left untouched.
+     */
+    public function repairMissingImage(
+        DelfiImportProduct $source,
+        bool $refreshDetails = false,
+        bool $deactivateWithoutSourceImage = false
+    ): array
+    {
+        if (! $source->product_id || ! $source->imported_at) {
+            throw new RuntimeException('Delfi zapis nije povezan s prethodno uvezenim Zuzi artiklom.');
+        }
+
+        $productId = (int) $source->product_id;
+        $product = Product::query()->find($productId);
+        if (! $product) {
+            throw new RuntimeException('Povezani Zuzi artikl više ne postoji.');
+        }
+
+        if (! $this->needsImageRepair($product)) {
+            return [
+                'action' => 'unchanged',
+                'message' => 'Artikl već ima dostupnu sliku.',
+                'product_id' => $productId,
+            ];
+        }
+
+        if ($refreshDetails) {
+            $source = $this->inspect($source, true);
+            if ((int) $source->product_id !== $productId) {
+                throw new RuntimeException('Delfi provjera više ne povezuje isti Zuzi artikl. Slika nije promijenjena.');
+            }
+        }
+
+        if (! $this->hasUsableSourceImage($source)) {
+            if ($deactivateWithoutSourceImage) {
+                $product->update(['status' => 0]);
+
+                return [
+                    'action' => 'deactivated',
+                    'message' => 'Artikl je deaktiviran jer Delfi izvor nema naslovnicu.',
+                    'product_id' => $productId,
+                ];
+            }
+
+            return [
+                'action' => 'unavailable',
+                'message' => 'Delfi izvor ne sadrži dostupnu sliku za ovaj artikl.',
+                'product_id' => $productId,
+            ];
+        }
+
+        $warning = $this->storeImages($product, $source);
+        $product->refresh();
+        if ($this->needsImageRepair($product)) {
+            return [
+                'action' => 'unavailable',
+                'message' => $warning ?: 'Delfi izvor ne sadrži dostupnu sliku za ovaj artikl.',
+                'product_id' => $productId,
+            ];
+        }
+
+        $source->update([
+            'check_message' => 'Slika je uspješno ponovno uvezena bez promjene cijene, zalihe ili kategorija.',
+        ]);
+
+        return [
+            'action' => 'repaired',
+            'message' => 'Slika je uspješno ponovno uvezena.',
+            'product_id' => $productId,
+        ];
+    }
+
+    private function hasUsableSourceImage(DelfiImportProduct $source): bool
+    {
+        $urls = array_values(array_filter(array_unique(array_merge(
+            [$source->image_url],
+            (array) $source->additional_image_urls
+        ))));
+
+        foreach ($urls as $url) {
+            try {
+                $this->assertImageUrl((string) $url);
+
+                return true;
+            } catch (RuntimeException $exception) {
+                // Try the next source image. A Delfi homepage URL is not an image.
+            }
+        }
+
+        return false;
+    }
+
     private function handleExisting(
         DelfiImportProduct $source,
         array $settings,
@@ -543,7 +638,7 @@ class DelfiImportService
         );
         $categoryMessage = $categoriesAdded ? ' Dodane su odabrane kategorije.' : '';
         $imageMessage = '';
-        if ($source->imported_at && ! $product->image && $source->image_url) {
+        if ($source->imported_at && $source->image_url && $this->needsImageRepair($product)) {
             $imageWarning = $this->storeImages($product, $source);
             $imageMessage = $imageWarning !== ''
                 ? ' ' . $imageWarning
@@ -590,6 +685,24 @@ class DelfiImportService
             'message' => 'Artikl već postoji u Zuzi katalogu i preskočen je.' . $categoryMessage . $imageMessage,
             'product_id' => (int) $product->id,
         ];
+    }
+
+    private function needsImageRepair(Product $product): bool
+    {
+        $storedPath = $product->getRawOriginal('image');
+        if (! $storedPath) {
+            return true;
+        }
+
+        $family = ProductImageFileSet::familyKeyFromStoredPath($storedPath);
+        if (! is_string($family) || ! Str::endsWith($family, '-delfi-1')) {
+            return false;
+        }
+
+        $disk = Storage::disk('products');
+
+        return ! $disk->exists($family . '.webp')
+            || ! $disk->exists($family . '-thumb.webp');
     }
 
     private function importDescription(DelfiImportProduct $source, array $settings): array
@@ -1088,43 +1201,79 @@ class DelfiImportService
             return '';
         }
 
-        try {
-            foreach (array_slice($urls, 0, 4) as $index => $url) {
+        $failures = [];
+        $storedImages = 0;
+        $attemptedUrls = array_slice($urls, 0, 4);
+
+        foreach ($attemptedUrls as $url) {
+            $temporaryPath = null;
+            $path = null;
+            $thumbPath = null;
+
+            try {
                 $this->assertImageUrl($url);
                 $temporaryPath = $this->downloadImage($url);
-                try {
-                    $image = Image::make($temporaryPath);
-                    $base = $product->id . '/' . Str::slug($product->name) . '-delfi-' . ($index + 1);
-                    $path = $base . '.webp';
-                    Storage::disk('products')->put($path, (string) $image->encode('webp'));
-                    $thumb = clone $image;
-                    $thumb->resize(null, 300, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    })->resizeCanvas(250, null);
-                    Storage::disk('products')->put($base . '-thumb.webp', (string) $thumb->encode('webp', 80));
+                $image = Image::make($temporaryPath);
+                $base = $product->id . '/' . Str::slug($product->name) . '-delfi-' . ($storedImages + 1);
+                $path = $base . '.webp';
+                $thumbPath = $base . '-thumb.webp';
+                $disk = Storage::disk('products');
 
-                    $storedPath = config('filesystems.disks.products.url') . $path;
-                    if ($index === 0) {
-                        $product->update(['image' => $storedPath]);
-                    } else {
-                        ProductImage::query()->create([
-                            'product_id' => $product->id,
-                            'image' => $storedPath,
-                            'alt' => $product->name,
-                            'published' => 1,
-                            'sort_order' => $index,
-                        ]);
-                    }
-                } finally {
+                if (! $disk->put($path, (string) $image->encode('webp'))) {
+                    throw new RuntimeException('Nije moguće spremiti sliku proizvoda.');
+                }
+
+                $thumb = clone $image;
+                $thumb->resize(null, 300, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })->resizeCanvas(250, null);
+                if (! $disk->put($thumbPath, (string) $thumb->encode('webp', 80))) {
+                    throw new RuntimeException('Nije moguće spremiti umanjenu sliku proizvoda.');
+                }
+
+                $storedPath = config('filesystems.disks.products.url') . $path;
+                if ($storedImages === 0) {
+                    $product->update(['image' => $storedPath]);
+                } else {
+                    ProductImage::query()->create([
+                        'product_id' => $product->id,
+                        'image' => $storedPath,
+                        'alt' => $product->name,
+                        'published' => 1,
+                        'sort_order' => $storedImages,
+                    ]);
+                }
+
+                $storedImages++;
+            } catch (\Throwable $exception) {
+                if ($path !== null || $thumbPath !== null) {
+                    Storage::disk('products')->delete(array_filter([$path, $thumbPath]));
+                }
+
+                $failures[] = $exception->getMessage();
+                logger()->warning('Delfi slika nije uvezena.', [
+                    'source_id' => $source->id,
+                    'product_id' => $product->id,
+                    'url' => $url,
+                    'reason' => $exception->getMessage(),
+                ]);
+            } finally {
+                if ($temporaryPath !== null) {
                     @unlink($temporaryPath);
                 }
             }
-        } catch (\Throwable $exception) {
-            return 'Uvoz slike nije uspio: ' . $exception->getMessage();
         }
 
-        return '';
+        if ($failures === []) {
+            return '';
+        }
+
+        if ($storedImages === 0) {
+            return 'Uvoz slike nije uspio: ' . $failures[0];
+        }
+
+        return sprintf('Neke slike nisu uvezene (%d od %d).', count($failures), count($attemptedUrls));
     }
 
     private function downloadImage(string $url): string
@@ -1157,6 +1306,17 @@ class DelfiImportService
                 ->get($url);
             clearstatcache(true, $temporaryPath);
             $bytes = filesize($temporaryPath);
+            if (($bytes === false || $bytes < 1) && $response->successful()) {
+                $body = $response->body();
+                if ($body !== '' && strlen($body) <= $maximum) {
+                    $written = file_put_contents($temporaryPath, $body);
+                    if ($written === false || $written !== strlen($body)) {
+                        throw new RuntimeException('Nije moguće pripremiti preuzetu sliku.');
+                    }
+                    clearstatcache(true, $temporaryPath);
+                    $bytes = filesize($temporaryPath);
+                }
+            }
             if (! $response->successful() || $bytes === false || $bytes < 1 || $bytes > $maximum) {
                 throw new RuntimeException('Slika nije dostupna ili je prevelika.');
             }
@@ -1182,7 +1342,8 @@ class DelfiImportService
         $parts = parse_url($url);
         $allowed = array_map('strtolower', (array) config('delfi_import.allowed_image_hosts', []));
         if (($parts['scheme'] ?? '') !== 'https'
-            || ! in_array(strtolower($parts['host'] ?? ''), $allowed, true)) {
+            || ! in_array(strtolower($parts['host'] ?? ''), $allowed, true)
+            || trim((string) ($parts['path'] ?? ''), '/') === '') {
             throw new RuntimeException('Domena slike nije dopuštena.');
         }
     }

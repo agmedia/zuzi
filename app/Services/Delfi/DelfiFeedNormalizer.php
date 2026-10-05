@@ -119,6 +119,7 @@ class DelfiFeedNormalizer
         $value = str_replace(' ', '%20', $value);
         $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
         $host = strtolower((string) parse_url($value, PHP_URL_HOST));
+        $path = trim((string) parse_url($value, PHP_URL_PATH), '/');
         $allowedHosts = array_map('strtolower', (array) config('delfi_import.allowed_image_hosts', [
             'delfi.rs',
             'www.delfi.rs',
@@ -126,6 +127,7 @@ class DelfiFeedNormalizer
 
         if ($scheme !== 'https'
             || ! in_array($host, $allowedHosts, true)
+            || $path === ''
             || filter_var($value, FILTER_VALIDATE_URL) === false) {
             return null;
         }

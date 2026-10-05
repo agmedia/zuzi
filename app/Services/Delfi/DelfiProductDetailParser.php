@@ -330,6 +330,7 @@ class DelfiProductDetailParser
         $value = str_replace(' ', '%20', $value);
         $scheme = mb_strtolower((string) parse_url($value, PHP_URL_SCHEME));
         $host = mb_strtolower((string) parse_url($value, PHP_URL_HOST));
+        $path = trim((string) parse_url($value, PHP_URL_PATH), '/');
         $allowedHosts = array_map('mb_strtolower', (array) config('delfi_import.allowed_image_hosts', [
             'delfi.rs',
             'www.delfi.rs',
@@ -337,6 +338,7 @@ class DelfiProductDetailParser
 
         return $scheme === 'https'
             && in_array($host, $allowedHosts, true)
+            && $path !== ''
             && filter_var($value, FILTER_VALIDATE_URL) !== false
                 ? $value
                 : null;

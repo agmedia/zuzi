@@ -68,6 +68,21 @@ class DelfiFeedServiceTest extends TestCase
         $this->assertSame([], $item['additional_image_urls']);
     }
 
+    public function test_it_does_not_treat_the_delfi_homepage_as_a_product_image(): void
+    {
+        $xml = '<item xmlns:g="http://base.google.com/ns/1.0">'
+            . '<g:id>NO-IMAGE</g:id><title>Knjiga bez slike</title><description>Opis</description>'
+            . '<g:availability>in stock</g:availability><g:price>999 RSD</g:price>'
+            . '<link>https://delfi.rs/knjige/251901-knjiga.html</link>'
+            . '<g:image_link>https://delfi.rs</g:image_link>'
+            . '<category>Knjiga</category><authors>Autor</authors>'
+            . '</item>';
+
+        $item = app(DelfiFeedNormalizer::class)->normalizeItemXml($xml);
+
+        $this->assertNull($item['image_url']);
+    }
+
     private function temporaryFeed(array $items): string
     {
         $path = tempnam(sys_get_temp_dir(), 'delfi-feed-test-');

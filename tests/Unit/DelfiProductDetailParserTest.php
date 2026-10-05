@@ -105,4 +105,16 @@ class DelfiProductDetailParserTest extends TestCase
         $this->assertNull($parsed['isbn']);
         $this->assertSame('1234567890128', $parsed['ean']);
     }
+
+    public function test_it_rejects_the_delfi_homepage_as_an_image_url(): void
+    {
+        $parsed = app(DelfiProductDetailParser::class)->parse([
+            'oldProductId' => 252000,
+            'category' => 'Knjiga',
+            'images' => ['xxl' => 'https://delfi.rs'],
+        ]);
+
+        $this->assertNull($parsed['image']);
+        $this->assertSame([], $parsed['images']);
+    }
 }

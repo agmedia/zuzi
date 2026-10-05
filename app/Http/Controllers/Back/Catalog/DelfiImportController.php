@@ -575,6 +575,11 @@ class DelfiImportController extends Controller
                 'publisher_category_id' => 'Rezervna podkategorija mora pripadati odabranoj kategoriji Nakladnici.',
             ]);
         }
+        if (mb_strtolower(trim((string) $publisherCategory->title)) !== 'delfi') {
+            return redirect()->back()->withInput()->withErrors([
+                'publisher_category_id' => 'Rezervna podkategorija Delfi importa mora biti Nakladnici > Delfi.',
+            ]);
+        }
 
         $genreCategoryMap = [];
         foreach (($validated['source_genres'] ?? []) as $index => $genre) {

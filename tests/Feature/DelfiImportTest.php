@@ -19,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -29,6 +30,128 @@ class DelfiImportTest extends TestCase
     public function test_description_translation_is_disabled_by_default(): void
     {
         $this->assertFalse(app(DelfiImportSettings::class)->all()['translate_descriptions']);
+    }
+
+    public function test_image_only_repair_does_not_change_price_stock_or_categories(): void
+    {
+        Storage::fake('products');
+        $productId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Artikl samo za popravak slike',
+            'sku' => 'DELFI-IMAGE-ONLY',
+            'itemid' => 991001,
+            'isbn' => '9788652162123',
+            'slug' => 'artikl-samo-za-popravak-slike',
+            'url' => '/',
+            'image' => null,
+            'price' => 44.50,
+            'quantity' => 17,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $hash = hash('sha256', 'delfi-image-only-repair');
+        $imageUrl = 'https://delfi.rs/_img/artikli/test-cover.png';
+        $source = $this->source([
+            'product_id' => $productId,
+            'image_url' => $imageUrl,
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'imported_hash' => $hash,
+            'check_status' => 'matched',
+            'imported_at' => now(),
+        ]);
+        Http::fake([
+            $imageUrl => Http::response($this->tinyPng(), 200, ['Content-Type' => 'image/png']),
+        ]);
+
+        $result = app(DelfiImportService::class)->repairMissingImage($source);
+        $product = DB::table('products')->where('id', $productId)->first();
+        $base = $productId . '/artikl-samo-za-popravak-slike-delfi-1';
+
+        $this->assertSame('repaired', $result['action']);
+        $this->assertSame(config('filesystems.disks.products.url') . $base . '.webp', $product->image);
+        $this->assertSame(44.50, (float) $product->price);
+        $this->assertSame(17, (int) $product->quantity);
+        $this->assertSame(0, DB::table('product_category')->where('product_id', $productId)->count());
+        Storage::disk('products')->assertExists($base . '.webp');
+        Storage::disk('products')->assertExists($base . '-thumb.webp');
+    }
+
+    public function test_image_only_repair_reports_an_upstream_root_url_as_unavailable(): void
+    {
+        Storage::fake('products');
+        $productId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Artikl bez izvorne slike',
+            'sku' => 'DELFI-NO-SOURCE-IMAGE',
+            'itemid' => 991002,
+            'slug' => 'artikl-bez-izvorne-slike',
+            'url' => '/',
+            'image' => null,
+            'price' => 12,
+            'quantity' => 3,
+            'status' => 1,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $hash = hash('sha256', 'delfi-no-source-image');
+        $source = $this->source([
+            'product_id' => $productId,
+            'image_url' => 'https://delfi.rs',
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'imported_hash' => $hash,
+            'check_status' => 'matched',
+            'imported_at' => now(),
+        ]);
+        Http::fake();
+
+        $result = app(DelfiImportService::class)->repairMissingImage($source);
+
+        $this->assertSame('unavailable', $result['action']);
+        $this->assertNull(DB::table('products')->where('id', $productId)->value('image'));
+        $this->assertSame(1, (int) DB::table('products')->where('id', $productId)->value('status'));
+        Http::assertNothingSent();
+    }
+
+    public function test_image_only_repair_can_deactivate_when_the_refreshed_source_has_no_image(): void
+    {
+        Storage::fake('products');
+        $productId = DB::table('products')->insertGetId([
+            'author_id' => 0,
+            'name' => 'Artikl za deaktivaciju bez slike',
+            'sku' => 'DELFI-DEACTIVATE-NO-IMAGE',
+            'itemid' => 991003,
+            'slug' => 'artikl-za-deaktivaciju-bez-slike',
+            'url' => '/',
+            'image' => null,
+            'price' => 12,
+            'quantity' => 3,
+            'status' => 1,
+            'tax_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $hash = hash('sha256', 'delfi-deactivate-no-image');
+        $source = $this->source([
+            'product_id' => $productId,
+            'image_url' => 'https://delfi.rs',
+            'source_hash' => $hash,
+            'checked_source_hash' => $hash,
+            'imported_hash' => $hash,
+            'check_status' => 'matched',
+            'imported_at' => now(),
+        ]);
+        Http::fake();
+
+        $result = app(DelfiImportService::class)->repairMissingImage($source, false, true);
+
+        $this->assertSame('deactivated', $result['action']);
+        $this->assertSame(0, (int) DB::table('products')->where('id', $productId)->value('status'));
+        $this->assertNull(DB::table('products')->where('id', $productId)->value('image'));
+        Http::assertNothingSent();
     }
 
     public function test_new_book_uses_source_publisher_genre_mapping_translation_and_eur_price(): void
@@ -447,6 +570,27 @@ class DelfiImportTest extends TestCase
             ->get(route('delfi-import.index', ['tab' => 'settings']))
             ->assertOk()
             ->assertSee('name="source_genres[]" value="Ljubići"', false);
+    }
+
+    public function test_admin_cannot_map_the_delfi_fallback_to_laguna(): void
+    {
+        $mapping = $this->configureImport();
+
+        $response = $this->actingAs($this->admin())->post(route('delfi-import.settings'), [
+            'exchange_rate' => 117.2,
+            'markup_percent' => 30,
+            'publisher_parent_category_id' => $mapping['publisher_parent_category_id'],
+            'publisher_category_id' => $mapping['source_publisher_category_id'],
+            'publisher_id' => $mapping['fallbackPublisherId'],
+            'default_quantity' => 5,
+            'existing_action' => 'skip',
+        ]);
+
+        $response->assertSessionHasErrors('publisher_category_id');
+        $this->assertSame(
+            $mapping['fallbackPublisherCategoryId'],
+            app(DelfiImportSettings::class)->all()['publisher_category_id']
+        );
     }
 
     public function test_stale_admin_form_cannot_erase_another_admins_genre_mapping(): void
@@ -1404,6 +1548,18 @@ class DelfiImportTest extends TestCase
             'check_status' => 'pending',
             'last_seen_at' => now(),
         ], $overrides));
+    }
+
+    private function tinyPng(): string
+    {
+        $image = imagecreatetruecolor(20, 30);
+        imagefill($image, 0, 0, imagecolorallocate($image, 80, 120, 160));
+        ob_start();
+        imagepng($image);
+        $contents = ob_get_clean();
+        imagedestroy($image);
+
+        return $contents;
     }
 
     private function detailPayload(): array
