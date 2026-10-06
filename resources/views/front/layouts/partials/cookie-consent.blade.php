@@ -76,7 +76,11 @@
         syncMailchimpAttribution(marketingGranted);
 
         if (typeof window.updateGoogleConsentFromCookie === 'function') {
-            window.updateGoogleConsentFromCookie(analyticsGranted, marketingGranted);
+            window.updateGoogleConsentFromCookie(
+                analyticsGranted,
+                marketingGranted,
+                window.CookieConsent.validConsent()
+            );
         }
     };
 

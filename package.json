@@ -7,7 +7,8 @@
         "watch-poll": "mix watch -- --watch-options-poll=1000",
         "hot": "mix watch --hot",
         "prod": "npm run production",
-        "production": "mix --production"
+        "production": "mix --production",
+        "test:meta-pixel": "node --test tests/JavaScript/meta-pixel.test.cjs"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.3.1",

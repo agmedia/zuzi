@@ -58,6 +58,10 @@ return [
         'measurement_api_secret' => env('GOOGLE_ANALYTICS_MEASUREMENT_API_SECRET'),
     ],
 
+    'meta_pixel' => [
+        'id' => env('META_PIXEL_ID', '1118812093430338'),
+    ],
+
     'google_login' => [
         'enabled' => env('GOOGLE_LOGIN_ENABLED', false),
         'client_id' => env('GOOGLE_LOGIN_CLIENT_ID'),

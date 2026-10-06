@@ -594,7 +594,7 @@
                 gtag('set', 'allow_ad_personalization_signals', marketingAllowed);
             };
 
-            window.updateGoogleConsentFromCookie = function (analyticsGranted, marketingGranted) {
+            window.updateGoogleConsentFromCookie = function (analyticsGranted, marketingGranted, consentDecided) {
                 window.cookieAnalyticsAllowed = analyticsGranted === true;
                 window.cookieMarketingAllowed = marketingGranted === true;
                 window.applyGooglePrivacySettings(marketingGranted);
@@ -605,6 +605,13 @@
                     ad_user_data: marketingGranted ? 'granted' : 'denied',
                     ad_personalization: marketingGranted ? 'granted' : 'denied'
                 });
+
+                if (typeof window.updateMetaConsentFromCookie === 'function') {
+                    window.updateMetaConsentFromCookie(
+                        marketingGranted === true,
+                        consentDecided === true
+                    );
+                }
             };
             gtag('consent', 'default', {
                 analytics_storage: 'denied',
@@ -709,6 +716,7 @@
 <!-- Sign in / sign up modal-->
 @include('front.layouts.modals.login')
 @include('front.layouts.partials.cookie-consent')
+@include('front.layouts.partials.meta-pixel')
 
 
 
