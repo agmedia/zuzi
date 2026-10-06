@@ -15,12 +15,18 @@
                 tracker.setConsent(marketingGranted === true, consentDecided === true);
             };
 
-            window.updateMetaConsentFromCookie(
-                window.cookieMarketingAllowed === true,
-                document.cookie.split(';').some(function (entry) {
-                    return entry.trim().indexOf('cc_cookie=') === 0;
-                })
-            );
+            if (
+                window.CookieConsent
+                && typeof window.CookieConsent.validConsent === 'function'
+                && window.CookieConsent.validConsent()
+            ) {
+                window.updateMetaConsentFromCookie(
+                    window.CookieConsent.acceptedCategory('marketing'),
+                    true
+                );
+            } else {
+                tracker.setConsent(false, false);
+            }
         })();
     </script>
 @endif

@@ -105,10 +105,49 @@ test('drops queued events when stored denial is applied before page load', () =>
     const tracker = createTracker(fakeWindow, '1118812093430338');
 
     tracker.setConsent(false, true);
-    loadHandler();
     tracker.setConsent(true, true);
+    loadHandler();
 
     assert.equal(calls.some((call) => call[2] === 'ViewContent'), false);
+});
+
+test('sends a consented Purchase without waiting for the window load event', () => {
+    const calls = [];
+    const fakeWindow = {
+        dataLayer: [{
+            event: 'purchase',
+            ecommerce: { transaction_id: 'FAST-1', value: 22, currency: 'EUR' }
+        }],
+        document: { readyState: 'loading' },
+        addEventListener: () => {},
+        fbq: (...args) => calls.push(args)
+    };
+    const tracker = createTracker(fakeWindow, '1118812093430338');
+
+    tracker.setConsent(true, true);
+
+    assert.equal(calls.some((call) => call[2] === 'Purchase'), true);
+});
+
+test('continues when sessionStorage access is blocked', () => {
+    const calls = [];
+    const fakeWindow = {
+        dataLayer: [{
+            event: 'purchase',
+            ecommerce: { transaction_id: 'PRIVATE-1', value: 18, currency: 'EUR' }
+        }],
+        document: { readyState: 'complete' },
+        fbq: (...args) => calls.push(args)
+    };
+
+    Object.defineProperty(fakeWindow, 'sessionStorage', {
+        get: () => { throw new Error('SecurityError'); }
+    });
+
+    const tracker = createTracker(fakeWindow, '1118812093430338');
+    tracker.setConsent(true, true);
+
+    assert.equal(calls.some((call) => call[2] === 'Purchase'), true);
 });
 
 test('sends PageView and queued ecommerce events after consent', () => {
@@ -135,7 +174,7 @@ test('sends PageView and queued ecommerce events after consent', () => {
     assert.equal(calls.at(-1)[2], 'AddToCart');
 });
 
-test('does not duplicate tracking when GTM already owns the same Pixel', () => {
+test('uses the application tracker as the explicit Pixel owner', () => {
     const calls = [];
     const fakeWindow = {
         _fbq_gtm_ids: ['1118812093430338'],
@@ -147,6 +186,6 @@ test('does not duplicate tracking when GTM already owns the same Pixel', () => {
 
     tracker.setConsent(true);
 
-    assert.equal(calls.some((call) => call[0] === 'init'), false);
-    assert.equal(calls.some((call) => call[0] === 'trackSingle'), false);
+    assert.equal(calls.some((call) => call[0] === 'init'), true);
+    assert.equal(calls.some((call) => call[2] === 'Purchase'), true);
 });

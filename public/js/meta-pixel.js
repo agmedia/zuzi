@@ -108,12 +108,6 @@
         var initialized = false;
         var pixelConsentGranted = false;
         var pageViewTracked = false;
-        var managedByGtm = false;
-
-        function pixelIsManagedByGtm() {
-            return Array.isArray(global._fbq_gtm_ids)
-                && global._fbq_gtm_ids.map(String).indexOf(String(pixelId)) !== -1;
-        }
 
         function installFacebookQueue() {
             if (typeof global.fbq === 'function') {
@@ -154,22 +148,7 @@
             }
         }
 
-        function syncManagedPixelConsent() {
-            if (typeof global.fbq !== 'function') {
-                return;
-            }
-
-            global.fbq('consent', marketingAllowed ? 'grant' : 'revoke');
-            pixelConsentGranted = marketingAllowed;
-        }
-
         function initializePixel() {
-            if (pixelIsManagedByGtm()) {
-                managedByGtm = true;
-                syncManagedPixelConsent();
-                return false;
-            }
-
             installFacebookQueue();
 
             if (!initialized) {
@@ -190,32 +169,44 @@
             return true;
         }
 
+        function sessionStorageHandle() {
+            try {
+                return global.sessionStorage || null;
+            } catch (error) {
+                return null;
+            }
+        }
+
         function eventWasSent(eventId) {
-            if (!eventId || !global.sessionStorage) {
+            var storage = sessionStorageHandle();
+
+            if (!eventId || !storage) {
                 return false;
             }
 
             try {
-                return global.sessionStorage.getItem('zuzi_meta_' + eventId) === '1';
+                return storage.getItem('zuzi_meta_' + eventId) === '1';
             } catch (error) {
                 return false;
             }
         }
 
         function rememberSentEvent(eventId) {
-            if (!eventId || !global.sessionStorage) {
+            var storage = sessionStorageHandle();
+
+            if (!eventId || !storage) {
                 return;
             }
 
             try {
-                global.sessionStorage.setItem('zuzi_meta_' + eventId, '1');
+                storage.setItem('zuzi_meta_' + eventId, '1');
             } catch (error) {
                 // Tracking must not interfere with checkout when storage is unavailable.
             }
         }
 
         function trackEntry(entry) {
-            if (!started || managedByGtm || !entry || typeof entry !== 'object') {
+            if (!started || !entry || typeof entry !== 'object') {
                 return;
             }
 
@@ -285,11 +276,18 @@
             started = true;
             attachToDataLayer();
 
-            if (pixelIsManagedByGtm()) {
-                managedByGtm = true;
-                syncManagedPixelConsent();
+            if (!marketingAllowed && discardWhileDenied) {
+                processExistingEntries();
                 return;
             }
+
+            if (marketingAllowed && initializePixel()) {
+                processExistingEntries();
+            }
+        }
+
+        function refreshAfterPageLoad() {
+            attachToDataLayer();
 
             if (!marketingAllowed && discardWhileDenied) {
                 processExistingEntries();
@@ -325,20 +323,15 @@
                 return;
             }
 
-            if (managedByGtm) {
-                syncManagedPixelConsent();
-                return;
-            }
-
             if (initializePixel()) {
                 processExistingEntries();
             }
         }
 
-        if (global.document.readyState === 'complete') {
-            start();
-        } else {
-            global.addEventListener('load', start, { once: true });
+        start();
+
+        if (global.document.readyState !== 'complete') {
+            global.addEventListener('load', refreshAfterPageLoad, { once: true });
         }
 
         return {
