@@ -3,7 +3,7 @@
     $aboutSquareImage = asset('media/onama/zuzi-boxnow2.jpg');
     $aboutHeroTitle = 'Broj 1 online knjižara i antikvarijat u Hrvatskoj';
     $aboutHeroIntro = 'Više od knjižare. Mjesto gdje počinju dobre priče.';
-    $aboutHeroBody = 'Zuzi je danas jedna od najvećih online knjižara i antikvarijata u Hrvatskoj, s više od 84.000 naslova i istinskom ljubavlju prema knjigama.';
+    $aboutHeroBody = 'Zuzi je danas jedna od najvećih online knjižara i antikvarijata u Hrvatskoj, s više od 73.000 naslova i istinskom ljubavlju prema knjigama.';
 @endphp
 
 @once
