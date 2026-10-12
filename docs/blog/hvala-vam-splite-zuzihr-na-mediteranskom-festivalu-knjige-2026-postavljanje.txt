@@ -27,8 +27,18 @@ URL OBJAVE
 https://www.zuzi.hr/blog/hvala-vam-splite-zuzihr-na-mediteranskom-festivalu-knjige-2026
 
 MEDIJI
-8 fotografija + 2 videa (39 sekundi i 1 minuta 19 sekundi).
-Glavna slika je širi kadar ZUZI štanda; ostalih 7 fotografija je u sadržaju.
+20 fotografija + 2 videa (39 sekundi i 1 minuta 19 sekundi).
+Glavna slika je širi kadar ZUZI štanda; ostalih 19 fotografija je u sadržaju.
 Videi imaju kontrole, naslovne sličice i učitavaju se tek na zahtjev posjetitelja.
 Dodatna slična portretna varijanta PHOTO-2026-10-02-13-31-03.jpg nije ponovljena u galeriji.
 Izvorne datoteke u public/assets/ nisu mijenjane.
+
+AŽURIRANJE POSTOJEĆE OBJAVE (ID 254 NA LIVE BAZI)
+1. Preuzeti najnovije promjene iz Gita na server, uključujući fotografije.
+2. U phpMyAdminu odabrati ZUZI bazu i uvesti:
+   hvala-vam-splite-zuzihr-na-mediteranskom-festivalu-knjige-2026-update.sql
+3. Rezultat treba biti OK: updated (20 photos, 2 videos).
+Ovaj UPDATE pronalazi postojeću objavu po slugu i mijenja samo sadržaj.
+Ne stvara novi članak i čuva naslov, glavnu sliku, SEO, datum i preglede.
+Dodatno je uključeno 12 fotografija. Snimka medijske stranice
+PHOTO-2026-10-02-13-30-32.jpg nije uključena u galeriju fotografija.
