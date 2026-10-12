@@ -1,0 +1,43 @@
+NASLOV
+ZUZI.hr na Interliberu 2026.: vidimo se u paviljonima 6 i 7!
+
+GLAVNA SLIKA
+/media/img/blog/interliber-2026/zuzi-interliber-2026.webp
+Dimenzije: 1430 × 530 px. Priloženi službeni Interliber vizual.
+U bazi se pohranjuje JPG putanja; aplikacija automatski prikazuje WebP.
+Priložene su obje datoteke, JPG i WebP.
+
+SADRŽAJ ZA EDITOR
+zuzihr-na-interliberu-2026-vidimo-se-u-paviljonima-6-i-7.html
+Naslov i glavna slika nisu ponovljeni u HTML-u jer ih predložak bloga prikazuje zasebno.
+
+POSTAVLJANJE KROZ SQL
+1. Preuzeti promjene iz Gita na server ili prenijeti obje datoteke iz:
+   public/media/img/blog/interliber-2026/
+2. Provjeriti da je glavna slika javno dostupna na:
+   https://www.zuzi.hr/media/img/blog/interliber-2026/zuzi-interliber-2026.webp
+3. U phpMyAdminu odabrati produkcijsku ZUZI bazu i uvesti:
+   zuzihr-na-interliberu-2026-vidimo-se-u-paviljonima-6-i-7-live.sql
+4. Rezultat treba biti OK: created ili OK: updated.
+5. Otvoriti objavu i provjeriti naslovnu sliku i sadržaj.
+
+SQL uključuje naslov, sažetak, HTML, glavnu sliku, SEO polja i objavljen status.
+Može se ponoviti bez stvaranja nove objave. Ne mijenja druge članke.
+Git push sam po sebi ne izvršava ovaj SQL.
+
+URL OBJAVE
+https://www.zuzi.hr/blog/zuzihr-na-interliberu-2026-vidimo-se-u-paviljonima-6-i-7
+
+PODACI ZA NAJAVU
+Interliber, 48. međunarodni sajam knjiga: 10. – 15. studenoga 2026.
+ZUZI.hr: paviljon 6 / štand 3A i paviljon 7 / štand 31.
+Zagrebački velesajam, Avenija Dubrovnik 15, Zagreb. Ulaz je besplatan.
+10. – 12. 11.: 10:00 – 20:00; 13. i 14. 11.: 10:00 – 21:00; 15. 11.: 09:00 – 19:00.
+
+IZVORI
+Brojevi štandova provjereni u dostavljenim nacrtima ZUZI 2026 PAV 6.pdf i ZUZI 2026 PAV 7.pdf.
+Nacrti nisu javno priloženi uz članak.
+Datumi, besplatan ulaz i radno vrijeme provjereni 12. listopada 2026. na službenim stranicama:
+https://www.zv.hr/sajmovi-7/interliber-2519/o-sajmu-10046/10046
+https://www.zv.hr/sajmovi-7/interliber-2519/posjetitelji-2707/2707
+https://www.zv.hr/sajmovi-7/interliber-2519/posjetitelji-2707/radno-vrijeme-i-plan-sajma/8982
