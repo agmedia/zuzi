@@ -42,3 +42,8 @@ Ovaj UPDATE pronalazi postojeću objavu po slugu i mijenja samo sadržaj.
 Ne stvara novi članak i čuva naslov, glavnu sliku, SEO, datum i preglede.
 Dodatno je uključeno 12 fotografija. Snimka medijske stranice
 PHOTO-2026-10-02-13-30-32.jpg nije uključena u galeriju fotografija.
+
+AKO DVIJE FOTOGRAFIJE OSTANU PRAZNE U PREGLEDNIKU
+Obje fotografije potvrđeno su dostupne na serveru. Za ponovno učitavanje
+pokrenuti hvala-vam-splite-zuzihr-na-mediteranskom-festivalu-knjige-2026-image-cache-fix.sql.
+Mijenja samo njihove URL-ove u postojećem sadržaju i čuva ostatak članka.
