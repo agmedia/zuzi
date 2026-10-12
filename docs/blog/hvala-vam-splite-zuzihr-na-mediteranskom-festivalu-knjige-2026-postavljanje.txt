@@ -1,0 +1,34 @@
+NASLOV
+Hvala vam, Splite! ZUZI.hr na Mediteranskom festivalu knjige 2026.
+
+GLAVNA SLIKA
+/media/img/blog/mfk-2026-zahvala/zuzi-stand.webp
+U bazi se pohranjuje JPG putanja; aplikacija automatski prikazuje WebP.
+
+SADRŽAJ ZA EDITOR
+hvala-vam-splite-zuzihr-na-mediteranskom-festivalu-knjige-2026.html
+Naslov i glavna slika nisu ponovljeni u HTML-u jer ih predložak bloga prikazuje zasebno.
+
+POSTAVLJANJE KROZ SQL
+1. Preuzeti promjene iz Gita na server ili prenijeti cijele direktorije:
+   public/media/img/blog/mfk-2026-zahvala/
+   public/media/video/blog/mfk-2026-zahvala/
+2. Provjeriti da su slike i oba MP4 javno dostupni na tim putanjama.
+3. U phpMyAdminu odabrati produkcijsku ZUZI bazu i uvesti datoteku:
+   hvala-vam-splite-zuzihr-na-mediteranskom-festivalu-knjige-2026-live.sql
+4. Rezultat treba biti OK: created ili OK: updated.
+5. Otvoriti objavu, provjeriti glavnu sliku, galeriju i pokrenuti oba videa.
+
+SQL uključuje naslov, sažetak, HTML, glavnu sliku, SEO polja i objavljen status.
+Može se ponoviti bez stvaranja nove objave. Ne mijenja druge članke.
+Git push sam po sebi ne izvršava ovaj SQL.
+
+URL OBJAVE
+https://www.zuzi.hr/blog/hvala-vam-splite-zuzihr-na-mediteranskom-festivalu-knjige-2026
+
+MEDIJI
+8 fotografija + 2 videa (39 sekundi i 1 minuta 19 sekundi).
+Glavna slika je širi kadar ZUZI štanda; ostalih 7 fotografija je u sadržaju.
+Videi imaju kontrole, naslovne sličice i učitavaju se tek na zahtjev posjetitelja.
+Dodatna slična portretna varijanta PHOTO-2026-10-02-13-31-03.jpg nije ponovljena u galeriji.
+Izvorne datoteke u public/assets/ nisu mijenjane.
