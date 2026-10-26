@@ -16,6 +16,7 @@ use App\Models\Front\Loyalty;
 use App\Models\Front\Page;
 use App\Models\Sitemap;
 use App\Services\Front\CuratedCollectionService;
+use App\Support\InterliberCampaign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
@@ -47,11 +48,12 @@ class HomeController extends Controller
         });
 
         $homeSalesWidget = view('front.layouts.partials.home-sales-widget', $curatedCollectionService->homepageWidgetData())->render();
+        $homepageDescription = $this->resolveHomepageHero($this->resolveHomepageDescriptionSnapshot($page));
         $page->description = Helper::setDescription(
             str_replace(
                 ['<!--home-sales-widget-->', '<!--home-about-widget-->'],
                 [$homeSalesWidget, ''],
-                $this->resolveHomepageDescriptionSnapshot($page)
+                $homepageDescription
             ),
             ['short_description' => $page->short_description ?? '']
         );
@@ -486,6 +488,21 @@ class HomeController extends Controller
         return response()->view('front.layouts.partials.xmlexport', [
             'items' => $xmlexport->getItems()
         ])->header('Content-Type', 'text/xml');
+    }
+
+
+    private function resolveHomepageHero(string $description): string
+    {
+        // Keep the saved slider intact; restore it after 1 December, Zagreb time.
+        if (! InterliberCampaign::isActive() || ! str_contains($description, '++slider-index++')) {
+            return $description;
+        }
+
+        return str_replace(
+            '++slider-index++',
+            view('front.layouts.partials.home-interliber-hero')->render(),
+            $description
+        );
     }
 
 

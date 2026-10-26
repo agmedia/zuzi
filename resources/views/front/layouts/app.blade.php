@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     @php
+        $interliberCampaignActive = \App\Support\InterliberCampaign::isActive();
         $seoTitle = \App\Models\Seo::title(trim($__env->yieldContent('title')));
         $seoDescription = \App\Models\Seo::description(trim($__env->yieldContent('description')));
         $seoCanonical = trim($__env->yieldContent('canonical')) ?: \App\Models\Seo::canonical(request());
@@ -52,6 +53,9 @@
     <link rel="stylesheet" media="screen" href="{{ asset('vendor/simplebar/dist/simplebar.min.css') }}"/>
     <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.0035') }}">
     <link rel="stylesheet" media="screen" href="{{ asset('css/google-login.css?v=1') }}">
+    @if ($interliberCampaignActive)
+        <link rel="stylesheet" href="{{ asset('css/home-interliber-hero.css') }}?v=3">
+    @endif
     <script src="{{ asset('js/jquery/jquery-2.1.1.min.js') }}"></script>
 
 
@@ -664,7 +668,7 @@
 </head>
 
 <!-- Body-->
-<body class="bg-bck">
+<body class="bg-bck{{ $interliberCampaignActive ? ' interliber-campaign-active' : '' }}">
 @if (config('app.env') == 'production')
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M6Q5GRCN"
@@ -715,6 +719,9 @@
 
 <!-- Sign in / sign up modal-->
 @include('front.layouts.modals.login')
+@if ($interliberCampaignActive)
+    @include('front.layouts.partials.interliber-promo')
+@endif
 @include('front.layouts.partials.cookie-consent')
 @include('front.layouts.partials.meta-pixel')
 
@@ -737,6 +744,9 @@
 
 
 <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
+@if ($interliberCampaignActive)
+    <script src="{{ asset('js/interliber-promo.js') }}?v=1" defer></script>
+@endif
 <script src="{{ asset('js/simplebar.min.js') }}"></script>
 <script src="{{ asset('js/tiny-slider.js?v=2.3') }}"></script>
 <script src="{{ asset('js/smooth-scroll.polyfills.min.js') }}"></script>
