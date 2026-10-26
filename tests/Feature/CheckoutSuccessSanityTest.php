@@ -9,6 +9,7 @@ use App\Models\Front\Loyalty;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -44,8 +45,16 @@ class CheckoutSuccessSanityTest extends TestCase
         $this->createSchema();
     }
 
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
+
     public function test_success_flow_redeems_loyalty_and_clears_cart_session(): void
     {
+        Carbon::setTestNow(Carbon::parse('2026-12-01 12:00:00', 'Europe/Zagreb'));
         Bus::fake();
 
         $user = User::factory()->create();
@@ -137,6 +146,156 @@ class CheckoutSuccessSanityTest extends TestCase
         $this->assertNotNull($order->fresh()->checkout_processed_at);
     }
 
+    /**
+     * @dataProvider offlinePaymentCodes
+     */
+    public function test_saved_loyalty_discount_requires_review_during_redemption_pause(string $paymentCode): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-30 23:59:59', 'Europe/Zagreb'));
+        Bus::fake();
+        config()->set('services.pelion.checkout_stock_check_enabled', false);
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Loyalty::addPoints(100, 0, 'admin', 'Opening balance', $user->id);
+        $order = $this->createOrder($user, 20, Carbon::parse('2026-10-25 12:00:00'), [
+            'order_status_id' => (int) config('settings.order.status.unfinished'),
+            'payment_code' => $paymentCode,
+            'checkout_processed_at' => null,
+        ]);
+        $this->createLoyaltyDiscount($order);
+
+        session()->start();
+        session([
+            config('session.cart') => 'saved-loyalty-cart',
+            config('session.cart') . '_loyalty' => 100,
+        ]);
+        CheckoutSession::setOrder(['id' => $order->id]);
+
+        $response = app(CheckoutController::class)->order(Request::create(
+            '/narudzba',
+            'GET',
+            ['provjera' => (string) $order->id]
+        ));
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertSame(route('pregled'), $response->getTargetUrl());
+        $this->assertSame(
+            'Loyalty popust trenutačno nije dostupan. Osvježite pregled narudžbe prije potvrde.',
+            session('error')
+        );
+        $this->assertSame(
+            (int) config('settings.order.status.unfinished'),
+            (int) $order->fresh()->order_status_id
+        );
+        $this->assertNull($order->fresh()->checkout_processed_at);
+        $this->assertSame(100, Loyalty::hasLoyaltyTotal($user->id));
+        $this->assertTrue(CheckoutSession::hasOrder());
+    }
+
+    public static function offlinePaymentCodes(): array
+    {
+        return [
+            'cash on delivery' => ['cod'],
+            'bank transfer' => ['bank'],
+            'pay on pickup' => ['pickup'],
+        ];
+    }
+
+    public function test_saved_loyalty_discount_can_finish_when_redemption_resumes(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-12-01 00:00:00', 'Europe/Zagreb'));
+        Bus::fake();
+        config()->set('services.pelion.checkout_stock_check_enabled', false);
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $order = $this->createOrder($user, 20, null, [
+            'order_status_id' => (int) config('settings.order.status.unfinished'),
+            'checkout_processed_at' => null,
+        ]);
+        $this->createLoyaltyDiscount($order);
+
+        session()->start();
+        session([config('session.cart') => 'saved-loyalty-cart']);
+
+        $response = app(CheckoutController::class)->order(Request::create(
+            '/narudzba',
+            'GET',
+            ['provjera' => (string) $order->id]
+        ));
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertSame(route('checkout.success'), $response->getTargetUrl());
+        $this->assertSame(
+            (int) config('settings.order.status.new'),
+            (int) $order->fresh()->order_status_id
+        );
+        $this->assertNotNull($order->fresh()->checkout_processed_at);
+    }
+
+    /**
+     * @dataProvider existingPaymentFinalizations
+     */
+    public function test_pause_preserves_completed_orders_and_successful_card_callbacks(
+        string $paymentCode,
+        string $initialStatus,
+        string $expectedStatus
+    ): void {
+        Carbon::setTestNow(Carbon::parse('2026-11-30 12:00:00', 'Europe/Zagreb'));
+        Bus::fake();
+        config()->set('services.pelion.checkout_stock_check_enabled', false);
+
+        Schema::create('order_transactions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('order_id');
+            $table->boolean('success');
+            $table->timestamps();
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $order = $this->createOrder($user, 20, null, [
+            'order_status_id' => (int) config('settings.order.status.' . $initialStatus),
+            'payment_code' => $paymentCode,
+            'checkout_processed_at' => $initialStatus === 'new' ? now()->subDay() : null,
+        ]);
+        $this->createLoyaltyDiscount($order);
+
+        session()->start();
+        session([config('session.cart') => 'saved-loyalty-cart']);
+        $parameters = $paymentCode === 'corvus'
+            ? ['order_number' => (string) $order->id, 'approval_code' => 'approved-payment']
+            : ['provjera' => (string) $order->id];
+
+        $response = app(CheckoutController::class)->order(Request::create('/narudzba', 'GET', $parameters));
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertSame(route('checkout.success'), $response->getTargetUrl());
+        $this->assertSame(
+            (int) config('settings.order.status.' . $expectedStatus),
+            (int) $order->fresh()->order_status_id
+        );
+        $this->assertEquals(20, $order->fresh()->total);
+        $this->assertNotNull($order->fresh()->checkout_processed_at);
+        $this->assertNull(session('error'));
+
+        if ($paymentCode === 'corvus') {
+            $this->assertDatabaseHas('order_transactions', [
+                'order_id' => $order->id,
+                'success' => 1,
+            ]);
+        }
+    }
+
+    public static function existingPaymentFinalizations(): array
+    {
+        return [
+            'completed cash on delivery order' => ['cod', 'new', 'new'],
+            'successful card callback' => ['corvus', 'unfinished', 'paid'],
+        ];
+    }
+
     public function test_success_flow_saves_first_checkout_address_to_customer_details(): void
     {
         Bus::fake();
@@ -188,6 +347,19 @@ class CheckoutSuccessSanityTest extends TestCase
             'oib' => '12345678901',
             'role' => 'customer',
             'status' => 1,
+        ]);
+    }
+
+    private function createLoyaltyDiscount(AdminOrder $order): void
+    {
+        DB::table('order_total')->insert([
+            'order_id' => $order->id,
+            'code' => 'special',
+            'title' => 'Loyalty',
+            'value' => -5,
+            'sort_order' => 4,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 

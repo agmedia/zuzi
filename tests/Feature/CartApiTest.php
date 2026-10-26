@@ -21,6 +21,59 @@ class CartApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Carbon::setTestNow(Carbon::parse('2026-10-25 12:00:00', 'Europe/Zagreb'));
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
+
+    public function test_redemption_pause_clears_saved_discount_and_rejects_direct_requests_until_december(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Loyalty::addPoints(100, 0, 'admin', 'Opening balance', $user->id);
+        $productId = $this->createProduct('Loyalty pause test', 'LOYALTY-PAUSE');
+
+        $this->postJson('/api/v2/cart/add', [
+            'item' => ['id' => $productId, 'quantity' => 1],
+        ])->assertOk();
+        $this->getJson('/api/v2/cart/loyalty/100')->assertOk();
+        $beforePause = $this->getJson('/api/v2/cart/get')->assertOk();
+        $this->assertTrue($this->cartHasDetailCondition($beforePause->json(), 'Loyalty', -5.0));
+
+        Carbon::setTestNow(Carbon::parse('2026-10-26 00:00:00', 'Europe/Zagreb'));
+
+        $duringPause = $this->getJson('/api/v2/cart/get')->assertOk()
+            ->assertJsonPath('loyalty_redemption_enabled', false)
+            ->assertJsonPath('has_loyalty', 0)
+            ->assertJsonPath('loyalty', '')
+            ->assertSessionMissing(config('session.cart') . '_loyalty');
+        $this->assertFalse($this->cartHasDetailCondition($duringPause->json(), 'Loyalty'));
+        $this->assertEqualsWithDelta(100.0, (float) $duringPause->json('total'), 0.01);
+
+        $attempt = $this->getJson('/api/v2/cart/loyalty/100')->assertOk()
+            ->assertSessionMissing(config('session.cart') . '_loyalty');
+        $this->assertSame(0, $attempt->json());
+        $this->assertSame(100, Loyalty::hasLoyaltyTotal($user->id));
+
+        Carbon::setTestNow(Carbon::parse('2026-12-01 00:00:00', 'Europe/Zagreb'));
+
+        $this->getJson('/api/v2/cart/loyalty/100')->assertOk();
+        $afterPause = $this->getJson('/api/v2/cart/get')->assertOk()
+            ->assertJsonPath('loyalty_redemption_enabled', true)
+            ->assertJsonPath('has_loyalty', 100);
+        $this->assertTrue($this->cartHasDetailCondition($afterPause->json(), 'Loyalty', -5.0));
+        $this->assertEqualsWithDelta(95.0, (float) $afterPause->json('total'), 0.01);
+    }
+
     public function test_cart_check_returns_consistent_payload_for_empty_ids(): void
     {
         $response = $this->postJson('/api/v2/cart/check', [

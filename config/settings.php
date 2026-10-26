@@ -165,6 +165,8 @@ return [
 
     //
     'loyalty' => [
+        'redemption_paused_from' => '2026-10-26',
+        'redemption_resumes_at' => '2026-12-01',
         'link_tag' => 'preporuka',
         'first_order_points' => 50,
         'birthday_points' => 100,

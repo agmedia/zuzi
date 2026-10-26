@@ -6,10 +6,13 @@ use App\Console\Commands\CheckUsersBirthday;
 use App\Helpers\OrderHelper;
 use App\Mail\OrderSent;
 use App\Models\Back\Orders\Order as AdminOrder;
+use App\Models\Front\AgCart;
 use App\Models\Front\Loyalty;
 use App\Models\User;
 use App\Models\UserDetail;
+use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -20,6 +23,8 @@ class LoyaltyProgramTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->travelTo(Carbon::parse('2026-10-25 12:00:00', 'Europe/Zagreb'));
 
         config()->set('database.default', 'sqlite');
         config()->set('database.connections.sqlite', [
@@ -32,6 +37,8 @@ class LoyaltyProgramTest extends TestCase
         config()->set('settings.loyalty.first_order_points', 50);
         config()->set('settings.loyalty.birthday_points', 100);
         config()->set('settings.loyalty.points_per_euro', 1);
+        config()->set('settings.loyalty.redemption_paused_from', '2026-10-26');
+        config()->set('settings.loyalty.redemption_resumes_at', '2026-12-01');
         config()->set('settings.loyalty.rewards.orders_per_month', [
             3 => 20,
             2 => 10,
@@ -58,6 +65,149 @@ class LoyaltyProgramTest extends TestCase
 
         $this->assertSame(100, Loyalty::hasLoyalty());
         $this->assertSame(5, Loyalty::calculateLoyalty(100));
+    }
+
+    /**
+     * @dataProvider redemptionPauseBoundaries
+     */
+    public function test_redemption_pause_uses_zagreb_dates_without_changing_balance(
+        string $date,
+        string $timezone,
+        bool $enabled
+    ): void {
+        $this->travelTo(Carbon::parse($date, $timezone));
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Loyalty::addPoints(100, 0, 'admin', 'Opening balance', $user->id);
+
+        $this->assertSame($enabled, Loyalty::redemptionEnabled());
+        $this->assertSame($enabled ? 100 : 0, Loyalty::hasLoyalty());
+        $this->assertSame($enabled ? 5 : 0, Loyalty::calculateLoyalty(100));
+        $this->assertSame(100, Loyalty::hasLoyaltyTotal($user->id));
+    }
+
+    public function redemptionPauseBoundaries(): array
+    {
+        return [
+            'last instant before the pause' => ['2026-10-25 23:59:59.999999', 'Europe/Zagreb', true],
+            'pause starts at local midnight' => ['2026-10-26 00:00:00', 'Europe/Zagreb', false],
+            'November remains paused' => ['2026-11-15 12:00:00', 'Europe/Zagreb', false],
+            'last instant in November' => ['2026-11-30 23:59:59.999999', 'Europe/Zagreb', false],
+            'redemption resumes at local midnight' => ['2026-12-01 00:00:00', 'Europe/Zagreb', true],
+            'UTC instant before local start' => ['2026-10-25 22:59:59.999999', 'UTC', true],
+            'UTC instant at local start' => ['2026-10-25 23:00:00', 'UTC', false],
+            'UTC instant before local end' => ['2026-11-30 22:59:59.999999', 'UTC', false],
+            'UTC instant at local end' => ['2026-11-30 23:00:00', 'UTC', true],
+        ];
+    }
+
+    public function test_order_and_welcome_points_are_earned_during_pause_without_spending_stale_selection(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-15 12:00:00', 'Europe/Zagreb'));
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Loyalty::addPoints(100, 0, 'admin', 'Opening balance', $user->id);
+
+        $order = $this->createOrder($user, 25);
+
+        (new OrderHelper($order->id))->addLoyaltyPoints(100);
+
+        $this->assertSame(175, Loyalty::hasLoyaltyTotal($user->id));
+        $this->assertSame(0, (int) Loyalty::query()->where('user_id', $user->id)->sum('spend'));
+        $this->assertDatabaseHas('loyalty', [
+            'user_id' => $user->id,
+            'reference_id' => $order->id,
+            'reference' => 'order',
+            'earned' => 25,
+            'spend' => 0,
+        ]);
+        $this->assertDatabaseHas('loyalty', [
+            'user_id' => $user->id,
+            'reference_id' => $order->id,
+            'reference' => 'order',
+            'comment' => 'First order reward.',
+            'earned' => 50,
+            'spend' => 0,
+        ]);
+        $this->assertSame(0, Loyalty::hasLoyalty());
+        $this->assertSame(0, Loyalty::calculateLoyalty(100));
+    }
+
+    public function test_legacy_order_resolution_earns_points_without_spending_during_pause(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-30 23:59:59', 'Europe/Zagreb'));
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Loyalty::addPoints(100, 0, 'admin', 'Opening balance', $user->id);
+        $order = $this->createOrder($user, 25);
+
+        $this->assertTrue(Loyalty::resolveOrder(['loyalty' => 100], $order));
+
+        $this->assertSame(125, Loyalty::hasLoyaltyTotal($user->id));
+        $this->assertDatabaseHas('loyalty', [
+            'user_id' => $user->id,
+            'reference_id' => $order->id,
+            'reference' => 'order',
+            'earned' => 25,
+            'spend' => 0,
+        ]);
+    }
+
+    public function test_cart_clears_stale_redemption_and_refuses_selection_until_december(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Loyalty::addPoints(100, 0, 'admin', 'Opening balance', $user->id);
+
+        $cartId = 'loyalty-redemption-pause';
+        $loyaltySessionKey = config('session.cart') . '_loyalty';
+        Cart::session($cartId)->add([
+            'id' => 1,
+            'name' => 'Test book',
+            'price' => 100,
+            'quantity' => 1,
+            'attributes' => [],
+        ]);
+
+        $cart = new AgCart($cartId);
+        $this->assertSame(100, $cart->loyalty(100));
+        $beforePause = $cart->get();
+        $this->assertTrue($beforePause['loyalty_redemption_enabled']);
+        $this->assertSame(100, $beforePause['loyalty']);
+        $this->assertSame(100, session($loyaltySessionKey));
+        $this->assertTrue(collect($beforePause['detail_con'])->contains('name', 'Loyalty'));
+        $this->assertEquals(95, $beforePause['total']);
+
+        $this->travelTo(Carbon::parse('2026-10-26 00:00:00', 'Europe/Zagreb'));
+        $cart = new AgCart($cartId);
+        $duringPause = $cart->get();
+
+        $this->assertFalse($duringPause['loyalty_redemption_enabled']);
+        $this->assertSame('', $duringPause['loyalty']);
+        $this->assertSame(0, $duringPause['has_loyalty']);
+        $this->assertFalse(session()->has($loyaltySessionKey));
+        $this->assertFalse(collect($duringPause['detail_con'])->contains('name', 'Loyalty'));
+        $this->assertFalse(Cart::session($cartId)->getConditions()->contains(
+            fn ($condition) => $condition->getName() === 'Loyalty'
+        ));
+        $this->assertEquals(100, $duringPause['total']);
+        $this->assertSame(0, $cart->loyalty(100));
+        $this->assertFalse(session()->has($loyaltySessionKey));
+        $this->assertEquals(100, $cart->get()['total']);
+
+        $this->travelTo(Carbon::parse('2026-12-01 00:00:00', 'Europe/Zagreb'));
+        $cart = new AgCart($cartId);
+        $afterPause = $cart->get();
+        $this->assertTrue($afterPause['loyalty_redemption_enabled']);
+        $this->assertSame(100, $afterPause['has_loyalty']);
+        $this->assertSame('', $afterPause['loyalty']);
+        $this->assertEquals(100, $afterPause['total']);
+        $this->assertSame(100, $cart->loyalty(100));
+        $this->assertEquals(95, $cart->get()['total']);
+        $this->assertSame(100, Loyalty::hasLoyaltyTotal($user->id));
     }
 
     public function test_first_order_receives_welcome_points(): void
@@ -197,7 +347,7 @@ class LoyaltyProgramTest extends TestCase
         $createdAt = $createdAt ?: now();
         $status = $status ?: 1;
 
-        return AdminOrder::query()->create([
+        $order = AdminOrder::query()->create([
             'user_id' => $user->id,
             'affiliate_id' => 0,
             'order_status_id' => $status,
@@ -227,9 +377,14 @@ class LoyaltyProgramTest extends TestCase
             'oib' => '',
             'comment' => '',
             'tracking_code' => '',
+        ]);
+
+        $order->forceFill([
             'created_at' => $createdAt,
             'updated_at' => $createdAt,
-        ]);
+        ])->save();
+
+        return $order;
     }
 
     private function createSchema(): void

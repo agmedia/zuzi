@@ -3100,7 +3100,6 @@ __webpack_require__.r(__webpack_exports__);
       couponSubmitting: false,
       showCouponPanel: false,
       showLoyaltyPanel: false,
-      has_loyalty: false,
       selected_loyalty: 0,
       tax: 0
     };
@@ -3111,6 +3110,10 @@ __webpack_require__.r(__webpack_exports__);
     },
     hasGiftVoucher: function hasGiftVoucher() {
       return !!this.$store.state.cart.has_gift_voucher;
+    },
+    canRedeemLoyalty: function canRedeemLoyalty() {
+      var cart = this.$store.state.cart;
+      return cart.loyalty_redemption_enabled === true && Number(cart.has_loyalty || 0) > 0 && !this.hasGiftVoucher && !this.hasActiveCoupon;
     },
     hasActiveLoyaltySelection: function hasActiveLoyaltySelection() {
       return Number(this.selected_loyalty || 0) > 0;
@@ -3189,12 +3192,20 @@ __webpack_require__.r(__webpack_exports__);
       });
     }
   },
+  watch: {
+    canRedeemLoyalty: {
+      immediate: true,
+      handler: function handler(enabled) {
+        this.selected_loyalty = enabled ? this.$store.state.cart.loyalty || null : null;
+        this.showLoyaltyPanel = enabled && Number(this.selected_loyalty || 0) > 0;
+      }
+    }
+  },
   mounted: function mounted() {
     if (window.innerWidth < 800) {
       this.mobile = true;
     }
     this.checkIfEmpty();
-    this.checkLoyalty();
     //this.setCoupon();
   },
 
@@ -3253,7 +3264,7 @@ __webpack_require__.r(__webpack_exports__);
       }
 
       // Check loyalty
-      if (cart.loyalty != '' && cart.loyalty != 'null') {
+      if (this.canRedeemLoyalty && cart.loyalty != '' && cart.loyalty != 'null') {
         this.selected_loyalty = cart.loyalty;
         this.showLoyaltyPanel = Number(cart.loyalty || 0) > 0;
       }
@@ -3314,6 +3325,9 @@ __webpack_require__.r(__webpack_exports__);
       return this.nextBogoTier && Number(this.nextBogoTier.quantity || 0) === Number(tier.quantity || 0);
     },
     setLoyalty: function setLoyalty() {
+      if (!this.canRedeemLoyalty) {
+        return;
+      }
       var cart = this.$store.state.storage.getCart();
       cart.loyalty = this.selected_loyalty;
       this.showLoyaltyPanel = true;
@@ -3339,15 +3353,6 @@ __webpack_require__.r(__webpack_exports__);
      */
     updateLoyalty: function updateLoyalty() {
       this.$store.dispatch('updateLoyalty', this.selected_loyalty);
-    },
-    /**
-     *
-     */
-    checkLoyalty: function checkLoyalty() {
-      var cart = this.$store.state.storage.getCart();
-      if (cart && cart.has_loyalty > 0) {
-        this.has_loyalty = true;
-      }
     }
   }
 });
@@ -5587,7 +5592,8 @@ function defaultCart() {
     secondary_price: false,
     coupon: '',
     has_gift_voucher: false,
-    has_loyalty: 0
+    has_loyalty: 0,
+    loyalty_redemption_enabled: false
   };
 }
 function normalizeCart(cart) {
@@ -9687,10 +9693,7 @@ var render = function() {
         )
       : _vm._e(),
     _vm._v(" "),
-    !_vm.hasGiftVoucher &&
-    !_vm.hasActiveCoupon &&
-    ((_vm.has_loyalty && _vm.route == "kosarica") ||
-      (_vm.has_loyalty && _vm.route == "naplata"))
+    _vm.canRedeemLoyalty && (_vm.route == "kosarica" || _vm.route == "naplata")
       ? _c(
           "div",
           {

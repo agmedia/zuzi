@@ -44,11 +44,31 @@ class Loyalty extends Model
     }
 
 
+    public static function redemptionEnabled(): bool
+    {
+        $pausedFrom = config('settings.loyalty.redemption_paused_from');
+        $resumesAt = config('settings.loyalty.redemption_resumes_at');
+
+        if (! $pausedFrom || ! $resumesAt) {
+            return true;
+        }
+
+        $now = Carbon::now('Europe/Zagreb');
+
+        return $now->lt(Carbon::parse($pausedFrom, 'Europe/Zagreb'))
+            || $now->gte(Carbon::parse($resumesAt, 'Europe/Zagreb'));
+    }
+
+
     /**
      * @return int
      */
     public static function hasLoyalty(): int
     {
+        if (! static::redemptionEnabled()) {
+            return 0;
+        }
+
         if (auth()->user()) {
             $has_any = static::hasLoyaltyTotal(auth()->id());
 
@@ -87,6 +107,10 @@ class Loyalty extends Model
      */
     public static function calculateLoyalty(int $points = 0): int
     {
+        if (! static::redemptionEnabled()) {
+            return 0;
+        }
+
         if (auth()->user() && $points) {
             $has_points = static::hasLoyaltyTotal(auth()->id());
 
@@ -109,7 +133,7 @@ class Loyalty extends Model
     {
         $spent = 0;
 
-        if ($cart['loyalty']) {
+        if (static::redemptionEnabled() && $cart['loyalty']) {
             $spent = $cart['loyalty'];
         }
 

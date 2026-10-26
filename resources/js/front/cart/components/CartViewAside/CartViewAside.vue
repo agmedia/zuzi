@@ -162,7 +162,7 @@
             </div>
         </div>
 
-        <div class="rounded-3 p-4 mt-3" v-if="!hasGiftVoucher && !hasActiveCoupon && (has_loyalty && route == 'kosarica' || has_loyalty && route == 'naplata')" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
+        <div class="rounded-3 p-4 mt-3" v-if="canRedeemLoyalty && (route == 'kosarica' || route == 'naplata')" style="border: 1px dashed #e3e9ef;background-color: #fff !important;">
             <div class="py-2 px-xl-2" v-cloak>
                 <button
                     type="button"
@@ -233,7 +233,6 @@ export default {
             couponSubmitting: false,
             showCouponPanel: false,
             showLoyaltyPanel: false,
-            has_loyalty: false,
             selected_loyalty: 0,
             tax: 0,
         }
@@ -244,6 +243,14 @@ export default {
         },
         hasGiftVoucher() {
             return !!this.$store.state.cart.has_gift_voucher;
+        },
+        canRedeemLoyalty() {
+            const cart = this.$store.state.cart;
+
+            return cart.loyalty_redemption_enabled === true
+                && Number(cart.has_loyalty || 0) > 0
+                && !this.hasGiftVoucher
+                && !this.hasActiveCoupon;
         },
         hasActiveLoyaltySelection() {
             return Number(this.selected_loyalty || 0) > 0;
@@ -328,13 +335,21 @@ export default {
             });
         }
     },
+    watch: {
+        canRedeemLoyalty: {
+            immediate: true,
+            handler(enabled) {
+                this.selected_loyalty = enabled ? (this.$store.state.cart.loyalty || null) : null;
+                this.showLoyaltyPanel = enabled && Number(this.selected_loyalty || 0) > 0;
+            }
+        }
+    },
     mounted() {
         if (window.innerWidth < 800) {
             this.mobile = true;
         }
 
         this.checkIfEmpty();
-        this.checkLoyalty();
         //this.setCoupon();
     },
 
@@ -398,7 +413,7 @@ export default {
             }
 
             // Check loyalty
-            if (cart.loyalty != '' && cart.loyalty != 'null') {
+            if (this.canRedeemLoyalty && cart.loyalty != '' && cart.loyalty != 'null') {
                 this.selected_loyalty = cart.loyalty;
                 this.showLoyaltyPanel = Number(cart.loyalty || 0) > 0;
             }
@@ -478,6 +493,10 @@ export default {
         },
 
         setLoyalty() {
+            if (!this.canRedeemLoyalty) {
+                return;
+            }
+
             let cart = this.$store.state.storage.getCart();
 
             cart.loyalty = this.selected_loyalty;
@@ -507,17 +526,6 @@ export default {
          */
         updateLoyalty() {
             this.$store.dispatch('updateLoyalty', this.selected_loyalty);
-        },
-
-        /**
-         *
-         */
-        checkLoyalty() {
-            let cart = this.$store.state.storage.getCart();
-
-            if (cart && cart.has_loyalty > 0) {
-                this.has_loyalty = true;
-            }
         }
     }
 };

@@ -86,6 +86,7 @@ class AgCart extends Model
             'coupon'          => $this->coupon,
             'loyalty'         => $this->loyalty,
             'has_loyalty'     => $this->hasLoyalty(),
+            'loyalty_redemption_enabled' => Loyalty::redemptionEnabled(),
             'fair_discount_active' => $this->hasActiveFairDiscount(),
             'loyalty_points_per_euro' => $this->loyaltyPointsPerEuro(),
             'has_gift_voucher' => $this->hasGiftVoucherItems(),
@@ -409,6 +410,12 @@ class AgCart extends Model
      */
     public function loyalty($loyalty): int
     {
+        if (! Loyalty::redemptionEnabled()) {
+            $this->clearLoyalty();
+
+            return 0;
+        }
+
         if (! $loyalty || $loyalty === 'null') {
             $this->clearLoyalty();
 
@@ -530,6 +537,10 @@ class AgCart extends Model
     public function setCartConditions()
     {
         $this->cart->clearCartConditions();
+
+        if (! Loyalty::redemptionEnabled()) {
+            $this->clearLoyalty();
+        }
 
         $shipping_method   = ShippingMethod::condition($this->cart);
         $payment_method    = PaymentMethod::condition($this->cart);

@@ -238,6 +238,24 @@ class CheckoutController extends Controller
         }
 
         $currentOrder = $order->getData();
+
+        if (
+            $currentOrder
+            && ! Loyalty::redemptionEnabled()
+            && (int) $currentOrder->order_status_id === (int) config('settings.order.status.unfinished')
+            && in_array($currentOrder->payment_code, ['cod', 'bank', 'pickup'], true)
+            && $currentOrder->totals()
+                ->where('code', 'special')
+                ->where('title', 'Loyalty')
+                ->where('value', '<', 0)
+                ->exists()
+        ) {
+            return redirect()->route('pregled')->with(
+                'error',
+                'Loyalty popust trenutačno nije dostupan. Osvježite pregled narudžbe prije potvrde.'
+            );
+        }
+
         $shoppingCart = $this->shoppingCart();
         $couponUsageError = $this->rejectAlreadyUsedCoupon(
             $shoppingCart,
