@@ -2,7 +2,9 @@
 
 namespace App\Models\Front\Checkout\Shipping;
 
+use App\Helpers\Country;
 use App\Models\Back\Orders\Order;
+use RuntimeException;
 use SoapClient;
 use \stdClass;
 
@@ -65,7 +67,7 @@ class Glsstari
             $deliveryAddress->HouseNumber     = "";
             $deliveryAddress->City            = $this->order['payment_city'];
             $deliveryAddress->ZipCode         = $this->order['payment_zip'];
-            $deliveryAddress->CountryIsoCode  = "HR";
+            $deliveryAddress->CountryIsoCode  = $this->deliveryCountryIsoCode();
             $deliveryAddress->HouseNumberInfo = "";
             $parcel->DeliveryAddress          = $deliveryAddress;
             $pickupAddress                    = new StdClass();
@@ -108,8 +110,61 @@ class Glsstari
             return $this->PrepareLabels($username, $password, $parcels, str_replace("SERVICE_NAME", $serviceName, $wsdl), $soapOptions, $this->order);
 
         } catch (\Exception $e) {
-            echo $e->getMessage();
+            return ['PrepareLabelsError' => [['ErrorDescription' => $e->getMessage()]]];
         }
+    }
+
+
+    private function deliveryCountryIsoCode(): string
+    {
+        // The other delivery fields also come from the order's payment address.
+        $value = trim((string) data_get($this->order, 'payment_state', ''));
+
+        if ($value === '') {
+            throw new RuntimeException('Nedostaje država primatelja. Uredite adresu narudžbe prije slanja u GLS.');
+        }
+
+        // Administrators can enter local country names in the free-text field.
+        $aliases = [
+            'hrvatska' => 'HR',
+            'slovenija' => 'SI',
+            'njemačka' => 'DE',
+            'njemacka' => 'DE',
+            'austrija' => 'AT',
+            'italija' => 'IT',
+            'srbija' => 'RS',
+            'bosna i hercegovina' => 'BA',
+            'crna gora' => 'ME',
+            'mađarska' => 'HU',
+            'madjarska' => 'HU',
+            'češka' => 'CZ',
+            'ceska' => 'CZ',
+            'slovačka' => 'SK',
+            'slovacka' => 'SK',
+        ];
+        $value = $aliases[mb_strtolower($value, 'UTF-8')] ?? $value;
+
+        $country = Country::list()->first(function (array $country) use ($value) {
+            foreach (['name', 'iso_code_2', 'iso_code_3'] as $key) {
+                if (strcasecmp($value, (string) ($country[$key] ?? '')) === 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if (! $country || empty($country['iso_code_2'])) {
+            throw new RuntimeException('Nepoznata država primatelja. Upišite dvoslovnu oznaku države (npr. HR ili SI) u adresu narudžbe prije slanja u GLS.');
+        }
+
+        return strtoupper($country['iso_code_2']);
+    }
+
+
+    protected function createSoapClient($wsdl, $soapOptions): SoapClient
+    {
+        return new SoapClient($wsdl, $soapOptions);
     }
 
 
@@ -218,7 +273,7 @@ class Glsstari
         $request = array("prepareLabelsRequest" => $prepareLabelsRequest);
 
         //Service client creation:
-        $client = new SoapClient($wsdl, $soapOptions);
+        $client = $this->createSoapClient($wsdl, $soapOptions);
 
         //Service calling:
         $response = $client->PrepareLabels($request);

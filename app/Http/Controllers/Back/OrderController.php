@@ -605,8 +605,7 @@ class OrderController extends Controller
             return response()->json(['message' => $this->existingShipmentMessage($order)]);
         }
 
-        $gls   = new Glsstari($order);
-        $label = $gls->resolve();
+        $label = $this->resolveGlsShipment($order);
         $parcelId = data_get($label, 'ParcelIdList.0');
         $parcelNumber = data_get($label, 'ParcelNumberList.0');
 
@@ -646,12 +645,42 @@ class OrderController extends Controller
             return response()->json(['message' => 'GLS je uspješno poslan sa ID: ' . $parcelId . '. Tracking broj nije vraćen.']);
         }
 
+        $errors = $this->glsErrorDescriptions(data_get($label, 'PrepareLabelsError', []));
+
         Log::warning('GLS stari shipment did not return a parcel ID.', [
             'order_id' => $order->id,
-            'label' => $label,
+            'errors' => $errors,
         ]);
 
-        return response()->json(['error' => 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..']);
+        return response()->json([
+            'error' => $errors !== []
+                ? 'GLS nije kreirao pošiljku. ' . implode(' ', $errors)
+                : 'Greška..! Molimo pokušajte ponovo ili kontaktirajte administratora..',
+        ]);
+    }
+
+    protected function resolveGlsShipment(Order $order)
+    {
+        return (new Glsstari($order))->resolve();
+    }
+
+    private function glsErrorDescriptions($errors): array
+    {
+        $descriptions = [];
+
+        foreach ((array) $errors as $key => $value) {
+            if ($key === 'ErrorDescription' && is_string($value)) {
+                $description = trim(strip_tags($value));
+
+                if ($description !== '') {
+                    $descriptions[] = $description;
+                }
+            } elseif (is_array($value) || is_object($value)) {
+                $descriptions = array_merge($descriptions, $this->glsErrorDescriptions($value));
+            }
+        }
+
+        return array_values(array_unique($descriptions));
     }
 
     private function sendBoxNowShipment(Order $order)
