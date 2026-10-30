@@ -4,6 +4,7 @@ namespace App\Services\Znanje;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 
@@ -61,7 +62,13 @@ class ZnanjeProductListClient
                 ])
                 ->timeout($timeout)
                 ->withHeaders(['User-Agent' => 'Zuzi-Znanje-Importer/1.0'])
-                ->retry($attempts, $retryDelay, fn ($exception) => $this->shouldRetryZnanje($exception))
+                ->retry($attempts, $retryDelay, function ($exception) {
+                    if ($exception instanceof RequestException) {
+                        $exception->response->close();
+                    }
+
+                    return $this->shouldRetryZnanje($exception);
+                })
                 ->get($url, [
                     'sort' => 'date',
                     'order' => 'desc',
@@ -72,6 +79,7 @@ class ZnanjeProductListClient
                 ]);
         } catch (RequestException $exception) {
             $status = $exception->response->status();
+            $exception->response->close();
             if ($this->isRetryableZnanjeStatus($status)) {
                 throw new ZnanjeRetryableException(
                     $status === 429
@@ -93,9 +101,9 @@ class ZnanjeProductListClient
             );
         }
 
-        $html = str_replace("\0", '', $response->body());
         $contentType = strtolower((string) $response->header('Content-Type'));
         $maxBytes = max(1024, (int) config('znanje_import.max_html_bytes', 4 * 1024 * 1024));
+        $html = $this->readBoundedHtml($response, $maxBytes);
         if ($html === '' || strlen($html) > $maxBytes
             || ($contentType !== ''
                 && ! str_contains($contentType, 'text/html')
@@ -111,6 +119,49 @@ class ZnanjeProductListClient
         }
 
         return $html;
+    }
+
+    private function readBoundedHtml(Response $response, int $maxBytes): string
+    {
+        try {
+            $body = $response->toPsrResponse()->getBody();
+            $size = $body->getSize();
+            if ($size !== null && $size > $maxBytes) {
+                throw new ZnanjeRetryableException('Znanje stranica kataloga je prevelika.', 503, 3);
+            }
+            if ($body->isSeekable()) {
+                $body->rewind();
+            }
+
+            // Do not cast an untrusted response body to a PHP string before
+            // enforcing the limit. Unknown-length responses need the same cap.
+            $html = '';
+            while (! $body->eof()) {
+                $chunk = $body->read(min(65536, $maxBytes + 1 - strlen($html)));
+                if ($chunk === '' && ! $body->eof()) {
+                    throw new ZnanjeRetryableException('Znanje stranica kataloga nije potpuno preuzeta.', 503, 3);
+                }
+                $html .= $chunk;
+                if (strlen($html) > $maxBytes) {
+                    throw new ZnanjeRetryableException('Znanje stranica kataloga je prevelika.', 503, 3);
+                }
+            }
+
+            return str_replace("\0", '', $html);
+        } catch (ZnanjeRetryableException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            throw new ZnanjeRetryableException(
+                'Znanje stranicu kataloga privremeno nije moguće pročitati.',
+                503,
+                3,
+                $exception
+            );
+        } finally {
+            // A nightly crawl fetches hundreds of pages in one PHP process.
+            // Release each buffered body even if other HTTP objects await GC.
+            $response->close();
+        }
     }
 
     public static function roots(): array

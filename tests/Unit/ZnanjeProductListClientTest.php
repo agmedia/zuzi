@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Services\Znanje\ZnanjeProductListClient;
 use App\Services\Znanje\ZnanjeRetryableException;
+use GuzzleHttp\Psr7\FnStream;
+use GuzzleHttp\Psr7\Utils;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use Tests\TestCase;
@@ -92,6 +94,51 @@ class ZnanjeProductListClientTest extends TestCase
         }
 
         Http::assertSentCount(3);
+    }
+
+    public function test_it_rejects_unknown_length_html_without_reading_or_casting_the_entire_body(): void
+    {
+        config(['znanje_import.max_html_bytes' => 1024]);
+        $source = Utils::streamFor($this->validHtml() . str_repeat('x', 4096));
+        $bytesRead = 0;
+        $closed = false;
+        $stream = FnStream::decorate($source, [
+            'getSize' => static fn () => null,
+            '__toString' => static function () {
+                throw new \LogicException('An unbounded response body cast is forbidden.');
+            },
+            'read' => static function ($length) use ($source, &$bytesRead) {
+                $chunk = $source->read($length);
+                $bytesRead += strlen($chunk);
+
+                return $chunk;
+            },
+            'close' => static function () use ($source, &$closed) {
+                $closed = true;
+                $source->close();
+            },
+        ]);
+        Http::fake(['*' => Http::response($stream, 200, ['Content-Type' => 'text/html'])]);
+
+        try {
+            app(ZnanjeProductListClient::class)->fetchPage(500);
+            $this->fail('Expected oversized catalogue rejection.');
+        } catch (ZnanjeRetryableException $exception) {
+            $this->assertStringContainsString('prevelika', $exception->getMessage());
+        }
+
+        $this->assertSame(1025, $bytesRead);
+        $this->assertTrue($closed);
+        Http::assertSentCount(1);
+    }
+
+    public function test_it_closes_successful_response_buffers_and_keeps_null_cleanup(): void
+    {
+        $source = Utils::streamFor(str_replace('<html>', "<html>\0", $this->validHtml()));
+        Http::fake(['*' => Http::response($source, 200, ['Content-Type' => 'text/html'])]);
+
+        $this->assertSame($this->validHtml(), app(ZnanjeProductListClient::class)->fetchPage(500));
+        $this->assertFalse($source->isReadable());
     }
 
     private function validHtml(): string

@@ -333,6 +333,107 @@ class MailchimpEcommerceTrackingTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_known_invalid_contact_errors_do_not_starve_new_orders_but_transient_errors_retry(): void
+    {
+        Carbon::setTestNow('2026-08-28 07:00:00');
+        $invalidLocal = $this->makeOrder([
+            'payment_email' => 'invalid-address',
+            'mailchimp_ecommerce_last_attempt_at' => now(),
+            'mailchimp_ecommerce_last_error' => 'Narudžba nema valjanu e-mail adresu kupca.',
+        ]);
+        $invalidRemote = $this->makeOrder([
+            'mailchimp_ecommerce_last_attempt_at' => now(),
+            'mailchimp_ecommerce_last_error' => 'Mailchimp customer sync nije uspio: HTTP 400 — Customer Was Not Saved: [redacted-email] is an invalid email address and cannot be imported.',
+        ]);
+        $temporaryFailure = $this->makeOrder([
+            'mailchimp_ecommerce_last_attempt_at' => now(),
+            'mailchimp_ecommerce_last_error' => 'Mailchimp e-commerce trenutno nije dostupan.',
+        ]);
+        $otherBadRequest = $this->makeOrder([
+            'mailchimp_ecommerce_last_attempt_at' => now(),
+            'mailchimp_ecommerce_last_error' => 'Mailchimp customer sync nije uspio: HTTP 400 — Invalid Resource: A required field is missing.',
+        ]);
+
+        Carbon::setTestNow('2026-08-28 08:00:00');
+        $newOrder = $this->makeOrder();
+        $pending = app(MailchimpOrderSynchronizer::class)->pendingOrders(5)->pluck('id')->all();
+
+        $this->assertSame([$temporaryFailure->id, $otherBadRequest->id, $newOrder->id], $pending);
+        $this->assertNotContains($invalidLocal->id, $pending);
+        $this->assertNotContains($invalidRemote->id, $pending);
+        $this->assertNotNull($invalidLocal->fresh()->mailchimp_ecommerce_last_error);
+        $this->assertNotNull($invalidRemote->fresh()->mailchimp_ecommerce_last_error);
+        Http::assertNothingSent();
+    }
+
+    public function test_local_invalid_email_waits_for_an_order_correction_and_then_syncs(): void
+    {
+        Carbon::setTestNow('2026-08-28 07:00:00');
+        $order = $this->makeOrder(['payment_email' => 'invalid-address'], true);
+        $synchronizer = app(MailchimpOrderSynchronizer::class);
+        $result = $synchronizer->syncOrderId($order->id);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('Narudžba nema valjanu e-mail adresu kupca.', $order->fresh()->mailchimp_ecommerce_last_error);
+        Http::assertNothingSent();
+
+        Carbon::setTestNow('2026-08-28 08:00:00');
+        $this->assertCount(0, $synchronizer->pendingOrders(5));
+
+        // A direct correction is eligible even if the editing path does not
+        // explicitly call markForSync(). Business timestamps remain owned by
+        // the edit, not by the background synchronizer.
+        $order->update(['payment_email' => 'corrected@example.test']);
+        $correctedAt = $order->fresh()->updated_at->format('Y-m-d H:i:s');
+        $this->assertSame([$order->id], $synchronizer->pendingOrders(5)->pluck('id')->all());
+        $requests = [];
+        $this->fakeSuccessfulMailchimp($requests);
+
+        $this->assertTrue($synchronizer->syncOrderId($order->id)['ok']);
+        $this->assertNull($order->fresh()->mailchimp_ecommerce_last_error);
+        $this->assertNotNull($order->fresh()->mailchimp_ecommerce_synced_at);
+        $this->assertSame($correctedAt, $order->fresh()->updated_at->format('Y-m-d H:i:s'));
+        $this->assertSame(3, (int) $order->fresh()->order_status_id);
+    }
+
+    public function test_mailchimp_invalid_email_rejection_is_redacted_and_retries_after_explicit_requeue(): void
+    {
+        Carbon::setTestNow('2026-08-28 07:00:00');
+        $order = $this->makeOrder([], true);
+        $synchronizer = app(MailchimpOrderSynchronizer::class);
+        Http::fake(function (ClientRequest $request) {
+            if (strpos($request->url(), '/customers/') !== false) {
+                return Http::response([
+                    'title' => 'Customer Was Not Saved',
+                    'detail' => 'buyer@example.test is an invalid email address and cannot be imported.',
+                ], 400);
+            }
+
+            return Http::response([
+                'name' => 'Zuzi test store',
+                'currency_code' => 'EUR',
+                'list_id' => 'audience-123',
+                'is_syncing' => true,
+            ], 200);
+        });
+
+        $this->assertFalse($synchronizer->syncOrderId($order->id)['ok']);
+        $this->assertStringContainsString('Customer Was Not Saved', $order->fresh()->mailchimp_ecommerce_last_error);
+        $this->assertStringNotContainsString('buyer@example.test', $order->fresh()->mailchimp_ecommerce_last_error);
+        Http::assertSentCount(2);
+
+        Carbon::setTestNow('2026-08-28 08:00:00');
+        $this->assertCount(0, $synchronizer->pendingOrders(5));
+
+        // Admin saves already call markForSync(), which clears the recorded
+        // contact failure and permits a fresh attempt after correcting it.
+        $order->update(['payment_email' => 'corrected@example.test']);
+        $synchronizer->markForSync($order->id);
+        $this->assertNull($order->fresh()->mailchimp_ecommerce_last_error);
+        $this->assertNull($order->fresh()->mailchimp_ecommerce_last_attempt_at);
+        $this->assertSame([$order->id], $synchronizer->pendingOrders(5)->pluck('id')->all());
+    }
+
     public function test_migration_backfills_only_finalized_rollout_orders(): void
     {
         Carbon::setTestNow('2026-08-28 08:00:00');

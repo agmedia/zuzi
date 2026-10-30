@@ -250,6 +250,26 @@ class MailchimpOrderSynchronizer
                 $query->whereNull('mailchimp_ecommerce_last_attempt_at')
                     ->orWhere('mailchimp_ecommerce_last_attempt_at', '<=', now()->subMinutes(15));
             })
+            ->where(function ($query) {
+                // Invalid contact data cannot recover by retrying unchanged
+                // orders. Keep those failures visible, but leave room for new
+                // sales until an order is edited or explicitly queued again.
+                $query->whereNull('mailchimp_ecommerce_last_error')
+                    ->orWhereColumn('updated_at', '>', 'mailchimp_ecommerce_last_attempt_at')
+                    ->orWhere(function ($retryable) {
+                        $retryable->where(
+                            'mailchimp_ecommerce_last_error',
+                            '<>',
+                            'Narudžba nema valjanu e-mail adresu kupca.'
+                        )->where(
+                            'mailchimp_ecommerce_last_error',
+                            'not like',
+                            'Mailchimp customer sync nije uspio: HTTP 400%'
+                                . 'Customer Was Not Saved:%'
+                                . 'is an invalid email address and cannot be imported.%'
+                        );
+                    });
+            })
             ->where(function ($query) use ($statusCase, $bindings) {
                 $query->whereNull('mailchimp_ecommerce_synced_at')
                     ->orWhereRaw(
