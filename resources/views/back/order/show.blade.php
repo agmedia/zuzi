@@ -45,7 +45,9 @@
                         </thead>
                         <tbody class="js-gallery">
                         @foreach ($order->products as $product)
-                            @php($productImageUrl = \App\Support\ProductImageDisplay::url(optional($product->product)->image))
+                            @php
+                                $productImageUrl = \App\Support\ProductImageDisplay::url(optional($product->product)->image);
+                            @endphp
                             <tr>
                                 <td class="text-center"> <a class="img-link img-link-zoom-in img-lightbox" href="{{ $productImageUrl }}">
                                         <img src="{{ $productImageUrl }}" height="80px"/>
