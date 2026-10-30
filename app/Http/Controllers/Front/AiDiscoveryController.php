@@ -13,7 +13,9 @@ class AiDiscoveryController extends Controller
             'offerActive' => $offer->isActive(),
         ], 200, [
             'Content-Type' => 'text/plain; charset=UTF-8',
-            'Cache-Control' => 'no-cache',
+            'Cache-Control' => 'no-store, no-cache, max-age=0, must-revalidate',
+            'Expires' => '0',
+            'Pragma' => 'no-cache',
         ]);
     }
 }

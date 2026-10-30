@@ -21,7 +21,7 @@
     <meta name="author" content="Zuzi Shop">
     <meta name="robots" content="{{ $seoRobots }}">
     <link rel="canonical" href="{{ $seoCanonical }}" />
-    <link rel="describedby" type="text/plain" href="{{ route('ai.llms') }}" />
+    <link rel="describedby" type="text/plain" href="{{ route('ai.llms', ['v' => '20261030']) }}" />
     <meta property="og:locale" content="hr_HR" />
     <meta property="og:type" content="{{ $seoType }}" />
     <meta property="og:title" content="{{ $seoTitle }}" />

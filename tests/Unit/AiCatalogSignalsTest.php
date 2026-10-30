@@ -33,6 +33,10 @@ class AiCatalogSignalsTest extends TestCase
         $this->assertStringNotContainsString('ZUZI20', $content);
         $this->assertStringContainsString('text/plain', $response->headers->get('Content-Type'));
         $this->assertStringContainsString('no-cache', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('max-age=0', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('must-revalidate', $response->headers->get('Cache-Control'));
+        $response->assertHeader('Expires', '0')->assertHeader('Pragma', 'no-cache');
     }
 
     public function test_llms_txt_includes_the_verified_offer_without_a_public_expiry_date(): void
