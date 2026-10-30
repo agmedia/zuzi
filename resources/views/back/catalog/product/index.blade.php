@@ -153,6 +153,7 @@
                         @forelse ($products as $product)
                             @php
                                 $subcategory = $product->subcategories->first();
+                                $productImageUrl = \App\Support\ProductImageDisplay::url($product->image);
                                 $editableProduct = [
                                     'id'           => $product->id,
                                     'price'        => $product->price,
@@ -164,8 +165,8 @@
                             @endphp
                             <tr>
                                 <td class="text-center font-size-sm text-nowrap">
-                                    <a class="img-link img-link-zoom-in img-lightbox" href="{{ $product->image ? asset($product->image) : asset('media/avatars/avatar0.jpg') }}">
-                                        <img src="{{ $product->image ? asset($product->image) : asset('media/avatars/avatar0.jpg') }}" height="80px" loading="lazy"/>
+                                    <a class="img-link img-link-zoom-in img-lightbox" href="{{ $productImageUrl }}">
+                                        <img src="{{ $productImageUrl }}" height="80px" loading="lazy"/>
                                     </a>
                                 </td>
                                 <td class="font-size-sm" style="min-width: 280px;">

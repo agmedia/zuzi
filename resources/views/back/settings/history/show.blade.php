@@ -28,7 +28,7 @@
                 <div class="row">
                     <div class="col-sm-12 col-md-3 text-center">
                         <a class="img-link mt-3" href="{{ $history->getTargetUrl() }}">
-                            <img src="{{ isset($target->image) ? asset($target->image) : asset('media/avatars/avatar0.jpg') }}" height="140px"/>
+                            <img src="{{ \App\Support\ProductImageDisplay::url($target->image ?? null) }}" height="140px"/>
                         </a>
                     </div>
                     <div class="col-sm-12 col-md-9 py-2">

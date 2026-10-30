@@ -68,7 +68,7 @@
                                      data-meta-type_id="{{ $product->id }}"
                                      data-will-remove="removeImage"
                                         {{--data-will-request="handleXHRRequest"--}}>
-                                    <img src="{{ asset($product->image) }}" alt="{{ 'image_' . $product->id }}"/>
+                                    <img src="{{ \App\Support\ProductImageDisplay::url($product->image) }}" alt="{{ 'image_' . $product->id }}"/>
                                     <input type="file" name="slim[0][image]"/>
                                 </div>
                             </div>
@@ -118,7 +118,7 @@
                                                  data-meta-image_id="{{ $image['id'] }}"
                                                  data-will-remove="removeImage"
                                             >
-                                                <img src="{{ asset($image['image']) }}" alt="{{ 'image_' . $image['id'] }}"/>
+                                                <img src="{{ \App\Support\ProductImageDisplay::url($image['image']) }}" alt="{{ 'image_' . $image['id'] }}"/>
                                                 <input type="file" name="slim[{{ $image['id'] }}][image]"/>
                                             </div>
                                         </div>

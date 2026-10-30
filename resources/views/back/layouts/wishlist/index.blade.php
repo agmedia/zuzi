@@ -95,7 +95,7 @@
                                             <tr>
                                                 <td>
                                                     @if($w->product && $w->product->image)
-                                                        <img src="{{ asset($w->product->image) }}" height="60" alt="">
+                                                        <img src="{{ \App\Support\ProductImageDisplay::url($w->product->image) }}" height="60" alt="">
                                                     @endif
                                                 </td>
                                                 <td>{{ $w->product->name ?? '---' }}</td>

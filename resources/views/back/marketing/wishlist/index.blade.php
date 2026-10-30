@@ -124,7 +124,7 @@
                                             <tr>
                                                 <td class="text-center text-nowrap">
                                                     @if($w->product)
-                                                        @php($imageUrl = $w->product->image ? asset($w->product->image) : asset('media/avatars/avatar0.jpg'))
+                                                        @php($imageUrl = \App\Support\ProductImageDisplay::url($w->product->image))
                                                         <a class="img-link img-link-zoom-in img-lightbox" href="{{ $imageUrl }}">
                                                             <img src="{{ $imageUrl }}"
                                                                  height="60"
@@ -257,7 +257,7 @@
                                             <tr>
                                                 <td class="text-center text-nowrap">
                                                     @if($item->product)
-                                                        @php($imageUrl = $item->product->image ? asset($item->product->image) : asset('media/avatars/avatar0.jpg'))
+                                                        @php($imageUrl = \App\Support\ProductImageDisplay::url($item->product->image))
                                                         <a class="img-link img-link-zoom-in img-lightbox" href="{{ $imageUrl }}">
                                                             <img src="{{ $imageUrl }}"
                                                                  height="60"

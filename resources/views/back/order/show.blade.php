@@ -45,9 +45,10 @@
                         </thead>
                         <tbody class="js-gallery">
                         @foreach ($order->products as $product)
+                            @php($productImageUrl = \App\Support\ProductImageDisplay::url(optional($product->product)->image))
                             <tr>
-                                <td class="text-center"> <a class="img-link img-link-zoom-in img-lightbox" href="{{ ($product->product && $product->product->image) ? asset($product->product->image) : asset('media/avatars/avatar0.jpg') }}">
-                                        <img src="{{ ($product->product && $product->product->image) ? asset($product->product->image) : asset('media/avatars/avatar0.jpg') }}" height="80px"/>
+                                <td class="text-center"> <a class="img-link img-link-zoom-in img-lightbox" href="{{ $productImageUrl }}">
+                                        <img src="{{ $productImageUrl }}" height="80px"/>
                                     </a>
                                 </td>
                                 <td>
