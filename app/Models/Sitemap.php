@@ -84,13 +84,15 @@ class Sitemap
         $sitemap = Str::replaceLast('.xml', '', $sitemap);
 
         if ($sitemap === 'pages') {
-            return static::dateFromMaxUpdatedAt(
+            $pageUpdatedAt = static::dateFromMaxUpdatedAt(
                 Page::query()
                     ->whereIn('group', ['page', 'blog'])
                     ->where('status', 1)
                     ->max('updated_at'),
                 Carbon::now()->startOfMonth()
             );
+
+            return $pageUpdatedAt->max(static::interliberLastModified());
         }
 
         if ($sitemap === 'categories') {
@@ -128,6 +130,17 @@ class Sitemap
     private static function dateFromMaxUpdatedAt($value, Carbon $fallback): Carbon
     {
         return Carbon::make($value) ?: $fallback;
+    }
+
+
+    private static function interliberLastModified(): Carbon
+    {
+        $template = resource_path('views/front/interliber-popusti.blade.php');
+        $modifiedAt = is_file($template) ? filemtime($template) : false;
+
+        return $modifiedAt !== false
+            ? Carbon::createFromTimestamp($modifiedAt, 'UTC')
+            : Carbon::parse('2026-10-30', 'Europe/Zagreb');
     }
 
 
@@ -216,6 +229,11 @@ class Sitemap
         $this->response[] = [
             'url' => route('faq'),
             'lastmod' => Carbon::now()->startOfYear()->tz('UTC')->toAtomString()
+        ];
+
+        $this->response[] = [
+            'url' => route('interliber.popusti'),
+            'lastmod' => static::interliberLastModified()->tz('UTC')->toAtomString(),
         ];
 
         foreach ($pages as $page) {

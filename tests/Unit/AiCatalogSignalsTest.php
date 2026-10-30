@@ -10,20 +10,43 @@ use App\Models\Front\Catalog\Category;
 use App\Models\Front\Catalog\Product;
 use App\Models\Front\Catalog\ProductImage;
 use App\Models\Front\Catalog\Publisher;
+use App\Support\InterliberOffer;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class AiCatalogSignalsTest extends TestCase
 {
-    public function test_llms_txt_exists_and_points_to_catalog_discovery_urls(): void
+    public function test_llms_txt_points_to_catalog_discovery_urls_without_an_unverified_coupon(): void
     {
-        $content = (string) file_get_contents(public_path('llms.txt'));
+        $offer = \Mockery::mock(InterliberOffer::class);
+        $offer->shouldReceive('isActive')->once()->andReturn(false);
+        $this->app->instance(InterliberOffer::class, $offer);
+
+        $response = $this->get('/llms.txt')->assertOk();
+        $content = $response->getContent();
 
         $this->assertStringContainsString('https://www.zuzi.hr/sitemap.xml', $content);
         $this->assertStringContainsString('https://www.zuzi.hr/sitemap/products.xml', $content);
         $this->assertStringContainsString('https://www.zuzi.hr/feeds/openai-products.jsonl', $content);
         $this->assertStringContainsString('https://www.zuzi.hr/robots.txt', $content);
+        $this->assertStringNotContainsString('ZUZI20', $content);
+        $this->assertStringContainsString('text/plain', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('no-cache', $response->headers->get('Cache-Control'));
+    }
+
+    public function test_llms_txt_includes_the_verified_offer_without_a_public_expiry_date(): void
+    {
+        $offer = \Mockery::mock(InterliberOffer::class);
+        $offer->shouldReceive('isActive')->once()->andReturn(true);
+        $this->app->instance(InterliberOffer::class, $offer);
+
+        $content = $this->get('/llms.txt')->assertOk()->getContent();
+
+        $this->assertStringContainsString('20 % popusta na sve uz kod ZUZI20', $content);
+        $this->assertStringContainsString('](' . route('interliber.popusti') . ')', $content);
+        $this->assertStringNotContainsString('2026-12', $content);
+        $this->assertStringNotContainsString('1.12.', $content);
     }
 
     public function test_global_schema_contains_bookstore_and_website(): void

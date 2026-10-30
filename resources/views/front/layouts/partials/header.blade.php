@@ -90,7 +90,7 @@
                     </a>
                 @endif
 
-                <cart-nav-icon class="site-header-cart" carturl="{{ route('kosarica') }}" checkouturl="{{ route('naplata') }}"></cart-nav-icon>
+                <cart-nav-icon v-cloak class="site-header-cart" carturl="{{ route('kosarica') }}" checkouturl="{{ route('naplata') }}"></cart-nav-icon>
 
             </div>
         </div>
@@ -151,7 +151,7 @@
     </ul>
     <div class="offcanvas-body px-0 pt-3 pb-0" data-simplebar>
         <div class="tab-content">
-            <filter-view ids="{{ $sidebarIds }}"
+            <filter-view v-cloak ids="{{ $sidebarIds }}"
                          group="{{ $sidebarGroup }}"
                          cat="{{ $sidebarCat }}"
                          subcat="{{ $sidebarSubcat }}"

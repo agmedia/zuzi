@@ -42,12 +42,14 @@ use App\Http\Controllers\Back\UserController;
 use App\Http\Controllers\Back\Widget\WidgetController;
 use App\Http\Controllers\Back\Widget\WidgetGroupController;
 use App\Http\Controllers\Front\CatalogRouteController;
+use App\Http\Controllers\Front\AiDiscoveryController;
 use App\Http\Controllers\Front\CheckoutController;
 use App\Http\Controllers\Front\CustomerController;
 use App\Http\Controllers\Front\ContractWithdrawalController;
 use App\Http\Controllers\Front\GiftVoucherController;
 use App\Http\Controllers\Front\GoogleLoginController;
 use App\Http\Controllers\Front\HomeController;
+use App\Http\Controllers\Front\InterliberPromotionController;
 use App\Http\Controllers\Front\NewsletterController;
 use App\Http\Controllers\MatchPredictionController;
 use App\Http\Responses\LogoutResponse;
@@ -497,6 +499,8 @@ Route::prefix('api/v2')->group(function () {
  * FRONT ROUTES
  */
 Route::get('/', [HomeController::class, 'index'])->middleware('affiliate.track')->name('index');
+Route::get('/llms.txt', [AiDiscoveryController::class, 'llms'])->name('ai.llms');
+Route::get('/interliber-popusti', [InterliberPromotionController::class, 'index'])->name('interliber.popusti');
 Route::get('/logout', function (Request $request) {
     Auth::guard('web')->logout();
 

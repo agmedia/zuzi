@@ -14,6 +14,7 @@
         <div class="interliber-hero__actions">
             <a class="interliber-hero__cta" href="{{ url('kategorija-proizvoda') }}">Pronađi svoj ulov <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
             <span class="interliber-hero__hint">Kod upiši u košarici.</span>
+            <a class="interliber-hero__hint" href="{{ route('interliber.popusti') }}" style="text-decoration: underline;">Interliber ponuda i uvjeti</a>
         </div>
     </div>
 </section>

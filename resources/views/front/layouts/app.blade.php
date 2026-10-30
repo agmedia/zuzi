@@ -21,6 +21,7 @@
     <meta name="author" content="Zuzi Shop">
     <meta name="robots" content="{{ $seoRobots }}">
     <link rel="canonical" href="{{ $seoCanonical }}" />
+    <link rel="describedby" type="text/plain" href="{{ route('ai.llms') }}" />
     <meta property="og:locale" content="hr_HR" />
     <meta property="og:type" content="{{ $seoType }}" />
     <meta property="og:title" content="{{ $seoTitle }}" />
@@ -143,25 +144,18 @@
                   opacity: 0;
               }
         }
-        [v-cloak] .v-cloak--block {
-            display: block;
-        }
-        [v-cloak] .v-cloak--inline {
-            display: inline;
-        }
-        [v-cloak] .v-cloak--inlineBlock {
-            display: inline-block;
-        }
-        [v-cloak] .v-cloak--hidden {
-            display: none;
-        }
-        [v-cloak] .v-cloak--invisible {
+        /* Only unmounted Vue widgets wait for cart.js; server-rendered content stays visible. */
+        #agapp [v-cloak],
+        #agapp cart-nav-icon,
+        #agapp cart-footer-icon,
+        #agapp cart-view,
+        #agapp cart-view-aside,
+        #agapp add-to-cart-btn,
+        #agapp add-to-cart-btn-simple,
+        #agapp filter-view,
+        #agapp products-view,
+        #agapp pagination {
             visibility: hidden;
-        }
-        .v-cloak--block,
-        .v-cloak--inline,
-        .v-cloak--inlineBlock {
-            display: none;
         }
 
         .product-bogo-line {
@@ -676,13 +670,8 @@
     <!-- End Google Tag Manager (noscript) -->
 @endif
 <div id="agapp">
-    <div v-cloak>
-
-        <div class="v-cloak--inline"> <!-- Parts that will be visible before compiled your HTML -->
-            <div class="spinner"></div>
-        </div>
-
-        <div class="v-cloak--hidden">
+    <div>
+        <div>
             @include('front.layouts.partials.header')
             <main class="offcanvas-enabled ">
                 @if (auth()->check() && session('impersonator_id'))
