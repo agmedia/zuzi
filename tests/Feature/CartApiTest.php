@@ -35,7 +35,7 @@ class CartApiTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_redemption_pause_clears_saved_discount_and_rejects_direct_requests_until_december(): void
+    public function test_redemption_pause_clears_saved_discount_and_rejects_direct_requests_until_november_2(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -64,7 +64,7 @@ class CartApiTest extends TestCase
         $this->assertSame(0, $attempt->json());
         $this->assertSame(100, Loyalty::hasLoyaltyTotal($user->id));
 
-        Carbon::setTestNow(Carbon::parse('2026-12-01 00:00:00', 'Europe/Zagreb'));
+        Carbon::setTestNow(Carbon::parse('2026-11-02 00:00:00', 'Europe/Zagreb'));
 
         $this->getJson('/api/v2/cart/loyalty/100')->assertOk();
         $afterPause = $this->getJson('/api/v2/cart/get')->assertOk()

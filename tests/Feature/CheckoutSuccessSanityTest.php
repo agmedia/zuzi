@@ -151,7 +151,7 @@ class CheckoutSuccessSanityTest extends TestCase
      */
     public function test_saved_loyalty_discount_requires_review_during_redemption_pause(string $paymentCode): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-11-30 23:59:59', 'Europe/Zagreb'));
+        Carbon::setTestNow(Carbon::parse('2026-11-01 23:59:59', 'Europe/Zagreb'));
         Bus::fake();
         config()->set('services.pelion.checkout_stock_check_enabled', false);
 
@@ -204,7 +204,7 @@ class CheckoutSuccessSanityTest extends TestCase
 
     public function test_saved_loyalty_discount_can_finish_when_redemption_resumes(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-12-01 00:00:00', 'Europe/Zagreb'));
+        Carbon::setTestNow(Carbon::parse('2026-11-02 00:00:00', 'Europe/Zagreb'));
         Bus::fake();
         config()->set('services.pelion.checkout_stock_check_enabled', false);
 
@@ -242,7 +242,7 @@ class CheckoutSuccessSanityTest extends TestCase
         string $initialStatus,
         string $expectedStatus
     ): void {
-        Carbon::setTestNow(Carbon::parse('2026-11-30 12:00:00', 'Europe/Zagreb'));
+        Carbon::setTestNow(Carbon::parse('2026-11-01 12:00:00', 'Europe/Zagreb'));
         Bus::fake();
         config()->set('services.pelion.checkout_stock_check_enabled', false);
 
