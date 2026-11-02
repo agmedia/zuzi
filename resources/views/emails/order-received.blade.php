@@ -8,6 +8,7 @@
         <tr>
             <td class="ag-mail-tableset"> <h3>Narudžba broj: {{ $order->id }} </h3></td>
         </tr>
+        @include('emails.layouts.partials.interliber-delivery-notice')
         <tr>
             <td class="ag-mail-tableset">
                 @include('emails.layouts.partials.order-details', ['order' => $order])

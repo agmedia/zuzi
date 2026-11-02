@@ -6,10 +6,57 @@ use App\Models\Back\Catalog\Product\Product;
 use App\Models\Back\Catalog\Publisher;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderProduct;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class OrderEmailDeliveryNoticeTest extends TestCase
 {
+    /**
+     * @dataProvider interliberNoticeDates
+     */
+    public function test_order_confirmations_show_the_interliber_notice_only_until_the_end_of_november_15(string $date, bool $visible): void
+    {
+        Carbon::setTestNow(Carbon::parse($date));
+
+        try {
+            $order = new Order([
+                'id' => 123,
+                'payment_fname' => 'Ana',
+                'payment_code' => 'cod',
+                'shipping_state' => 'Croatia',
+                'shipping_method' => 'GLS',
+            ]);
+            $order->setRelation('products', collect());
+            $order->setRelation('totals', collect());
+
+            foreach (['emails.order-sent', 'emails.order-received'] as $template) {
+                $html = view($template, ['order' => $order, 'loyaltyMailData' => null])->render();
+                $notice = 'Moguće je dulje čekanje na isporuku knjiga zbog priprema za Interliber i samog Interlibera.';
+
+                if ($visible) {
+                    $this->assertStringContainsString($notice, $html, $template);
+                    $this->assertLessThan(strpos($html, 'Podaci o kupcu:'), strpos($html, $notice), $template);
+                } else {
+                    $this->assertStringNotContainsString($notice, $html, $template);
+                }
+            }
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function interliberNoticeDates(): array
+    {
+        return [
+            'current period' => ['2026-11-02 12:00:00 Europe/Zagreb', true],
+            'last second in Zagreb' => ['2026-11-15 23:59:59 Europe/Zagreb', true],
+            'expired in Zagreb' => ['2026-11-16 00:00:00 Europe/Zagreb', false],
+            'last second from UTC' => ['2026-11-15 22:59:59 UTC', true],
+            'expired from UTC' => ['2026-11-15 23:00:00 UTC', false],
+            'does not recur next year' => ['2027-11-02 12:00:00 Europe/Zagreb', false],
+        ];
+    }
+
     /**
      * @dataProvider publishersWithTwentyDayDelivery
      */
