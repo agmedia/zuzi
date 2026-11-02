@@ -87,6 +87,7 @@ class AgCart extends Model
             'loyalty'         => $this->loyalty,
             'has_loyalty'     => $this->hasLoyalty(),
             'loyalty_redemption_enabled' => Loyalty::redemptionEnabled(),
+            'loyalty_coupon_compatible' => Loyalty::canCombineWithCoupon((string) $this->coupon),
             'fair_discount_active' => $this->hasActiveFairDiscount(),
             'loyalty_points_per_euro' => $this->loyaltyPointsPerEuro(),
             'has_gift_voucher' => $this->hasGiftVoucherItems(),
@@ -343,7 +344,9 @@ class AgCart extends Model
 
         if ( ! $success) {
             if ($this->cart->getTotalQuantity() <= 0 && $this->isValidCouponCode($coupon)) {
-                $this->clearLoyalty();
+                if (! Loyalty::canCombineWithCoupon($coupon)) {
+                    $this->clearLoyalty();
+                }
 
                 return [
                     'success' => true,
@@ -358,7 +361,9 @@ class AgCart extends Model
             $this->refreshCouponAwareItems();
             $cart = $this->get();
         } else {
-            $this->clearLoyalty();
+            if (! Loyalty::canCombineWithCoupon($coupon)) {
+                $this->clearLoyalty();
+            }
             $cart = $this->get();
         }
 
@@ -560,7 +565,14 @@ class AgCart extends Model
             $coupon_conditions = Helper::hasCouponCartConditions($this->cart, $this->coupon);
             $loyalty_conditions = $this->hasExclusiveDiscount()
                 ? false
-                : Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty));
+                : Helper::hasLoyaltyCartConditions($this->cart, intval($this->loyalty), [
+                    $automatic_discount_condition,
+                    $coupon_conditions,
+                ]);
+        }
+
+        if (! $loyalty_conditions && intval($this->loyalty) > 0) {
+            $this->clearLoyalty();
         }
 
         if ($payment_method) {
@@ -807,7 +819,7 @@ class AgCart extends Model
     private function hasExclusiveDiscount(): bool
     {
         return $this->hasGiftVoucherItems()
-            || $this->hasActiveCoupon()
+            || ($this->hasActiveCoupon() && ! Loyalty::canCombineWithCoupon((string) $this->coupon))
             || $this->hasActiveFairDiscount();
     }
 
@@ -827,7 +839,11 @@ class AgCart extends Model
             $this->refreshCouponAwareItems();
         }
 
-        if ($hasGiftVoucher || $this->hasActiveCoupon() || $hasFairDiscount) {
+        if (
+            $hasGiftVoucher
+            || ($this->hasActiveCoupon() && ! Loyalty::canCombineWithCoupon((string) $this->coupon))
+            || $hasFairDiscount
+        ) {
             $this->clearLoyalty();
         }
 

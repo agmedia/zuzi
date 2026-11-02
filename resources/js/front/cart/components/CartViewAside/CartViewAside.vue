@@ -152,7 +152,8 @@
                     </div>
 
                     <p class="small text-muted mb-0 mt-2">
-                        Moguće je primijeniti jedan kod po narudžbi. Kod se ne može kombinirati s Loyalty popustom.
+                        Moguće je primijeniti jedan kod po narudžbi.
+                        <span v-if="hasActiveCoupon">{{ couponAllowsLoyalty ? 'Ovaj kod možete kombinirati s Loyalty popustom.' : 'Ovaj kod ne može se kombinirati s Loyalty popustom.' }}</span>
                     </p>
 
                     <p v-if="hasActiveCoupon" class="small text-success mb-0 mt-2">
@@ -244,13 +245,16 @@ export default {
         hasGiftVoucher() {
             return !!this.$store.state.cart.has_gift_voucher;
         },
+        couponAllowsLoyalty() {
+            return this.$store.state.cart.loyalty_coupon_compatible === true;
+        },
         canRedeemLoyalty() {
             const cart = this.$store.state.cart;
 
             return cart.loyalty_redemption_enabled === true
                 && Number(cart.has_loyalty || 0) > 0
                 && !this.hasGiftVoucher
-                && !this.hasActiveCoupon;
+                && (!this.hasActiveCoupon || this.couponAllowsLoyalty);
         },
         hasActiveLoyaltySelection() {
             return Number(this.selected_loyalty || 0) > 0;
@@ -336,6 +340,10 @@ export default {
         }
     },
     watch: {
+        '$store.state.cart.loyalty'(points) {
+            this.selected_loyalty = this.canRedeemLoyalty ? (points || null) : null;
+            this.showLoyaltyPanel = Number(this.selected_loyalty || 0) > 0;
+        },
         canRedeemLoyalty: {
             immediate: true,
             handler(enabled) {
@@ -445,8 +453,8 @@ export default {
                     this.coupon = String(this.$store.state.cart.coupon || '').trim();
 
                     if (response && response.success) {
-                        this.selected_loyalty = null;
-                        this.showLoyaltyPanel = false;
+                        this.selected_loyalty = this.canRedeemLoyalty ? (this.$store.state.cart.loyalty || null) : null;
+                        this.showLoyaltyPanel = Number(this.selected_loyalty || 0) > 0;
 
                         if (this.coupon === normalizedCoupon) {
                             this.codeInput = '';

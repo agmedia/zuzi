@@ -29,6 +29,7 @@ function defaultCart() {
         has_gift_voucher: false,
         has_loyalty: 0,
         loyalty_redemption_enabled: false,
+        loyalty_coupon_compatible: false,
     };
 }
 

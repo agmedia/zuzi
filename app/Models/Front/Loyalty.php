@@ -60,6 +60,15 @@ class Loyalty extends Model
     }
 
 
+    public static function canCombineWithCoupon(string $coupon): bool
+    {
+        $coupon = Str::upper(trim($coupon));
+
+        return $coupon !== '' && collect((array) config('settings.loyalty.combinable_coupons', []))
+            ->contains(fn ($allowedCoupon) => $coupon === Str::upper(trim((string) $allowedCoupon)));
+    }
+
+
     /**
      * @return int
      */

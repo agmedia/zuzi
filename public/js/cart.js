@@ -3067,6 +3067,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
@@ -3111,9 +3112,12 @@ __webpack_require__.r(__webpack_exports__);
     hasGiftVoucher: function hasGiftVoucher() {
       return !!this.$store.state.cart.has_gift_voucher;
     },
+    couponAllowsLoyalty: function couponAllowsLoyalty() {
+      return this.$store.state.cart.loyalty_coupon_compatible === true;
+    },
     canRedeemLoyalty: function canRedeemLoyalty() {
       var cart = this.$store.state.cart;
-      return cart.loyalty_redemption_enabled === true && Number(cart.has_loyalty || 0) > 0 && !this.hasGiftVoucher && !this.hasActiveCoupon;
+      return cart.loyalty_redemption_enabled === true && Number(cart.has_loyalty || 0) > 0 && !this.hasGiftVoucher && (!this.hasActiveCoupon || this.couponAllowsLoyalty);
     },
     hasActiveLoyaltySelection: function hasActiveLoyaltySelection() {
       return Number(this.selected_loyalty || 0) > 0;
@@ -3193,6 +3197,10 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   watch: {
+    '$store.state.cart.loyalty': function $storeStateCartLoyalty(points) {
+      this.selected_loyalty = this.canRedeemLoyalty ? points || null : null;
+      this.showLoyaltyPanel = Number(this.selected_loyalty || 0) > 0;
+    },
     canRedeemLoyalty: {
       immediate: true,
       handler: function handler(enabled) {
@@ -3289,8 +3297,8 @@ __webpack_require__.r(__webpack_exports__);
       return this.checkCoupon(normalizedCoupon).then(function (response) {
         _this4.coupon = String(_this4.$store.state.cart.coupon || '').trim();
         if (response && response.success) {
-          _this4.selected_loyalty = null;
-          _this4.showLoyaltyPanel = false;
+          _this4.selected_loyalty = _this4.canRedeemLoyalty ? _this4.$store.state.cart.loyalty || null : null;
+          _this4.showLoyaltyPanel = Number(_this4.selected_loyalty || 0) > 0;
           if (_this4.coupon === normalizedCoupon) {
             _this4.codeInput = '';
           }
@@ -5593,7 +5601,8 @@ function defaultCart() {
     coupon: '',
     has_gift_voucher: false,
     has_loyalty: 0,
-    loyalty_redemption_enabled: false
+    loyalty_redemption_enabled: false,
+    loyalty_coupon_compatible: false
   };
 }
 function normalizeCart(cart) {
@@ -9673,8 +9682,19 @@ var render = function() {
                   _vm._v(" "),
                   _c("p", { staticClass: "small text-muted mb-0 mt-2" }, [
                     _vm._v(
-                      "\n                    Moguće je primijeniti jedan kod po narudžbi. Kod se ne može kombinirati s Loyalty popustom.\n                "
-                    )
+                      "\n                    Moguće je primijeniti jedan kod po narudžbi.\n                    "
+                    ),
+                    _vm.hasActiveCoupon
+                      ? _c("span", [
+                          _vm._v(
+                            _vm._s(
+                              _vm.couponAllowsLoyalty
+                                ? "Ovaj kod možete kombinirati s Loyalty popustom."
+                                : "Ovaj kod ne može se kombinirati s Loyalty popustom."
+                            )
+                          )
+                        ])
+                      : _vm._e()
                   ]),
                   _vm._v(" "),
                   _vm.hasActiveCoupon

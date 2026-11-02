@@ -1615,16 +1615,25 @@ class Helper
 
     /**
      * @param        $cart
-     * @param string $coupon
+     * @param int $loyalty
+     * @param array<int, CartCondition|false> $precedingDiscounts
      *
      * @return CartCondition|false
      * @throws \Darryldecode\Cart\Exceptions\InvalidConditionException
      */
-    public static function hasLoyaltyCartConditions($cart, int $loyalty = 0)
+    public static function hasLoyaltyCartConditions($cart, int $loyalty = 0, array $precedingDiscounts = [])
     {
         $condition = false;
         $has_loyalty   = Loyalty::hasLoyalty();
         $discountableTotal = self::discountableCartTotal($cart);
+
+        foreach ($precedingDiscounts as $discountCondition) {
+            if ($discountCondition instanceof CartCondition) {
+                $discountableTotal = $discountCondition->applyCondition($discountableTotal);
+            }
+        }
+
+        $discountableTotal = max(0.0, round($discountableTotal, 2));
 
         if ($has_loyalty) {
             $discount = Loyalty::calculateLoyalty($loyalty);
