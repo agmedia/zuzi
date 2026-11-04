@@ -35,7 +35,12 @@ class StatusCompleted extends Mailable
      */
     public function build()
     {
-        return $this->subject('Vasa knjiga je poslana - Zuzi Shop')
-            ->view('emails.status-completed');
+        $isPersonalPickup = $this->order->shipping_code === 'pickup';
+
+        return $this->subject($isPersonalPickup
+            ? 'Vaša narudžba je završena - Zuzi Shop'
+            : 'Vasa knjiga je poslana - Zuzi Shop')
+            ->view('emails.status-completed')
+            ->with('isPersonalPickup', $isPersonalPickup);
     }
 }

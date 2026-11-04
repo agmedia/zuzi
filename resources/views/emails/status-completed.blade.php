@@ -2,14 +2,18 @@
 
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-        <tr><td class="ag-mail-tableset"><h3>Vaša knjiga je poslana</h3></td></tr>
+        <tr><td class="ag-mail-tableset"><h3>{{ $isPersonalPickup ? 'Vaša narudžba je završena' : 'Vaša knjiga je poslana' }}</h3></td></tr>
 
         <tr>
             <td class="ag-mail-tableset">
                 Broj narudžbe: <strong>{{ $order->id }}</strong><br>
                 Datum: <strong>{{ now()->format('d.m.Y') }}</strong><br>
                 Status: <strong>Narudžba je završena</strong><br><br>
-                Obavještavamo Vas da je Vaša knjiga poslana.
+                @if ($isPersonalPickup)
+                    Vaša narudžba za osobno preuzimanje je završena. Hvala Vam na kupnji!
+                @else
+                    Obavještavamo Vas da je Vaša knjiga poslana.
+                @endif
             </td>
         </tr>
 
