@@ -25,7 +25,12 @@ class HomepageInterliberHeroTest extends TestCase
 
         $description = '<section>uvod</section>++slider-index++<!--home-sales-widget-->++novo++';
         $expected = $isActive
-            ? str_replace('++slider-index++', view('front.layouts.partials.home-interliber-hero')->render(), $description)
+            ? str_replace(
+                '++slider-index++',
+                view('front.layouts.partials.home-interliber-hero')->render()
+                    . view('front.layouts.partials.home-bookstore-vote-banner')->render(),
+                $description
+            )
             : $description;
 
         $this->assertSame($expected, $this->resolveHero($description));
@@ -62,6 +67,40 @@ class HomepageInterliberHeroTest extends TestCase
         $this->assertStringStartsWith('++before++<!--home-about-widget-->', $resolved);
         $this->assertStringEndsWith('<!--home-sales-widget-->++novo++', $resolved);
         $this->assertStringNotContainsString('++slider-index++', $resolved);
+    }
+
+    public function test_voting_banner_follows_the_hero_as_one_accessible_external_link(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-05 12:00:00', 'Europe/Zagreb'));
+
+        $resolved = $this->resolveHero('++slider-index++<!--home-sales-widget-->++novo++');
+        $document = new \DOMDocument();
+        @$document->loadHTML('<?xml encoding="UTF-8">' . $resolved);
+        $xpath = new \DOMXPath($document);
+        $banner = $xpath->query('//section[contains(@class, "interliber-hero")]/following-sibling::*[1][self::a and @class="bookstore-vote-banner"]')->item(0);
+
+        $this->assertInstanceOf(\DOMElement::class, $banner);
+        $this->assertSame('https://min-kulture.gov.hr/glasaj/', $banner->getAttribute('href'));
+        $this->assertSame('_blank', $banner->getAttribute('target'));
+        $this->assertSame('noopener noreferrer', $banner->getAttribute('rel'));
+        $this->assertSame('bookstore-vote-title', $banner->getAttribute('aria-labelledby'));
+        $this->assertSame(0, $xpath->query('.//a | .//button | .//input', $banner)->length);
+        $this->assertStringContainsString('Glasaj za ZUZI Shop', $banner->textContent);
+        $this->assertStringContainsString('Podrži nas u izboru za najbolju knjižaru u Hrvatskoj 2026.', $banner->textContent);
+        $this->assertStringContainsString('Glasanje do 1. prosinca.', $banner->textContent);
+        $this->assertStringContainsString('Glasaj sada', $banner->textContent);
+        $this->assertStringNotContainsString('ZUZI20', $banner->textContent);
+        $this->assertStringNotContainsString('popust', mb_strtolower($banner->textContent));
+        $this->assertStringNotContainsString('poklon', mb_strtolower($banner->textContent));
+    }
+
+    public function test_voting_banner_is_not_added_without_the_homepage_slider_marker(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-05 12:00:00', 'Europe/Zagreb'));
+
+        $description = '<section>Existing content</section><!--home-sales-widget-->++novo++';
+
+        $this->assertSame($description, $this->resolveHero($description));
     }
 
     private function resolveHero(string $description): string

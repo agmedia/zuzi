@@ -55,7 +55,8 @@
     <link rel="stylesheet" media="screen" href="{{ asset('css/theme.css?v=6.0035') }}">
     <link rel="stylesheet" media="screen" href="{{ asset('css/google-login.css?v=1') }}">
     @if ($interliberCampaignActive)
-        <link rel="stylesheet" href="{{ asset('css/home-interliber-hero.css') }}?v=3">
+        <link rel="stylesheet" href="{{ asset('css/home-interliber-hero.css') }}?v=4">
+        <link rel="stylesheet" href="{{ asset('css/home-bookstore-vote-banner.css') }}?v=1">
     @endif
     <script src="{{ asset('js/jquery/jquery-2.1.1.min.js') }}"></script>
 

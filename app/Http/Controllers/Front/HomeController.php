@@ -500,7 +500,8 @@ class HomeController extends Controller
 
         return str_replace(
             '++slider-index++',
-            view('front.layouts.partials.home-interliber-hero')->render(),
+            view('front.layouts.partials.home-interliber-hero')->render()
+                . view('front.layouts.partials.home-bookstore-vote-banner')->render(),
             $description
         );
     }

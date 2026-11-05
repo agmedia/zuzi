@@ -22,8 +22,23 @@
     padding-right: 0;
 }
 
+.interliber-hero__branding {
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 1.5vw, 24px);
+    margin-bottom: 20px;
+}
+
+.interliber-hero__event-logo {
+    display: block;
+    flex: 0 0 auto;
+    width: clamp(144px, 12vw, 192px);
+    height: auto;
+    border-radius: 4px;
+}
+
 .interliber-hero__eyebrow {
-    margin: 0 0 20px;
+    margin: 0;
     color: #182033;
     font-size: 12px;
     font-weight: 500;
@@ -213,7 +228,23 @@
 
     .interliber-hero__copy {
         align-self: stretch;
+        position: static;
         padding: 16px;
+    }
+
+    .interliber-hero__branding {
+        display: contents;
+    }
+
+    .interliber-hero__event-logo {
+        position: absolute;
+        z-index: 3;
+        top: 8px;
+        right: 4%;
+        width: 26%;
+        max-width: 190px;
+        border-radius: 3px;
+        pointer-events: none;
     }
 
     .interliber-hero__eyebrow,

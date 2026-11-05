@@ -5,7 +5,10 @@
         @include('front.layouts.partials.interliber-promo-artwork', ['artworkId' => 'interliber-hero-art'])
     </a>
     <div class="interliber-hero__copy">
-        <p class="interliber-hero__eyebrow">Povodom Interlibera</p>
+        <div class="interliber-hero__branding">
+            <p class="interliber-hero__eyebrow">Povodom Interlibera</p>
+            <img class="interliber-hero__event-logo" src="{{ asset('media/img/campaigns/interliber-2026/interliber-logo-2026.webp') }}" width="960" height="336" alt="Interliber, 10. – 15. studenoga 2026." decoding="async">
+        </div>
         <h1 class="interliber-hero__title" id="interliber-hero-title">Stvaramo gužvu.<span>Na tvojoj polici.</span></h1>
         <div class="interliber-hero__offer">
             <div class="interliber-hero__discount"><strong>−20 %</strong><span>na sve</span></div>
