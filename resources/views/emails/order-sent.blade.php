@@ -59,6 +59,7 @@
                 Lijep pozdrav,<br>Zuzi Shop
             </td>
         </tr>
+        @include('emails.layouts.partials.order-promotion')
 
     </table>
 @endsection
