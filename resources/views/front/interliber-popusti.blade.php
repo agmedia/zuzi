@@ -48,7 +48,7 @@
 @section('seo_image_alt', 'Izbor romana i bestselera iz ZUZI ponude')
 
 @push('css_after')
-    <link rel="stylesheet" href="{{ asset('css/interliber-popusti.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/interliber-popusti.css') }}?v=2">
 @endpush
 
 @push('meta_tags')
@@ -72,7 +72,7 @@
                         <div><strong class="interliber-page__percent">−20 %</strong><span>na sve</span></div>
                         <div class="interliber-page__code"><span>Kod za košaricu</span><strong id="interliber-coupon">ZUZI20</strong><button type="button" id="interliber-copy" hidden>Kopiraj kod</button></div>
                     </div>
-                    <p id="interliber-copy-status" class="interliber-page__copy-status" role="status" aria-live="polite"></p>
+                    <p id="interliber-page-copy-status" class="interliber-page__copy-status" role="status" aria-live="polite"></p>
                 @else
                     <h1 id="interliber-page-title">Tvoja sljedeća knjiga.<span>Pronađi joj mjesto.</span></h1>
                     <p class="interliber-page__lead">Interliber kupon trenutačno nije dostupan. Pronađi svoj novi roman, istraži bestselere i provjeri aktualnu ZUZI ponudu.</p>
@@ -119,7 +119,7 @@
         <script>
             (function () {
                 var button = document.getElementById('interliber-copy');
-                var status = document.getElementById('interliber-copy-status');
+                var status = document.getElementById('interliber-page-copy-status');
                 if (!button || !navigator.clipboard || !window.isSecureContext) return;
                 button.hidden = false;
                 button.addEventListener('click', function () {
