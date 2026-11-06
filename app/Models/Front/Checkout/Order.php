@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Schema;
 class Order extends Model
 {
     protected $casts = [
+        'unfinished_at' => 'datetime',
         'shipping_tracking_updated_at' => 'datetime',
         'shipping_tracking_payload' => 'array',
     ];
@@ -165,6 +166,11 @@ class Order extends Model
                 $attributes['coupon_code'] = $coupon !== '' ? $coupon : null;
             }
 
+            if ((int) $this->order['order_status_id'] === (int) config('settings.order.status.unfinished', 8)
+                && Schema::hasColumn('orders', 'unfinished_at')) {
+                $attributes['unfinished_at'] = Carbon::now();
+            }
+
             $order_id = \App\Models\Back\Orders\Order::insertGetId($attributes);
 
             if ($order_id) {
@@ -235,6 +241,12 @@ class Order extends Model
         }
 
         $updated = \App\Models\Back\Orders\Order::where('id', $data['id'])->update($attributes);
+
+        if (Schema::hasColumn('orders', 'unfinished_at')) {
+            \App\Models\Back\Orders\Order::where('id', $data['id'])
+                ->where('order_status_id', (int) config('settings.order.status.unfinished', 8))
+                ->update(['unfinished_at' => Carbon::now()]);
+        }
 
         if ($updated) {
             $this->updateProducts($data['id']);

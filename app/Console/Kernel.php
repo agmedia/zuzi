@@ -36,6 +36,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('sync:category-actions')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('check:wishlist')->everySixHours();//->everyMinute();
         $schedule->command('send:review-requests')->dailyAt('09:15')->withoutOverlapping();
+        $schedule->command('orders:send-abandoned-cart-reminders')->everyFiveMinutes()->withoutOverlapping(10);
 
         $reviewRequestBackfill = (array) config('settings.order.review_request.backfill', []);
 

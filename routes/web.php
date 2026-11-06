@@ -43,6 +43,7 @@ use App\Http\Controllers\Back\Widget\WidgetController;
 use App\Http\Controllers\Back\Widget\WidgetGroupController;
 use App\Http\Controllers\Front\CatalogRouteController;
 use App\Http\Controllers\Front\AiDiscoveryController;
+use App\Http\Controllers\Front\AbandonedCartRecoveryController;
 use App\Http\Controllers\Front\CheckoutController;
 use App\Http\Controllers\Front\CustomerController;
 use App\Http\Controllers\Front\ContractWithdrawalController;
@@ -536,6 +537,9 @@ Route::get('/dojmovi', [HomeController::class, 'reviews'])->name('dojmovi');
 Route::post('/dojmovi/{review}/koristan', [HomeController::class, 'markReviewHelpful'])->name('dojmovi.koristan');
 //
 Route::get('/kosarica', [CheckoutController::class, 'cart'])->name('kosarica');
+Route::get('/kosarica/obnovi/{order}', AbandonedCartRecoveryController::class)
+    ->middleware(['signed', 'throttle:10,1'])
+    ->name('abandoned-cart.restore');
 Route::get('/naplata', [CheckoutController::class, 'checkout'])->name('naplata');
 Route::get('/naplata/wallet/{wallet}', [CheckoutController::class, 'wallet'])->name('checkout.wallet');
 Route::get('/pregled', [CheckoutController::class, 'view'])->name('pregled');

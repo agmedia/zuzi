@@ -5,6 +5,7 @@ namespace App\Models\Back\Orders;
 use App\Helpers\Mailchimp;
 use App\Helpers\Session\CheckoutSession;
 use App\Models\Back\Marketing\Action;
+use App\Models\AbandonedCartReminder;
 use App\Models\GiftVoucher;
 use App\Models\Back\Settings\Settings;
 use App\Models\Back\Users\Client;
@@ -38,6 +39,7 @@ class Order extends Model
      * @var array
      */
     protected $casts = [
+        'unfinished_at' => 'datetime',
         'checkout_processed_at' => 'datetime',
         'mailchimp_ecommerce_synced_at' => 'datetime',
         'mailchimp_ecommerce_last_attempt_at' => 'datetime',
@@ -120,6 +122,12 @@ class Order extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'order_id');
+    }
+
+
+    public function abandonedCartReminders()
+    {
+        return $this->hasMany(AbandonedCartReminder::class, 'order_id');
     }
 
 

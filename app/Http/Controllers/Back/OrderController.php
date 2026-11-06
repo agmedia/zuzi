@@ -11,7 +11,7 @@ use App\Mail\StatusCompleted;
 use App\Mail\StatusPaid;
 use App\Mail\StatusReady;
 use App\Mail\UnfinishedOrderPromo;
-use App\Mail\UnfinishedOrderReminder;
+use App\Models\AbandonedCartReminder;
 use App\Models\Back\Marketing\Action;
 use App\Models\Back\Orders\Order;
 use App\Models\Back\Orders\OrderHistory;
@@ -19,6 +19,7 @@ use App\Models\Back\Settings\Settings;
 use App\Models\Front\Checkout\Shipping\Glsstari;
 use App\Models\Front\Checkout\Shipping\HP;
 use App\Models\Front\Loyalty;
+use App\Services\AbandonedCartReminderService;
 use App\Services\GiftVoucherService;
 use App\Services\MailchimpOrderSynchronizer;
 use App\Services\Shipping\BoxNowService;
@@ -360,6 +361,33 @@ class OrderController extends Controller
         if (! filled($order->payment_email)) {
             return response()->json(['error' => 'Narudžba nema e-mail adresu kupca.'], 422);
         }
+        if ($unfinishedOrderPromoService->hasSentPromoForOrder($order)) {
+            return response()->json(['error' => 'Promo mail je već poslan za ovu narudžbu.'], 422);
+        }
+        if ($unfinishedOrderPromoService->shouldSuppressSendButtonForOrder($order)) {
+            return response()->json(['error' => 'Kupac na ovoj narudžbi već koristi kod.'], 422);
+        }
+
+        $reminders = app(AbandonedCartReminderService::class);
+
+        if ((int) $order->order_status_id === (int) config('settings.order.status.unfinished') && $reminders->isAvailable()) {
+            try {
+                return $reminders->sendPromotion($order, function (Order $fresh) use ($discount, $unfinishedOrderPromoService) {
+                    return $this->sendUnfinishedPromoResponse($fresh, $discount, $unfinishedOrderPromoService);
+                });
+            } catch (\RuntimeException $exception) {
+                return response()->json(['error' => $exception->getMessage()], 422);
+            }
+        }
+
+        return $this->sendUnfinishedPromoResponse($order, $discount, $unfinishedOrderPromoService);
+    }
+
+    private function sendUnfinishedPromoResponse(Order $order, int $discount, UnfinishedOrderPromoService $unfinishedOrderPromoService)
+    {
+        if (! filled($order->payment_email)) {
+            return response()->json(['error' => 'Narudžba nema e-mail adresu kupca.'], 422);
+        }
 
         if ($unfinishedOrderPromoService->hasSentPromoForOrder($order)) {
             return response()->json(['error' => 'Promo mail je već poslan za ovu narudžbu.'], 422);
@@ -477,27 +505,16 @@ class OrderController extends Controller
         }
 
         try {
-            Mail::to($order->payment_email)->send(new UnfinishedOrderReminder($order));
-        } catch (\Throwable $e) {
+            app(AbandonedCartReminderService::class)->send($order, 1, AbandonedCartReminder::SOURCE_MANUAL);
+        } catch (\RuntimeException $exception) {
+            return response()->json(['error' => $exception->getMessage()], 422);
+        } catch (\Throwable $exception) {
             Log::error('Failed to send unfinished order reminder email.', [
                 'order_id' => $order->id,
-                'payment_email' => $order->payment_email,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return response()->json(['error' => 'Greška..! Slanje podsjetnika nije uspjelo.'], 422);
-        }
-
-        try {
-            OrderHistory::store($order->id, new Request([
-                'status' => 0,
-                'comment' => UnfinishedOrderPromoService::REMINDER_HISTORY_COMMENT,
-            ]));
-        } catch (\Throwable $e) {
-            Log::warning('Failed to store unfinished order reminder email history.', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
         }
 
         return response()->json(['message' => 'Podsjetnik je uspješno poslan.']);

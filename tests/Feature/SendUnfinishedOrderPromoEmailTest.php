@@ -401,7 +401,7 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
 
     private function createOrder(int $statusId, string $email): int
     {
-        return (int) DB::table('orders')->insertGetId([
+        $orderId = (int) DB::table('orders')->insertGetId([
             'user_id' => 0,
             'affiliate_id' => 0,
             'order_status_id' => $statusId,
@@ -436,6 +436,20 @@ class SendUnfinishedOrderPromoEmailTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        DB::table('order_products')->insert([
+            'order_id' => $orderId,
+            'product_id' => 1,
+            'name' => 'Odabrana knjiga',
+            'quantity' => 1,
+            'org_price' => 25,
+            'price' => 25,
+            'total' => 25,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $orderId;
     }
 
     private function addOrderTotal(int $orderId, string $code, string $title, float $value): void
